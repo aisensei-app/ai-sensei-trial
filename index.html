@@ -782,25 +782,32 @@ function listen(target,cb){
   r.maxAlternatives=1;
   r.continuous=false;
 
-  let parts=[], done=false, stopTimer=null, lastError=null;
+  let parts=[], done=false, stopTimer=null, lastError=null, manualStop=false;
 
+  // 採点は、音声認識が終了して最終結果を受け取ってから行う。
   const finish=(reason=null)=>{
     if(done) return;
     done=true;
     clearTimeout(stopTimer);
-    try{ r.stop(); }catch(e){}
-    const text=parts.join(" ").trim();
-    cb(text || null, reason || lastError || (text ? null : "no-speech"));
+    const recognized=parts.join(" ").trim();
+    cb(recognized || null, reason || lastError || (recognized ? null : "no-speech"));
   };
 
   r.onresult=e=>{
+    if(done) return;
     for(let i=e.resultIndex;i<e.results.length;i++){
       if(e.results[i] && e.results[i][0] && e.results[i][0].transcript){
         parts.push(e.results[i][0].transcript);
       }
     }
-    clearTimeout(stopTimer);
-    stopTimer=setTimeout(()=>finish(),900);
+
+    // 通常利用では、発話後の短い無音で自動終了させる。
+    if(!manualStop){
+      clearTimeout(stopTimer);
+      stopTimer=setTimeout(()=>{
+        try{ r.stop(); }catch(e){ finish(); }
+      },900);
+    }
   };
 
   r.onerror=e=>{
@@ -813,6 +820,8 @@ function listen(target,cb){
     finish(lastError);
   };
 
+  // stop() 後にも最終 result が届くことがあるため、
+  // 「話し終わった」押下時はここまで待ってから採点する。
   r.onend=()=>{ if(!done) finish(); };
 
   try{
@@ -823,7 +832,20 @@ function listen(target,cb){
     return;
   }
 
-  S.mic={stop:()=>finish()};
+  S.mic={
+    stop:()=>{
+      if(done) return;
+      manualStop=true;
+      clearTimeout(stopTimer);
+      try{
+        r.stop();
+        // 一部ブラウザで onend が来ない場合の保険。
+        stopTimer=setTimeout(()=>finish(),1500);
+      }catch(e){
+        finish();
+      }
+    }
+  };
 }
 
 function speechErrorMessage(reason){
