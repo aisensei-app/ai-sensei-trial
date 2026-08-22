@@ -773,27 +773,76 @@ function speak(text,rate){
 /* ---------- speech in ---------- */
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 function listen(target,cb){
-  if(!SR||!S.micOK){cb(null);return;}
+  if(!SR||!S.micOK){cb(null,"unsupported");return;}
   let r;
-  try{ r=new SR(); }catch(e){ S.micOK=false; cb(null); return; }
-  r.lang="en-US"; r.interimResults=false; r.maxAlternatives=1; r.continuous=true;
-  let parts=[], done=false, stopTimer=null;
-  const finish=()=>{ if(done)return; done=true; try{r.stop()}catch(e){} cb(parts.join(" ")); };
+  try{ r=new SR(); }catch(e){ S.micOK=false; cb(null,"start-failed"); return; }
+
+  r.lang="en-US";
+  r.interimResults=false;
+  r.maxAlternatives=1;
+  r.continuous=false;
+
+  let parts=[], done=false, stopTimer=null, lastError=null;
+
+  const finish=(reason=null)=>{
+    if(done) return;
+    done=true;
+    clearTimeout(stopTimer);
+    try{ r.stop(); }catch(e){}
+    const text=parts.join(" ").trim();
+    cb(text || null, reason || lastError || (text ? null : "no-speech"));
+  };
+
   r.onresult=e=>{
-    for(let i=e.resultIndex;i<e.results.length;i++) parts.push(e.results[i][0].transcript);
-    clearTimeout(stopTimer); stopTimer=setTimeout(finish,1600);
-  };
-  r.onerror=e=>{
-    if(e.error==="not-allowed"||e.error==="service-not-allowed"){
-      log("mic_blocked",{error:e.error});
-    } else {
-      log("mic_error",{error:e.error||"unknown"});
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      if(e.results[i] && e.results[i][0] && e.results[i][0].transcript){
+        parts.push(e.results[i][0].transcript);
+      }
     }
-    finish();
+    clearTimeout(stopTimer);
+    stopTimer=setTimeout(()=>finish(),900);
   };
-  r.onend=()=>{ if(!done && parts.length) finish(); };
-  try{ r.start(); }catch(e){ log("mic_start_failed",{}); cb(null); return; }
-  S.mic={stop:finish};
+
+  r.onerror=e=>{
+    lastError=e.error||"unknown";
+    if(lastError==="not-allowed"||lastError==="service-not-allowed"){
+      log("mic_blocked",{error:lastError});
+    } else {
+      log("mic_error",{error:lastError});
+    }
+    finish(lastError);
+  };
+
+  r.onend=()=>{ if(!done) finish(); };
+
+  try{
+    r.start();
+  }catch(e){
+    log("mic_start_failed",{});
+    cb(null,"start-failed");
+    return;
+  }
+
+  S.mic={stop:()=>finish()};
+}
+
+function speechErrorMessage(reason){
+  if(reason==="not-allowed"||reason==="service-not-allowed"){
+    return "マイクが許可されていません。ブラウザの設定からマイクを「許可」にしてください。";
+  }
+  if(reason==="audio-capture"){
+    return "マイクを利用できませんでした。PC・スマホのマイク設定を確認してください。";
+  }
+  if(reason==="network"){
+    return "音声認識サービスに接続できませんでした。通信状態を確認して、もう一度お試しください。";
+  }
+  if(reason==="no-speech"){
+    return "音声を認識できませんでした。0点にはせず、もう一度やり直せます。少し大きめの声で発音してください。";
+  }
+  if(reason==="aborted"){
+    return "音声認識が中断されました。もう一度「話す」を押してください。";
+  }
+  return "音声を取得できませんでした。マイクの許可と通信状態を確認して、もう一度お試しください。";
 }
 
 /* ---------- prompter ---------- */
@@ -1025,10 +1074,11 @@ function attemptUI(from,to,kind,restorePrompter){
         <button class="btn small" id="stop">話し終わった</button></div>
         <p class="hint">画面上の部分を話してください。少し間があくと自動的に止まります。</p>`;
       let t=Date.now();
-      listen(S.words.slice(from,to).join(" "),txt=>{
+      listen(S.words.slice(from,to).join(" "),(txt,reason)=>{
         if(txt===null){
           attemptUI(from,to,kind,restorePrompter);
-          c.insertAdjacentHTML("beforeend",'<p class="hint" style="color:var(--miss)">マイクを使用できませんでした。マイクの許可を確認して、もう一度「話す」を押してください。</p>');
+          const msg=speechErrorMessage(reason);
+          c.insertAdjacentHTML("beforeend",`<p class="hint" style="color:var(--miss)">${msg}</p>`);
           return;
         }
         grade(txt,from,to,kind,"spoken",Date.now()-t);
@@ -1058,10 +1108,11 @@ function attemptUI(from,to,kind,restorePrompter){
       <button class="btn small" id="stop">話し終わった</button></div>
       <p class="hint">画面上の部分を話してください。少し間があくと自動的に止まります。</p>`;
     let t=Date.now();
-    listen(S.words.slice(from,to).join(" "),txt=>{
+    listen(S.words.slice(from,to).join(" "),(txt,reason)=>{
       if(txt===null){
         attemptUI(from,to,kind);
-        c.insertAdjacentHTML("beforeend",'<p class="hint" style="color:var(--miss)">マイクを使用できませんでした。マイクの許可を確認して、もう一度「話す」を押してください。</p>');
+        const msg=speechErrorMessage(reason);
+        c.insertAdjacentHTML("beforeend",`<p class="hint" style="color:var(--miss)">${msg}</p>`);
         return;
       }
       grade(txt,from,to,kind,"spoken",Date.now()-t);
