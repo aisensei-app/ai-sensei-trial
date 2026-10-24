@@ -1,9 +1,9 @@
 /* オフラインでも開けるようにするための仕組み（Service Worker）
    ネットにつながるときは常に最新のファイルを使い、
    つながらないときだけ保存しておいたファイルを使います。 */
-const CACHE = 'tanukun-v5';
+const CACHE = 'tanukun-v6';
 const FILES = [
-  './', './index.html', './style.css', './config.js', './lines.js', './app.js',
+  './', './index.html', './style.css', './config.js', './lines.js', './save.js', './app.js',
   './manifest.webmanifest', './images/icon-192.png', './images/icon-512.png',
   './images/normal.webp', './images/shy.webp', './images/happy.webp',
   './images/muni.webp', './images/ponpoko1.webp', './images/ponpoko2.webp',

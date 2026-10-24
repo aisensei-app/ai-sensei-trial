@@ -14,8 +14,19 @@
 <meta name="apple-mobile-web-app-title" content="タヌくん">
 <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="mode-home">
 <main id="app">
+
+  <!-- 上のバー：メニュー画面では「何日目」、遊ぶ画面では「もどる」とハート -->
+  <header id="topbar">
+    <button id="back" class="back" type="button">‹ もどる</button>
+    <div id="days" class="days">
+      <div class="days-main">なかよし <b id="days-total">1</b> 日目</div>
+      <div class="days-sub" id="days-streak"></div>
+    </div>
+    <div id="play-hearts" class="hearts" aria-label="なかよし度"></div>
+  </header>
+
   <div id="stage">
     <div id="bubble" class="bubble" aria-live="polite"></div>
     <div id="tanu-area">
@@ -33,12 +44,38 @@
       <div id="zones"></div>
     </div>
   </div>
+
+  <!-- メニュー画面のボタン -->
+  <nav id="menu">
+    <button id="btn-play" class="btn btn-main" type="button">
+      <span>遊ぶ</span>
+      <span id="menu-hearts" class="hearts" aria-label="なかよし度"></span>
+    </button>
+    <div class="btn-row">
+      <button id="btn-record" class="btn" type="button">実績</button>
+      <button id="btn-settings" class="btn" type="button">設定</button>
+    </div>
+  </nav>
+
   <p class="hint">頭・おなか・しっぽをタップしてね</p>
 </main>
 
-<!-- 読み込む順番が大事です：設定 → セリフ → 本体 -->
+<!-- 実績・設定のパネル -->
+<div id="sheet" class="sheet" hidden>
+  <div class="sheet-box" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+    <h2 id="sheet-title"></h2>
+    <div id="sheet-body"></div>
+    <button id="sheet-close" class="btn" type="button">とじる</button>
+  </div>
+</div>
+
+<!-- お知らせ（なかよし度アップ など） -->
+<div id="toast" class="toast" aria-live="polite"></div>
+
+<!-- 読み込む順番が大事です：設定 → セリフ → 記録 → 本体 -->
 <script src="config.js"></script>
 <script src="lines.js"></script>
+<script src="save.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

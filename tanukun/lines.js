@@ -3,14 +3,19 @@
    1行が1つのセリフです。行を増やすだけでセリフが増えます。
 
    when（出す条件）に書ける項目：
-     scene     … 場面   tap（タップ）/ melt（とろけ）/ angry（怒り）
+     scene     … 場面   home（メニュー画面のあいさつ）
+                        / tap（タップ）/ melt（とろけ）/ angry（怒り）
                         / hiddenTap（隠れ中にタップ）/ return（戻ってくる）
+     visit     … 来かた（home のときだけ）
+                        first（はじめて）/ new（今日はじめて・前日も来た）
+                        / comeback（2日以上あいて来た）/ again（今日2回目以降）
      place     … 場所   head（頭）/ belly（おなか）/ tail（しっぽ）
      mood      … 状態   normal（通常）/ shy（照れ）/ troubled（困り）
      timeOfDay … 時間帯 morning（5〜10時）/ day（11〜16時）
                         / evening（17〜19時）/ night（20〜4時）
-     friendship … なかよし度 例 { min: 10 }   ※将来用（今は常に 0）
-     streakDays … 連続日数   例 { min: 3 }    ※将来用（今は常に 0）
+     friendship … なかよし度（ハートの数 0〜5） 例 { min: 3 }
+     streakDays … 連続日数                     例 { min: 3 }
+     totalDays  … のべ日数（なかよし○日目）    例 { min: 7 }
 
    ・書かなかった項目は「どれでもOK」という意味です。
    ・複数を許すときは配列で： place: ['head', 'belly']
@@ -18,6 +23,21 @@
    ・weight を書くと出やすさを変えられます（省略時 1、2 なら2倍出やすい）
    ========================================================= */
 window.TANU_LINES = [
+
+  /* ---------- メニュー画面のあいさつ ---------- */
+  { text: 'はじめまして！タヌくんだよ', when: { scene: 'home', visit: 'first' } },
+  { text: 'おはよ〜',                   when: { scene: 'home', visit: 'new', timeOfDay: 'morning' } },
+  { text: 'こんにちは！',               when: { scene: 'home', visit: 'new', timeOfDay: 'day' } },
+  { text: 'こんばんは〜',               when: { scene: 'home', visit: 'new', timeOfDay: 'evening' } },
+  { text: '夜ふかし？いっしょにいるね', when: { scene: 'home', visit: 'new', timeOfDay: 'night' } },
+  { text: '今日も来てくれた〜！',       when: { scene: 'home', visit: 'new' } },
+  { text: '毎日来てくれて、うれしいな', when: { scene: 'home', visit: 'new', streakDays: { min: 3 } } },
+  { text: 'きみといると、おちつくなあ', when: { scene: 'home', visit: 'new', friendship: { min: 3 } } },
+  { text: 'おかえり〜！待ってたよ',     when: { scene: 'home', visit: 'comeback' }, face: 'shy' },
+  { text: 'ひさしぶり！会いたかった',   when: { scene: 'home', visit: 'comeback' }, face: 'shy' },
+  { text: 'また来てくれたの？',         when: { scene: 'home', visit: 'again' } },
+  { text: 'なにしてあそぶ？',           when: { scene: 'home', visit: 'again' } },
+  { text: 'ふぁ〜あ…',                  when: { scene: 'home', visit: 'again', timeOfDay: 'night' } },
 
   /* ---------- 頭 ---------- */
   { text: 'なでなで、うれしいな', when: { scene: 'tap', place: 'head', mood: 'normal' } },

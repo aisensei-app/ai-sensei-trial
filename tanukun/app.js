@@ -7,6 +7,7 @@
 
   const C = window.TANU_CONFIG;
   const LINES = window.TANU_LINES || [];
+  const SAVE = window.TanuSave;
   const $ = (id) => document.getElementById(id);
 
   const area   = $('tanu-area');
@@ -93,6 +94,7 @@
 
   area.addEventListener('pointerdown', (e) => {
     e.preventDefault();
+    if (mode === 'home') { enterPlay(); return; }
     if (state.phase === 'hidden') { onHiddenTap(); return; }
     const zone = e.target.closest('[data-place]');
     if (zone) onTap(zone.dataset.place);
@@ -134,6 +136,9 @@
     const mood = moodFromCount(tapCount(t));
     if (mood === 'angry') { getAngry(); return; }
     state.mood = mood;
+
+    SAVE.count('tap.' + place);
+    if (SAVE.addTapPoint()) heartUp();
 
     let scene = 'tap';
     if (place === 'head')  scene = petHead(t);
@@ -179,6 +184,7 @@
     state.meltTimer = setTimeout(endMelt, C.melt.holdSeconds * 1000);
     if (state.melting) return;
     state.melting = true;
+    SAVE.count('melt');
     melt.animate([
       { transform: 'scale(1, 1)' },
       { transform: 'scale(1.14, .9)' }
@@ -231,6 +237,7 @@
   async function getAngry() {
     state.phase = 'angry';
     state.faceSeq = null;
+    SAVE.count('angry');
     endMelt(true);
     refreshFace();
     say({ scene: 'angry' });
@@ -277,6 +284,7 @@
 
   function onHiddenTap() {
     rustle();
+    SAVE.count('hiddenTap');
     say({ scene: 'hiddenTap' });
   }
 
@@ -322,7 +330,9 @@
     mood:       (cond, ctx) => listHas(cond, ctx.mood),
     timeOfDay:  (cond, ctx) => listHas(cond, ctx.timeOfDay),
     friendship: (cond, ctx) => inRange(cond, ctx.friendship),
-    streakDays: (cond, ctx) => inRange(cond, ctx.streakDays)
+    streakDays: (cond, ctx) => inRange(cond, ctx.streakDays),
+    totalDays:  (cond, ctx) => inRange(cond, ctx.totalDays),
+    visit:      (cond, ctx) => listHas(cond, ctx.visit)
   };
 
   const warned = {};
@@ -345,13 +355,14 @@
     return 'night';
   }
 
-  // セリフ選びに使う情報（将来ここに「なかよし度」などの本当の値を入れる）
+  // セリフ選びに使う情報
   function getContext(base) {
     return Object.assign({
       mood: 'normal',
       timeOfDay: timeOfDay(new Date().getHours()),
-      friendship: 0,
-      streakDays: 0
+      friendship: SAVE.hearts(),          // ハートの数
+      streakDays: SAVE.data.streak,       // 連続日数
+      totalDays: SAVE.data.totalDays      // のべ日数
     }, base);
   }
 
@@ -379,6 +390,7 @@
     if (!line) return null;
     state.recentTexts.push(line.text);
     if (state.recentTexts.length > 3) state.recentTexts.shift();
+    SAVE.seeLine(line.text);
     if (line.face && C.images[line.face]) {
       state.faceOverride = line.face;
       state.faceOverrideUntil = now() + C.bubbleSeconds * 1000;
@@ -399,9 +411,133 @@
     bubbleTimer = setTimeout(() => bubble.classList.remove('on'), C.bubbleSeconds * 1000);
   }
 
+  /* =========================================================
+     メニュー画面（何日目・ハート）と 遊ぶ画面 の切り替え
+     ========================================================= */
+  let mode = 'home';   // home（メニュー）/ play（遊ぶ）
+
+  function setMode(m) {
+    mode = m;
+    document.body.classList.toggle('mode-home', m === 'home');
+    document.body.classList.toggle('mode-play', m === 'play');
+  }
+
+  function enterPlay() {
+    setMode('play');
+    showBubble('なにしてあそぶ？');
+  }
+
+  function backHome() {
+    if (state.phase !== 'active') return;   // 怒って隠れている間はもどれない
+    endMelt(true);
+    setMode('home');
+    renderStatus();
+    say({ scene: 'home', visit: 'again' });
+  }
+
+  $('btn-play').addEventListener('click', enterPlay);
+  $('back').addEventListener('click', backHome);
+
+  // ハートの表示（例：💖💖🤍🤍🤍）
+  function heartsText() {
+    const n = SAVE.hearts();
+    const max = C.friendship.heartAt.length;
+    return '💖'.repeat(n) + '🤍'.repeat(max - n);
+  }
+
+  function renderStatus() {
+    const d = SAVE.data;
+    $('days-total').textContent = Math.max(1, d.totalDays);
+    $('days-streak').textContent = d.streak >= 2 ? 'れんぞく ' + d.streak + ' 日' : '';
+    $('menu-hearts').textContent = heartsText();
+    $('play-hearts').textContent = heartsText();
+  }
+
+  function heartUp() {
+    renderStatus();
+    toast('💖 なかよし度がアップした！');
+    const h = $('play-hearts');
+    h.classList.remove('pop'); void h.offsetWidth; h.classList.add('pop');
+  }
+
+  let toastTimer = null;
+  function toast(text) {
+    const el = $('toast');
+    el.textContent = text;
+    el.classList.add('on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('on'), 2400);
+  }
+
+  // その日はじめてなら記録して、あいさつ
+  function checkIn() {
+    const r = SAVE.checkIn();
+    renderStatus();
+    if (r.visit === 'again') return false;
+    if (mode === 'home') say({ scene: 'home', visit: r.visit });
+    if (r.heartUp) setTimeout(heartUp, 900);
+    return true;
+  }
+
+  // 開いたまま日付が変わったときのために、画面に戻ってきたら確認
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') checkIn();
+  });
+
+  /* =========================================================
+     実績・設定のパネル
+     ========================================================= */
+  const sheet = $('sheet');
+  function openSheet(title, html) {
+    $('sheet-title').textContent = title;
+    $('sheet-body').innerHTML = html;
+    sheet.hidden = false;
+  }
+  function closeSheet() { sheet.hidden = true; }
+  $('sheet-close').addEventListener('click', closeSheet);
+  sheet.addEventListener('click', (e) => { if (e.target === sheet) closeSheet(); });
+
+  // 実績（いまは記録の一覧。バッジは次の段階で）
+  $('btn-record').addEventListener('click', () => {
+    const d = SAVE.data, s = d.stats;
+    const total = new Set(LINES.map((l) => l.text)).size;
+    const rows = [
+      ['なかよし', d.totalDays + ' 日'],
+      ['れんぞく（いま／最高）', d.streak + ' 日 ／ ' + d.bestStreak + ' 日'],
+      ['頭をなでた', s.tap.head + ' 回'],
+      ['おなかをさわった', s.tap.belly + ' 回'],
+      ['しっぽをさわった', s.tap.tail + ' 回'],
+      ['とろけさせた', s.melt + ' 回'],
+      ['怒らせちゃった', s.angry + ' 回'],
+      ['セリフ図鑑', d.seenLines.length + ' ／ ' + total]
+    ];
+    openSheet('実績',
+      '<table class="rec">' + rows.map((r) => '<tr><th>' + r[0] + '</th><td>' + r[1] + '</td></tr>').join('') + '</table>' +
+      '<p class="note">バッジ（実績のごほうび）は準備中だよ</p>');
+  });
+
+  // 設定
+  $('btn-settings').addEventListener('click', () => {
+    openSheet('設定',
+      '<p class="note">記録はこのスマホのブラウザの中だけに保存されます。' +
+      '<b>ホーム画面に追加</b>して使うと、記録が消えにくくなります。</p>' +
+      '<p class="note">iPhone：共有ボタン →「ホーム画面に追加」<br>Android：右上のメニュー →「ホーム画面に追加」</p>' +
+      '<button id="btn-reset" class="btn btn-danger" type="button">記録をリセット</button>');
+    const btn = $('btn-reset');
+    btn.addEventListener('click', () => {
+      // 2回押しで確定（うっかり消さないように）
+      if (!btn.dataset.sure) { btn.dataset.sure = '1'; btn.textContent = '本当に消す？（もう一度押す）'; return; }
+      SAVE.reset();
+      closeSheet();
+      checkIn();
+    });
+  });
+
   /* ---------- 開始 ---------- */
+  setMode('home');
   refreshFace();
-  setTimeout(() => showBubble('こんにちは！'), 400);
+  renderStatus();
+  setTimeout(() => { if (!checkIn()) say({ scene: 'home', visit: 'again' }); }, 400);
 
   /* ---------- ホーム画面に追加して使うための準備（PWA） ----------
      ファイルを直接開いたとき（file://）は動かないので、そのときは何もしません */
