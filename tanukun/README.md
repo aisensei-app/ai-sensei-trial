@@ -28,7 +28,7 @@
 |---|---|
 | 通常 | normal（通常） |
 | 照れ | shy（照れ顔） |
-| 困り | troubled（困り顔） |
+| 困り | troubled（困り顔・斜め向き） |
 | とろけ | melt（とろけ顔） |
 | おなかタップ | ponpoko1 ⇔ ponpoko2 を交互に（照れ中は muni） |
 | 怒り | angry（怒り顔） |
