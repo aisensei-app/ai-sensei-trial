@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>タヌくん</title>
+<meta name="theme-color" content="#FFF4E0">
+<!-- ホーム画面に追加したときの設定（PWA の準備） -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="images/icon-192.png">
+<link rel="apple-touch-icon" href="images/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="タヌくん">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main id="app">
+  <div id="stage">
+    <div id="bubble" class="bubble" aria-live="polite"></div>
+    <div id="tanu-area">
+      <div class="ground"></div>
+      <!-- 動きごとに入れ物を分けて、動きが重なっても崩れないようにしています -->
+      <div id="tanu-move">
+        <div id="tanu-melt">
+          <div id="tanu-body">
+            <div id="tanu-breath">
+              <img id="tanu-img" alt="タヌくん" draggable="false">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="zones"></div>
+    </div>
+  </div>
+  <p class="hint">頭・おなか・しっぽをタップしてね</p>
+</main>
+
+<!-- 読み込む順番が大事です：設定 → セリフ → 本体 -->
+<script src="config.js"></script>
+<script src="lines.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
