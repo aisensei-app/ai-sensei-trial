@@ -10,7 +10,7 @@ window.TANU_CONFIG = {
   images: {
     normal:   'images/normal.webp',    // 通常
     shy:      'images/shy.webp',       // 照れ
-    troubled: 'images/muni.webp',      // 困り（いまは「お腹むにむに」で代用）
+    troubled: 'images/troubled.webp',  // 困り
     angry:    'images/angry.webp',     // 怒り
     melt:     'images/happy.webp',     // とろけ（いまは「にっこり」で代用）
     bush:     'images/bush.webp',      // 茂み
@@ -27,8 +27,7 @@ window.TANU_CONFIG = {
      ぽんぽこ①②を交互に出して「ぽんぽこ」たたいているように見せます。 */
   bellyFaces: {
     normal:   ['ponpoko1', 'ponpoko2', 'ponpoko1', 'ponpoko2'],
-    shy:      ['muni', 'muni', 'muni', 'muni'],   // 同じ絵を並べると長く表示されます
-    troubled: ['muni', 'muni', 'muni', 'muni']
+    shy:      ['muni', 'muni', 'muni', 'muni']   // 同じ絵を並べると長く表示されます
   },
   bellyFaceMs: 220,   // 1枚を表示する時間（ミリ秒＝1000分の1秒）
 
