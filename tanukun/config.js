@@ -11,7 +11,7 @@ window.TANU_CONFIG = {
     normal:   'images/normal.webp',    // 通常
     shy:      'images/shy.webp',       // 照れ
     troubled: 'images/muni.webp',      // 困り（いまは「お腹むにむに」で代用）
-    angry:    'images/normal.webp',    // 怒り（専用の絵がないので、通常の絵を赤くして代用）
+    angry:    'images/angry.webp',     // 怒り
     melt:     'images/happy.webp',     // とろけ（いまは「にっこり」で代用）
     bush:     'images/bush.webp',      // 茂み（仮の絵）
     muni:     'images/muni.webp',      // お腹むにむに
@@ -21,7 +21,7 @@ window.TANU_CONFIG = {
 
   /* 怒りの絵がまだないあいだ、絵を赤っぽくして「💢」を出す。
      専用の angry 画像ができたら false に。 */
-  angryTint: true,
+  angryTint: false,
 
   /* おなかをタップしたときに、順番に切り替える絵（気分ごと）。
      ぽんぽこ①②を交互に出して「ぽんぽこ」たたいているように見せます。 */
