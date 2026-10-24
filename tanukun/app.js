@@ -28,6 +28,7 @@
     lastHeadTap: 0,
     meltTimer: null,
     face: null,           // いま表示している絵の名前
+    faceSeq: null,        // 順番に切り替える絵 { frames, start }
     faceOverride: null,   // セリフで一時的に指定された絵
     faceOverrideUntil: 0,
     recentTexts: []       // 同じセリフが続かないように覚えておく
@@ -49,7 +50,10 @@
 
   function setFace(name) {
     if (state.face === name) return;
+    area.classList.remove('face-' + state.face);
     state.face = name;
+    area.classList.add('face-' + name);
+    area.classList.toggle('tint-angry', name === 'angry' && !!C.angryTint);
     img.src = C.images[name] || C.images.normal;
   }
 
@@ -57,6 +61,11 @@
   function currentFace() {
     if (state.phase === 'angry')  return 'angry';
     if (state.phase === 'hidden') return 'bush';
+    if (state.faceSeq) {
+      const i = Math.floor((now() - state.faceSeq.start) / C.bellyFaceMs);
+      if (i < state.faceSeq.frames.length) return state.faceSeq.frames[i];
+      state.faceSeq = null;
+    }
     if (state.faceOverride && now() < state.faceOverrideUntil) return state.faceOverride;
     if (state.melting) return 'melt';
     return state.mood;   // normal / shy / troubled
@@ -132,7 +141,20 @@
     if (place === 'tail')  wiggleTail();
 
     say({ scene: scene, place: place, mood: mood });
+    if (place === 'belly') playFaces(C.bellyFaces && C.bellyFaces[mood]);
     refreshFace();
+  }
+
+  // 絵を順番に切り替える（ぽんぽこ①→②→…）
+  let seqTimer = null;
+  function playFaces(frames) {
+    clearInterval(seqTimer);
+    if (!frames || !frames.length) { state.faceSeq = null; return; }
+    state.faceSeq = { frames: frames, start: now() };
+    seqTimer = setInterval(() => {
+      refreshFace();
+      if (!state.faceSeq) clearInterval(seqTimer);
+    }, Math.max(30, C.bellyFaceMs / 2));
   }
 
   /* ---- 頭：続けてなでると、とろける ---- */
@@ -208,6 +230,7 @@
      ========================================================= */
   async function getAngry() {
     state.phase = 'angry';
+    state.faceSeq = null;
     endMelt(true);
     refreshFace();
     say({ scene: 'angry' });

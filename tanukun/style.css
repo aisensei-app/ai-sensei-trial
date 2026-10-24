@@ -34,7 +34,7 @@ html, body {
 /* ---- タヌくん ---- */
 #tanu-area {
   position: relative;
-  width: min(84vw, 54vh * 0.8, 440px);
+  width: min(90vw, 62vh * 0.8, 460px);
   aspect-ratio: 4 / 5;
 }
 .ground {
@@ -60,6 +60,20 @@ html, body {
   object-fit: contain;
   pointer-events: none;
 }
+
+/* ---- 怒りの絵がないあいだの代用（config.js の angryTint） ---- */
+#tanu-img { transition: filter .25s; }
+.tint-angry #tanu-img {
+  filter: sepia(.3) saturate(1.7) hue-rotate(-18deg);
+}
+.tint-angry #tanu-breath::after {
+  content: "💢";
+  position: absolute;
+  left: 62%; top: 1%;
+  font-size: clamp(30px, 10vw, 48px);
+  animation: pop .35s cubic-bezier(.3, 1.6, .5, 1);
+}
+@keyframes pop { from { transform: scale(0); } to { transform: scale(1); } }
 
 /* ---- タップ範囲 ---- */
 #zones { position: absolute; inset: 0; }

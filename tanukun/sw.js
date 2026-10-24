@@ -1,12 +1,13 @@
 /* オフラインでも開けるようにするための仕組み（Service Worker）
    ネットにつながるときは常に最新のファイルを使い、
    つながらないときだけ保存しておいたファイルを使います。 */
-const CACHE = 'tanukun-v1';
+const CACHE = 'tanukun-v2';
 const FILES = [
   './', './index.html', './style.css', './config.js', './lines.js', './app.js',
   './manifest.webmanifest', './images/icon-192.png', './images/icon-512.png',
-  './images/normal.svg', './images/shy.svg', './images/angry.svg',
-  './images/melt.svg', './images/bush.svg'
+  './images/normal.webp', './images/shy.webp', './images/happy.webp',
+  './images/muni.webp', './images/ponpoko1.webp', './images/ponpoko2.webp',
+  './images/bush.webp'
 ];
 
 self.addEventListener('install', (e) => {

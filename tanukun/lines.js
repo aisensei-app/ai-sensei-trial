@@ -30,12 +30,15 @@ window.TANU_LINES = [
 
   /* ---------- おなか ---------- */
   { text: 'ぽよん！',             when: { scene: 'tap', place: 'belly', mood: 'normal' } },
+  { text: 'ぽんぽこ♪',            when: { scene: 'tap', place: 'belly', mood: 'normal' }, weight: 2 },
+  { text: 'いい音するでしょ〜',   when: { scene: 'tap', place: 'belly', mood: 'normal' } },
   { text: 'おなか、やわらかいでしょ', when: { scene: 'tap', place: 'belly', mood: 'normal' } },
   { text: 'くすぐったい〜',       when: { scene: 'tap', place: 'belly', mood: 'normal' } },
   { text: 'さっき、おやつ食べたんだ', when: { scene: 'tap', place: 'belly', mood: 'normal', timeOfDay: 'day' } },
   { text: 'おなか、すいたなあ',   when: { scene: 'tap', place: 'belly', mood: 'normal', timeOfDay: ['morning', 'evening'] } },
   { text: 'あんまり見ないで…',    when: { scene: 'tap', place: 'belly', mood: 'shy' } },
   { text: 'ぷにぷにしないで〜',   when: { scene: 'tap', place: 'belly', mood: 'shy' } },
+  { text: 'むにむにされると…照れる',   when: { scene: 'tap', place: 'belly', mood: 'shy' } },
   { text: 'もう〜！',             when: { scene: 'tap', place: 'belly', mood: 'troubled' } },
   { text: 'おなかは大事なの！',   when: { scene: 'tap', place: 'belly', mood: 'troubled' } },
 

@@ -8,22 +8,38 @@ window.TANU_CONFIG = {
      絵を差し替えるときは、images フォルダにファイルを置いて
      ここのファイル名を書き換えるだけでOKです。（例：'images/normal.png'） */
   images: {
-    normal:   'images/normal.svg',  // 通常
-    shy:      'images/shy.svg',     // 照れ
-    troubled: 'images/shy.svg',     // 困り（専用の絵ができたら差し替え）
-    angry:    'images/angry.svg',   // 怒り
-    melt:     'images/melt.svg',    // とろけ
-    bush:     'images/bush.svg'     // 茂み（しっぽがはみ出た絵）
+    normal:   'images/normal.webp',    // 通常
+    shy:      'images/shy.webp',       // 照れ
+    troubled: 'images/muni.webp',      // 困り（いまは「お腹むにむに」で代用）
+    angry:    'images/normal.webp',    // 怒り（専用の絵がないので、通常の絵を赤くして代用）
+    melt:     'images/happy.webp',     // とろけ（いまは「にっこり」で代用）
+    bush:     'images/bush.webp',      // 茂み（仮の絵）
+    muni:     'images/muni.webp',      // お腹むにむに
+    ponpoko1: 'images/ponpoko1.webp',  // お腹ぽんぽこ①
+    ponpoko2: 'images/ponpoko2.webp'   // お腹ぽんぽこ②
   },
+
+  /* 怒りの絵がまだないあいだ、絵を赤っぽくして「💢」を出す。
+     専用の angry 画像ができたら false に。 */
+  angryTint: true,
+
+  /* おなかをタップしたときに、順番に切り替える絵（気分ごと）。
+     ぽんぽこ①②を交互に出して「ぽんぽこ」たたいているように見せます。 */
+  bellyFaces: {
+    normal:   ['ponpoko1', 'ponpoko2', 'ponpoko1', 'ponpoko2'],
+    shy:      ['muni', 'muni', 'muni', 'muni'],   // 同じ絵を並べると長く表示されます
+    troubled: ['muni', 'muni', 'muni', 'muni']
+  },
+  bellyFaceMs: 220,   // 1枚を表示する時間（ミリ秒＝1000分の1秒）
 
   /* ---- タップする場所の範囲 ----
      絵の左上を 0、右下を 100 とした「％」で指定します。
      本番の絵に差し替えたら、ここを合わせて調整してください。
      （showZones を true にすると、範囲が画面に表示されます） */
   zones: {
-    head:  { left: 10, top: 0,  width: 70, height: 46 },
-    belly: { left: 14, top: 46, width: 58, height: 54 },
-    tail:  { left: 72, top: 38, width: 28, height: 52 }
+    head:  { left: 20, top: 0,  width: 50, height: 22 },
+    belly: { left: 10, top: 22, width: 50, height: 42 },
+    tail:  { left: 60, top: 50, width: 40, height: 40 }
   },
   showZones: false,   // URL の最後に ?zones を付けても表示されます
 
