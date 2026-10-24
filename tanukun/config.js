@@ -12,7 +12,7 @@ window.TANU_CONFIG = {
     shy:      'images/shy.webp',       // 照れ
     troubled: 'images/troubled.webp',  // 困り
     angry:    'images/angry.webp',     // 怒り
-    melt:     'images/happy.webp',     // とろけ（いまは「にっこり」で代用）
+    melt:     'images/melt.webp',      // とろけ
     bush:     'images/bush.webp',      // 茂み
     muni:     'images/muni.webp',      // お腹むにむに
     ponpoko1: 'images/ponpoko1.webp',  // お腹ぽんぽこ①
