@@ -1,7 +1,8 @@
 """タヌくん お試し版をつくる
 
 使い方（tanukun フォルダで）:
-    python3 tools/build_demo.py --base-url https://ユーザー名.github.io/リポジトリ名/
+    python3 tools/build_demo.py
+    （公開先を変えるときは --base-url https://〜/ を付ける）
 
 つくられるもの（demo-dist フォルダ）:
     index.html など      … お試し版本体（頭なで・おなかぽんぽこ・診断）
@@ -9,7 +10,7 @@
     og/<結果>.png        … 診断結果ごとのカードの絵
     r/<結果>.html        … 診断結果をポストしたときのページ（開くとお試し版へ移動）
 
-demo-dist の中身を、そのまま公開用の場所（GitHub Pages など）に置けば完成です。
+demo-dist の中身を zip にして、Cloudflare Pages（tanukun-demo）にアップロードすれば完成です。
 カードの絵の文字には、日本語フォントが必要です（--font で指定。なければ自動で探します）。
 """
 import argparse
@@ -176,7 +177,7 @@ def build(base, out, font_path):
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser(description='タヌくん お試し版をつくる')
-    ap.add_argument('--base-url', default='https://example.github.io/tanukun-demo/',
+    ap.add_argument('--base-url', default='https://tanukun-demo.pages.dev/',
                     help='公開する場所の URL（最後は / ）')
     ap.add_argument('--out', default=str(ROOT / 'demo-dist'), help='出力先フォルダ')
     ap.add_argument('--font', default=None, help='カードの絵に使う日本語フォント')

@@ -97,12 +97,23 @@
 - 結果画面の下に「🔔 @アカウント をフォローして待つ」ボタン（`demo.js` の `followId`）。
 - 結果の種類・文章・ポストの文は `demo.js` で変えられます。
 
-### つくり方
-```
-python3 tools/build_demo.py --base-url https://ユーザー名.github.io/リポジトリ名/
-```
-`demo-dist` フォルダができます。中身をそのまま公開用の場所（GitHub Pages など）に置けば完成です。
+### 公開先
+- **https://tanukun-demo.pages.dev/** （Cloudflare Pages。GitHub とはつながっていません）
+- 大学や個人が分かる情報が出ないよう、GitHub Pages ではなく Cloudflare Pages の「ファイルを直接アップロード」で公開しています。
+
+### 更新のしかた
+1. tanukun フォルダで次を実行すると、`demo-dist` フォルダができます
+   ```
+   python3 tools/build_demo.py
+   ```
+   （カードの絵の文字に日本語フォントが必要です。`--font` で指定。なければ自動で探します）
+2. `demo-dist` の中身を zip にまとめます（zip の中にフォルダを作らず、index.html がいちばん上に来るように）
+3. Cloudflare の画面で、次のリンクからプロジェクトを開きます（一覧に出ないことがあるため）
+   https://dash.cloudflare.com/?to=/:account/pages/view/tanukun-demo
+4. 「Create deployment」→ **Production** のまま zip をアップロード →「Save and deploy」
+5. スマホで開き直して確認（古い版が出たら再読み込み）
+
+### 中身
 - `og/` … X に URL を貼ったときに出るカードの絵（入り口用と、診断結果ごと）
 - `r/` … 診断結果をポストしたときのページ（カードの絵が結果に合わせて変わる。開くとお試し版へ移動）
-- カードの絵の文字には日本語フォントが必要です（`--font` で指定。なければ自動で探します）。
-- `--base-url` は公開する場所の URL です。カードの絵の場所に使うので、正しい URL を入れてください。
+- ※ ポストの文のハッシュタグは本文に直接入れています（X アプリが hashtags= の指定を消すことがあるため）
