@@ -239,6 +239,22 @@ html, body {
   pointer-events: none;
 }
 
+/* ---- おなかだけ揺らす重ね絵 ----
+   位置と大きさは config.js の bellyJiggle から app.js が --bx などに入れます */
+#belly-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transform-origin: var(--bx, 37%) var(--by, 46%);
+  -webkit-mask-image: radial-gradient(ellipse var(--brx, 30%) var(--bry, 19%) at var(--bx, 37%) var(--by, 46%), #000 70%, transparent 100%);
+          mask-image: radial-gradient(ellipse var(--brx, 30%) var(--bry, 19%) at var(--bx, 37%) var(--by, 46%), #000 70%, transparent 100%);
+}
+#belly-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
 /* ---- 怒りの絵がないあいだの代用（config.js の angryTint） ---- */
 #tanu-img { transition: filter .25s; }
 .tint-angry #tanu-img {

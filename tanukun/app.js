@@ -15,6 +15,8 @@
   const melt   = $('tanu-melt');    // とろけて横に広がる
   const body   = $('tanu-body');    // ぷるん・よじり・震え
   const img    = $('tanu-img');
+  const bellyLayer = $('belly-layer');
+  const bellyImg   = $('belly-img');
   const bubble = $('bubble');
   const zonesEl = $('zones');
 
@@ -56,7 +58,16 @@
     area.classList.add('face-' + name);
     area.classList.toggle('tint-angry', name === 'angry' && !!C.angryTint);
     img.src = C.images[name] || C.images.normal;
+    bellyImg.src = img.src;
+    // 茂みのときは重ね絵を使わない
+    bellyLayer.style.display = name === 'bush' ? 'none' : '';
   }
+
+  // おなかの重ね絵の位置（config.js の bellyJiggle）
+  const BJ = C.bellyJiggle || { x: 37, y: 47, rx: 24, ry: 16, strength: 1 };
+  [['--bx', BJ.x], ['--by', BJ.y], ['--brx', BJ.rx], ['--bry', BJ.ry]].forEach((v) => {
+    area.style.setProperty(v[0], v[1] + '%');
+  });
 
   // いまの状態から、出すべき絵を決める（上にあるものほど優先）
   function currentFace() {
@@ -174,7 +185,7 @@
     // 1回だけのときは、軽くうなずく
     body.animate([
       { transform: 'translateY(0)' },
-      { transform: 'translateY(2%) scale(1.02, .98)' },
+      { transform: 'translateY(.8%) scale(1.01, .99)' },
       { transform: 'translateY(0)' }
     ], { duration: 320, easing: 'ease-out' });
     return 'tap';
@@ -207,16 +218,25 @@
     refreshFace();
   }
 
-  /* ---- おなか：ぷるん（ぽっちゃりした重さ。ゆっくり戻る） ---- */
+  /* ---- おなか：おなかだけ「ぽよん」＋体全体はほんの少しだけ ----
+     重ね絵は 1 より小さくすると下の絵のふちが透けるので、ふくらむ方向だけで揺らします */
   function jiggleBelly() {
+    const k = BJ.strength == null ? 1 : BJ.strength;
+    const s = (x, y) => 'scale(' + (1 + x * k) + ', ' + (1 + y * k) + ')';
+    bellyLayer.animate([
+      { transform: s(0, 0) },
+      { transform: s(.045, .015), offset: .14 },
+      { transform: s(.01, .04), offset: .34 },
+      { transform: s(.028, .008), offset: .54 },
+      { transform: s(.004, .015), offset: .74 },
+      { transform: s(0, 0) }
+    ], { duration: 900, easing: 'cubic-bezier(.25,.6,.4,1)' });
     body.animate([
       { transform: 'scale(1, 1)' },
-      { transform: 'scale(1.10, .90)', offset: .12 },
-      { transform: 'scale(.95, 1.06)', offset: .34 },
-      { transform: 'scale(1.04, .97)', offset: .55 },
-      { transform: 'scale(.99, 1.01)', offset: .76 },
+      { transform: 'scale(1.015, .985)', offset: .15 },
+      { transform: 'scale(.995, 1.005)', offset: .45 },
       { transform: 'scale(1, 1)' }
-    ], { duration: 1000, easing: 'cubic-bezier(.25,.6,.4,1)' });
+    ], { duration: 700, easing: 'ease-out' });
     if (C.vibrate && navigator.vibrate) navigator.vibrate(15);
   }
 
