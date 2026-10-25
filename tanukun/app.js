@@ -94,6 +94,7 @@
 
   area.addEventListener('pointerdown', (e) => {
     e.preventDefault();
+    if (mode === 'name') return;
     if (mode === 'home') { enterPlay(); return; }
     if (state.phase === 'hidden') { onHiddenTap(); return; }
     const zone = e.target.closest('[data-place]');
@@ -397,30 +398,59 @@
     } else {
       state.faceOverride = null;
     }
-    showBubble(line.text);
+    showBubble(withName(line.text));
     return line;
   }
 
+  /* セリフの {name} を呼び名に置きかえる。
+     名前がないときは「{name}、」「、{name}」ごと消す（例：「{name}、おかえり」→「おかえり」） */
+  function withName(text) {
+    const name = SAVE.data.name;
+    if (name) return text.split('{name}').join(name);
+    return text.replace(/[、,]?\{name\}[、,]?/g, '');
+  }
+
   let bubbleTimer = null;
-  function showBubble(text) {
+  function showBubble(text, keep) {
     bubble.textContent = text;
     bubble.classList.remove('on');
     void bubble.offsetWidth;          // アニメーションを最初からやり直すためのおまじない
     bubble.classList.add('on');
     clearTimeout(bubbleTimer);
-    bubbleTimer = setTimeout(() => bubble.classList.remove('on'), C.bubbleSeconds * 1000);
+    if (!keep) bubbleTimer = setTimeout(() => bubble.classList.remove('on'), C.bubbleSeconds * 1000);
   }
 
   /* =========================================================
      メニュー画面（何日目・ハート）と 遊ぶ画面 の切り替え
      ========================================================= */
-  let mode = 'home';   // home（メニュー）/ play（遊ぶ）
+  let mode = 'home';   // home（メニュー）/ play（遊ぶ）/ name（呼び名を聞く）
 
   function setMode(m) {
     mode = m;
-    document.body.classList.toggle('mode-home', m === 'home');
-    document.body.classList.toggle('mode-play', m === 'play');
+    ['home', 'play', 'name'].forEach((x) => document.body.classList.toggle('mode-' + x, m === x));
   }
+
+  /* ---- はじめての人に呼び名を聞く ---- */
+  let pendingHeartUp = false;
+  function askName() {
+    setMode('name');
+    $('name-input').value = '';
+    showBubble('はじめまして！タヌくんだよ\nなんて呼んだらいい？', true);
+  }
+
+  function finishName(name) {
+    SAVE.setName(name);
+    $('name-input').blur();
+    setMode('home');
+    say({ scene: 'named' });
+    if (pendingHeartUp) { pendingHeartUp = false; setTimeout(heartUp, 900); }
+  }
+
+  $('name-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    finishName($('name-input').value);
+  });
+  $('name-skip').addEventListener('click', () => finishName(''));
 
   function enterPlay() {
     setMode('play');
@@ -473,9 +503,15 @@
   function checkIn() {
     const r = SAVE.checkIn();
     renderStatus();
+    if (!SAVE.data.nameAsked) {
+      // 呼び名を聞き終わってから「なかよし度アップ」を出す
+      pendingHeartUp = pendingHeartUp || !!r.heartUp;
+      if (mode !== 'name') askName();
+      return true;
+    }
+    if (r.heartUp) setTimeout(heartUp, 900);
     if (r.visit === 'again') return false;
     if (mode === 'home') say({ scene: 'home', visit: r.visit });
-    if (r.heartUp) setTimeout(heartUp, 900);
     return true;
   }
 
@@ -519,10 +555,22 @@
   // 設定
   $('btn-settings').addEventListener('click', () => {
     openSheet('設定',
+      '<h3>呼び名</h3>' +
+      '<div class="set-row"><input id="set-name" class="name-input" type="text" maxlength="' + SAVE.NAME_MAX + '" placeholder="名前なし">' +
+      '<button id="set-name-ok" class="btn" type="button">変更</button></div>' +
+      '<p class="note small">空にすると、名前なしで話しかけます</p>' +
+      '<h3>記録</h3>' +
       '<p class="note">記録はこのスマホのブラウザの中だけに保存されます。' +
       '<b>ホーム画面に追加</b>して使うと、記録が消えにくくなります。</p>' +
       '<p class="note">iPhone：共有ボタン →「ホーム画面に追加」<br>Android：右上のメニュー →「ホーム画面に追加」</p>' +
       '<button id="btn-reset" class="btn btn-danger" type="button">記録をリセット</button>');
+    // 名前は innerHTML に直接入れず、あとから value に入れる（記号が入っても安全なように）
+    $('set-name').value = SAVE.data.name;
+    $('set-name-ok').addEventListener('click', () => {
+      SAVE.setName($('set-name').value);
+      closeSheet();
+      say({ scene: 'named' });
+    });
     const btn = $('btn-reset');
     btn.addEventListener('click', () => {
       // 2回押しで確定（うっかり消さないように）

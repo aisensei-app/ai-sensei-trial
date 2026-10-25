@@ -3,7 +3,7 @@
    1行が1つのセリフです。行を増やすだけでセリフが増えます。
 
    when（出す条件）に書ける項目：
-     scene     … 場面   home（メニュー画面のあいさつ）
+     scene     … 場面   home（メニュー画面のあいさつ）/ named（呼び名を決めたとき）
                         / tap（タップ）/ melt（とろけ）/ angry（怒り）
                         / hiddenTap（隠れ中にタップ）/ return（戻ってくる）
      visit     … 来かた（home のときだけ）
@@ -19,12 +19,18 @@
 
    ・書かなかった項目は「どれでもOK」という意味です。
    ・複数を許すときは配列で： place: ['head', 'belly']
+   ・{name} と書くと、そこが呼び名になります（例：'{name}、おかえり〜'）
+     名前なしのときは「{name}、」ごと消えて「おかえり〜」になります。
    ・face を書くと、そのセリフのときだけ絵を変えられます（例：face: 'shy'）
    ・weight を書くと出やすさを変えられます（省略時 1、2 なら2倍出やすい）
    ========================================================= */
 window.TANU_LINES = [
 
-  /* ---------- メニュー画面のあいさつ ---------- */
+  /* ---------- 呼び名を決めたとき ---------- */
+  { text: '{name}、よろしくね！',       when: { scene: 'named' }, face: 'shy' },
+
+  /* ---------- メニュー画面のあいさつ ----------
+     名前入りのセリフは、なかよし度（ハート）が上がるほど出やすくなります */
   { text: 'はじめまして！タヌくんだよ', when: { scene: 'home', visit: 'first' } },
   { text: 'おはよ〜',                   when: { scene: 'home', visit: 'new', timeOfDay: 'morning' } },
   { text: 'こんにちは！',               when: { scene: 'home', visit: 'new', timeOfDay: 'day' } },
@@ -35,7 +41,12 @@ window.TANU_LINES = [
   { text: 'きみといると、おちつくなあ', when: { scene: 'home', visit: 'new', friendship: { min: 3 } } },
   { text: 'おかえり〜！待ってたよ',     when: { scene: 'home', visit: 'comeback' }, face: 'shy' },
   { text: 'ひさしぶり！会いたかった',   when: { scene: 'home', visit: 'comeback' }, face: 'shy' },
+  { text: '{name}、今日も来てくれた〜！', when: { scene: 'home', visit: 'new' } },
+  { text: '{name}、まってたよ！',       when: { scene: 'home', visit: 'new', friendship: { min: 2 } }, weight: 2 },
+  { text: '{name}に会えると、元気でるなあ', when: { scene: 'home', visit: 'new', friendship: { min: 4 } }, weight: 3 },
+  { text: '{name}、おかえり〜！待ってたよ', when: { scene: 'home', visit: 'comeback', friendship: { min: 2 } }, face: 'shy', weight: 2 },
   { text: 'また来てくれたの？',         when: { scene: 'home', visit: 'again' } },
+  { text: 'おかえり、{name}！',         when: { scene: 'home', visit: 'again', friendship: { min: 2 } }, weight: 2 },
   { text: 'なにしてあそぶ？',           when: { scene: 'home', visit: 'again' } },
   { text: 'ふぁ〜あ…',                  when: { scene: 'home', visit: 'again', timeOfDay: 'night' } },
 
@@ -43,6 +54,7 @@ window.TANU_LINES = [
   { text: 'なでなで、うれしいな', when: { scene: 'tap', place: 'head', mood: 'normal' } },
   { text: 'えへへ',               when: { scene: 'tap', place: 'head', mood: 'normal' } },
   { text: 'あたま、ぽかぽか〜',   when: { scene: 'tap', place: 'head', mood: 'normal' } },
+  { text: '{name}になでられるの、すき', when: { scene: 'tap', place: 'head', mood: 'normal', friendship: { min: 3 } }, weight: 2 },
   { text: 'て、照れるなあ…',      when: { scene: 'tap', place: 'head', mood: 'shy' } },
   { text: 'そんなになでたら…',    when: { scene: 'tap', place: 'head', mood: 'shy' } },
   { text: 'もう〜！',             when: { scene: 'tap', place: 'head', mood: 'troubled' } },
@@ -54,6 +66,7 @@ window.TANU_LINES = [
   { text: 'いい音するでしょ〜',   when: { scene: 'tap', place: 'belly', mood: 'normal' } },
   { text: 'おなか、やわらかいでしょ', when: { scene: 'tap', place: 'belly', mood: 'normal' } },
   { text: 'くすぐったい〜',       when: { scene: 'tap', place: 'belly', mood: 'normal' } },
+  { text: '{name}も、ぽんぽこしてみる？', when: { scene: 'tap', place: 'belly', mood: 'normal', friendship: { min: 3 } }, weight: 2 },
   { text: 'さっき、おやつ食べたんだ', when: { scene: 'tap', place: 'belly', mood: 'normal', timeOfDay: 'day' } },
   { text: 'おなか、すいたなあ',   when: { scene: 'tap', place: 'belly', mood: 'normal', timeOfDay: ['morning', 'evening'] } },
   { text: 'あんまり見ないで…',    when: { scene: 'tap', place: 'belly', mood: 'shy' } },
@@ -65,6 +78,7 @@ window.TANU_LINES = [
   /* ---------- しっぽ ---------- */
   { text: 'しっぽ、ふわふわでしょ', when: { scene: 'tap', place: 'tail', mood: 'normal' } },
   { text: 'ふりふり♪',            when: { scene: 'tap', place: 'tail', mood: 'normal' } },
+  { text: '{name}だけ、とくべつだよ', when: { scene: 'tap', place: 'tail', mood: 'normal', friendship: { min: 4 } }, weight: 2 },
   { text: 'ひゃっ、しっぽは…',    when: { scene: 'tap', place: 'tail', mood: 'shy' } },
   { text: 'くすぐったいってば',   when: { scene: 'tap', place: 'tail', mood: 'shy' } },
   { text: 'もう〜！',             when: { scene: 'tap', place: 'tail', mood: 'troubled' } },
@@ -74,6 +88,7 @@ window.TANU_LINES = [
   { text: 'ふにゃ〜…',            when: { scene: 'melt' } },
   { text: 'とろけちゃう〜',       when: { scene: 'melt' } },
   { text: 'もっと〜…',            when: { scene: 'melt' } },
+  { text: '{name}の手、あったかい…', when: { scene: 'melt', friendship: { min: 2 } } },
   { text: 'ねむくなってきた…',    when: { scene: 'melt', timeOfDay: 'night' } },
 
   /* ---------- 怒る ---------- */

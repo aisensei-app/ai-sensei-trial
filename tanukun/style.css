@@ -29,7 +29,54 @@ html, body {
 .mode-home #back,
 .mode-home #play-hearts,
 .mode-play #menu,
-.mode-play #days { display: none; }
+.mode-play #days,
+.mode-name .hint,
+.mode-name #back,
+.mode-name #play-hearts,
+.mode-name #menu,
+.mode-name #days { display: none; }
+.name-form { display: none; }
+.mode-name .name-form { display: flex; }
+.mode-name #tanu-area { width: min(70vw, 36vh * 0.8, 360px); }
+
+/* ---- 呼び名の入力 ---- */
+.name-form {
+  width: 100%;
+  max-width: 360px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  margin-top: 16px;
+}
+.name-input {
+  border: 2px solid #E9C89A;
+  border-radius: 16px;
+  padding: 13px 16px;
+  font: inherit;
+  font-size: 18px;   /* 16px 未満だと iPhone で画面が拡大されてしまう */
+  font-weight: 700;
+  text-align: center;
+  color: inherit;
+  background: #fff;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.name-input:focus { outline: none; border-color: #F08A3C; }
+.link {
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 15px;
+  opacity: .7;
+  text-decoration: underline;
+  padding: 6px;
+  cursor: pointer;
+}
+.note.small { font-size: 12px; text-align: center; margin: 0; }
+.set-row { display: flex; gap: 8px; }
+.set-row .name-input { flex: 1; min-width: 0; padding: 10px 12px; }
+.sheet-box h3 { margin: 8px 0 0; font-size: 16px; }
 
 /* ---- 上のバー ---- */
 #topbar {
@@ -231,6 +278,7 @@ html, body {
 /* ---- ふきだし ---- */
 .bubble {
   position: relative;
+  white-space: pre-line;   /* セリフの中の改行（\n）をそのまま表示 */
   min-height: 3.2em;
   max-width: min(84vw, 380px);
   margin-bottom: 10px;

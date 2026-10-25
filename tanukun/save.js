@@ -19,6 +19,8 @@ window.TanuSave = (function () {
   function blank() {
     return {
       version: 1,
+      name: '',              // 呼んでほしい名前（空なら名前なし）
+      nameAsked: false,      // 最初の「なんて呼んだらいい？」を済ませたか
       firstDay: null,        // はじめて開いた日（'2026-10-24' の形）
       lastDay: null,         // 最後に開いた日
       totalDays: 0,          // のべ日数（なかよし○日目）
@@ -138,6 +140,14 @@ window.TanuSave = (function () {
     save();
   }
 
+  /* ---------- 呼び名 ---------- */
+  const NAME_MAX = 10;
+  function setName(name) {
+    data.name = String(name || '').trim().slice(0, NAME_MAX);
+    data.nameAsked = true;
+    save();
+  }
+
   function reset() {
     data = blank();
     save();
@@ -151,6 +161,8 @@ window.TanuSave = (function () {
     hearts: hearts,
     count: count,
     seeLine: seeLine,
+    setName: setName,
+    NAME_MAX: NAME_MAX,
     reset: reset
   };
 })();
