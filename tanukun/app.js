@@ -734,8 +734,11 @@
       (navigator.share ? '<button class="btn btn-share" type="button">📤 アプリでシェア</button>' : '') +
       '<button class="btn btn-copy" type="button">📋 文章をコピー</button>' +
       '</div>' +
-      '<p class="note small center">X のログイン画面が出たら、「アプリでシェア」から X アプリを選んでね</p>' +
-      '<p class="note small center">タヌくんは、ただいま制作中！<br>完成したら公開するよ。待っててね🦝</p>');
+      (navigator.share
+        ? '<p class="note small center">X のログイン画面が出たら、「アプリでシェア」から X アプリを選んでね</p>'
+        : '<p class="note small center">X のログイン画面が出たら、「文章をコピー」して X アプリに貼りつけてね</p>') +
+      '<p class="note small center">タヌくんは、ただいま制作中！<br>完成したら公開するよ。待っててね🦝</p>' +
+      (DEMO.followId ? '<a class="btn btn-follow" target="_blank" rel="noopener"></a>' : ''));
     // 文字や URL は、あとから入れる（記号が入っても安全なように）
     const body = $('sheet-body');
     body.querySelector('.res-title').textContent = '「' + r.title + '」';
@@ -755,6 +758,11 @@
     lastResult = r;
     resultOpen = true;
     body.querySelector('.btn-x').href = intent;
+    const follow = body.querySelector('.btn-follow');
+    if (follow) {
+      follow.textContent = '🔔 @' + DEMO.followId + ' をフォローして待つ';
+      follow.href = 'https://twitter.com/intent/follow?screen_name=' + encodeURIComponent(DEMO.followId);
+    }
 
     // スマホの「共有」メニューから X アプリなどで投稿（アプリはログイン済みなので、ログイン画面が出ない）
     const text = DEMO.shareText(r) + (DEMO.hashtag ? ' #' + DEMO.hashtag : '');
