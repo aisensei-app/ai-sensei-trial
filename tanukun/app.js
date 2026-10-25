@@ -23,7 +23,11 @@
   const bubble = $('bubble');
   const zonesEl = $('zones');
 
-  const PLACE_LABEL = { head: '頭', belly: 'おなか', tail: 'しっぽ' };
+  const PLACE_LABEL = { head: '頭', chestL: 'むね', chestR: 'むね', belly: 'おなか', tail: 'しっぽ' };
+  // タップ範囲 → セリフや記録で使う場所の名前（左右の胸はどちらも chest）
+  const PLACE_OF = { chestL: 'chest', chestR: 'chest' };
+  // ぷるんと揺れる場所（指をはなしたときにタップ。すべらせると引っぱれる）
+  const SOFT = { belly: true, chestL: true, chestR: true };
 
   /* ---------- いまの状態 ---------- */
   const state = {
@@ -107,9 +111,10 @@
   }
 
   /* 頭・しっぽは、さわった瞬間に反応。
-     おなかは Windows版と同じく「指をはなしたとき」にタップ。
-     指をすべらせると、おなかを引っぱれる（はなすと、ばねで戻る） */
-  let press = null;   // おなかを押している指 { id, x, y, pulling }
+     おなか・胸は Windows版と同じく「指をはなしたとき」にタップ。
+     指を置いている間はへこみ、指をすべらせると引っぱれる（はなすと、ばねで戻る） */
+  let press = null;   // おなか・胸を押している指 { id, part, x, y, pulling }
+  const toImg = () => img.naturalWidth / area.clientWidth;   // 画面 → 画像の倍率
   const DRAG_START = 8;   // この距離（画面のピクセル）以上動いたら「引っぱり」
 
   area.addEventListener('pointerdown', (e) => {
@@ -119,12 +124,17 @@
     if (state.phase === 'hidden') { onHiddenTap(); return; }
     const zone = e.target.closest('[data-place]');
     if (!zone) return;
-    if (zone.dataset.place === 'belly' && state.phase === 'active') {
-      press = { id: e.pointerId, x: e.clientX, y: e.clientY, pulling: false };
+    const part = zone.dataset.place;
+    if (SOFT[part] && state.phase === 'active') {
+      press = { id: e.pointerId, part: part, x: e.clientX, y: e.clientY, pulling: false };
       try { area.setPointerCapture(e.pointerId); } catch (err) {}
+      if (belly.ready()) {
+        const r = area.getBoundingClientRect();
+        belly.press(part, (e.clientX - r.left) * toImg(), (e.clientY - r.top) * toImg());
+      }
       return;
     }
-    onTap(zone.dataset.place);
+    onTap(part);
   });
 
   area.addEventListener('pointermove', (e) => {
@@ -133,15 +143,16 @@
     if (!press.pulling && Math.hypot(dx, dy) < DRAG_START) return;
     if (!belly.ready() || state.phase !== 'active') return;
     press.pulling = true;
-    belly.drag(dx, dy, img.naturalWidth / area.clientWidth);
+    belly.drag(press.part, dx, dy, toImg());
   });
 
   function endPress(e, cancel) {
     if (!press || e.pointerId !== press.id) return;
     const p = press;
     press = null;
-    if (p.pulling) { belly.release(); return; }
-    if (!cancel) onTap('belly', e);
+    if (p.pulling || cancel) { belly.release(p.part, false); return; }
+    belly.release(p.part, state.phase === 'active');
+    onTap(p.part, e);
   }
   area.addEventListener('pointerup', (e) => endPress(e, false));
   area.addEventListener('pointercancel', (e) => endPress(e, true));
@@ -173,8 +184,9 @@
   /* =========================================================
      タップしたとき
      ========================================================= */
-  function onTap(place, ev) {
+  function onTap(zonePlace, ev) {
     if (state.phase !== 'active') return;
+    const place = PLACE_OF[zonePlace] || zonePlace;   // chestL / chestR → chest
     const t = now();
     const w = C.countWeight[place] != null ? C.countWeight[place] : 1;
     state.taps.push({ time: t, weight: w });
@@ -252,11 +264,11 @@
     refreshFace();
   }
 
-  /* ---- おなか：おなかだけ「ぽよん」（belly.js の網目の変形。Windows版と同じ方式） ---- */
+  /* ---- おなか：おなかだけ「ぷるん」
+     揺れそのものは、指をはなしたときに belly.js（網目の変形）が出しています ---- */
   function jiggleBelly() {
     if (C.vibrate && navigator.vibrate) navigator.vibrate(15);
-    if (belly.ready()) { belly.tap(); return; }
-    jiggleBellyLite();
+    if (!belly.ready()) jiggleBellyLite();
   }
 
   /* 網目の変形が使えないとき（PC でファイルを直接開いたとき）の代わり：
@@ -624,6 +636,7 @@
       ['なかよし', d.totalDays + ' 日'],
       ['れんぞく（いま／最高）', d.streak + ' 日 ／ ' + d.bestStreak + ' 日'],
       ['頭をなでた', s.tap.head + ' 回'],
+      ['むねをさわった', (s.tap.chest || 0) + ' 回'],
       ['おなかをさわった', s.tap.belly + ' 回'],
       ['しっぽをさわった', s.tap.tail + ' 回'],
       ['とろけさせた', s.melt + ' 回'],

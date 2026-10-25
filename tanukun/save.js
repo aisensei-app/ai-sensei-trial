@@ -30,7 +30,7 @@ window.TanuSave = (function () {
       tapPointsDay: null,    // 今日のタップポイントを数えている日
       tapPointsToday: 0,     // 今日タップでもらったポイント
       stats: {               // 実績用の記録
-        tap: { head: 0, belly: 0, tail: 0 },
+        tap: { head: 0, chest: 0, belly: 0, tail: 0 },
         melt: 0,
         angry: 0,
         hiddenTap: 0
@@ -129,7 +129,10 @@ window.TanuSave = (function () {
 
   /* ---------- 実績用の記録 ---------- */
   function count(path) {
-    if (path.indexOf('tap.') === 0) data.stats.tap[path.slice(4)] += 1;
+    if (path.indexOf('tap.') === 0) {
+      const p = path.slice(4);
+      data.stats.tap[p] = (data.stats.tap[p] || 0) + 1;
+    }
     else data.stats[path] = (data.stats[path] || 0) + 1;
     save();
   }

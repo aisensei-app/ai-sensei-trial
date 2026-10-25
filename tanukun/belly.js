@@ -1,11 +1,13 @@
 /* =========================================================
-   タヌくん おなか・胸の「ぽよん」（Windows版と同じ方式）
-   絵を網目のように変形させて（メッシュ変形）、おなか（と両胸）だけを
+   タヌくん おなか・胸の「ぷるん」（Windows版と同じ方式）
+   絵を網目のように変形させて（メッシュ変形）、さわった場所だけを
    へこませたり、ふくらませたり、引っぱったりします。
+   揺れる場所は3か所：おなか（belly）・左の胸（chestL）・右の胸（chestR）
    ・変形は楕円の中心ほど強く、ふちに向かってなめらかに 0 になる
      → 境目ができず、絵が二重に見えない
    ・動きは「ばね」の計算（ばねの強さ SPRING、止まりやすさ DAMP）
-   ・胸は、おなかより少しだけ小さく・少し遅れて揺れる（つられて揺れる感じ）
+   ・指を置いている間は、その場所がへこみ、指の位置がくぼむ
+     → はなすと「ぷるん」と戻る
    数値は config.js の bellyJiggle / chestJiggle で調整します。
 
    ※ PC でファイルを直接開いたとき（file://）は、ブラウザの安全のしくみで
@@ -22,15 +24,24 @@ window.TanuBelly = function (opts) {
   const k = BJ.strength == null ? 1 : BJ.strength;
 
   /* ---------- 揺らす場所（楕円）----------
-     gain … おなかに対する揺れの大きさ　delay … おなかから何ミリ秒遅れて揺れるか */
-  const regions = [{ def: BJ, gain: 1, dragGain: 1, delay: 0 }];
+     gain … おなかに対する揺れの大きさ（胸はおなかより小さく） */
+  const parts = { belly: { def: BJ, gain: 1 } };
   if (CJ && CJ.gain > 0) {
-    const dg = CJ.dragGain == null ? CJ.gain : CJ.dragGain;
-    [CJ.left, CJ.right].forEach((d) => {
-      if (d) regions.push({ def: d, gain: CJ.gain, dragGain: dg, delay: CJ.delayMs || 0 });
-    });
+    if (CJ.left)  parts.chestL = { def: CJ.left,  gain: CJ.gain };
+    if (CJ.right) parts.chestR = { def: CJ.right, gain: CJ.gain };
   }
-  regions.forEach((r) => { r.x = r.v = r.px = r.py = r.pvx = r.pvy = 0; });
+  const regions = Object.keys(parts).map((key) => {
+    const r = parts[key];
+    r.key = key;
+    r.x = r.v = r.px = r.py = r.pvx = r.pvy = 0;
+    r.hold = 0;          // 指で押さえている間の「へこみ」の目標
+    r.dragging = false;
+    return r;
+  });
+
+  // 「指のくぼみ」（指を置いた場所だけが小さくへこむ。胸は gain の分だけ浅く）
+  const PK = BJ.poke || { size: 0.45, depth: 0.2 };
+  const poke = { x: 0, v: 0, hold: 0, cx: 0, cy: 0, rx: 1, ry: 1 };
 
   // 画像の大きさ（すべての絵が同じ大きさの前提）
   let W = 0, H = 0;
@@ -40,7 +51,6 @@ window.TanuBelly = function (opts) {
   /* ---------- ばね ---------- */
   const SPRING = BJ.spring || 450;
   const DAMP = BJ.damp || 9;
-  let dragging = false;
 
   // 1回のタップで「最初にへこむ量」が tapDent になる初速を計算
   const wd = Math.sqrt(SPRING - (DAMP / 2) * (DAMP / 2));
@@ -106,17 +116,31 @@ window.TanuBelly = function (opts) {
     // いま動いている場所だけ計算する
     const act = regions.filter((r) => r.x || r.px || r.py);
     act.forEach((r) => { r.sc = clamp(r.x, -0.35, 0.35); });   // 連打でも絵がこわれない範囲に
+    const pk = poke.x ? clamp(poke.x, -0.5, 0.3) : 0;
+    // くぼみの影：へこんでいるときだけ、指の位置をうっすら暗くする（押している感じを出す）
+    const shadeK = pk < 0 && PK.depth > 0 ? (PK.shade || 0) * Math.min(1, -pk / PK.depth) : 0;
     for (let y = 0; y < bh; y++) {
       for (let x = 0; x < bw; x++) {
         const i = y * bw + x;
         const X = x + bx, Y = y + by;
-        let sx = X, sy = Y;
+        let sx = X, sy = Y, dark = 0;
         for (let n = 0; n < act.length; n++) {
           const r = act[n], f = r.weight[i];
           if (f === 0) continue;
           // 中心に近い点ほど、ふくらみ（またはへこみ）と引っぱりの分だけずらして色を取る
           sx -= (X - r.cx) * r.sc * f + r.px * f;
           sy -= (Y - r.cy) * r.sc * f + r.py * f;
+        }
+        if (pk) {
+          // 指のくぼみ：指の位置を中心に、小さくへこませる
+          const u = (X - poke.cx) / poke.rx, v = (Y - poke.cy) / poke.ry;
+          const r2 = u * u + v * v;
+          if (r2 < 1) {
+            const f = (1 - r2) * (1 - r2);
+            sx -= (X - poke.cx) * pk * f;
+            sy -= (Y - poke.cy) * pk * f;
+            dark = shadeK * f * f;
+          }
         }
         // まわり4点の色をまぜて取る（なめらかにするため）
         const x0 = clamp(sx | 0, 0, W - 2), y0 = clamp(sy | 0, 0, H - 2);
@@ -126,7 +150,8 @@ window.TanuBelly = function (opts) {
         for (let ch = 0; ch < 4; ch++) {
           const top = data[a + ch] + (data[b + ch] - data[a + ch]) * fx;
           const bot = data[c + ch] + (data[d + ch] - data[c + ch]) * fx;
-          o[j + ch] = top + (bot - top) * fy;
+          const v = top + (bot - top) * fy;
+          o[j + ch] = ch < 3 && dark ? v * (1 - dark) : v;
         }
       }
     }
@@ -143,10 +168,11 @@ window.TanuBelly = function (opts) {
     baseImg.style.visibility = on ? 'hidden' : 'visible';
   }
 
+  // 押さえている間は hold（へこみ）に向かって、はなすと 0 に向かって、ばねが動く
   function stepRegion(r, h) {
-    r.v += (-SPRING * r.x - DAMP * r.v) * h;
+    r.v += (-SPRING * (r.x - r.hold) - DAMP * r.v) * h;
     r.x += r.v * h;
-    if (!dragging) {
+    if (!r.dragging) {
       r.pvx += (-SPRING * r.px - DAMP * r.pvx) * h;
       r.pvy += (-SPRING * r.py - DAMP * r.pvy) * h;
       r.px += r.pvx * h;
@@ -154,11 +180,11 @@ window.TanuBelly = function (opts) {
     }
   }
 
-  const isStill = (r) => Math.abs(r.x) < 0.001 && Math.abs(r.v) < 0.02 &&
+  const isStill = (r) => !r.hold && !r.dragging &&
+    Math.abs(r.x) < 0.001 && Math.abs(r.v) < 0.02 &&
     Math.abs(r.px) < 0.3 && Math.abs(r.py) < 0.3 && Math.abs(r.pvx) < 3 && Math.abs(r.pvy) < 3;
-  const zero = (r) => { r.x = r.v = r.px = r.py = r.pvx = r.pvy = 0; };
+  const zero = (r) => { r.x = r.v = r.px = r.py = r.pvx = r.pvy = 0; r.hold = 0; r.dragging = false; };
 
-  let pending = 0;   // 遅れて揺れ始める予定の数
   function loop(t) {
     let dt = Math.min(0.05, (t - last) / 1000);
     last = t;
@@ -166,10 +192,13 @@ window.TanuBelly = function (opts) {
     while (dt > 0) {
       const h = Math.min(dt, 1 / 240);
       regions.forEach((r) => stepRegion(r, h));
+      poke.v += (-SPRING * (poke.x - poke.hold) - DAMP * poke.v) * h;
+      poke.x += poke.v * h;
       dt -= h;
     }
-    if (!dragging && !pending && regions.every(isStill)) {
+    if (regions.every(isStill) && isStill(poke)) {
       regions.forEach(zero);
+      zero(poke);
       running = false;
       show(false);
       return;
@@ -189,7 +218,7 @@ window.TanuBelly = function (opts) {
   function ready() {
     if (!usable) return false;
     pixels(baseImg.src);
-    return usable;
+    return usable && !!W;
   }
 
   // 絵の色を前もって読んでおく（最初のタップで動きが引っかからないように）
@@ -205,38 +234,62 @@ window.TanuBelly = function (opts) {
   return {
     ready: ready,
     warm: warm,
-    // タップ：まずへこんで、ぽよんと戻る（連打すると揺れが足し算される）
-    tap: function () {
-      regions.forEach((r) => {
-        const kick = () => { r.v -= TAP_V * r.gain; start(); };
-        if (!r.delay) { kick(); return; }
-        pending++;
-        setTimeout(() => { pending--; kick(); }, r.delay);
-      });
+    has: (part) => !!parts[part],
+
+    // 指を置いた：その場所がへこむ（imgX, imgY は画像のピクセル位置。指の位置もくぼむ）
+    press: function (part, imgX, imgY) {
+      const r = parts[part];
+      if (!r || !W) return;
+      r.hold = -(BJ.pressDent || 0.05) * k * r.gain;
+      if (PK.depth > 0 && imgX != null) {
+        // 指の位置を、楕円の内側におさめる
+        const u = (imgX - r.cx) / r.rx, v = (imgY - r.cy) / r.ry;
+        const d = Math.hypot(u, v), m = d > 0.75 ? 0.75 / d : 1;
+        poke.cx = r.cx + u * m * r.rx; poke.cy = r.cy + v * m * r.ry;
+        poke.rx = r.rx * PK.size; poke.ry = r.ry * PK.size;
+        poke.hold = -PK.depth * k * Math.sqrt(r.gain);
+      }
       start();
     },
+
+    // 指をはなした：tapped が true なら「ぷるん」（連打すると揺れが足し算される）
+    release: function (part, tapped) {
+      const r = parts[part];
+      if (!r) return;
+      const target = (BJ.pressDent || 0.05) * k * r.gain;
+      r.hold = 0;
+      r.dragging = false;
+      poke.hold = 0;
+      if (tapped) {
+        if (r.x < -target * 0.5) {
+          // しっかり押していた：へこみから「ぷるん」と強めに戻す
+          r.v += TAP_V * r.gain * (BJ.reboundBoost == null ? 0.5 : BJ.reboundBoost);
+        } else {
+          // ちょんと触っただけ：Windows版と同じく、まずへこんでから戻る
+          r.v -= TAP_V * r.gain;
+        }
+      }
+      start();
+    },
+
     // 引っぱる（dx, dy は画面上の移動量。scale は画面→画像の倍率）
-    // 胸は dragGain の分だけ、つられて動く
-    drag: function (dx, dy, scale) {
-      if (!W) return;
-      dragging = true;
-      const max = (BJ.pullMax || 8.6) / 100 * W * k;
+    drag: function (part, dx, dy, scale) {
+      const r = parts[part];
+      if (!r || !W) return;
+      r.dragging = true;
+      r.hold = 0;
+      poke.hold = 0;
+      const max = (BJ.pullMax || 8.6) / 100 * W * k * r.gain;
       let px = dx * scale, py = dy * scale;
       const len = Math.hypot(px, py);
       if (len > max) { px *= max / len; py *= max / len; }
-      regions.forEach((r) => {
-        r.px = px * r.dragGain; r.py = py * r.dragGain; r.pvx = r.pvy = 0;
-      });
+      r.px = px; r.py = py; r.pvx = r.pvy = 0;
       start();
     },
-    // はなす：ばねで戻る（半分ずつ行きすぎながら止まる）
-    release: function () {
-      dragging = false;
-      start();
-    },
+
     stop: function () {
       regions.forEach(zero);
-      dragging = false;
+      zero(poke);
     }
   };
 };

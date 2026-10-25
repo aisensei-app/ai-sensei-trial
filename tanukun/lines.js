@@ -9,7 +9,7 @@
      visit     … 来かた（home のときだけ）
                         first（はじめて）/ new（今日はじめて・前日も来た）
                         / comeback（2日以上あいて来た）/ again（今日2回目以降）
-     place     … 場所   head（頭）/ belly（おなか）/ tail（しっぽ）
+     place     … 場所   head（頭）/ chest（むね）/ belly（おなか）/ tail（しっぽ）
      mood      … 状態   normal（通常）/ shy（照れ）/ troubled（困り）
      timeOfDay … 時間帯 morning（5〜10時）/ day（11〜16時）
                         / evening（17〜19時）/ night（20〜4時）
@@ -59,6 +59,16 @@ window.TANU_LINES = [
   { text: 'そんなになでたら…',    when: { scene: 'tap', place: 'head', mood: 'shy' } },
   { text: 'もう〜！',             when: { scene: 'tap', place: 'head', mood: 'troubled' } },
   { text: 'なですぎだよ〜',       when: { scene: 'tap', place: 'head', mood: 'troubled' } },
+
+  /* ---------- むね ---------- */
+  { text: 'むね、ぶあついでしょ',   when: { scene: 'tap', place: 'chest', mood: 'normal' } },
+  { text: 'きたえてるんだ〜',       when: { scene: 'tap', place: 'chest', mood: 'normal' } },
+  { text: 'ぷるんってした？',       when: { scene: 'tap', place: 'chest', mood: 'normal' } },
+  { text: 'ドキドキしてるの、ばれちゃう…', when: { scene: 'tap', place: 'chest', mood: 'normal', friendship: { min: 3 } }, face: 'shy', weight: 2 },
+  { text: 'そ、そこは…',           when: { scene: 'tap', place: 'chest', mood: 'shy' } },
+  { text: 'むねは、はずかしいよ…', when: { scene: 'tap', place: 'chest', mood: 'shy' } },
+  { text: 'もう〜！',               when: { scene: 'tap', place: 'chest', mood: 'troubled' } },
+  { text: 'むねばっかり〜！',       when: { scene: 'tap', place: 'chest', mood: 'troubled' } },
 
   /* ---------- おなか ---------- */
   { text: 'ぽよん！',             when: { scene: 'tap', place: 'belly', mood: 'normal' } },

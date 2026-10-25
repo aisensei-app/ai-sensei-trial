@@ -40,18 +40,17 @@ window.TANU_CONFIG = {
     spring: 450,        // ばねの強さ（大きいほど速く揺れる。450 で1往復 約0.3秒）
     damp: 9,            // 止まりやすさ（大きいほど早く止まる。9 で約0.8秒）
     tapDent: 0.08,      // タップで最初にへこむ量（0.08 = 8%）。そのあと約4%ふくらむ
-    pullMax: 8.6        // 引っぱれる最大の長さ（絵の横幅の％。Windows版の18px相当）
+    pullMax: 8.6,       // 引っぱれる最大の長さ（絵の横幅の％。Windows版の18px相当）
+    pressDent: 0.08,    // 指を置いている間、全体がへこむ量（押した感）
+    reboundBoost: 0.5,  // しっかり押してからはなしたときの「ぷるん」の強さ
+    poke: { size: 0.5, depth: 0.35, shade: 0.12 }  // 指の位置だけくぼむ（大きさ＝楕円の何倍、深さ、影の濃さ）
   },
 
-  /* ---- 両胸も、おなかにつられて少しだけ揺れる ----
-     gain … おなかに対する揺れの大きさ（0.45 = おなかの45%。0 で揺らさない）
-     delayMs … おなかから何ミリ秒遅れて揺れ始めるか（つられて揺れる感じ）
-     dragGain … おなかを引っぱったときに、胸がつられて動く大きさ（首飾りがのびすぎないよう小さめ）
+  /* ---- 両胸も、さわると「ぷるん」（おなかと同じ動き方で、おなかより控えめ） ----
+     gain … おなかに対する揺れ・へこみ・引っぱりの大きさ（0.45 = おなかの45%。0 で揺らさない）
      left / right … 絵で見て左・右の胸の楕円（％。720×900 の絵で 212,282 / 414,286） */
   chestJiggle: {
     gain: 0.45,
-    delayMs: 50,
-    dragGain: 0.2,
     left:  { x: 29.4, y: 31.3, rx: 11.4, ry: 5.3 },
     right: { x: 57.5, y: 31.8, rx: 11.7, ry: 5.6 }
   },
@@ -65,9 +64,11 @@ window.TANU_CONFIG = {
      本番の絵に差し替えたら、ここを合わせて調整してください。
      （showZones を true にすると、範囲が画面に表示されます） */
   zones: {
-    head:  { left: 20, top: 0,  width: 50, height: 22 },
-    belly: { left: 10, top: 22, width: 50, height: 42 },
-    tail:  { left: 60, top: 50, width: 40, height: 40 }
+    head:   { left: 20, top: 0,  width: 50, height: 24 },
+    chestL: { left: 18, top: 25, width: 23, height: 12 },   // 左の胸（絵で見て左）
+    chestR: { left: 46, top: 25, width: 23, height: 12 },   // 右の胸
+    belly:  { left: 10, top: 37, width: 52, height: 27 },
+    tail:   { left: 62, top: 50, width: 38, height: 40 }
   },
   showZones: false,   // URL の最後に ?zones を付けても表示されます
 
