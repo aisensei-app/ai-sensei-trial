@@ -6,6 +6,8 @@
      scene     … 場面   home（メニュー画面のあいさつ）/ named（呼び名を決めたとき）
                         / tap（タップ）/ melt（とろけ）/ angry（怒り）
                         / hiddenTap（隠れ中にタップ）/ return（戻ってくる）
+                        / wear（きせかえで部品を付けた・はずした）
+     part      … 付けた部品の id（wear のときだけ）。はずしたときは none
      visit     … 来かた（home のときだけ）
                         first（はじめて）/ new（今日はじめて・前日も来た）
                         / comeback（2日以上あいて来た）/ again（今日2回目以降）
@@ -28,6 +30,12 @@ window.TANU_LINES = [
 
   /* ---------- 呼び名を決めたとき ---------- */
   { text: '{name}、よろしくね！',       when: { scene: 'named' }, face: 'shy' },
+
+  /* ---------- きせかえ ---------- */
+  { text: 'でっぱってるの、気になる…？', when: { scene: 'wear', part: 'debeso' }, face: 'shy' },
+  { text: 'おへそ、ぽちっとしてみて！',   when: { scene: 'wear', part: 'debeso' } },
+  { text: 'デベソ、にあう？',             when: { scene: 'wear', part: 'debeso' }, face: 'shy' },
+  { text: 'もとにもどったよ〜',           when: { scene: 'wear', part: 'none' } },
 
   /* ---------- メニュー画面のあいさつ ----------
      名前入りのセリフは、なかよし度（ハート）が上がるほど出やすくなります */

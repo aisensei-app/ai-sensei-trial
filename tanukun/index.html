@@ -44,6 +44,8 @@
               <img id="tanu-img" alt="タヌくん" draggable="false">
               <!-- おなかだけ揺らすための重ね絵（同じ絵のおなか部分だけを、ふちをぼかして重ねる） -->
               <div id="belly-layer" aria-hidden="true"><img id="belly-img" alt="" draggable="false"></div>
+              <!-- きせかえパーツ（デベソなど）を重ねるところ。揺れている間は canvas の絵に入る -->
+              <div id="parts-layer" aria-hidden="true"></div>
               <!-- おなかを変形させた絵を描くところ（揺れている間だけ表示） -->
               <canvas id="belly-canvas" aria-hidden="true"></canvas>
             </div>
@@ -62,6 +64,7 @@
     </button>
     <div class="btn-row">
       <button id="btn-record" class="btn" type="button">実績</button>
+      <button id="btn-wear" class="btn" type="button">きせかえ</button>
       <button id="btn-settings" class="btn" type="button">設定</button>
     </div>
   </nav>

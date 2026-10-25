@@ -11,6 +11,7 @@
      中心ほど大きく動き、ふちに向かって弱くなるので、輪郭が折れない
      → はなすと「ぷるん」と戻る
    数値は config.js の bellyJiggle / chestJiggle で調整します。
+   ・きせかえパーツ（デベソなど）は、絵に重ねてから変形するので、いっしょに揺れます
 
    ※ PC でファイルを直接開いたとき（file://）は、ブラウザの安全のしくみで
      絵の色を読み取れないため、かんたんな方式（重ね絵の拡大）に切り替わります。
@@ -22,6 +23,8 @@ window.TanuBelly = function (opts) {
   const CJ = opts.chest || null;     // 胸（なければ胸は揺らさない）
   const baseImg = opts.img;          // ふだん表示している <img>
   const canvas = opts.canvas;        // 変形した絵を描く <canvas>
+  const overlay = opts.overlay || null;              // ふだん部品を表示している入れ物
+  const layersFor = opts.layers || (() => []);       // その絵に重ねる部品の一覧
   const ctx = canvas.getContext('2d');
   const k = BJ.strength == null ? 1 : BJ.strength;
 
@@ -63,26 +66,42 @@ window.TanuBelly = function (opts) {
   const peak = Math.exp(-DAMP / 2 * t1) * Math.sin(wd * t1) / wd;
   const TAP_V = (BJ.tapDent || 0.08) * k / peak;
 
-  /* ---------- 絵の色データ（絵ごとに1回だけ読む） ---------- */
-  const cache = {}, images = {};
+  /* ---------- きせかえパーツを重ねる ----------
+     layersFor(src) は [{ img, x, y, width }]（x, y, width は絵の％。なければ絵全体に重ねる） */
+  const ok = (im) => im.complete && im.naturalWidth > 0;
+  function drawLayers(c, layers) {
+    layers.forEach((l) => {
+      if (l.width == null) { c.drawImage(l.img, 0, 0, W, H); return; }
+      const w = l.width / 100 * W, h = w * l.img.naturalHeight / l.img.naturalWidth;
+      c.drawImage(l.img, l.x / 100 * W - w / 2, l.y / 100 * H - h / 2, w, h);
+    });
+  }
+  const keyOf = (src, layers) => src + '|' + layers.map((l) => l.img.src).join('|');
+
+  /* ---------- 絵の色データ（絵と部品の組み合わせごとに1回だけ読む） ---------- */
+  let cache = {};
+  const images = {};
   let usable = true;
   function pixels(src) {
-    if (cache[src]) return cache[src];
+    const layers = layersFor(src);
+    const key = keyOf(src, layers);
+    if (cache[key]) return cache[key];
     const im = images[src] || (images[src] = new Image());
     if (!im.src) im.src = src;
-    if (!im.complete || !im.naturalWidth) return null;
+    if (!ok(im) || !layers.every((l) => ok(l.img))) return null;
     if (!W) setup(im.naturalWidth, im.naturalHeight);
     const c = document.createElement('canvas');
     c.width = W; c.height = H;
     const cc = c.getContext('2d');
     cc.drawImage(im, 0, 0, W, H);
+    drawLayers(cc, layers);
     try {
-      cache[src] = cc.getImageData(0, 0, W, H).data;
+      cache[key] = cc.getImageData(0, 0, W, H).data;
     } catch (e) {
       usable = false;   // file:// などで読めない → かんたん方式へ
       return null;
     }
-    return cache[src];
+    return cache[key];
   }
 
   function setup(w, h) {
@@ -162,6 +181,7 @@ window.TanuBelly = function (opts) {
     }
     ctx.clearRect(0, 0, W, H);
     ctx.drawImage(baseImg, 0, 0, W, H);
+    drawLayers(ctx, layersFor(baseImg.src));
     ctx.putImageData(out, bx, by);
     return true;
   }
@@ -171,6 +191,7 @@ window.TanuBelly = function (opts) {
   function show(on) {
     canvas.style.visibility = on ? 'visible' : 'hidden';
     baseImg.style.visibility = on ? 'hidden' : 'visible';
+    if (overlay) overlay.style.visibility = on ? 'hidden' : 'visible';
   }
 
   // 押さえている間は hold（へこみ）に向かって、はなすと 0 に向かって、ばねが動く
@@ -298,6 +319,9 @@ window.TanuBelly = function (opts) {
       r.px = px; r.py = py; r.pvx = r.pvy = 0;
       start();
     },
+
+    // 付けている部品が変わったとき：古い組み合わせの色データを捨てる
+    refresh: function () { cache = {}; },
 
     stop: function () {
       regions.forEach(zero);

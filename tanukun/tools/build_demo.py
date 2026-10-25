@@ -112,7 +112,8 @@ def build(base, out, font_path):
 
     for f in FILES:
         shutil.copy(ROOT / f, out / f)
-    shutil.copytree(ROOT / 'images', out / 'images')
+    # きせかえパーツはお試し版では使わないので入れない
+    shutil.copytree(ROOT / 'images', out / 'images', ignore=shutil.ignore_patterns('parts'))
 
     # 公開先の URL を demo.js に書きこむ
     demo = (out / 'demo.js').read_text(encoding='utf8')

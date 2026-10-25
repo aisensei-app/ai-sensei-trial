@@ -18,8 +18,11 @@
   const img    = $('tanu-img');
   const bellyLayer = $('belly-layer');
   const bellyImg   = $('belly-img');
+  const partsLayer = $('parts-layer');
   const belly = window.TanuBelly({
-    config: C.bellyJiggle, chest: C.chestJiggle, img: img, canvas: $('belly-canvas')
+    config: C.bellyJiggle, chest: C.chestJiggle, img: img, canvas: $('belly-canvas'),
+    overlay: partsLayer,
+    layers: (src) => wornLayers(faceOfSrc[absUrl(src)])
   });
   const bubble = $('bubble');
   const zonesEl = $('zones');
@@ -69,6 +72,58 @@
     bellyImg.src = img.src;
     // 茂みのときは重ね絵を使わない
     bellyLayer.style.display = name === 'bush' ? 'none' : '';
+    renderParts();
+  }
+
+  /* =========================================================
+     きせかえパーツ（config.js の parts）
+     ========================================================= */
+  const PARTS = C.parts || {};
+  const partImgs = {};   // 部品の絵（先に読み込んでおく）
+  Object.keys(PARTS).forEach((slot) => {
+    PARTS[slot].items.forEach((it) => {
+      const im = new Image();
+      im.src = it.image;
+      partImgs[it.id] = im;
+    });
+  });
+  // 絵の URL → 表情の名前（変形の計算で、その表情に付ける部品を調べるため）
+  const absUrl = (src) => new URL(src, location.href).href;
+  const faceOfSrc = {};
+  Object.keys(C.images).forEach((k) => { faceOfSrc[absUrl(C.images[k])] = k; });
+
+  const findPart = (slot, id) => (PARTS[slot] ? PARTS[slot].items : []).filter((it) => it.id === id)[0];
+  const unlocked = (it) => DEMO ? false : SAVE.hearts() >= (it.hearts || 0);
+
+  // いま付けている部品（その表情で見せるものだけ）。お試し版では付けない
+  function wornLayers(face) {
+    if (DEMO) return [];
+    const wear = SAVE.data.wear || {};
+    const out = [];
+    Object.keys(PARTS).forEach((slot) => {
+      const it = findPart(slot, wear[slot]);
+      if (!it || !unlocked(it)) return;
+      if ((it.hideOn || ['bush']).indexOf(face) >= 0) return;
+      out.push({ img: partImgs[it.id], x: it.x, y: it.y, width: it.width });
+    });
+    return out;
+  }
+
+  // ふだんの表示：<img> を絵の上の同じ位置に重ねる
+  function renderParts() {
+    partsLayer.textContent = '';
+    wornLayers(state.face).forEach((l) => {
+      const el = document.createElement('img');
+      el.src = l.img.src;
+      el.alt = '';
+      el.draggable = false;
+      if (l.width != null) {
+        Object.assign(el.style, { left: l.x + '%', top: l.y + '%', width: l.width + '%' });
+      } else {
+        el.className = 'full';
+      }
+      partsLayer.appendChild(el);
+    });
   }
 
   // おなかの重ね絵の位置（file:// で網目の変形が使えないときの代わり。config.js の bellyJiggle）
@@ -428,7 +483,8 @@
     friendship: (cond, ctx) => inRange(cond, ctx.friendship),
     streakDays: (cond, ctx) => inRange(cond, ctx.streakDays),
     totalDays:  (cond, ctx) => inRange(cond, ctx.totalDays),
-    visit:      (cond, ctx) => listHas(cond, ctx.visit)
+    visit:      (cond, ctx) => listHas(cond, ctx.visit),
+    part:       (cond, ctx) => listHas(cond, ctx.part)
   };
 
   const warned = {};
@@ -650,6 +706,40 @@
       '<p class="note">バッジ（実績のごほうび）は準備中だよ</p>');
   });
 
+  // きせかえ：場所ごとに「なし」と部品を並べる。選ぶとパネルを閉じて、付けた姿を見せる
+  $('btn-wear').addEventListener('click', () => {
+    const wear = SAVE.data.wear || {};
+    const slots = Object.keys(PARTS);
+    let html = '';
+    slots.forEach((slot) => {
+      const S = PARTS[slot];
+      html += '<h3>' + S.label + '</h3><div class="wear-grid">' +
+        '<button class="wear-item' + (wear[slot] ? '' : ' on') + '" type="button" data-slot="' + slot + '" data-id="">' +
+        '<span class="wear-thumb">✖️</span><span>なし</span></button>';
+      S.items.forEach((it) => {
+        const open = unlocked(it);
+        html += '<button class="wear-item' + (wear[slot] === it.id ? ' on' : '') + '" type="button"' +
+          ' data-slot="' + slot + '" data-id="' + it.id + '"' + (open ? '' : ' disabled') + '>' +
+          '<span class="wear-thumb"><img src="' + it.image + '" alt=""></span>' +
+          '<span>' + (open ? it.name : '🔒 💖×' + it.hearts) + '</span></button>';
+      });
+      html += '</div>';
+    });
+    if (!slots.length) html = '<p class="note">まだ部品がないよ</p>';
+    openSheet('きせかえ', html + '<p class="note small">なかよし度（💖）が上がると、付けられる部品が増えるよ</p>');
+    $('sheet-body').querySelectorAll('.wear-item').forEach((b) => {
+      b.addEventListener('click', () => {
+        const slot = b.dataset.slot, id = b.dataset.id;
+        const changed = (wear[slot] || '') !== id;
+        SAVE.setWear(slot, id);
+        belly.refresh();
+        renderParts();
+        closeSheet();
+        if (changed) say({ scene: 'wear', part: id || 'none' });
+      });
+    });
+  });
+
   // 設定
   $('btn-settings').addEventListener('click', () => {
     openSheet('設定',
@@ -674,6 +764,8 @@
       // 2回押しで確定（うっかり消さないように）
       if (!btn.dataset.sure) { btn.dataset.sure = '1'; btn.textContent = '本当に消す？（もう一度押す）'; return; }
       SAVE.reset();
+      belly.refresh();
+      renderParts();
       closeSheet();
       checkIn();
     });

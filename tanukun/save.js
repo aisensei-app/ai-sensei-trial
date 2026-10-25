@@ -35,7 +35,8 @@ window.TanuSave = (function () {
         angry: 0,
         hiddenTap: 0
       },
-      seenLines: []          // 見たことのあるセリフ（セリフ図鑑用）
+      seenLines: [],         // 見たことのあるセリフ（セリフ図鑑用）
+      wear: {}               // 付けているきせかえパーツ（場所 → 部品の id。例 { navel: 'debeso' }）
     };
   }
 
@@ -151,6 +152,14 @@ window.TanuSave = (function () {
     save();
   }
 
+  /* ---------- きせかえ ----------
+     id が空なら、その場所の部品をはずす */
+  function setWear(slot, id) {
+    if (id) data.wear[slot] = id;
+    else delete data.wear[slot];
+    save();
+  }
+
   function reset() {
     data = blank();
     save();
@@ -166,6 +175,7 @@ window.TanuSave = (function () {
     seeLine: seeLine,
     setName: setName,
     NAME_MAX: NAME_MAX,
+    setWear: setWear,
     reset: reset
   };
 })();
