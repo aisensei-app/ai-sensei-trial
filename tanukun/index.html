@@ -39,6 +39,8 @@
               <img id="tanu-img" alt="タヌくん" draggable="false">
               <!-- おなかだけ揺らすための重ね絵（同じ絵のおなか部分だけを、ふちをぼかして重ねる） -->
               <div id="belly-layer" aria-hidden="true"><img id="belly-img" alt="" draggable="false"></div>
+              <!-- おなかを変形させた絵を描くところ（揺れている間だけ表示） -->
+              <canvas id="belly-canvas" aria-hidden="true"></canvas>
             </div>
           </div>
         </div>
@@ -83,10 +85,11 @@
 <!-- お知らせ（なかよし度アップ など） -->
 <div id="toast" class="toast" aria-live="polite"></div>
 
-<!-- 読み込む順番が大事です：設定 → セリフ → 記録 → 本体 -->
+<!-- 読み込む順番が大事です：設定 → セリフ → 記録 → おなか → 本体 -->
 <script src="config.js"></script>
 <script src="lines.js"></script>
 <script src="save.js"></script>
+<script src="belly.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

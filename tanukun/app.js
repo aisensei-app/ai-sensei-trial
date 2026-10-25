@@ -17,6 +17,7 @@
   const img    = $('tanu-img');
   const bellyLayer = $('belly-layer');
   const bellyImg   = $('belly-img');
+  const belly = window.TanuBelly({ config: C.bellyJiggle, img: img, canvas: $('belly-canvas') });
   const bubble = $('bubble');
   const zonesEl = $('zones');
 
@@ -63,9 +64,9 @@
     bellyLayer.style.display = name === 'bush' ? 'none' : '';
   }
 
-  // おなかの重ね絵の位置（config.js の bellyJiggle）
-  const BJ = C.bellyJiggle || { x: 37, y: 47, rx: 24, ry: 16, strength: 1 };
-  [['--bx', BJ.x], ['--by', BJ.y], ['--brx', BJ.rx], ['--bry', BJ.ry]].forEach((v) => {
+  // おなかの重ね絵の位置（file:// で網目の変形が使えないときの代わり。config.js の bellyJiggle）
+  const BJ = C.bellyJiggle;
+  [['--bx', BJ.x], ['--by', BJ.y], ['--brx', BJ.rx * 1.15], ['--bry', BJ.ry * 1.15]].forEach((v) => {
     area.style.setProperty(v[0], v[1] + '%');
   });
 
@@ -103,14 +104,45 @@
     document.body.classList.add('show-zones');
   }
 
+  /* 頭・しっぽは、さわった瞬間に反応。
+     おなかは Windows版と同じく「指をはなしたとき」にタップ。
+     指をすべらせると、おなかを引っぱれる（はなすと、ばねで戻る） */
+  let press = null;   // おなかを押している指 { id, x, y, pulling }
+  const DRAG_START = 8;   // この距離（画面のピクセル）以上動いたら「引っぱり」
+
   area.addEventListener('pointerdown', (e) => {
     e.preventDefault();
     if (mode === 'name') return;
     if (mode === 'home') { enterPlay(); return; }
     if (state.phase === 'hidden') { onHiddenTap(); return; }
     const zone = e.target.closest('[data-place]');
-    if (zone) onTap(zone.dataset.place);
+    if (!zone) return;
+    if (zone.dataset.place === 'belly' && state.phase === 'active') {
+      press = { id: e.pointerId, x: e.clientX, y: e.clientY, pulling: false };
+      try { area.setPointerCapture(e.pointerId); } catch (err) {}
+      return;
+    }
+    onTap(zone.dataset.place);
   });
+
+  area.addEventListener('pointermove', (e) => {
+    if (!press || e.pointerId !== press.id) return;
+    const dx = e.clientX - press.x, dy = e.clientY - press.y;
+    if (!press.pulling && Math.hypot(dx, dy) < DRAG_START) return;
+    if (!belly.ready() || state.phase !== 'active') return;
+    press.pulling = true;
+    belly.drag(dx, dy, img.naturalWidth / area.clientWidth);
+  });
+
+  function endPress(e, cancel) {
+    if (!press || e.pointerId !== press.id) return;
+    const p = press;
+    press = null;
+    if (p.pulling) { belly.release(); return; }
+    if (!cancel) onTap('belly', e);
+  }
+  area.addEventListener('pointerup', (e) => endPress(e, false));
+  area.addEventListener('pointercancel', (e) => endPress(e, true));
 
   /* =========================================================
      タップ回数 → 気分
@@ -139,7 +171,7 @@
   /* =========================================================
      タップしたとき
      ========================================================= */
-  function onTap(place) {
+  function onTap(place, ev) {
     if (state.phase !== 'active') return;
     const t = now();
     const w = C.countWeight[place] != null ? C.countWeight[place] : 1;
@@ -154,7 +186,7 @@
 
     let scene = 'tap';
     if (place === 'head')  scene = petHead(t);
-    if (place === 'belly') jiggleBelly();
+    if (place === 'belly') { jiggleBelly(); popWord(ev); }
     if (place === 'tail')  wiggleTail();
 
     say({ scene: scene, place: place, mood: mood });
@@ -218,9 +250,17 @@
     refreshFace();
   }
 
-  /* ---- おなか：おなかだけ「ぽよん」＋体全体はほんの少しだけ ----
-     重ね絵は 1 より小さくすると下の絵のふちが透けるので、ふくらむ方向だけで揺らします */
+  /* ---- おなか：おなかだけ「ぽよん」（belly.js の網目の変形。Windows版と同じ方式） ---- */
   function jiggleBelly() {
+    if (C.vibrate && navigator.vibrate) navigator.vibrate(15);
+    if (belly.ready()) { belly.tap(); return; }
+    jiggleBellyLite();
+  }
+
+  /* 網目の変形が使えないとき（PC でファイルを直接開いたとき）の代わり：
+     おなか部分だけの重ね絵を拡大して揺らす。
+     1 より小さくすると下の絵のふちが透けるので、ふくらむ方向だけで揺らします */
+  function jiggleBellyLite() {
     const k = BJ.strength == null ? 1 : BJ.strength;
     const s = (x, y) => 'scale(' + (1 + x * k) + ', ' + (1 + y * k) + ')';
     bellyLayer.animate([
@@ -231,13 +271,31 @@
       { transform: s(.004, .015), offset: .74 },
       { transform: s(0, 0) }
     ], { duration: 900, easing: 'cubic-bezier(.25,.6,.4,1)' });
-    body.animate([
-      { transform: 'scale(1, 1)' },
-      { transform: 'scale(1.015, .985)', offset: .15 },
-      { transform: 'scale(.995, 1.005)', offset: .45 },
-      { transform: 'scale(1, 1)' }
-    ], { duration: 700, easing: 'ease-out' });
-    if (C.vibrate && navigator.vibrate) navigator.vibrate(15);
+  }
+
+  /* ---- 「ぽん！」「ぽこ！」：タップした場所から文字がとび出す ---- */
+  let wordIndex = 0, lastWordTime = 0;
+  function popWord(ev) {
+    const W = C.bellyWords;
+    if (!W || !W.words || !W.words.length) return;
+    const t = now();
+    wordIndex = t - lastWordTime < W.comboSeconds * 1000 ? (wordIndex + 1) % W.words.length : 0;
+    lastWordTime = t;
+    const r = area.getBoundingClientRect();
+    const x = ev ? ev.clientX - r.left : r.width * BJ.x / 100;
+    const y = ev ? ev.clientY - r.top  : r.height * BJ.y / 100;
+    const el = document.createElement('span');
+    el.className = 'pop-word';
+    el.textContent = W.words[wordIndex];
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    area.appendChild(el);
+    const dx = (Math.random() - .5) * 40;
+    el.animate([
+      { transform: 'translate(-50%, -50%) scale(.6)', opacity: 0 },
+      { transform: 'translate(-50%, -110%) scale(1.15)', opacity: 1, offset: .25 },
+      { transform: 'translate(calc(-50% + ' + dx + 'px), -220%) scale(1)', opacity: 0 }
+    ], { duration: 750, easing: 'ease-out' }).finished.then(() => el.remove(), () => el.remove());
   }
 
   /* ---- しっぽ：体をよじるように左右に揺れる ---- */
@@ -258,6 +316,7 @@
   async function getAngry() {
     state.phase = 'angry';
     state.faceSeq = null;
+    belly.stop();
     SAVE.count('angry');
     endMelt(true);
     refreshFace();
@@ -474,6 +533,8 @@
 
   function enterPlay() {
     setMode('play');
+    const C2 = C.images;
+    belly.warm([C2.normal, C2.shy, C2.troubled, C2.ponpoko1, C2.ponpoko2, C2.muni].filter(Boolean));
     showBubble('なにしてあそぶ？');
   }
 
