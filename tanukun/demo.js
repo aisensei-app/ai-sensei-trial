@@ -47,5 +47,7 @@ window.TANU_DEMO = {
   delete C.zones.chestL;
   delete C.zones.chestR;
   delete C.zones.tail;
+  delete C.zones.crotch;
+  C.crotch = null;   // おまたの反応（ふくらみ）も使わない
   if (C.chestJiggle) C.chestJiggle.gain = 0;
 })();

@@ -12,6 +12,7 @@
      → はなすと「ぷるん」と戻る
    数値は config.js の bellyJiggle / chestJiggle で調整します。
    ・きせかえパーツ（デベソなど）は、絵に重ねてから変形するので、いっしょに揺れます
+   ・おまた（crotch）は、さわっても揺れず、swell で少しの間だけ「むくっ」とふくらむ
 
    ※ PC でファイルを直接開いたとき（file://）は、ブラウザの安全のしくみで
      絵の色を読み取れないため、かんたんな方式（重ね絵の拡大）に切り替わります。
@@ -21,6 +22,7 @@ window.TanuBelly = function (opts) {
 
   const BJ = opts.config;            // おなか
   const CJ = opts.chest || null;     // 胸（なければ胸は揺らさない）
+  const BG = opts.bulge || null;     // おまたのふくらみ（なければ、ふくらまない）
   const baseImg = opts.img;          // ふだん表示している <img>
   const canvas = opts.canvas;        // 変形した絵を描く <canvas>
   const overlay = opts.overlay || null;              // ふだん部品を表示している入れ物
@@ -37,6 +39,7 @@ window.TanuBelly = function (opts) {
     if (CJ.left)  parts.chestL = { def: CJ.left,  gain: CJ.gain, canDrag: cd, bob: bob };
     if (CJ.right) parts.chestR = { def: CJ.right, gain: CJ.gain, canDrag: cd, bob: bob };
   }
+  if (BG && BG.amount > 0) parts.crotch = { def: BG, gain: 1, canDrag: false };
   const regions = Object.keys(parts).map((key) => {
     const r = parts[key];
     r.key = key;
@@ -86,7 +89,8 @@ window.TanuBelly = function (opts) {
     const layers = layersFor(src);
     const key = keyOf(src, layers);
     if (cache[key]) return cache[key];
-    const im = images[src] || (images[src] = new Image());
+    // いま表示している絵なら、それをそのまま使う（読み込み待ちをしないため）
+    const im = src === baseImg.src && ok(baseImg) ? baseImg : (images[src] || (images[src] = new Image()));
     if (!im.src) im.src = src;
     if (!ok(im) || !layers.every((l) => ok(l.img))) return null;
     if (!W) setup(im.naturalWidth, im.naturalHeight);
@@ -322,6 +326,16 @@ window.TanuBelly = function (opts) {
 
     // 付けている部品が変わったとき：古い組み合わせの色データを捨てる
     refresh: function () { cache = {}; },
+
+    // ふくらむ：amount（0.1 で1割）まで「むくっ」とふくらんで、ms ミリ秒後に戻る
+    swell: function (part, amount, ms) {
+      const r = parts[part];
+      if (!r || !ready()) return;
+      r.hold = amount;
+      clearTimeout(r.swellTimer);
+      r.swellTimer = setTimeout(() => { r.hold = 0; start(); }, ms);
+      start();
+    },
 
     stop: function () {
       regions.forEach(zero);

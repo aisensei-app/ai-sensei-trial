@@ -99,9 +99,27 @@ window.TANU_CONFIG = {
     chestL: { left: 14, top: 30, width: 12, height: 8 },    // 左の胸（絵で見て左）
     chestR: { left: 41, top: 30, width: 12, height: 8 },    // 右の胸
     belly:  { left: 10, top: 38, width: 52, height: 26 },
-    tail:   { left: 62, top: 50, width: 38, height: 40 }
+    tail:   { left: 62, top: 50, width: 38, height: 40 },
+    crotch: { left: 25, top: 61, width: 16, height: 14 }    // おまた（おなかと少し重なるが、こちらが優先）
   },
   showZones: false,   // URL の最後に ?zones を付けても表示されます
+
+  /* ---- おまたをさわったとき ----
+     なかよし度（ハートの数）で反応が変わります。
+       angry … すぐ怒って隠れる（なかよしになる前）
+       moji  … モジモジ（はずかしがる。続けてさわると怒る）
+       dere  … デレる（ハートが最大になると、腰みのが少しだけ「むくっ」とふくらむ）
+     stages … それぞれの反応になるハートの数（この数以上で切りかえ）
+     faces  … それぞれの反応で出す絵（専用の絵ができたら images に足して、ここを書きかえる）
+     weight … 1回を何回分と数えるか（大きいほど怒りやすい）
+     bulge  … ふくらみ。x, y, rx, ry は場所（％）、amount は大きさ（0.1 で1割）、seconds は戻るまでの秒数
+              hearts 以上のときだけ。amount を 0 にすると、ふくらまない */
+  crotch: {
+    stages: { angry: 0, moji: 2, dere: 4 },
+    faces:  { moji: 'shy', dere: 'melt' },
+    weight: { moji: 2, dere: 0.5 },
+    bulge:  { hearts: 5, x: 30.7, y: 69, rx: 7, ry: 6.5, amount: 0.18, seconds: 3.5 }
+  },
 
   /* ---- 怒るまでのしきい値（回数） ---- */
   mood: {

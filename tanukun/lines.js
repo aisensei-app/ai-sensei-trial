@@ -8,6 +8,9 @@
                         / hiddenTap（隠れ中にタップ）/ return（戻ってくる）
                         / wear（きせかえで部品を付けた・はずした）
      part      … 付けた部品の id（wear のときだけ）。はずしたときは none
+     stage     … おまたの反応（place: 'crotch' のときだけ）
+                        moji（モジモジ）/ dere（デレ）/ bulge（デレて、少しふくらんだ）
+                        ※ なかよしになる前は、すぐ怒る（scene: 'angry', place: 'crotch'）
      visit     … 来かた（home のときだけ）
                         first（はじめて）/ new（今日はじめて・前日も来た）
                         / comeback（2日以上あいて来た）/ again（今日2回目以降）
@@ -102,6 +105,23 @@ window.TANU_LINES = [
   { text: 'もう〜！',             when: { scene: 'tap', place: 'tail', mood: 'troubled' } },
   { text: 'しっぽ、引っぱらないで〜', when: { scene: 'tap', place: 'tail', mood: 'troubled' } },
 
+  /* ---------- おまた（なかよし度で反応が変わる） ---------- */
+  // モジモジ（ハート2〜3）
+  { text: 'そ、そこは…まだダメ…',       when: { scene: 'tap', place: 'crotch', stage: 'moji' } },
+  { text: 'も、もじもじ…',               when: { scene: 'tap', place: 'crotch', stage: 'moji' } },
+  { text: 'は、はずかしいってば…',       when: { scene: 'tap', place: 'crotch', stage: 'moji' } },
+  { text: 'うぅ…どこさわってるの…',     when: { scene: 'tap', place: 'crotch', stage: 'moji', mood: ['shy', 'troubled'] }, face: 'troubled' },
+  { text: 'これ以上は、怒るからね…！',   when: { scene: 'tap', place: 'crotch', stage: 'moji', mood: 'troubled' }, face: 'troubled', weight: 2 },
+  // デレ（ハート4〜）
+  { text: '{name}だけ、とくべつだよ…',  when: { scene: 'tap', place: 'crotch', stage: ['dere', 'bulge'] }, weight: 2 },
+  { text: 'えへへ…くすぐったい',         when: { scene: 'tap', place: 'crotch', stage: ['dere', 'bulge'] } },
+  { text: 'もう…しょうがないなぁ',       when: { scene: 'tap', place: 'crotch', stage: ['dere', 'bulge'] }, face: 'shy' },
+  { text: '{name}になら、いいよ…？',     when: { scene: 'tap', place: 'crotch', stage: ['dere', 'bulge'] }, face: 'shy' },
+  // デレて、少しふくらんだ（ハート最大）
+  { text: 'あっ…み、見ないで…！',       when: { scene: 'tap', place: 'crotch', stage: 'bulge' }, face: 'shy', weight: 2 },
+  { text: 'な、なんでもないから…！',     when: { scene: 'tap', place: 'crotch', stage: 'bulge' }, face: 'troubled', weight: 2 },
+  { text: '{name}のせいだからね…',       when: { scene: 'tap', place: 'crotch', stage: 'bulge' }, face: 'shy' },
+
   /* ---------- 頭を続けてなでる（とろけ） ---------- */
   { text: 'ふにゃ〜…',            when: { scene: 'melt' } },
   { text: 'とろけちゃう〜',       when: { scene: 'melt' } },
@@ -113,6 +133,10 @@ window.TANU_LINES = [
   { text: 'もう知らないっ！',     when: { scene: 'angry' } },
   { text: 'さわりすぎー！',       when: { scene: 'angry' } },
   { text: 'ぷんぷん！',           when: { scene: 'angry' } },
+  // おまたをさわって怒った（なかよしになる前）
+  { text: 'ど、どこさわってるの！',   when: { scene: 'angry', place: 'crotch' }, weight: 4 },
+  { text: 'へんたーい！',             when: { scene: 'angry', place: 'crotch' }, weight: 4 },
+  { text: 'そこはダメーっ！',         when: { scene: 'angry', place: 'crotch' }, weight: 4 },
 
   /* ---------- 隠れている間にタップ ---------- */
   { text: 'いないよ！',           when: { scene: 'hiddenTap' }, weight: 3 },

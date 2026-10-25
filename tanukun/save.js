@@ -9,6 +9,7 @@
 
    動作確認用：URL の最後に ?today=2026-11-03 を付けると、
    その日付に開いたことにできます（日付をまたぐ動きの確認用）。
+   ?hearts=5 を付けると、なかよし度（ハートの数）をその数にできます（記録は変わりません）。
    ========================================================= */
 window.TanuSave = (function () {
   'use strict';
@@ -30,7 +31,7 @@ window.TanuSave = (function () {
       tapPointsDay: null,    // 今日のタップポイントを数えている日
       tapPointsToday: 0,     // 今日タップでもらったポイント
       stats: {               // 実績用の記録
-        tap: { head: 0, chest: 0, belly: 0, tail: 0 },
+        tap: { head: 0, chest: 0, belly: 0, tail: 0, crotch: 0 },
         melt: 0,
         angry: 0,
         hiddenTap: 0
@@ -66,6 +67,7 @@ window.TanuSave = (function () {
   /* ---------- 日付 ---------- */
   const pad = (n) => (n < 10 ? '0' : '') + n;
   const testDay = (location.search.match(/[?&]today=(\d{4}-\d{2}-\d{2})/) || [])[1];
+  const testHearts = (location.search.match(/[?&]hearts=(\d)/) || [])[1];
 
   // 「今日」を 'YYYY-MM-DD' で返す（config.js の dayStartHour 時に日付が変わる）
   function today() {
@@ -125,6 +127,7 @@ window.TanuSave = (function () {
 
   // ハートの数（0〜最大）
   function hearts() {
+    if (testHearts != null) return Math.min(+testHearts, C.friendship.heartAt.length);
     return C.friendship.heartAt.filter((p) => data.points >= p).length;
   }
 

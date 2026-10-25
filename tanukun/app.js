@@ -21,13 +21,14 @@
   const partsLayer = $('parts-layer');
   const belly = window.TanuBelly({
     config: C.bellyJiggle, chest: C.chestJiggle, img: img, canvas: $('belly-canvas'),
+    bulge: C.crotch && C.crotch.bulge,
     overlay: partsLayer,
     layers: (src) => wornLayers(faceOfSrc[absUrl(src)])
   });
   const bubble = $('bubble');
   const zonesEl = $('zones');
 
-  const PLACE_LABEL = { head: '頭', chestL: 'むね', chestR: 'むね', belly: 'おなか', tail: 'しっぽ' };
+  const PLACE_LABEL = { head: '頭', chestL: 'むね', chestR: 'むね', belly: 'おなか', tail: 'しっぽ', crotch: 'おまた' };
   // タップ範囲 → セリフや記録で使う場所の名前（左右の胸はどちらも chest）
   const PLACE_OF = { chestL: 'chest', chestR: 'chest' };
   // ぷるんと揺れる場所（指をはなしたときにタップ。すべらせると引っぱれる）
@@ -245,6 +246,7 @@
     if (state.phase !== 'active') return;
     const place = PLACE_OF[zonePlace] || zonePlace;   // chestL / chestR → chest
     const t = now();
+    if (place === 'crotch' && C.crotch) { touchCrotch(t); return; }
     const w = C.countWeight[place] != null ? C.countWeight[place] : 1;
     state.taps.push({ time: t, weight: w });
 
@@ -263,6 +265,55 @@
     say({ scene: scene, place: place, mood: mood });
     if (place === 'belly') playFaces(C.bellyFaces && C.bellyFaces[mood]);
     refreshFace();
+  }
+
+  /* ---- おまた：なかよし度で反応が変わる（config.js の crotch） ----
+     angry（すぐ怒る）→ moji（モジモジ）→ dere（デレる。ハート最大で少しふくらむ） */
+  function crotchStage() {
+    const h = SAVE.hearts(), S = C.crotch.stages;
+    if (h >= S.dere) return 'dere';
+    if (h >= S.moji) return 'moji';
+    return 'angry';
+  }
+
+  function touchCrotch(t) {
+    const CR = C.crotch;
+    const stage = crotchStage();
+    track('tap.crotch');
+    // なかよしになる前は、すぐ怒って隠れる
+    if (stage === 'angry') { getAngry({ place: 'crotch' }); return; }
+
+    state.taps.push({ time: t, weight: CR.weight[stage] != null ? CR.weight[stage] : 1 });
+    const mood = moodFromCount(tapCount(t));
+    if (mood === 'angry') { getAngry({ place: 'crotch' }); return; }
+    state.mood = mood;
+    if (!DEMO && SAVE.addTapPoint()) heartUp();
+
+    const B = CR.bulge;
+    const bulge = stage === 'dere' && B && B.amount > 0 && SAVE.hearts() >= B.hearts;
+    mojimoji(stage === 'dere' ? 0.6 : 1);
+    if (bulge) belly.swell('crotch', B.amount, B.seconds * 1000);
+
+    say({ scene: 'tap', place: 'crotch', stage: bulge ? 'bulge' : stage, mood: mood });
+    // セリフに絵の指定がないときは、反応ごとの絵にする
+    if (!state.faceOverride && CR.faces[stage] && C.images[CR.faces[stage]]) {
+      state.faceOverride = CR.faces[stage];
+      state.faceOverrideUntil = now() + C.bubbleSeconds * 1000;
+    }
+    state.faceSeq = null;
+    refreshFace();
+  }
+
+  // モジモジ：ひざをすりあわせるように、小さく左右にくねくね（k で大きさ）
+  function mojimoji(k) {
+    body.animate([
+      { transform: 'rotate(0) scale(1, 1)' },
+      { transform: 'rotate(' + (-1.6 * k) + 'deg) scale(' + (1 - .012 * k) + ', ' + (1 + .006 * k) + ')' },
+      { transform: 'rotate(' + (1.6 * k) + 'deg) scale(' + (1 - .012 * k) + ', ' + (1 + .006 * k) + ')' },
+      { transform: 'rotate(' + (-1.2 * k) + 'deg) scale(1, 1)' },
+      { transform: 'rotate(' + (0.8 * k) + 'deg) scale(1, 1)' },
+      { transform: 'rotate(0) scale(1, 1)' }
+    ], { duration: 900, easing: 'ease-in-out' });
   }
 
   // 絵を順番に切り替える（ぽんぽこ①→②→…）
@@ -384,14 +435,14 @@
   /* =========================================================
      怒る → 隠れる → 戻ってくる
      ========================================================= */
-  async function getAngry() {
+  async function getAngry(base) {
     state.phase = 'angry';
     state.faceSeq = null;
     belly.stop();
     track('angry');
     endMelt(true);
     refreshFace();
-    say({ scene: 'angry' });
+    say(Object.assign({ scene: 'angry' }, base));
 
     // プルプル震える
     await body.animate([
@@ -484,7 +535,8 @@
     streakDays: (cond, ctx) => inRange(cond, ctx.streakDays),
     totalDays:  (cond, ctx) => inRange(cond, ctx.totalDays),
     visit:      (cond, ctx) => listHas(cond, ctx.visit),
-    part:       (cond, ctx) => listHas(cond, ctx.part)
+    part:       (cond, ctx) => listHas(cond, ctx.part),
+    stage:      (cond, ctx) => listHas(cond, ctx.stage)
   };
 
   const warned = {};
@@ -697,6 +749,7 @@
       ['むねをさわった', (s.tap.chest || 0) + ' 回'],
       ['おなかをさわった', s.tap.belly + ' 回'],
       ['しっぽをさわった', s.tap.tail + ' 回'],
+      ['おまたをさわった', (s.tap.crotch || 0) + ' 回'],
       ['とろけさせた', s.melt + ' 回'],
       ['怒らせちゃった', s.angry + ' 回'],
       ['セリフ図鑑', d.seenLines.length + ' ／ ' + total]
