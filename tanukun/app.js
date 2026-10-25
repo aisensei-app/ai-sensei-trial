@@ -720,9 +720,10 @@
     }
     const r = demoResult();
     $('toast').classList.remove('on');
-    const intent = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(DEMO.shareText(r)) +
-      '&url=' + encodeURIComponent(shareUrl(r)) +
-      (DEMO.hashtag ? '&hashtags=' + encodeURIComponent(DEMO.hashtag) : '');
+    // ハッシュタグは本文に直接書く（hashtags= で渡すと X アプリで消えることがあるため）
+    const postText = DEMO.shareText(r) + (DEMO.hashtag ? '\n#' + DEMO.hashtag : '');
+    const intent = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(postText) +
+      '&url=' + encodeURIComponent(shareUrl(r));
     openSheet('診断結果',
       '<p class="res-lead">きみは…</p>' +
       '<p class="res-title"></p>' +
@@ -765,7 +766,7 @@
     }
 
     // スマホの「共有」メニューから X アプリなどで投稿（アプリはログイン済みなので、ログイン画面が出ない）
-    const text = DEMO.shareText(r) + (DEMO.hashtag ? ' #' + DEMO.hashtag : '');
+    const text = postText;
     const url = shareUrl(r);
     const share = body.querySelector('.btn-share');
     if (share) {
