@@ -48,11 +48,11 @@ window.TANU_CONFIG = {
 
   /* ---- 両胸も、さわると「ぷるん」（おなかと同じ動き方で、おなかより控えめ） ----
      gain … おなかに対する揺れ・へこみ・引っぱりの大きさ（0.45 = おなかの45%。0 で揺らさない）
-     left / right … 絵で見て左・右の胸の楕円（％） */
+     left / right … 絵で見て左・右の胸の、揺らす楕円（％） */
   chestJiggle: {
     gain: 0.45,
-    left:  { x: 29.4, y: 31.3, rx: 11.4, ry: 4.3 },
-    right: { x: 57.5, y: 28.8, rx: 11.7, ry: 4.6 }
+    left:  { x: 35.0, y: 32.2, rx: 7.2, ry: 3.3 },   // 絵で見て左の胸の乳輪あたり（720×900 の絵で 252, 290）
+    right: { x: 60.0, y: 32.8, rx: 5.0, ry: 3.3 }    // 絵で見て右の胸の乳輪あたり（432, 295）
   },
 
   /* おなかタップで「ぽん！」「ぽこ！」の文字を出す。
@@ -65,8 +65,8 @@ window.TANU_CONFIG = {
      （showZones を true にすると、範囲が画面に表示されます） */
   zones: {
     head:   { left: 20, top: 0,  width: 50, height: 24 },
-    chestL: { left: 18, top: 25, width: 23, height: 12 },   // 左の胸（絵で見て左）
-    chestR: { left: 46, top: 25, width: 23, height: 12 },   // 右の胸
+    chestL: { left: 22, top: 26, width: 25, height: 11 },   // 左の胸（絵で見て左）
+    chestR: { left: 52, top: 27, width: 15, height: 10 },   // 右の胸
     belly:  { left: 10, top: 37, width: 52, height: 27 },
     tail:   { left: 62, top: 50, width: 38, height: 40 }
   },
