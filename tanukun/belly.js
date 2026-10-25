@@ -25,10 +25,11 @@ window.TanuBelly = function (opts) {
 
   /* ---------- 揺らす場所（楕円）----------
      gain … おなかに対する揺れの大きさ（胸はおなかより小さく） */
-  const parts = { belly: { def: BJ, gain: 1 } };
+  const parts = { belly: { def: BJ, gain: 1, canDrag: true } };
   if (CJ && CJ.gain > 0) {
-    if (CJ.left)  parts.chestL = { def: CJ.left,  gain: CJ.gain };
-    if (CJ.right) parts.chestR = { def: CJ.right, gain: CJ.gain };
+    const cd = !!CJ.drag;
+    if (CJ.left)  parts.chestL = { def: CJ.left,  gain: CJ.gain, canDrag: cd };
+    if (CJ.right) parts.chestR = { def: CJ.right, gain: CJ.gain, canDrag: cd };
   }
   const regions = Object.keys(parts).map((key) => {
     const r = parts[key];
@@ -235,6 +236,8 @@ window.TanuBelly = function (opts) {
     ready: ready,
     warm: warm,
     has: (part) => !!parts[part],
+    // 引っぱれる場所か（胸は config.js の chestJiggle.drag で切りかえ）
+    canDrag: (part) => !!(parts[part] && parts[part].canDrag),
 
     // 指を置いた：その場所がへこむ（imgX, imgY は画像のピクセル位置。指の位置もくぼむ）
     press: function (part, imgX, imgY) {
@@ -275,7 +278,7 @@ window.TanuBelly = function (opts) {
     // 引っぱる（dx, dy は画面上の移動量。scale は画面→画像の倍率）
     drag: function (part, dx, dy, scale) {
       const r = parts[part];
-      if (!r || !W) return;
+      if (!r || !W || !r.canDrag) return;
       r.dragging = true;
       r.hold = 0;
       poke.hold = 0;

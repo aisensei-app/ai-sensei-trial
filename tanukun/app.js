@@ -142,6 +142,7 @@
     const dx = e.clientX - press.x, dy = e.clientY - press.y;
     if (!press.pulling && Math.hypot(dx, dy) < DRAG_START) return;
     if (!belly.ready() || state.phase !== 'active') return;
+    if (!belly.canDrag(press.part)) return;   // 胸は引っぱらない（指をはなすと、ぷるん）
     press.pulling = true;
     belly.drag(press.part, dx, dy, toImg());
   });
