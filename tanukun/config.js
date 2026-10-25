@@ -80,8 +80,8 @@ window.TANU_CONFIG = {
     navel: {
       label: 'おへそ',
       items: [
-        // 720×900 の絵で中心 (192, 461)、横幅 52 ピクセル。どの表情の絵でも、おへその位置は同じ
-        { id: 'debeso', name: 'デベソ', image: 'images/parts/debeso.webp', x: 26.67, y: 51.22, width: 7.22, hearts: 0 }
+        // 720×900 の絵で中心 (192, 461)、横幅 56 ピクセル。どの表情の絵でも、おへその位置は同じ
+        { id: 'debeso', name: 'デベソ', image: 'images/parts/debeso.webp', x: 26.67, y: 51.22, width: 7.78, hearts: 0 }
       ]
     }
   },
