@@ -17,7 +17,9 @@
   const img    = $('tanu-img');
   const bellyLayer = $('belly-layer');
   const bellyImg   = $('belly-img');
-  const belly = window.TanuBelly({ config: C.bellyJiggle, img: img, canvas: $('belly-canvas') });
+  const belly = window.TanuBelly({
+    config: C.bellyJiggle, chest: C.chestJiggle, img: img, canvas: $('belly-canvas')
+  });
   const bubble = $('bubble');
   const zonesEl = $('zones');
 
