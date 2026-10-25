@@ -7,6 +7,8 @@
      → 境目ができず、絵が二重に見えない
    ・動きは「ばね」の計算（ばねの強さ SPRING、止まりやすさ DAMP）
    ・指を置いている間は、その場所がへこみ、指の位置がくぼむ
+   ・胸は「肉のかたまりが上下にぷるんぷるん揺れる」動き（bob）。
+     中心ほど大きく動き、ふちに向かって弱くなるので、輪郭が折れない
      → はなすと「ぷるん」と戻る
    数値は config.js の bellyJiggle / chestJiggle で調整します。
 
@@ -28,14 +30,16 @@ window.TanuBelly = function (opts) {
   const parts = { belly: { def: BJ, gain: 1, canDrag: true } };
   if (CJ && CJ.gain > 0) {
     const cd = !!CJ.drag;
-    if (CJ.left)  parts.chestL = { def: CJ.left,  gain: CJ.gain, canDrag: cd };
-    if (CJ.right) parts.chestR = { def: CJ.right, gain: CJ.gain, canDrag: cd };
+    const bob = CJ.bob || 0;   // 上下に揺れる大きさ（絵の高さの％）
+    if (CJ.left)  parts.chestL = { def: CJ.left,  gain: CJ.gain, canDrag: cd, bob: bob };
+    if (CJ.right) parts.chestR = { def: CJ.right, gain: CJ.gain, canDrag: cd, bob: bob };
   }
   const regions = Object.keys(parts).map((key) => {
     const r = parts[key];
     r.key = key;
     r.x = r.v = r.px = r.py = r.pvx = r.pvy = 0;
     r.hold = 0;          // 指で押さえている間の「へこみ」の目標
+    r.holdY = 0;         // 指で押さえている間の「沈み」の目標（胸の上下の揺れ用。ピクセル）
     r.dragging = false;
     return r;
   });
@@ -175,16 +179,16 @@ window.TanuBelly = function (opts) {
     r.x += r.v * h;
     if (!r.dragging) {
       r.pvx += (-SPRING * r.px - DAMP * r.pvx) * h;
-      r.pvy += (-SPRING * r.py - DAMP * r.pvy) * h;
+      r.pvy += (-SPRING * (r.py - r.holdY) - DAMP * r.pvy) * h;
       r.px += r.pvx * h;
       r.py += r.pvy * h;
     }
   }
 
-  const isStill = (r) => !r.hold && !r.dragging &&
+  const isStill = (r) => !r.hold && !r.holdY && !r.dragging &&
     Math.abs(r.x) < 0.001 && Math.abs(r.v) < 0.02 &&
     Math.abs(r.px) < 0.3 && Math.abs(r.py) < 0.3 && Math.abs(r.pvx) < 3 && Math.abs(r.pvy) < 3;
-  const zero = (r) => { r.x = r.v = r.px = r.py = r.pvx = r.pvy = 0; r.hold = 0; r.dragging = false; };
+  const zero = (r) => { r.x = r.v = r.px = r.py = r.pvx = r.pvy = 0; r.hold = r.holdY = 0; r.dragging = false; };
 
   function loop(t) {
     let dt = Math.min(0.05, (t - last) / 1000);
@@ -244,6 +248,8 @@ window.TanuBelly = function (opts) {
       const r = parts[part];
       if (!r || !W) return;
       r.hold = -(BJ.pressDent || 0.05) * k * r.gain;
+      // 胸：押さえている間は少し下に沈む
+      if (r.bob) r.holdY = r.bob / 100 * H * k * 0.5;
       if (PK.depth > 0 && imgX != null) {
         // 指の位置を、楕円の内側におさめる
         const u = (imgX - r.cx) / r.rx, v = (imgY - r.cy) / r.ry;
@@ -261,8 +267,11 @@ window.TanuBelly = function (opts) {
       if (!r) return;
       const target = (BJ.pressDent || 0.05) * k * r.gain;
       r.hold = 0;
+      r.holdY = 0;
       r.dragging = false;
       poke.hold = 0;
+      // 胸：下にぷるんと沈んでから、上下に揺れて戻る（沈む深さが bob になる勢いをつける）
+      if (tapped && r.bob) r.pvy += r.bob / 100 * H * k / peak;
       if (tapped) {
         if (r.x < -target * 0.5) {
           // しっかり押していた：へこみから「ぷるん」と強めに戻す
