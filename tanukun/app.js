@@ -8,6 +8,7 @@
   const C = window.TANU_CONFIG;
   const LINES = window.TANU_LINES || [];
   const SAVE = window.TanuSave;
+  const DEMO = window.TANU_DEMO || null;   // お試し版のときだけある（demo.js）
   const $ = (id) => document.getElementById(id);
 
   const area   = $('tanu-area');
@@ -196,8 +197,8 @@
     if (mood === 'angry') { getAngry(); return; }
     state.mood = mood;
 
-    SAVE.count('tap.' + place);
-    if (SAVE.addTapPoint()) heartUp();
+    track('tap.' + place);
+    if (!DEMO && SAVE.addTapPoint()) heartUp();
 
     let scene = 'tap';
     if (place === 'head')  scene = petHead(t);
@@ -243,7 +244,7 @@
     state.meltTimer = setTimeout(endMelt, C.melt.holdSeconds * 1000);
     if (state.melting) return;
     state.melting = true;
-    SAVE.count('melt');
+    track('melt');
     melt.animate([
       { transform: 'scale(1, 1)' },
       { transform: 'scale(1.14, .9)' }
@@ -332,7 +333,7 @@
     state.phase = 'angry';
     state.faceSeq = null;
     belly.stop();
-    SAVE.count('angry');
+    track('angry');
     endMelt(true);
     refreshFace();
     say({ scene: 'angry' });
@@ -379,7 +380,7 @@
 
   function onHiddenTap() {
     rustle();
-    SAVE.count('hiddenTap');
+    track('hiddenTap');
     say({ scene: 'hiddenTap' });
   }
 
@@ -613,7 +614,7 @@
 
   // 開いたまま日付が変わったときのために、画面に戻ってきたら確認
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') checkIn();
+    if (document.visibilityState === 'visible' && !DEMO) checkIn();
   });
 
   /* =========================================================
@@ -678,15 +679,86 @@
     });
   });
 
-  /* ---------- 開始 ---------- */
-  setMode('home');
-  refreshFace();
-  renderStatus();
-  setTimeout(() => { if (!checkIn()) say({ scene: 'home', visit: 'again' }); }, 400);
+  /* =========================================================
+     お試し版（demo.js があるときだけ）
+     開いたらすぐ遊べて、遊んだ内容から「診断」→ 結果を X にポストできる
+     ========================================================= */
+  const demoStats = { head: 0, melt: 0, belly: 0, angry: 0, total: 0 };
 
-  /* ---------- ホーム画面に追加して使うための準備（PWA） ----------
-     ファイルを直接開いたとき（file://）は動かないので、そのときは何もしません */
-  if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
+  // 遊んだ記録（本編は記録に保存、お試し版はその場だけ数える）
+  function track(key) {
+    if (!DEMO) { SAVE.count(key); return; }
+    const k = key.indexOf('tap.') === 0 ? key.slice(4) : key;
+    if (k in demoStats) demoStats[k] += 1;
+    if (key.indexOf('tap.') === 0) {
+      demoStats.total += 1;
+      if (demoStats.total === DEMO.resultAfter) {
+        $('btn-result').classList.add('ready');
+        toast('🔮 診断できるようになったよ！');
+      }
+    }
+  }
+
+  function demoResult() {
+    return DEMO.results.find((r) => r.when(demoStats)) || DEMO.results[DEMO.results.length - 1];
+  }
+
+  function shareUrl(r) {
+    // 結果ごとのページ（X でカードの絵が結果に合わせて変わる）。公開先が未設定なら今のページ
+    if (DEMO.baseUrl) return DEMO.baseUrl + 'r/' + r.id + '.html';
+    return location.href.split('?')[0].split('#')[0];
+  }
+
+  function showResult() {
+    const left = DEMO.resultAfter - demoStats.total;
+    if (left > 0) {
+      showBubble('もうちょっと遊んでから〜！\n（あと ' + left + ' 回）');
+      return;
+    }
+    const r = demoResult();
+    $('toast').classList.remove('on');
+    const intent = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(DEMO.shareText(r)) +
+      '&url=' + encodeURIComponent(shareUrl(r)) +
+      (DEMO.hashtag ? '&hashtags=' + encodeURIComponent(DEMO.hashtag) : '');
+    openSheet('診断結果',
+      '<p class="res-lead">きみは…</p>' +
+      '<p class="res-title"></p>' +
+      '<img class="res-img" alt="">' +
+      '<p class="res-comment"></p>' +
+      '<a class="btn btn-main btn-x" target="_blank" rel="noopener">𝕏 でポストする</a>' +
+      '<p class="note small center">タヌくんは、ただいま制作中！<br>完成したら公開するよ。待っててね🦝</p>');
+    // 文字や URL は、あとから入れる（記号が入っても安全なように）
+    const body = $('sheet-body');
+    body.querySelector('.res-title').textContent = '「' + r.title + '」';
+    body.querySelector('.res-img').src = C.images[r.face] || C.images.normal;
+    body.querySelector('.res-comment').textContent = r.comment;
+    body.querySelector('.btn-x').href = intent;
+  }
+
+  function startDemo() {
+    document.body.classList.add('demo');
+    $('sheet-close').textContent = 'もっと遊ぶ';
+    $('btn-result').addEventListener('click', showResult);
+    const C2 = C.images;
+    belly.warm([C2.normal, C2.shy, C2.troubled, C2.ponpoko1, C2.ponpoko2, C2.muni].filter(Boolean));
+    setMode('play');
+    refreshFace();
+    setTimeout(() => showBubble('はじめまして！タヌくんだよ\nさわってみてね'), 400);
+  }
+
+  /* ---------- 開始 ---------- */
+  if (DEMO) {
+    startDemo();
+  } else {
+    setMode('home');
+    refreshFace();
+    renderStatus();
+    setTimeout(() => { if (!checkIn()) say({ scene: 'home', visit: 'again' }); }, 400);
+
+    /* ---------- ホーム画面に追加して使うための準備（PWA） ----------
+       ファイルを直接開いたとき（file://）は動かないので、そのときは何もしません */
+    if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    }
   }
 })();

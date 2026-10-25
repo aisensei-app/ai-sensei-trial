@@ -39,6 +39,42 @@ html, body {
 .mode-name .name-form { display: flex; }
 .mode-name #tanu-area { width: min(70vw, 36vh * 0.8, 360px); }
 
+/* ---- お試し版 ---- */
+.demo-bar { display: none; }
+.demo .demo-bar {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+}
+.demo #back, .demo #play-hearts { display: none; }
+.demo-badge {
+  font-size: 13px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .7);
+}
+.btn-result { font-size: 15px; padding: 9px 16px; }
+.btn-result.ready {
+  background: #F08A3C;
+  color: #fff;
+  box-shadow: 0 3px 0 #C8641E;
+  animation: nudge 1.6s ease-in-out infinite;
+}
+@keyframes nudge {
+  0%, 70%, 100% { transform: scale(1); }
+  80% { transform: scale(1.08); }
+  90% { transform: scale(.97); }
+}
+.res-lead { margin: 0; text-align: center; font-size: 15px; opacity: .7; }
+.res-title { margin: 0; text-align: center; font-size: 26px; font-weight: 900; color: #C8641E; }
+.res-img { display: block; width: 55%; max-width: 220px; margin: 0 auto; aspect-ratio: 4 / 5; object-fit: contain; }
+.res-comment { margin: 0; text-align: center; font-size: 17px; font-weight: 700; }
+.btn-main.btn-x { display: block; text-align: center; text-decoration: none; background: #111; box-shadow: 0 4px 0 #444; color: #fff; }
+.btn-main.btn-x:active { box-shadow: 0 2px 0 #444; }
+.note.center { text-align: center; }
+
 /* ---- 呼び名の入力 ---- */
 .name-form {
   width: 100%;
