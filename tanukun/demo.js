@@ -11,7 +11,7 @@ window.TANU_DEMO = {
   baseUrl: '',
 
   // この回数さわると「診断」できるようになる
-  resultAfter: 12,
+  resultAfter: 5,
 
   // ポストにつけるハッシュタグ（# はつけない）
   hashtag: 'タヌくん',
@@ -25,7 +25,7 @@ window.TANU_DEMO = {
       when: (c) => c.angry >= 1 },
     { id: 'torokeshi', title: 'とろけさせ名人', face: 'melt',
       comment: 'なでるの、じょうずすぎ…ふにゃ〜',
-      when: (c) => c.melt >= 3 },
+      when: (c) => c.melt >= 2 },
     { id: 'ponpoko', title: 'ぽんぽこ職人',     face: 'ponpoko1',
       comment: 'いい音、出してくれるね〜♪',
       when: (c) => c.belly > c.head },

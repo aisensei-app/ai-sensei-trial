@@ -74,6 +74,8 @@ html, body {
 .btn-main.btn-x { display: block; text-align: center; text-decoration: none; background: #111; box-shadow: 0 4px 0 #444; color: #fff; }
 .btn-main.btn-x:active { box-shadow: 0 2px 0 #444; }
 .note.center { text-align: center; }
+.share-row { display: flex; gap: 8px; }
+.share-row .btn { flex: 1; font-size: 14px; padding: 11px 8px; }
 
 /* ---- 呼び名の入力 ---- */
 .name-form {

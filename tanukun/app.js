@@ -726,6 +726,11 @@
       '<img class="res-img" alt="">' +
       '<p class="res-comment"></p>' +
       '<a class="btn btn-main btn-x" target="_blank" rel="noopener">𝕏 でポストする</a>' +
+      '<div class="share-row">' +
+      (navigator.share ? '<button class="btn btn-share" type="button">📤 アプリでシェア</button>' : '') +
+      '<button class="btn btn-copy" type="button">📋 文章をコピー</button>' +
+      '</div>' +
+      '<p class="note small center">X のログイン画面が出たら、「アプリでシェア」から X アプリを選んでね</p>' +
       '<p class="note small center">タヌくんは、ただいま制作中！<br>完成したら公開するよ。待っててね🦝</p>');
     // 文字や URL は、あとから入れる（記号が入っても安全なように）
     const body = $('sheet-body');
@@ -733,6 +738,39 @@
     body.querySelector('.res-img').src = C.images[r.face] || C.images.normal;
     body.querySelector('.res-comment').textContent = r.comment;
     body.querySelector('.btn-x').href = intent;
+
+    // スマホの「共有」メニューから X アプリなどで投稿（アプリはログイン済みなので、ログイン画面が出ない）
+    const text = DEMO.shareText(r) + (DEMO.hashtag ? ' #' + DEMO.hashtag : '');
+    const url = shareUrl(r);
+    const share = body.querySelector('.btn-share');
+    if (share) {
+      share.addEventListener('click', () => {
+        navigator.share({ text: text, url: url }).catch(() => {});
+      });
+    }
+    // 文章と URL をコピー（自分で X に貼りつけて投稿）
+    body.querySelector('.btn-copy').addEventListener('click', (e) => {
+      const btn = e.currentTarget, all = text + '\n' + url;
+      const done = () => { btn.textContent = '✅ コピーしました'; };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(all).then(done, () => copyFallback(all, done));
+      } else {
+        copyFallback(all, done);
+      }
+    });
+  }
+
+  // 古いブラウザ用のコピー
+  function copyFallback(textToCopy, done) {
+    const ta = document.createElement('textarea');
+    ta.value = textToCopy;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { if (document.execCommand('copy')) done(); } catch (err) {}
+    ta.remove();
   }
 
   function startDemo() {
