@@ -709,6 +709,9 @@
     return location.href.split('?')[0].split('#')[0];
   }
 
+  let lastResult = null;    // 前回の診断結果（結果が変わったことが分かるように）
+  let resultOpen = false;
+
   function showResult() {
     const left = DEMO.resultAfter - demoStats.total;
     if (left > 0) {
@@ -723,6 +726,7 @@
     openSheet('診断結果',
       '<p class="res-lead">きみは…</p>' +
       '<p class="res-title"></p>' +
+      '<p class="res-prev" hidden></p>' +
       '<img class="res-img" alt="">' +
       '<p class="res-comment"></p>' +
       '<a class="btn btn-main btn-x" target="_blank" rel="noopener">𝕏 でポストする</a>' +
@@ -737,6 +741,19 @@
     body.querySelector('.res-title').textContent = '「' + r.title + '」';
     body.querySelector('.res-img').src = C.images[r.face] || C.images.normal;
     body.querySelector('.res-comment').textContent = r.comment;
+    // 2回目からは、前回とくらべて表示する
+    const prev = body.querySelector('.res-prev');
+    if (lastResult) {
+      prev.hidden = false;
+      if (lastResult.id !== r.id) {
+        prev.textContent = '🎉 結果が変わったよ！（前回は「' + lastResult.title + '」）';
+        prev.classList.add('changed');
+      } else {
+        prev.textContent = '前回と同じ結果だよ';
+      }
+    }
+    lastResult = r;
+    resultOpen = true;
     body.querySelector('.btn-x').href = intent;
 
     // スマホの「共有」メニューから X アプリなどで投稿（アプリはログイン済みなので、ログイン画面が出ない）
@@ -775,8 +792,18 @@
 
   function startDemo() {
     document.body.classList.add('demo');
-    $('sheet-close').textContent = 'もっと遊ぶ';
+    $('sheet-close').textContent = 'もう一回あそぶ';
     $('btn-result').addEventListener('click', showResult);
+    // 診断結果を閉じたら、診断をリセット（もう一度5回さわると、新しく診断できる）
+    const resetDemo = () => {
+      if (!resultOpen || !$('sheet').hidden) return;
+      resultOpen = false;
+      Object.keys(demoStats).forEach((k) => { demoStats[k] = 0; });
+      $('btn-result').classList.remove('ready');
+      showBubble('もう一回、診断してみる？\n（あと ' + DEMO.resultAfter + ' 回さわってね）');
+    };
+    $('sheet-close').addEventListener('click', resetDemo);
+    $('sheet').addEventListener('click', resetDemo);
     const C2 = C.images;
     belly.warm([C2.normal, C2.shy, C2.troubled, C2.ponpoko1, C2.ponpoko2, C2.muni].filter(Boolean));
     setMode('play');
