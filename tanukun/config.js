@@ -51,8 +51,8 @@ window.TANU_CONFIG = {
      left / right … 絵で見て左・右の胸の、揺らす楕円（％） */
   chestJiggle: {
     gain: 0.45,
-    left:  { x: 35.0, y: 32.2, rx: 7.2, ry: 3.3 },   // 絵で見て左の胸の乳輪あたり（720×900 の絵で 252, 290）
-    right: { x: 60.0, y: 32.8, rx: 5.0, ry: 3.3 }    // 絵で見て右の胸の乳輪あたり（432, 295）
+    left:  { x: 19.4, y: 35.6, rx: 4.4, ry: 2.9 },   // 絵で見て左の乳輪あたり（720×900 の絵で 140, 320）
+    right: { x: 47.2, y: 35.6, rx: 4.4, ry: 2.9 }    // 絵で見て右の乳輪あたり（340, 320）
   },
 
   /* おなかタップで「ぽん！」「ぽこ！」の文字を出す。
@@ -65,9 +65,9 @@ window.TANU_CONFIG = {
      （showZones を true にすると、範囲が画面に表示されます） */
   zones: {
     head:   { left: 20, top: 0,  width: 50, height: 24 },
-    chestL: { left: 22, top: 26, width: 25, height: 11 },   // 左の胸（絵で見て左）
-    chestR: { left: 52, top: 27, width: 15, height: 10 },   // 右の胸
-    belly:  { left: 10, top: 37, width: 52, height: 27 },
+    chestL: { left: 14, top: 30, width: 12, height: 8 },    // 左の胸（絵で見て左）
+    chestR: { left: 41, top: 30, width: 12, height: 8 },    // 右の胸
+    belly:  { left: 10, top: 38, width: 52, height: 26 },
     tail:   { left: 62, top: 50, width: 38, height: 40 }
   },
   showZones: false,   // URL の最後に ?zones を付けても表示されます
