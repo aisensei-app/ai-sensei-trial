@@ -460,6 +460,41 @@ html, body {
   transition: opacity .12s, transform .25s cubic-bezier(.3, 1.6, .5, 1);
 }
 
+/* ---- 思い出（特別イラスト）：全画面で絵と台詞 ---- */
+.event { position: fixed; inset: 0; z-index: 40; background: #000; opacity: 0; transition: opacity .4s; cursor: pointer; }
+.event[hidden] { display: none; }
+.event.on { opacity: 1; }
+.ev-pic { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+.ev-img { width: 100%; height: 100%; object-fit: cover; animation: ev-in 1.2s ease-out; }
+.ev-pic.stand .ev-img { width: auto; height: 66%; max-width: 92%; object-fit: contain; margin-bottom: 22%; }
+@keyframes ev-in { from { transform: scale(1.06); filter: brightness(1.4); } to { transform: none; filter: none; } }
+.ev-title { position: absolute; top: calc(env(safe-area-inset-top) + 16px); left: 50%; transform: translateX(-50%);
+  background: rgba(255, 255, 255, .85); color: #C8641E; font-weight: 800; font-size: 15px;
+  padding: 6px 16px; border-radius: 999px; white-space: nowrap; }
+.ev-skip { position: absolute; top: calc(env(safe-area-inset-top) + 12px); right: 12px; width: 36px; height: 36px;
+  border: 0; border-radius: 50%; background: rgba(0, 0, 0, .35); color: #fff; font-size: 20px; cursor: pointer; }
+.ev-box { position: absolute; left: 12px; right: 12px; bottom: calc(env(safe-area-inset-bottom) + 16px);
+  min-height: 112px; padding: 26px 18px 18px; border-radius: 18px;
+  background: rgba(255, 249, 239, .93); border: 2px solid #F0C9A0; box-shadow: 0 6px 20px rgba(0, 0, 0, .3); }
+.ev-name { position: absolute; top: -14px; left: 16px; background: #F08A3C; color: #fff; font-weight: 800;
+  font-size: 14px; padding: 4px 14px; border-radius: 999px; }
+.ev-text { margin: 0; font-size: 18px; font-weight: 700; line-height: 1.6; min-height: 1.6em; }
+.event.sys .ev-name { display: none; }
+.event.sys .ev-text { text-align: center; color: #C8641E; }
+.ev-next { position: absolute; right: 16px; bottom: 10px; color: #F08A3C; font-size: 14px; animation: blink 1s infinite; }
+@keyframes blink { 50% { opacity: .2; } }
+/* 思い出アルバム */
+.album { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.mem { display: flex; flex-direction: column; gap: 4px; padding: 0; border: 0; background: none; font: inherit;
+  color: inherit; cursor: pointer; text-align: center; }
+.mem-pic { display: flex; align-items: center; justify-content: center; aspect-ratio: 2 / 3; overflow: hidden;
+  border-radius: 12px; background: #fff; box-shadow: 0 2px 0 rgba(74, 46, 22, .15); }
+.mem-pic img { width: 100%; height: 100%; object-fit: cover; }
+.mem-pic.stand img { width: 90%; height: auto; object-fit: contain; }
+.mem.locked .mem-pic { background: #EADFCF; color: #B9A88F; font-size: 34px; font-weight: 900; }
+.mem-t { font-size: 11px; font-weight: 700; line-height: 1.3; word-break: break-all; }
+.mem.locked .mem-t { opacity: .6; font-weight: 400; }
+
 /* ---- なでなでゲージ（本編の遊ぶ画面だけ） ---- */
 .gauge { display: none; gap: 4px; margin-top: 14px; }
 body.mode-play:not(.demo) .gauge { display: flex; }

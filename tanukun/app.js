@@ -781,12 +781,77 @@
 
   function heartUp() {
     renderStatus();
-    // タヌくんも、ひとこと（ハートの数ごとのセリフ）
-    if (mode !== 'name') say({ scene: 'heartUp' });
     const msg = (C.friendship.rewards || [])[SAVE.hearts() - 1];
-    toast('💖 ハートをゲット！' + (msg ? '\n' + msg : ''), 3600);
+    const gotText = '💖 ハートをゲット！' + (msg ? '\n' + msg : '');
+    // そのハートの「思い出」があれば、特別イラストと台詞を見せてから、お知らせ
+    const m = memoryOf(SAVE.hearts());
+    if (m && mode !== 'name') {
+      setTimeout(() => playMemory(m, true).then(() => toast(gotText, 3600)), 600);
+    } else {
+      // タヌくんも、ひとこと（ハートの数ごとのセリフ）
+      if (mode !== 'name') say({ scene: 'heartUp' });
+      toast(gotText, 3600);
+    }
     const h = $('play-hearts');
     h.classList.remove('pop'); void h.offsetWidth; h.classList.add('pop');
+  }
+
+  /* =========================================================
+     思い出（恋愛ゲームのように、特別イラストと台詞）。config.js の memories
+     ========================================================= */
+  const MEM = C.memories || [];
+  const memoryOf = (n) => MEM.filter((m) => m.hearts === n)[0];
+  const evEl = $('event');
+  function playMemory(m, fresh) {
+    return new Promise((resolve) => {
+      const img = evEl.querySelector('.ev-img');
+      const pic = evEl.querySelector('.ev-pic');
+      const text = evEl.querySelector('.ev-text');
+      // 特別イラストがまだないときは、ふだんの絵を、色の背景の上に仮に出す
+      const real = !!m.image;
+      img.src = real ? m.image : (C.images[m.stand] || C.images.normal);
+      pic.classList.toggle('stand', !real);
+      pic.style.background = real ? '' : 'linear-gradient(' + m.bg[0] + ', ' + m.bg[1] + ')';
+      evEl.querySelector('.ev-title').textContent = '💖' + m.hearts + '　' + m.title;
+      const lines = m.lines.map(withName).concat(fresh ? ['📖 思い出アルバムに追加されました'] : []);
+      let i = 0, typing = null, shown = '';
+      function show() {
+        const full = lines[i];
+        evEl.classList.toggle('sys', fresh && i === lines.length - 1);
+        let k = 0;
+        clearInterval(typing);
+        text.textContent = '';
+        // 1文字ずつ表示（恋愛ゲームの会話のように）
+        typing = setInterval(() => {
+          k += 1;
+          text.textContent = full.slice(0, k);
+          if (k >= full.length) { clearInterval(typing); typing = null; }
+        }, 45);
+        shown = full;
+      }
+      function next(e) {
+        if (e) e.stopPropagation();
+        if (typing) { clearInterval(typing); typing = null; text.textContent = shown; return; }
+        i += 1;
+        if (i < lines.length) { show(); return; }
+        close();
+      }
+      function close() {
+        clearInterval(typing);
+        evEl.removeEventListener('click', next);
+        skip.removeEventListener('click', onSkip);
+        evEl.classList.remove('on');
+        setTimeout(() => { evEl.hidden = true; resolve(); }, 300);
+      }
+      const skip = evEl.querySelector('.ev-skip');
+      const onSkip = (e) => { e.stopPropagation(); close(); };
+      evEl.addEventListener('click', next);
+      skip.addEventListener('click', onSkip);
+      evEl.hidden = false;
+      void evEl.offsetWidth;
+      evEl.classList.add('on');
+      setTimeout(show, 500);
+    });
   }
 
   let toastTimer = null;
@@ -935,14 +1000,32 @@
       ['むねをさわった', (s.tap.chest || 0) + ' 回'],
       ['おなかをさわった', s.tap.belly + ' 回'],
       ['しっぽをさわった', s.tap.tail + ' 回'],
-      ['おまたをさわった', (s.tap.crotch || 0) + ' 回'],
+      // おまたは、さわるまでは「？？？」（ひみつ）
+      [(s.tap.crotch ? 'おまた' : '？？？') + 'をさわった', (s.tap.crotch || 0) + ' 回'],
       ['とろけさせた', s.melt + ' 回'],
       ['怒らせちゃった', s.angry + ' 回'],
       ['セリフ図鑑', d.seenLines.length + ' ／ ' + total]
     ];
+    // 思い出アルバム：ハートの数まで見られる。まだのものは「？」
+    const hearts = SAVE.hearts();
+    const album = MEM.length ? '<h3>📖 思い出アルバム（' + MEM.filter((m) => m.hearts <= hearts).length + ' ／ ' + MEM.length + '）</h3>' +
+      '<div class="album">' + MEM.map((m, i) => m.hearts <= hearts
+        ? '<button class="mem" type="button" data-i="' + i + '"><span class="mem-pic"><img alt=""></span><span class="mem-t"></span></button>'
+        : '<div class="mem locked"><span class="mem-pic">？</span><span class="mem-t">💖' + m.hearts + 'で見られる</span></div>').join('') +
+      '</div>' : '';
     openSheet('実績',
+      album +
+      '<h3>きろく</h3>' +
       '<table class="rec">' + rows.map((r) => '<tr><th>' + r[0] + '</th><td>' + r[1] + '</td></tr>').join('') + '</table>' +
       '<p class="note">バッジ（実績のごほうび）は準備中だよ</p>');
+    $('sheet-body').querySelectorAll('button.mem').forEach((b) => {
+      const m = MEM[+b.dataset.i];
+      const pic = b.querySelector('.mem-pic');
+      b.querySelector('img').src = m.image || C.images[m.stand] || C.images.normal;
+      if (!m.image) { pic.classList.add('stand'); pic.style.background = 'linear-gradient(' + m.bg[0] + ', ' + m.bg[1] + ')'; }
+      b.querySelector('.mem-t').textContent = '💖' + m.hearts + ' ' + m.title;
+      b.addEventListener('click', () => { closeSheet(); playMemory(m, false); });
+    });
   });
 
   // きせかえ：場所ごとに「なし」と部品を並べる。選ぶとパネルを閉じて、付けた姿を見せる
