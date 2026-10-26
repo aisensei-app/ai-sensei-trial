@@ -9,8 +9,9 @@
                         / wear（きせかえで部品を付けた・はずした）
      part      … 付けた部品の id（wear のときだけ）。はずしたときは none
      stage     … おまたの反応（place: 'crotch' のときだけ）
-                        moji（モジモジ）/ dere（デレ）/ bulge（デレて、少しふくらんだ）
-                        ※ なかよしになる前は、すぐ怒る（scene: 'angry', place: 'crotch'）
+                        warn（なかよしになる前の1回目。注意する）/ moji（モジモジ）
+                        / dere（デレ）/ bulge（デレて、少しふくらんだ）
+                        ※ なかよしになる前に続けてさわると怒る（scene: 'angry', place: 'crotch'）
      visit     … 来かた（home のときだけ）
                         first（はじめて）/ new（今日はじめて・前日も来た）
                         / comeback（2日以上あいて来た）/ again（今日2回目以降）
@@ -106,6 +107,11 @@ window.TANU_LINES = [
   { text: 'しっぽ、引っぱらないで〜', when: { scene: 'tap', place: 'tail', mood: 'troubled' } },
 
   /* ---------- おまた（なかよし度で反応が変わる） ---------- */
+  // 注意（ハート0〜1の1回目。もう一度さわると怒る）
+  { text: 'ちょっと！次さわったら怒るからね！', when: { scene: 'tap', place: 'crotch', stage: 'warn' } },
+  { text: 'こらっ！そこはダメ！…次は怒るよ',  when: { scene: 'tap', place: 'crotch', stage: 'warn' } },
+  { text: 'ど、どこさわってるの！？もうダメだからね！', when: { scene: 'tap', place: 'crotch', stage: 'warn' } },
+  { text: '{name}でも、そこはまだダメ！',      when: { scene: 'tap', place: 'crotch', stage: 'warn' } },
   // モジモジ（ハート2〜3）
   { text: 'そ、そこは…まだダメ…',       when: { scene: 'tap', place: 'crotch', stage: 'moji' } },
   { text: 'も、もじもじ…',               when: { scene: 'tap', place: 'crotch', stage: 'moji' } },

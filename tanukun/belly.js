@@ -121,13 +121,21 @@ window.TanuBelly = function (opts) {
     bx = Math.max(0, Math.floor(x0)); by = Math.max(0, Math.floor(y0));
     bw = Math.min(W, Math.ceil(x1)) - bx; bh = Math.min(H, Math.ceil(y1)) - by;
     // 楕円の中の各点の「変形の強さ」を先に計算しておく（中心 1 → ふち 0）
+    // shade がある場所（おまたのふくらみ）は、丸く見せる陰影（上が明るく、下と横が暗い）も計算しておく
+    const L = [-0.35, -0.75, 0.55], LN = Math.hypot(L[0], L[1], L[2]);
     regions.forEach((r) => {
       r.weight = new Float32Array(bw * bh);
+      if (r.def.shade) r.light = new Float32Array(bw * bh);
       for (let y = 0; y < bh; y++) {
         for (let x = 0; x < bw; x++) {
           const u = (x + bx - r.cx) / r.rx, v = (y + by - r.cy) / r.ry;
           const r2 = u * u + v * v;
           r.weight[y * bw + x] = r2 < 1 ? (1 - r2) * (1 - r2) : 0;
+          if (r.light && r2 < 1) {
+            const nz = Math.sqrt(1 - r2);
+            const dot = (u * L[0] + v * L[1] + nz * L[2]) / LN;
+            r.light[y * bw + x] = (dot - 0.45) * nz * r.def.shade;
+          }
         }
       }
     });
@@ -143,7 +151,11 @@ window.TanuBelly = function (opts) {
     const o = out.data;
     // いま動いている場所だけ計算する
     const act = regions.filter((r) => r.x || r.px || r.py);
-    act.forEach((r) => { r.sc = clamp(r.x, -0.35, 0.35); });   // 連打でも絵がこわれない範囲に
+    act.forEach((r) => {
+      r.sc = clamp(r.x, -0.35, 0.35);   // 連打でも絵がこわれない範囲に
+      // ふくらみ：いまどのくらいふくらんでいるか（0〜1）。陰影と持ち上げに使う
+      r.fr = r.def.amount ? clamp(r.x / r.def.amount, 0, 1.2) : 0;
+    });
     const pk = poke.x ? clamp(poke.x, -0.5, 0.3) : 0;
     // くぼみの影：へこんでいるときだけ、指の位置をうっすら暗くする（押している感じを出す）
     const shadeK = pk < 0 && PK.depth > 0 ? (PK.shade || 0) * Math.min(1, -pk / PK.depth) : 0;
@@ -151,13 +163,17 @@ window.TanuBelly = function (opts) {
       for (let x = 0; x < bw; x++) {
         const i = y * bw + x;
         const X = x + bx, Y = y + by;
-        let sx = X, sy = Y, dark = 0;
+        let sx = X, sy = Y, dark = 0, lit = 0;
         for (let n = 0; n < act.length; n++) {
           const r = act[n], f = r.weight[i];
           if (f === 0) continue;
           // 中心に近い点ほど、ふくらみ（またはへこみ）と引っぱりの分だけずらして色を取る
           sx -= (X - r.cx) * r.sc * f + r.px * f;
           sy -= (Y - r.cy) * r.sc * f + r.py * f;
+          if (r.light) {
+            sy += (r.def.lift || 0) * f * r.fr;   // 少し持ち上がる
+            lit += r.light[i] * r.fr;
+          }
         }
         if (pk) {
           // 指のくぼみ：指の位置を中心に、小さくへこませる
@@ -179,7 +195,7 @@ window.TanuBelly = function (opts) {
           const top = data[a + ch] + (data[b + ch] - data[a + ch]) * fx;
           const bot = data[c + ch] + (data[d + ch] - data[c + ch]) * fx;
           const v = top + (bot - top) * fy;
-          o[j + ch] = ch < 3 && dark ? v * (1 - dark) : v;
+          o[j + ch] = ch < 3 && (dark || lit) ? clamp(v * (1 - dark) * (1 + lit), 0, 255) : v;
         }
       }
     }

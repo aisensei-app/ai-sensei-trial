@@ -46,7 +46,8 @@
     faceSeq: null,        // 順番に切り替える絵 { frames, start }
     faceOverride: null,   // セリフで一時的に指定された絵
     faceOverrideUntil: 0,
-    recentTexts: []       // 同じセリフが続かないように覚えておく
+    recentTexts: [],      // 同じセリフが続かないように覚えておく
+    crotchWarnAt: 0       // おまたで「次さわったら怒るよ」と注意した時刻（なかよしになる前）
   };
 
   const now = () => performance.now();
@@ -281,8 +282,28 @@
     const CR = C.crotch;
     const stage = crotchStage();
     track('tap.crotch');
-    // なかよしになる前は、すぐ怒って隠れる
-    if (stage === 'angry') { getAngry({ place: 'crotch' }); return; }
+    // なかよしになる前：1回目は注意だけ、続けてさわると怒って隠れる
+    if (stage === 'angry') {
+      if (state.crotchWarnAt && t - state.crotchWarnAt < (CR.warnSeconds || 10) * 1000) {
+        state.crotchWarnAt = 0;
+        getAngry({ place: 'crotch' });
+        return;
+      }
+      state.crotchWarnAt = t;
+      state.faceSeq = null;
+      say({ scene: 'tap', place: 'crotch', stage: 'warn' });
+      if (!state.faceOverride) {
+        state.faceOverride = 'angry';
+        state.faceOverrideUntil = now() + C.bubbleSeconds * 1000;
+      }
+      // ぷいっと、小さく身ぶるい
+      body.animate([
+        { transform: 'translateX(0)' }, { transform: 'translateX(-1.2%)' },
+        { transform: 'translateX(1.2%)' }, { transform: 'translateX(0)' }
+      ], { duration: 260, easing: 'ease-in-out' });
+      refreshFace();
+      return;
+    }
 
     state.taps.push({ time: t, weight: CR.weight[stage] != null ? CR.weight[stage] : 1 });
     const mood = moodFromCount(tapCount(t));

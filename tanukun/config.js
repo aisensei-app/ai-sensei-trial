@@ -118,14 +118,17 @@ window.TANU_CONFIG = {
      stages … それぞれの反応になるハートの数（この数以上で切りかえ）
      faces  … それぞれの反応で出す絵（images の名前）。bulge はふくらんだときの絵
      weight … 1回を何回分と数えるか（大きいほど怒りやすい）
-     bulge  … ふくらみ。x, y, rx, ry は場所（％）、amount は大きさ（0.1 で1割）、seconds は戻るまでの秒数
+     bulge  … ふくらみ。x, y, rx, ry は場所（％）、amount は大きさ（0.1 で1割。0.35 まで）、seconds は戻るまでの秒数
+              shade は丸く見せる陰影の濃さ（0 でなし）、lift は持ち上がる量（ピクセル）
               hearts 以上のときだけ。amount を 0 にすると、ふくらまない
               ※ ふくらむ間は faces.bulge の絵（デレ2）になるので、場所はデレ2の腰みのに合わせてある */
   crotch: {
     stages: { angry: 0, moji: 2, dere: 4 },
     faces:  { moji: 'mojimoji', dere: 'dere', bulge: 'dere2' },
     weight: { moji: 2, dere: 0.5 },
-    bulge:  { hearts: 5, x: 32.8, y: 69.7, rx: 7, ry: 6.5, amount: 0.18, seconds: 3.5 }
+    bulge:  { hearts: 5, x: 32.8, y: 69.7, rx: 8.3, ry: 7.3, amount: 0.32, shade: 0.6, lift: 9, seconds: 3.5 },
+    // ハート0〜1のとき：1回目は「次さわったら怒るよ」と注意だけ。この秒数以内にもう一度さわると怒って隠れる
+    warnSeconds: 10
   },
 
   /* ---- 怒るまでのしきい値（回数） ---- */
