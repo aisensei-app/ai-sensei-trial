@@ -1,7 +1,7 @@
 /* オフラインでも開けるようにするための仕組み（Service Worker）
    ネットにつながるときは常に最新のファイルを使い、
    つながらないときだけ保存しておいたファイルを使います。 */
-const CACHE = 'tanukun-v10';
+const CACHE = 'tanukun-v11';
 const FILES = [
   './', './index.html', './style.css', './config.js', './lines.js', './save.js', './belly.js', './app.js',
   './manifest.webmanifest', './images/icon-192.png', './images/icon-512.png',
