@@ -439,6 +439,8 @@ html, body {
   transition: opacity .12s, transform .25s cubic-bezier(.3, 1.6, .5, 1);
 }
 
+/* 本編では、さわる場所の案内は出さない（どこが反応するかは、自分で探してもらう）。お試し版だけ表示 */
+body:not(.demo) .hint { display: none; }
 .hint {
   margin: 22px 0 0;
   font-size: 14px;
