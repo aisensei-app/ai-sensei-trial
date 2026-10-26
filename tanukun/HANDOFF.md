@@ -243,6 +243,15 @@
 - 確認用：設定の「確認用」に「🌺 ひみつの思い出とクリア画面を見る」ボタン（記録は変えない。testHearts と一緒に本番前に消える）
 - 7日間を通しで遊ぶ確認をした：1日目💖1／2日目💖2／3日目💖3／4日目💖4／5日目💖5／7日目クリア
 
+### 公開の準備②：本編の公開（2026-10-27。進行中）
+- `python3 tools/build_app.py --base-url https://<プロジェクト名>.pages.dev/` → `app-dist/` と `app-dist.zip`（git には入れない）
+  - index.html にカード（OGP、og/main.jpg）、config.js の report.url を公開先に、testHearts が true なら止まる、
+    身元につながる言葉（大学名・メールアドレスの一部など）が入っていたら止まる
+  - demo.js・メモ・道具・確認用ファイル・元の絵は入れない
+- Cloudflare Pages に本編用のプロジェクトを作る（お試し版と同じく「Continue to Pages」→ 直接アップロード）。
+  プロジェクト名の案は tanukun（URL が tanukun.pages.dev にならなかったら、その URL で作り直してアップロードし直す）
+- そのあと：Web Analytics を有効に、お試し版の結果画面に「本編で遊ぶ」ボタン、実機確認
+
 ### 公開の準備①（2026-10-27）
 - **確認用の機能は、公開するファイルでは自動で消える**：`config.js` の `testHearts: false`（公開用）。
   `tools/build_preview.py`（確認用リンク）だけ true に書きかえる。URL の `?hearts=5` も testHearts が true のときだけ効く（公開後のずる防止）
