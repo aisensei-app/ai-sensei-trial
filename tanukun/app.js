@@ -22,6 +22,7 @@
   const belly = window.TanuBelly({
     config: C.bellyJiggle, chest: C.chestJiggle, img: img, canvas: $('belly-canvas'),
     bulge: C.crotch && C.crotch.bulge,
+    tail: C.crotch && C.crotch.tail,
     overlay: partsLayer,
     layers: (src) => wornLayers(faceOfSrc[absUrl(src)])
   });
@@ -314,6 +315,9 @@
     const B = CR.bulge;
     const bulge = stage === 'dere' && B && B.amount > 0 && SAVE.hearts() >= B.hearts;
     mojimoji(stage === 'dere' ? 0.6 : 1);
+    // モジモジのときは、しっぽが「ビクン」
+    const TT = CR.tail;
+    if (stage === 'moji' && TT && TT.angle) setTimeout(() => belly.twitch('tail', TT.angle), (TT.delay || 0) * 1000);
     if (bulge) belly.swell('crotch', B.amount, B.seconds * 1000);
 
     say({ scene: 'tap', place: 'crotch', stage: bulge ? 'bulge' : stage, mood: mood });

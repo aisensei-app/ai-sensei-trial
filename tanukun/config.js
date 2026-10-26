@@ -127,6 +127,12 @@ window.TANU_CONFIG = {
     faces:  { moji: 'mojimoji', dere: 'dere', bulge: 'dere2' },
     weight: { moji: 2, dere: 0.5 },
     bulge:  { hearts: 5, x: 32.8, y: 69.7, rx: 8.3, ry: 7.3, amount: 0.32, shade: 0.6, lift: 9, seconds: 3.5 },
+    // モジモジのとき、しっぽが「ビクン」と動く（モジモジの絵のしっぽに合わせた場所）
+    //   angle … はねる角度（度。0 で動かさない）、delay … さわってから動くまでの秒数
+    //   pivotX, pivotY … しっぽの付け根（動かない所）、x, y, rx, ry … しっぽ全体をかこむ楕円
+    //   reach … 付け根からこの長さで、いちばん大きく動く、cutX … これより左（腰みの）は動かさない（すべて％）
+    tail:   { angle: 10, delay: 0.12, pivotX: 68.75, pivotY: 57.8, x: 79.9, y: 71.1, rx: 16.7, ry: 19.4,
+              reach: 34.7, cutX: 65.3 },
     // ハート0〜1のとき：1回目は「次さわったら怒るよ」と注意だけ。この秒数以内にもう一度さわると怒って隠れる
     warnSeconds: 10
   },

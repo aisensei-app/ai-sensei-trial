@@ -13,6 +13,7 @@
    数値は config.js の bellyJiggle / chestJiggle で調整します。
    ・きせかえパーツ（デベソなど）は、絵に重ねてから変形するので、いっしょに揺れます
    ・おまた（crotch）は、さわっても揺れず、swell で少しの間だけ「むくっ」とふくらむ
+   ・しっぽ（tail）は、twitch で付け根を軸に「ビクン」と動く（付け根は動かず、先ほど大きく動く）
 
    ※ PC でファイルを直接開いたとき（file://）は、ブラウザの安全のしくみで
      絵の色を読み取れないため、かんたんな方式（重ね絵の拡大）に切り替わります。
@@ -23,6 +24,7 @@ window.TanuBelly = function (opts) {
   const BJ = opts.config;            // おなか
   const CJ = opts.chest || null;     // 胸（なければ胸は揺らさない）
   const BG = opts.bulge || null;     // おまたのふくらみ（なければ、ふくらまない）
+  const TT = opts.tail || null;      // しっぽの「ビクン」（なければ、動かさない）
   const baseImg = opts.img;          // ふだん表示している <img>
   const canvas = opts.canvas;        // 変形した絵を描く <canvas>
   const overlay = opts.overlay || null;              // ふだん部品を表示している入れ物
@@ -40,6 +42,7 @@ window.TanuBelly = function (opts) {
     if (CJ.right) parts.chestR = { def: CJ.right, gain: CJ.gain, canDrag: cd, bob: bob };
   }
   if (BG && BG.amount > 0) parts.crotch = { def: BG, gain: 1, canDrag: false };
+  if (TT && TT.angle) parts.tail = { def: TT, gain: 1, canDrag: false, twist: true };
   const regions = Object.keys(parts).map((key) => {
     const r = parts[key];
     r.key = key;
@@ -122,14 +125,31 @@ window.TanuBelly = function (opts) {
     bw = Math.min(W, Math.ceil(x1)) - bx; bh = Math.min(H, Math.ceil(y1)) - by;
     // 楕円の中の各点の「変形の強さ」を先に計算しておく（中心 1 → ふち 0）
     // shade がある場所（おまたのふくらみ）は、丸く見せる陰影（上が明るく、下と横が暗い）も計算しておく
+    // しっぽ（twist）は、楕円の中ほぼ全体を、付け根（pivot）から遠いほど大きく回す
     const L = [-0.35, -0.75, 0.55], LN = Math.hypot(L[0], L[1], L[2]);
     regions.forEach((r) => {
       r.weight = new Float32Array(bw * bh);
       if (r.def.shade) r.light = new Float32Array(bw * bh);
+      // この場所を計算する範囲（四角の中での位置）。動いている場所だけ計算するため
+      r.x0 = Math.max(0, Math.floor(r.cx - r.rx) - bx); r.y0 = Math.max(0, Math.floor(r.cy - r.ry) - by);
+      r.x1 = Math.min(bw, Math.ceil(r.cx + r.rx) - bx); r.y1 = Math.min(bh, Math.ceil(r.cy + r.ry) - by);
+      if (r.twist) {
+        r.pvx = r.def.pivotX / 100 * W; r.pvy = r.def.pivotY / 100 * H;
+        r.reach = r.def.reach / 100 * W;
+        r.cut = r.def.cutX / 100 * W;
+      }
       for (let y = 0; y < bh; y++) {
         for (let x = 0; x < bw; x++) {
           const u = (x + bx - r.cx) / r.rx, v = (y + by - r.cy) / r.ry;
           const r2 = u * u + v * v;
+          if (r.twist) {
+            if (r2 >= 1) continue;
+            const edge = Math.min(1, (1 - r2) / 0.3);                                  // 楕円のふちだけ弱く
+            const cut = clamp((x + bx - r.cut + 15) / 30, 0, 1);                        // 腰みの側（左）は動かさない
+            const far = clamp(Math.hypot(x + bx - r.pvx, y + by - r.pvy) / r.reach, 0, 1);  // 付け根から遠いほど大きく
+            r.weight[y * bw + x] = edge * cut * far * (2 - far);
+            continue;
+          }
           r.weight[y * bw + x] = r2 < 1 ? (1 - r2) * (1 - r2) : 0;
           if (r.light && r2 < 1) {
             const nz = Math.sqrt(1 - r2);
@@ -149,8 +169,14 @@ window.TanuBelly = function (opts) {
     if (!data) return false;
     if (!out) out = ctx.createImageData(bw, bh);
     const o = out.data;
-    // いま動いている場所だけ計算する
+    // いま動いている場所だけ計算する（その場所を囲む四角の中だけ）
     const act = regions.filter((r) => r.x || r.px || r.py);
+    let ax0 = bw, ay0 = bh, ax1 = 0, ay1 = 0;
+    act.forEach((r) => {
+      ax0 = Math.min(ax0, r.x0); ay0 = Math.min(ay0, r.y0);
+      ax1 = Math.max(ax1, r.x1); ay1 = Math.max(ay1, r.y1);
+    });
+    if (ax1 <= ax0 || ay1 <= ay0) { ax0 = ay0 = 0; ax1 = ay1 = 1; }
     act.forEach((r) => {
       r.sc = clamp(r.x, -0.35, 0.35);   // 連打でも絵がこわれない範囲に
       // ふくらみ：いまどのくらいふくらんでいるか（0〜1）。陰影と持ち上げに使う
@@ -159,14 +185,24 @@ window.TanuBelly = function (opts) {
     const pk = poke.x ? clamp(poke.x, -0.5, 0.3) : 0;
     // くぼみの影：へこんでいるときだけ、指の位置をうっすら暗くする（押している感じを出す）
     const shadeK = pk < 0 && PK.depth > 0 ? (PK.shade || 0) * Math.min(1, -pk / PK.depth) : 0;
-    for (let y = 0; y < bh; y++) {
-      for (let x = 0; x < bw; x++) {
+    for (let y = ay0; y < ay1; y++) {
+      for (let x = ax0; x < ax1; x++) {
         const i = y * bw + x;
         const X = x + bx, Y = y + by;
-        let sx = X, sy = Y, dark = 0, lit = 0;
+        let sx = X, sy = Y, dark = 0, lit = 0, clear = false;
         for (let n = 0; n < act.length; n++) {
           const r = act[n], f = r.weight[i];
           if (f === 0) continue;
+          if (r.twist) {
+            // しっぽ：付け根を軸に、角度 r.x（ラジアン）× 強さ だけ回したところの色を取る
+            const a = clamp(r.x, -0.6, 0.6) * f, c = Math.cos(a), s = Math.sin(a);
+            const dx = X - r.pvx, dy = Y - r.pvy;
+            sx += r.pvx + c * dx + s * dy - X;
+            sy += r.pvy - s * dx + c * dy - Y;
+            // しっぽが動いてあいた所に、足や腰みのの色を持ってこない（透明にする）
+            if (r.pvx + c * dx + s * dy < r.cut - 15) clear = true;
+            continue;
+          }
           // 中心に近い点ほど、ふくらみ（またはへこみ）と引っぱりの分だけずらして色を取る
           sx -= (X - r.cx) * r.sc * f + r.px * f;
           sy -= (Y - r.cy) * r.sc * f + r.py * f;
@@ -191,6 +227,7 @@ window.TanuBelly = function (opts) {
         const fx = clamp(sx - x0, 0, 1), fy = clamp(sy - y0, 0, 1);
         const a = (y0 * W + x0) * 4, b = a + 4, c = a + W * 4, d = c + 4;
         const j = i * 4;
+        if (clear) { o[j] = o[j + 1] = o[j + 2] = o[j + 3] = 0; continue; }
         for (let ch = 0; ch < 4; ch++) {
           const top = data[a + ch] + (data[b + ch] - data[a + ch]) * fx;
           const bot = data[c + ch] + (data[d + ch] - data[c + ch]) * fx;
@@ -202,7 +239,7 @@ window.TanuBelly = function (opts) {
     ctx.clearRect(0, 0, W, H);
     ctx.drawImage(baseImg, 0, 0, W, H);
     drawLayers(ctx, layersFor(baseImg.src));
-    ctx.putImageData(out, bx, by);
+    ctx.putImageData(out, bx, by, ax0, ay0, ax1 - ax0, ay1 - ay0);
     return true;
   }
 
@@ -350,6 +387,14 @@ window.TanuBelly = function (opts) {
       r.hold = amount;
       clearTimeout(r.swellTimer);
       r.swellTimer = setTimeout(() => { r.hold = 0; start(); }, ms);
+      start();
+    },
+
+    // しっぽを「ビクン」：angle 度だけ、はねるように動いて、ばねで戻る（正の数で、先が上に）
+    twitch: function (part, angle) {
+      const r = parts[part];
+      if (!r || !ready()) return;
+      r.v -= angle * Math.PI / 180 / peak;
       start();
     },
 
