@@ -195,17 +195,17 @@ window.TANU_CONFIG = {
      lines の中で { text: '…', image: '…' } と書くと、その台詞から絵が切りかわる（恋愛ゲームの「差分」）
      thumb … アルバムの小さな絵（なければ image） */
   memories: [
-    { hearts: 1, title: 'はじめまして', image: 'images/memories/m1.webp', stand: 'happy', bg: ['#FFE9C7', '#B9DFA0'],
+    { hearts: 1, title: 'はじめまして', image: 'images/memories/1.webp', stand: 'happy', bg: ['#FFE9C7', '#B9DFA0'],
       lines: ['…あ、また来てくれたんだ', 'えへへ、{name}って、なんだか話しやすいな', 'これから、よろしくね！'] },
-    { hearts: 2, title: 'おやつ半分こ', image: 'images/memories/m2.webp', stand: 'ponpoko1', bg: ['#FFE2B8', '#E7B97A'],
+    { hearts: 2, title: 'おやつ半分こ', image: 'images/memories/2.webp', stand: 'ponpoko1', bg: ['#FFE2B8', '#E7B97A'],
       lines: ['これ、森でいちばんおいしい木の実なんだ', '…はい、半分こ！', '{name}と食べると、もっとおいしいね'] },
-    { hearts: 3, title: 'ひなたぼっこ', image: 'images/memories/m3.webp', stand: 'melt', bg: ['#FFF4C9', '#A8D88A'],
+    { hearts: 3, title: 'ひなたぼっこ', image: 'images/memories/3.webp', stand: 'melt', bg: ['#FFF4C9', '#A8D88A'],
       lines: ['今日はぽかぽかだね〜', 'となり、あいてるよ？', '…{name}といると、ねむくなっちゃう'] },
-    { hearts: 4, title: '星空の下で', image: 'images/memories/m4.webp', stand: 'shy', bg: ['#2B2F5C', '#5A4B7A'],
+    { hearts: 4, title: '星空の下で', image: 'images/memories/4.webp', stand: 'shy', bg: ['#2B2F5C', '#5A4B7A'],
       lines: ['見て、星がいっぱい…', 'ねえ、{name}。…ずっと、ここに来てくれる？', '…ううん、なんでもない！'] },
-    { hearts: 5, title: 'だいすき', image: 'images/memories/m5.webp', thumb: 'images/memories/m5b.webp', stand: 'dere2', bg: ['#FFD9E4', '#FFB27A'],
+    { hearts: 5, title: 'だいすき', image: 'images/memories/5.webp', thumb: 'images/memories/5b.webp', stand: 'dere2', bg: ['#FFD9E4', '#FFB27A'],
       lines: ['{name}、ちょっといい…？', 'いつも会いに来てくれて、ありがとう',
-              { text: '…だいすき！ぎゅってして！', image: 'images/memories/m5b.webp' }] }
+              { text: '…だいすき！ぎゅってして！', image: 'images/memories/5b.webp' }] }
   ],
 
   /* ---- なでなでレポート（本編だけ） ----
