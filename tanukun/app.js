@@ -315,9 +315,12 @@
     const B = CR.bulge;
     const bulge = stage === 'dere' && B && B.amount > 0 && SAVE.hearts() >= B.hearts;
     mojimoji(stage === 'dere' ? 0.6 : 1);
-    // モジモジのときは、しっぽが「ビクン」
+    // しっぽが「ビクン」（反応ごとに大きさがちがう）
     const TT = CR.tail;
-    if (stage === 'moji' && TT && TT.angle) setTimeout(() => belly.twitch('tail', TT.angle), (TT.delay || 0) * 1000);
+    const angle = TT && TT.angles && TT.angles[bulge ? 'bulge' : stage];
+    if (angle) setTimeout(() => belly.twitch('tail', angle), (TT.delay || 0) * 1000);
+    // ふくらんでいる最中にさわったら「ぷるん」
+    if (bulge && B.poke && belly.swelling('crotch')) belly.bounce('crotch', B.amount * B.poke);
     if (bulge) belly.swell('crotch', B.amount, B.seconds * 1000);
 
     say({ scene: 'tap', place: 'crotch', stage: bulge ? 'bulge' : stage, mood: mood });

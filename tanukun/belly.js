@@ -42,7 +42,7 @@ window.TanuBelly = function (opts) {
     if (CJ.right) parts.chestR = { def: CJ.right, gain: CJ.gain, canDrag: cd, bob: bob };
   }
   if (BG && BG.amount > 0) parts.crotch = { def: BG, gain: 1, canDrag: false };
-  if (TT && TT.angle) parts.tail = { def: TT, gain: 1, canDrag: false, twist: true };
+  if (TT && TT.angles) parts.tail = { def: TT, gain: 1, canDrag: false, twist: true };
   const regions = Object.keys(parts).map((key) => {
     const r = parts[key];
     r.key = key;
@@ -395,6 +395,17 @@ window.TanuBelly = function (opts) {
       const r = parts[part];
       if (!r || !ready()) return;
       r.v -= angle * Math.PI / 180 / peak;
+      start();
+    },
+
+    // ふくらんでいる最中か
+    swelling: (part) => !!(parts[part] && parts[part].hold > 0),
+
+    // ふくらんでいる所を指で「ぷるん」：size だけへこんで、ばねで揺れて戻る
+    bounce: function (part, size) {
+      const r = parts[part];
+      if (!r || !ready()) return;
+      r.v -= size / peak;
       start();
     },
 
