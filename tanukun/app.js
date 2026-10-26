@@ -809,14 +809,25 @@
       const text = evEl.querySelector('.ev-text');
       // 特別イラストがまだないときは、ふだんの絵を、色の背景の上に仮に出す
       const real = !!m.image;
+      const bgImg = evEl.querySelector('.ev-bg');
       img.src = real ? m.image : (C.images[m.stand] || C.images.normal);
+      bgImg.src = real ? m.image : '';
       pic.classList.toggle('stand', !real);
       pic.style.background = real ? '' : 'linear-gradient(' + m.bg[0] + ', ' + m.bg[1] + ')';
       evEl.querySelector('.ev-title').textContent = '💖' + m.hearts + '　' + m.title;
-      const lines = m.lines.map(withName).concat(fresh ? ['📖 思い出アルバムに追加されました'] : []);
+      // 台詞は文字だけか、{ text, image }（その台詞から絵が切りかわる）
+      const lines = m.lines.map((l) => typeof l === 'string' ? { text: l } : l)
+        .map((l) => ({ text: withName(l.text), image: l.image }))
+        .concat(fresh ? [{ text: '📖 思い出アルバムに追加されました' }] : []);
+      lines.forEach((l) => { if (l.image) new Image().src = l.image; });   // 切りかわる絵を先に読んでおく
       let i = 0, typing = null, shown = '';
       function show() {
-        const full = lines[i];
+        const full = lines[i].text;
+        if (lines[i].image && real) {
+          img.src = lines[i].image;
+          bgImg.src = lines[i].image;
+          img.style.animation = 'none'; void img.offsetWidth; img.style.animation = '';
+        }
         evEl.classList.toggle('sys', fresh && i === lines.length - 1);
         let k = 0;
         clearInterval(typing);
@@ -1021,7 +1032,7 @@
     $('sheet-body').querySelectorAll('button.mem').forEach((b) => {
       const m = MEM[+b.dataset.i];
       const pic = b.querySelector('.mem-pic');
-      b.querySelector('img').src = m.image || C.images[m.stand] || C.images.normal;
+      b.querySelector('img').src = m.thumb || m.image || C.images[m.stand] || C.images.normal;
       if (!m.image) { pic.classList.add('stand'); pic.style.background = 'linear-gradient(' + m.bg[0] + ', ' + m.bg[1] + ')'; }
       b.querySelector('.mem-t').textContent = '💖' + m.hearts + ' ' + m.title;
       b.addEventListener('click', () => { closeSheet(); playMemory(m, false); });

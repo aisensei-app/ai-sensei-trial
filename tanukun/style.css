@@ -465,7 +465,12 @@ html, body {
 .event[hidden] { display: none; }
 .event.on { opacity: 1; }
 .ev-pic { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
-.ev-img { width: 100%; height: 100%; object-fit: cover; animation: ev-in 1.2s ease-out; }
+/* 絵は全体が見えるように（スマホは絵より縦長なので、あいた所は同じ絵をぼかして埋める） */
+.ev-img { position: relative; width: 100%; height: 100%; object-fit: contain; object-position: 50% 35%;
+  animation: ev-in 1.2s ease-out; }
+.ev-bg { position: absolute; inset: -40px; width: calc(100% + 80px); height: calc(100% + 80px); object-fit: cover;
+  filter: blur(22px) brightness(.65); }
+.ev-pic.stand .ev-bg { display: none; }
 .ev-pic.stand .ev-img { width: auto; height: 66%; max-width: 92%; object-fit: contain; margin-bottom: 22%; }
 @keyframes ev-in { from { transform: scale(1.06); filter: brightness(1.4); } to { transform: none; filter: none; } }
 .ev-title { position: absolute; top: calc(env(safe-area-inset-top) + 16px); left: 50%; transform: translateX(-50%);

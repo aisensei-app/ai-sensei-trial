@@ -191,18 +191,21 @@ window.TANU_CONFIG = {
      ハートが hearts 個になると、全画面で絵が出て、タヌくんが lines を1行ずつ話す（タップで次へ）。
      見た思い出は、実績の「思い出アルバム」から何度でも見返せる。
      image … 特別イラスト（縦長 2:3。images/memories に置く）。空のあいだは stand（ふだんの絵）で仮に表示
-     bg    … 仮の表示のときの背景の色（上・下） */
+     bg    … 仮の表示のときの背景の色（上・下）
+     lines の中で { text: '…', image: '…' } と書くと、その台詞から絵が切りかわる（恋愛ゲームの「差分」）
+     thumb … アルバムの小さな絵（なければ image） */
   memories: [
-    { hearts: 1, title: 'はじめまして', image: '', stand: 'happy', bg: ['#FFE9C7', '#B9DFA0'],
+    { hearts: 1, title: 'はじめまして', image: 'images/memories/m1.webp', stand: 'happy', bg: ['#FFE9C7', '#B9DFA0'],
       lines: ['…あ、また来てくれたんだ', 'えへへ、{name}って、なんだか話しやすいな', 'これから、よろしくね！'] },
-    { hearts: 2, title: 'おやつ半分こ', image: '', stand: 'ponpoko1', bg: ['#FFE2B8', '#E7B97A'],
+    { hearts: 2, title: 'おやつ半分こ', image: 'images/memories/m2.webp', stand: 'ponpoko1', bg: ['#FFE2B8', '#E7B97A'],
       lines: ['これ、森でいちばんおいしい木の実なんだ', '…はい、半分こ！', '{name}と食べると、もっとおいしいね'] },
-    { hearts: 3, title: 'ひなたぼっこ', image: '', stand: 'melt', bg: ['#FFF4C9', '#A8D88A'],
+    { hearts: 3, title: 'ひなたぼっこ', image: 'images/memories/m3.webp', stand: 'melt', bg: ['#FFF4C9', '#A8D88A'],
       lines: ['今日はぽかぽかだね〜', 'となり、あいてるよ？', '…{name}といると、ねむくなっちゃう'] },
-    { hearts: 4, title: '星空の下で', image: '', stand: 'shy', bg: ['#2B2F5C', '#5A4B7A'],
+    { hearts: 4, title: '星空の下で', image: 'images/memories/m4.webp', stand: 'shy', bg: ['#2B2F5C', '#5A4B7A'],
       lines: ['見て、星がいっぱい…', 'ねえ、{name}。…ずっと、ここに来てくれる？', '…ううん、なんでもない！'] },
-    { hearts: 5, title: 'だいすき', image: '', stand: 'dere2', bg: ['#FFD9E4', '#FFB27A'],
-      lines: ['{name}、ちょっといい…？', 'いつも会いに来てくれて、ありがとう', '…だいすき！ぎゅってして！'] }
+    { hearts: 5, title: 'だいすき', image: 'images/memories/m5.webp', thumb: 'images/memories/m5b.webp', stand: 'dere2', bg: ['#FFD9E4', '#FFB27A'],
+      lines: ['{name}、ちょっといい…？', 'いつも会いに来てくれて、ありがとう',
+              { text: '…だいすき！ぎゅってして！', image: 'images/memories/m5b.webp' }] }
   ],
 
   /* ---- なでなでレポート（本編だけ） ----
