@@ -6,7 +6,8 @@
   'use strict';
 
   const C = window.TANU_CONFIG;
-  const LINES = window.TANU_LINES || [];
+  const I18N = window.TanuI18n || { lang: 'ja', LANGS: { ja: '日本語' }, t: (k, ja) => ja, apply: () => {}, set: () => {}, lines: () => window.TANU_LINES || [] };
+  const LINES = I18N.lines();   // いまの言語のセリフ集（i18n.js。訳がなければ日本語）
   const SAVE = window.TanuSave;
   const DEMO = window.TANU_DEMO || null;   // お試し版のときだけある（demo.js）
   const $ = (id) => document.getElementById(id);
@@ -1125,12 +1126,17 @@
       '<b>ホーム画面に追加</b>して使うと、記録が消えにくくなります。</p>' +
       '<p class="note">iPhone：共有ボタン →「ホーム画面に追加」<br>Android：右上のメニュー →「ホーム画面に追加」</p>' +
       '<button id="btn-reset" class="btn btn-danger" type="button">記録をリセット</button>' +
+      // ことば（使える言語が2つ以上になったら出る）
+      (Object.keys(I18N.LANGS).length > 1 ? '<h3>ことば / Language</h3><div class="set-row"><select id="set-lang" class="name-input">' +
+        Object.keys(I18N.LANGS).map((l) => '<option value="' + l + '"' + (l === I18N.lang ? ' selected' : '') + '>' + I18N.LANGS[l] + '</option>').join('') +
+        '</select></div>' : '') +
       (C.testHearts ? '<h3>確認用：なかよし度を切りかえて試す</h3>' +
         '<div class="test-hearts">' +
         ['ふつう', 0, 1, 2, 3, 4, 5].map((n) => '<button class="btn" type="button" data-h="' + (n === 'ふつう' ? '' : n) + '">' +
           (n === 'ふつう' ? n : '💖' + n) + '</button>').join('') + '</div>' +
         '<p class="note small">記録は変わりません。アプリを開き直すと「ふつう」に戻ります</p>' +
         '<button id="btn-test-clear" class="btn" type="button">🌺 ひみつの思い出とクリア画面を見る</button>' : ''));
+    if ($('set-lang')) $('set-lang').addEventListener('change', (e) => I18N.set(e.target.value));
     if (C.testHearts && $('btn-test-clear')) {
       $('btn-test-clear').addEventListener('click', () => {
         closeSheet();

@@ -22,7 +22,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parent.parent      # tanukun フォルダ
-FILES = ['style.css', 'config.js', 'lines.js', 'save.js', 'belly.js', 'app.js', 'demo.js']
+FILES = ['style.css', 'config.js', 'lines.js', 'i18n.js', 'save.js', 'belly.js', 'app.js', 'demo.js']
 
 TITLE = 'タヌくん（お試し版）'
 DESCRIPTION = 'さわって遊べるタヌくん。頭をなでたり、おなかをぽんぽこしてみてね。'
