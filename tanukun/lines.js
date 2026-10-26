@@ -7,6 +7,7 @@
                         / tap（タップ）/ melt（とろけ）/ angry（怒り）
                         / hiddenTap（隠れ中にタップ）/ return（戻ってくる）
                         / wear（きせかえで部品を付けた・はずした）
+                        / heartUp（ハートをゲットしたとき。friendship で何個目かを指定）
      part      … 付けた部品の id（wear のときだけ）。はずしたときは none
      stage     … おまたの反応（place: 'crotch' のときだけ）
                         warn（なかよしになる前の1回目。注意する）/ moji（モジモジ）
@@ -26,7 +27,8 @@
    ・書かなかった項目は「どれでもOK」という意味です。
    ・複数を許すときは配列で： place: ['head', 'belly']
    ・{name} と書くと、そこが呼び名になります（例：'{name}、おかえり〜'）
-     名前なしのときは「{name}、」ごと消えて「おかえり〜」になります。
+     名前なしのときは、呼びかけ（「{name}、」「、{name}！」）は消えて「おかえり〜」に、
+     文の途中（「{name}の手」など）は「きみ」になります（「きみの手」）。
    ・face を書くと、そのセリフのときだけ絵を変えられます（例：face: 'shy'）
    ・weight を書くと出やすさを変えられます（省略時 1、2 なら2倍出やすい）
    ========================================================= */
@@ -105,6 +107,78 @@ window.TANU_LINES = [
   { text: 'くすぐったいってば',   when: { scene: 'tap', place: 'tail', mood: 'shy' } },
   { text: 'もう〜！',             when: { scene: 'tap', place: 'tail', mood: 'troubled' } },
   { text: 'しっぽ、引っぱらないで〜', when: { scene: 'tap', place: 'tail', mood: 'troubled' } },
+
+  /* ---------- なかよし度で深まるセリフ（ハート2〜3：だんだん慣れてくる／ハート4〜5：甘えん坊） ---------- */
+  // 頭
+  { text: 'なでなで、クセになってきたかも…',   when: { scene: 'tap', place: 'head', mood: 'normal', friendship: { min: 2, max: 3 } }, weight: 2 },
+  { text: '{name}のなで方、おぼえちゃった',    when: { scene: 'tap', place: 'head', mood: 'normal', friendship: { min: 2, max: 3 } }, weight: 2 },
+  { text: 'もうちょっとだけ…なでて？',         when: { scene: 'tap', place: 'head', mood: 'normal', friendship: { min: 2, max: 3 } }, face: 'shy', weight: 2 },
+  { text: '頭なでられると、ぽかぽかする〜',    when: { scene: 'tap', place: 'head', mood: 'normal', friendship: { min: 2, max: 3 } }, weight: 2 },
+  { text: '{name}の手じゃないと、もうダメかも', when: { scene: 'tap', place: 'head', mood: 'normal', friendship: { min: 4 } }, face: 'shy', weight: 3 },
+  { text: 'ずっとなでてて…ね？',               when: { scene: 'tap', place: 'head', mood: 'normal', friendship: { min: 4 } }, face: 'melt', weight: 3 },
+  { text: 'なでられると、しあわせ〜',          when: { scene: 'tap', place: 'head', mood: 'normal', friendship: { min: 4 } }, face: 'happy', weight: 3 },
+  { text: '{name}になでてほしくて、毛づくろいしてきたよ', when: { scene: 'tap', place: 'head', mood: 'normal', friendship: { min: 4 } }, weight: 3 },
+  // むね
+  { text: '…ちょっとだけなら、いいよ',         when: { scene: 'tap', place: 'chest', mood: 'normal', friendship: { min: 2, max: 3 } }, face: 'shy', weight: 2 },
+  { text: 'むね、ドキドキいってない…？',       when: { scene: 'tap', place: 'chest', mood: 'normal', friendship: { min: 2, max: 3 } }, weight: 2 },
+  { text: 'かたいでしょ？…え、やわらかい？',   when: { scene: 'tap', place: 'chest', mood: 'normal', friendship: { min: 2, max: 3 } }, weight: 2 },
+  { text: 'くすぐったいけど…いやじゃない',     when: { scene: 'tap', place: 'chest', mood: 'normal', friendship: { min: 2, max: 3 } }, weight: 2 },
+  { text: '{name}の手、あったかい…',           when: { scene: 'tap', place: 'chest', mood: 'normal', friendship: { min: 4 } }, face: 'shy', weight: 3 },
+  { text: 'ドキドキしてるの、{name}のせいだからね', when: { scene: 'tap', place: 'chest', mood: 'normal', friendship: { min: 4 } }, face: 'dere', weight: 3 },
+  { text: 'ぎゅってしてもいいよ…？',           when: { scene: 'tap', place: 'chest', mood: 'normal', friendship: { min: 4 } }, face: 'dere', weight: 3 },
+  { text: '{name}の手、おちつく〜',            when: { scene: 'tap', place: 'chest', mood: 'normal', friendship: { min: 4 } }, weight: 3 },
+  // おなか
+  { text: '今日もいい音、なってる？',          when: { scene: 'tap', place: 'belly', mood: 'normal', friendship: { min: 2, max: 3 } }, weight: 2 },
+  { text: 'おなか、ぽんぽこするの好きでしょ〜', when: { scene: 'tap', place: 'belly', mood: 'normal', friendship: { min: 2, max: 3 } }, weight: 2 },
+  { text: 'たくさん食べたから、よく鳴るよ♪',   when: { scene: 'tap', place: 'belly', mood: 'normal', friendship: { min: 2, max: 3 } }, weight: 2 },
+  { text: 'ぽんぽこ、ぽんぽこ♪ リズムいいね！', when: { scene: 'tap', place: 'belly', mood: 'normal', friendship: { min: 2, max: 3 } }, weight: 2 },
+  { text: '{name}専用の太鼓だよ〜♪',           when: { scene: 'tap', place: 'belly', mood: 'normal', friendship: { min: 4 } }, weight: 3 },
+  { text: '{name}にぽんぽこされるの、いちばん好き', when: { scene: 'tap', place: 'belly', mood: 'normal', friendship: { min: 4 } }, weight: 3 },
+  { text: 'おなか、{name}の手の形になっちゃうよ〜', when: { scene: 'tap', place: 'belly', mood: 'normal', friendship: { min: 4 } }, weight: 3 },
+  { text: 'いっしょにぽんぽこ、しよ？',        when: { scene: 'tap', place: 'belly', mood: 'normal', friendship: { min: 4 } }, weight: 3 },
+  // しっぽ
+  { text: 'しっぽ、勝手に動いちゃう…',         when: { scene: 'tap', place: 'tail', mood: 'normal', friendship: { min: 2, max: 3 } }, weight: 2 },
+  { text: 'ふわふわ、気に入った？',            when: { scene: 'tap', place: 'tail', mood: 'normal', friendship: { min: 2, max: 3 } }, weight: 2 },
+  { text: 'しっぽは、なかよしの人にしかさわらせないんだよ', when: { scene: 'tap', place: 'tail', mood: 'normal', friendship: { min: 2, max: 3 } }, weight: 2 },
+  { text: 'ブラッシングしてくれたら、もっとふわふわになるかも', when: { scene: 'tap', place: 'tail', mood: 'normal', friendship: { min: 2, max: 3 } }, weight: 2 },
+  { text: 'うれしいと、しっぽ止まんないの',    when: { scene: 'tap', place: 'tail', mood: 'normal', friendship: { min: 4 } }, weight: 3 },
+  { text: '{name}がいると、しっぽがずっとふりふり♪', when: { scene: 'tap', place: 'tail', mood: 'normal', friendship: { min: 4 } }, weight: 3 },
+  { text: 'しっぽ、まくらにしてもいいよ？',    when: { scene: 'tap', place: 'tail', mood: 'normal', friendship: { min: 4 } }, face: 'happy', weight: 3 },
+  { text: '{name}にだけ、さわらせてあげる',    when: { scene: 'tap', place: 'tail', mood: 'normal', friendship: { min: 4 } }, face: 'shy', weight: 3 },
+
+  /* ---------- ハートをゲットしたとき（何個目か＝friendship） ---------- */
+  { text: '{name}、これからよろしくね！',      when: { scene: 'heartUp', friendship: { min: 1, max: 1 } }, face: 'happy' },
+  { text: 'きみのこと、ちょっと気になってきた…', when: { scene: 'heartUp', friendship: { min: 1, max: 1 } }, face: 'shy' },
+  { text: '{name}といると、たのしいな〜',      when: { scene: 'heartUp', friendship: { min: 2, max: 2 } }, face: 'happy' },
+  { text: 'また明日も来てくれる？',            when: { scene: 'heartUp', friendship: { min: 2, max: 2 } }, face: 'shy' },
+  { text: 'もう、{name}がいないとさみしいかも…', when: { scene: 'heartUp', friendship: { min: 3, max: 3 } }, face: 'shy' },
+  { text: '{name}のこと、もっと知りたいな',    when: { scene: 'heartUp', friendship: { min: 3, max: 3 } }, face: 'shy' },
+  { text: '{name}は、とくべつな人だよ',        when: { scene: 'heartUp', friendship: { min: 4, max: 4 } }, face: 'dere' },
+  { text: 'ずっと、ここにいてくれる…？',       when: { scene: 'heartUp', friendship: { min: 4, max: 4 } }, face: 'dere' },
+  { text: '{name}のこと、だいすき！',          when: { scene: 'heartUp', friendship: { min: 5 } }, face: 'dere2' },
+  { text: 'これからも、ずっと一緒にいてね',    when: { scene: 'heartUp', friendship: { min: 5 } }, face: 'dere2' },
+
+  /* ---------- 記念日・連続のあいさつ（その日だけ、優先して出る） ---------- */
+  { text: 'また来てくれた！2日目だね',         when: { scene: 'home', visit: ['new', 'comeback'], totalDays: { min: 2, max: 2 } }, face: 'happy', weight: 30 },
+  { text: '3日も来てくれた！うれしいな',       when: { scene: 'home', visit: ['new', 'comeback'], totalDays: { min: 3, max: 3 } }, face: 'happy', weight: 30 },
+  { text: '1週間記念だね！{name}、ありがとう', when: { scene: 'home', visit: ['new', 'comeback'], totalDays: { min: 7, max: 7 } }, face: 'happy', weight: 30 },
+  { text: '2週間…！もう親友だね',              when: { scene: 'home', visit: ['new', 'comeback'], totalDays: { min: 14, max: 14 } }, face: 'happy', weight: 30 },
+  { text: '1か月記念！これからも、ずっとね',   when: { scene: 'home', visit: ['new', 'comeback'], totalDays: { min: 30, max: 30 } }, face: 'happy', weight: 30 },
+  { text: '50日目！{name}といると、毎日たのしいよ', when: { scene: 'home', visit: ['new', 'comeback'], totalDays: { min: 50, max: 50 } }, face: 'happy', weight: 30 },
+  { text: '100日…！ほんとうに、ありがとう',    when: { scene: 'home', visit: ['new', 'comeback'], totalDays: { min: 100, max: 100 } }, face: 'shy', weight: 30 },
+  { text: '3日連続！えらいえらい〜',           when: { scene: 'home', visit: 'new', streakDays: { min: 3, max: 3 } }, weight: 20 },
+  { text: '毎日来てくれるの、知ってるんだからね〜♪', when: { scene: 'home', visit: 'new', streakDays: { min: 7, max: 7 } }, weight: 20 },
+  { text: '2週間毎日…{name}、だいすき',        when: { scene: 'home', visit: 'new', streakDays: { min: 14, max: 14 } }, face: 'shy', weight: 20 },
+
+  /* ---------- 時間帯・ひさしぶり ---------- */
+  { text: 'おはよ…まだ半分ねてる〜',          when: { scene: 'home', visit: 'new', timeOfDay: 'morning' }, face: 'melt' },
+  { text: '朝から会えるなんて、いい日になりそう！', when: { scene: 'home', visit: 'new', timeOfDay: 'morning' } },
+  { text: 'お昼休み？ちょっと休んでいってね',  when: { scene: 'home', visit: ['new', 'again'], timeOfDay: 'day' } },
+  { text: 'おつかれさま〜！今日もがんばったね', when: { scene: 'home', visit: ['new', 'again'], timeOfDay: 'evening' } },
+  { text: 'ねむいけど、{name}が来たから起きてる…', when: { scene: 'home', visit: ['new', 'again'], timeOfDay: 'night' }, face: 'melt' },
+  { text: '夜ふかしさん、いらっしゃい',        when: { scene: 'home', visit: ['new', 'again'], timeOfDay: 'night' } },
+  { text: '…さみしかったんだからね！',         when: { scene: 'home', visit: 'comeback' }, face: 'shy', weight: 2 },
+  { text: '{name}、どこ行ってたの〜！待ってたんだよ', when: { scene: 'home', visit: 'comeback', friendship: { min: 3 } }, face: 'troubled', weight: 2 },
 
   /* ---------- おまた（なかよし度で反応が変わる） ---------- */
   // 注意（ハート0〜1の1回目。もう一度さわると怒る）

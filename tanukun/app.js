@@ -639,12 +639,16 @@
     return line;
   }
 
-  /* セリフの {name} を呼び名に置きかえる。
-     名前がないときは「{name}、」「、{name}」ごと消す（例：「{name}、おかえり」→「おかえり」） */
+  /* セリフの {name} を呼び名に置きかえる。名前がないときは：
+     ・呼びかけは消す（「{name}、おかえり」→「おかえり」、「おかえり、{name}！」→「おかえり！」）
+     ・文の途中は「きみ」にする（「{name}になでられるの、すき」→「きみになでられるの、すき」） */
   function withName(text) {
     const name = SAVE.data.name;
     if (name) return text.split('{name}').join(name);
-    return text.replace(/[、,]?\{name\}[、,]?/g, '');
+    return text
+      .replace(/[、,]\{name\}(?=[！!。〜…？?♪]|$)/g, '')
+      .replace(/\{name\}[、,]/g, '')
+      .split('{name}').join('きみ');
   }
 
   let bubbleTimer = null;
@@ -777,6 +781,8 @@
 
   function heartUp() {
     renderStatus();
+    // タヌくんも、ひとこと（ハートの数ごとのセリフ）
+    if (mode !== 'name') say({ scene: 'heartUp' });
     const msg = (C.friendship.rewards || [])[SAVE.hearts() - 1];
     toast('💖 ハートをゲット！' + (msg ? '\n' + msg : ''), 3600);
     const h = $('play-hearts');
