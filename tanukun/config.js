@@ -126,9 +126,9 @@ window.TANU_CONFIG = {
     stages: { angry: 0, moji: 2, dere: 4 },
     faces:  { moji: 'mojimoji', dere: 'dere', bulge: 'dere2' },
     weight: { moji: 2, dere: 0.5 },
-    // ふくらむのは、腰みのの前のまんなかの葉っぱの中だけ（太ももは動かさない）。デレ2の絵で中心 (235, 615)
+    // ふくらむのは、腰みのの前のまんなかの葉っぱの中だけ（太ももは動かさない）。デレ2の絵で中心 (235, 600)
     //   poke … ふくらんでいる間にさわると「ぷるん」と揺れる大きさ（ふくらみの何倍へこむか。0 で揺れない）
-    bulge:  { hearts: 5, x: 32.6, y: 68.3, rx: 3.9, ry: 4.0, amount: 0.34, shade: 0.8, lift: 5, seconds: 3.5, poke: 0.7 },
+    bulge:  { hearts: 5, x: 32.6, y: 66.7, rx: 3.9, ry: 4.0, amount: 0.34, shade: 0.8, lift: 5, seconds: 3.5, poke: 0.7 },
     // しっぽが「ビクン」と動く（モジモジ・デレ・デレ2の絵は、しっぽの位置がほぼ同じ）
     //   angles … 反応ごとのはねる角度（度。0 で動かさない）。bulge はふくらむとき（デレ2）
     //   delay … さわってから動くまでの秒数
