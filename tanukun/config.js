@@ -18,7 +18,8 @@ window.TANU_CONFIG = {
     ponpoko1: 'images/ponpoko1.webp',  // お腹ぽんぽこ①
     ponpoko2: 'images/ponpoko2.webp',  // お腹ぽんぽこ②
     mojimoji: 'images/mojimoji.webp',  // おまた：モジモジ（両手で腰みのの前を押さえる）
-    dere:     'images/dere.webp'       // おまた：デレ（胸の前で指をちょんちょん）
+    dere:     'images/dere.webp',      // おまた：デレ（胸の前で指をちょんちょん）
+    dere2:    'images/dere2.webp'      // おまた：デレ2（目を閉じて照れ笑い・腕を腰の後ろ）
   },
   // ※ きせかえパーツの絵は、下の parts で設定します
 
@@ -84,9 +85,9 @@ window.TANU_CONFIG = {
       label: 'おへそ',
       items: [
         // 720×900 の絵で中心 (192, 461)、横幅 56 ピクセル。もとの表情の絵は、どれもおへその位置が同じ。
-        // モジモジ・デレの絵だけ体が右に寄っているので、位置を別に指定（(236, 463)・(202, 462)）
+        // モジモジ・デレ・デレ2の絵は体が右に寄っているので、位置を別に指定（(236, 463)・(202, 462)・(204, 456)）
         { id: 'debeso', name: 'デベソ', image: 'images/parts/debeso.webp', x: 26.67, y: 51.22, width: 7.78, hearts: 0,
-          faces: { mojimoji: { x: 32.78, y: 51.44 }, dere: { x: 28.06, y: 51.33 } } }
+          faces: { mojimoji: { x: 32.78, y: 51.44 }, dere: { x: 28.06, y: 51.33 }, dere2: { x: 28.33, y: 50.67 } } }
       ]
     }
   },
@@ -115,15 +116,16 @@ window.TANU_CONFIG = {
        moji  … モジモジ（はずかしがる。続けてさわると怒る）
        dere  … デレる（ハートが最大になると、腰みのが少しだけ「むくっ」とふくらむ）
      stages … それぞれの反応になるハートの数（この数以上で切りかえ）
-     faces  … それぞれの反応で出す絵（images の名前）。bulge はふくらんだときの絵（デレ2ができたら書きかえる）
+     faces  … それぞれの反応で出す絵（images の名前）。bulge はふくらんだときの絵
      weight … 1回を何回分と数えるか（大きいほど怒りやすい）
      bulge  … ふくらみ。x, y, rx, ry は場所（％）、amount は大きさ（0.1 で1割）、seconds は戻るまでの秒数
-              hearts 以上のときだけ。amount を 0 にすると、ふくらまない */
+              hearts 以上のときだけ。amount を 0 にすると、ふくらまない
+              ※ ふくらむ間は faces.bulge の絵（デレ2）になるので、場所はデレ2の腰みのに合わせてある */
   crotch: {
     stages: { angry: 0, moji: 2, dere: 4 },
-    faces:  { moji: 'mojimoji', dere: 'dere', bulge: 'dere' },
+    faces:  { moji: 'mojimoji', dere: 'dere', bulge: 'dere2' },
     weight: { moji: 2, dere: 0.5 },
-    bulge:  { hearts: 5, x: 30.7, y: 69, rx: 7, ry: 6.5, amount: 0.18, seconds: 3.5 }
+    bulge:  { hearts: 5, x: 32.8, y: 69.7, rx: 7, ry: 6.5, amount: 0.18, seconds: 3.5 }
   },
 
   /* ---- 怒るまでのしきい値（回数） ---- */

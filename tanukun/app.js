@@ -300,7 +300,8 @@
     const face = CR.faces[bulge ? 'bulge' : stage] || CR.faces[stage];
     if (!state.faceOverride && face && C.images[face]) {
       state.faceOverride = face;
-      state.faceOverrideUntil = now() + C.bubbleSeconds * 1000;
+      // ふくらんでいる間は、その絵のままにする
+      state.faceOverrideUntil = now() + Math.max(C.bubbleSeconds, bulge ? B.seconds : 0) * 1000;
     }
     state.faceSeq = null;
     refreshFace();
