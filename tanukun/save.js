@@ -67,7 +67,7 @@ window.TanuSave = (function () {
   /* ---------- 日付 ---------- */
   const pad = (n) => (n < 10 ? '0' : '') + n;
   const testDay = (location.search.match(/[?&]today=(\d{4}-\d{2}-\d{2})/) || [])[1];
-  const testHearts = (location.search.match(/[?&]hearts=(\d)/) || [])[1];
+  let testHearts = (location.search.match(/[?&]hearts=(\d)/) || [])[1];
 
   // 「今日」を 'YYYY-MM-DD' で返す（config.js の dayStartHour 時に日付が変わる）
   function today() {
@@ -163,6 +163,9 @@ window.TanuSave = (function () {
     save();
   }
 
+  /* 確認用：なかよし度（ハートの数）を一時的に変える。null で元に戻す（記録は変わらない） */
+  function setTestHearts(n) { testHearts = n == null ? undefined : n; }
+
   function reset() {
     data = blank();
     save();
@@ -179,6 +182,8 @@ window.TanuSave = (function () {
     setName: setName,
     NAME_MAX: NAME_MAX,
     setWear: setWear,
+    setTestHearts: setTestHearts,
+    get testHearts() { return testHearts == null ? null : +testHearts; },
     reset: reset
   };
 })();

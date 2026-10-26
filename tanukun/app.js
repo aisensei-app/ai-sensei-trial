@@ -807,7 +807,25 @@
       '<p class="note">記録はこのスマホのブラウザの中だけに保存されます。' +
       '<b>ホーム画面に追加</b>して使うと、記録が消えにくくなります。</p>' +
       '<p class="note">iPhone：共有ボタン →「ホーム画面に追加」<br>Android：右上のメニュー →「ホーム画面に追加」</p>' +
-      '<button id="btn-reset" class="btn btn-danger" type="button">記録をリセット</button>');
+      '<button id="btn-reset" class="btn btn-danger" type="button">記録をリセット</button>' +
+      (C.testHearts ? '<h3>確認用：なかよし度を切りかえて試す</h3>' +
+        '<div class="test-hearts">' +
+        ['ふつう', 0, 1, 2, 3, 4, 5].map((n) => '<button class="btn" type="button" data-h="' + (n === 'ふつう' ? '' : n) + '">' +
+          (n === 'ふつう' ? n : '💖' + n) + '</button>').join('') + '</div>' +
+        '<p class="note small">記録は変わりません。アプリを開き直すと「ふつう」に戻ります</p>' : ''));
+    if (C.testHearts) {
+      const cur = SAVE.testHearts;
+      $('sheet-body').querySelectorAll('.test-hearts .btn').forEach((b) => {
+        const h = b.dataset.h === '' ? null : +b.dataset.h;
+        b.classList.toggle('on', h === cur);
+        b.addEventListener('click', () => {
+          SAVE.setTestHearts(h);
+          renderStatus();
+          closeSheet();
+          toast(h == null ? 'なかよし度を元にもどしたよ' : '確認用：ハート' + h + 'で遊べるよ');
+        });
+      });
+    }
     // 名前は innerHTML に直接入れず、あとから value に入れる（記号が入っても安全なように）
     $('set-name').value = SAVE.data.name;
     $('set-name-ok').addEventListener('click', () => {

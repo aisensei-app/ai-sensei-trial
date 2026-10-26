@@ -165,5 +165,9 @@ window.TANU_CONFIG = {
 
   /* ---- その他 ---- */
   bubbleSeconds: 2.6,   // ふきだしを表示しておく秒数
-  vibrate: true         // おなかタップで軽く振動（Android のみ対応）
+  vibrate: true,        // おなかタップで軽く振動（Android のみ対応）
+
+  /* 確認用：設定画面に「なかよし度を切りかえて試す」を出す（記録は変わらない。開き直すと元に戻る）
+     ※ 本番で公開する前に false にしてください */
+  testHearts: true
 };

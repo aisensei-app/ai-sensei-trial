@@ -187,6 +187,9 @@ html, body {
 .btn-main:active { box-shadow: 0 2px 0 #C8641E; }
 .btn-row { display: flex; gap: 10px; }
 .btn-row .btn { flex: 1; }
+.test-hearts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.test-hearts .btn { font-size: 14px; padding: 9px 4px; border: 2px solid transparent; }
+.test-hearts .btn.on { border-color: #F08A3C; }
 .wear-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
 .wear-item {
   display: flex;
