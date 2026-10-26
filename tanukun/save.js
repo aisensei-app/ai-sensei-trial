@@ -37,7 +37,11 @@ window.TanuSave = (function () {
         hiddenTap: 0
       },
       seenLines: [],         // 見たことのあるセリフ（セリフ図鑑用）
-      wear: {}               // 付けているきせかえパーツ（場所 → 部品の id。例 { navel: 'debeso' }）
+      wear: {},              // 付けているきせかえパーツ（場所 → 部品の id。例 { navel: 'debeso' }）
+      heart5Day: null,       // ハートが最大になった日（のべ日数）。クリアの計算に使う
+      cleared: false,        // ひみつの思い出を見た（クリアした）
+      clearDay: null,        // クリアした日（のべ日数）
+      a2hsShown: false       // 「ホーム画面に追加」の案内を出した
     };
   }
 
@@ -108,6 +112,7 @@ window.TanuSave = (function () {
     data.bestStreak = Math.max(data.bestStreak, data.streak);
     const before = hearts();
     data.points += C.friendship.visitPoints;
+    markMax();
     save();
     return { visit: visit, heartUp: hearts() > before };
   }
@@ -121,9 +126,25 @@ window.TanuSave = (function () {
     const before = hearts();
     data.tapPointsToday += C.friendship.tapPoints;
     data.points += C.friendship.tapPoints;
+    markMax();
     save();
     return { added: true, heartUp: hearts() > before };
   }
+
+  // ハートが最大になった日を覚えておく（確認用のハート切りかえのときは覚えない）
+  function markMax() {
+    if (data.heart5Day == null && testHearts == null && hearts() >= C.friendship.heartAt.length) data.heart5Day = data.totalDays;
+  }
+
+  // ひみつの思い出（クリア）を見られる日か
+  function clearReady() {
+    const after = (C.clear && C.clear.afterDays) || 0;
+    return !data.cleared && data.heart5Day != null && data.totalDays - data.heart5Day >= after;
+  }
+  function setCleared() {
+    if (!data.cleared) { data.cleared = true; data.clearDay = data.totalDays; save(); }
+  }
+  function setFlag(key) { data[key] = true; save(); }
 
   // 今日のタップのポイントが上限に達したか
   function tapCapped() {
@@ -192,6 +213,9 @@ window.TanuSave = (function () {
     checkIn: checkIn,
     addTapPoint: addTapPoint,
     tapCapped: tapCapped,
+    clearReady: clearReady,
+    setCleared: setCleared,
+    setFlag: setFlag,
     heartProgress: heartProgress,
     hearts: hearts,
     count: count,

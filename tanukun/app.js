@@ -706,6 +706,7 @@
     setMode('home');
     renderStatus();
     say({ scene: 'home', visit: 'again' });
+    setTimeout(suggestHomeScreen, 1200);
   }
 
   $('btn-play').addEventListener('click', enterPlay);
@@ -734,7 +735,10 @@
       // 今日の上限に達したら、1日1回だけお知らせ
       if (SAVE.tapCapped() && capNotified !== SAVE.today()) {
         capNotified = SAVE.today();
-        toast('今日はたくさん遊んだね！\nまた明日なかよくしよう🌙');
+        // 明日の予告（いまのハートの数ごと。クリアしていたら最後の文）
+        const T = C.friendship.teasers || [];
+        const teaser = SAVE.data.cleared ? T[T.length - 1] : T[Math.min(SAVE.hearts(), T.length - 2)];
+        toast('今日はたくさん遊んだね！\n' + (teaser || 'また明日なかよくしよう') + '🌙', 3600);
       }
       return;
     }
@@ -814,7 +818,7 @@
       bgImg.src = real ? m.image : '';
       pic.classList.toggle('stand', !real);
       pic.style.background = real ? '' : 'linear-gradient(' + m.bg[0] + ', ' + m.bg[1] + ')';
-      evEl.querySelector('.ev-title').textContent = '💖' + m.hearts + '　' + m.title;
+      evEl.querySelector('.ev-title').textContent = (m.hearts ? '💖' + m.hearts : '🌺') + '　' + m.title;
       // 台詞は文字だけか、{ text, image }（その台詞から絵が切りかわる）
       const lines = m.lines.map((l) => typeof l === 'string' ? { text: l } : l)
         .map((l) => ({ text: withName(l.text), image: l.image }))
@@ -889,7 +893,39 @@
     else if (r.visit !== 'again' && !DEMO) setTimeout(() => toast('来てくれてありがとう！ 💗+' + C.friendship.visitPoints), 900);
     if (r.visit === 'again') return false;
     if (mode === 'home') say({ scene: 'home', visit: r.visit });
+    // ひみつの思い出（クリア）の日なら、あいさつのあとに流す
+    if (!DEMO && SAVE.clearReady() && !r.heartUp) setTimeout(playClear, 2200);
     return true;
+  }
+
+  /* ---- クリア：ひみつの思い出 → クリア画面（X にポスト） ---- */
+  const CLR = C.clear || null;
+  function playClear() {
+    if (!CLR || !$('event').hidden) return;
+    playMemory(CLR.memory, true).then(() => { SAVE.setCleared(); showClear(); });
+  }
+  function showClear() {
+    const days = Math.max(1, SAVE.data.clearDay || SAVE.data.totalDays);
+    const text = 'タヌくんと、ずっと一緒の約束をしたよ🌺\n（なかよし' + days + '日目でクリア！）' +
+      '\n#タヌくん' + (CLR.hashtag ? ' #' + CLR.hashtag : '');
+    openSheet('🌺 クリアおめでとう！',
+      '<img class="res-img clear-img" alt="">' +
+      '<p class="res-comment">ここまで遊んでくれて、ほんとうにありがとう！</p>' +
+      '<p class="note center">これからも、タヌくんに会いにきてね。<br>思い出は「実績」のアルバムで見返せるよ</p>' +
+      shareButtonsHtml());
+    const body = $('sheet-body');
+    body.querySelector('.clear-img').src = CLR.memory.image;
+    bindShare(body, text, C.report && C.report.url);
+  }
+
+  // 2日目以降、メニューに戻ったときに一度だけ「ホーム画面に追加」をすすめる（記録を消えにくくするため）
+  const standalone = () => (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone;
+  function suggestHomeScreen() {
+    if (DEMO || SAVE.data.a2hsShown || SAVE.data.totalDays < 2 || standalone() || !$('sheet').hidden) return;
+    SAVE.setFlag('a2hsShown');
+    openSheet('📱 ホーム画面に追加しよう',
+      '<p class="note">タヌくんを<b>ホーム画面に追加</b>すると、すぐ会いにこられて、なかよしの記録も消えにくくなるよ。</p>' +
+      '<p class="note">iPhone：共有ボタン →「ホーム画面に追加」<br>Android：右上のメニュー →「ホーム画面に追加」</p>');
   }
 
   // 開いたまま日付が変わったときのために、画面に戻ってきたら確認
@@ -1018,11 +1054,15 @@
       ['セリフ図鑑', d.seenLines.length + ' ／ ' + total]
     ];
     // 思い出アルバム：ハートの数まで見られる。まだのものは「？」
+    // 最後に「ひみつの思い出」（クリアするまで、名前も「？？？」）
     const hearts = SAVE.hearts();
-    const album = MEM.length ? '<h3>📖 思い出アルバム（' + MEM.filter((m) => m.hearts <= hearts).length + ' ／ ' + MEM.length + '）</h3>' +
-      '<div class="album">' + MEM.map((m, i) => m.hearts <= hearts
+    const all = MEM.concat(CLR ? [Object.assign({ secret: true }, CLR.memory)] : []);
+    const open = (m) => m.secret ? SAVE.data.cleared : m.hearts <= hearts;
+    const album = all.length ? '<h3>📖 思い出アルバム（' + all.filter(open).length + ' ／ ' + all.length + '）</h3>' +
+      '<div class="album">' + all.map((m, i) => open(m)
         ? '<button class="mem" type="button" data-i="' + i + '"><span class="mem-pic"><img alt=""></span><span class="mem-t"></span></button>'
-        : '<div class="mem locked"><span class="mem-pic">？</span><span class="mem-t">💖' + m.hearts + 'で見られる</span></div>').join('') +
+        : '<div class="mem locked"><span class="mem-pic">？</span><span class="mem-t">' +
+          (m.secret ? '？？？' : '💖' + m.hearts + 'で見られる') + '</span></div>').join('') +
       '</div>' : '';
     openSheet('実績',
       album +
@@ -1030,11 +1070,11 @@
       '<table class="rec">' + rows.map((r) => '<tr><th>' + r[0] + '</th><td>' + r[1] + '</td></tr>').join('') + '</table>' +
       '<p class="note">バッジ（実績のごほうび）は準備中だよ</p>');
     $('sheet-body').querySelectorAll('button.mem').forEach((b) => {
-      const m = MEM[+b.dataset.i];
+      const m = all[+b.dataset.i];
       const pic = b.querySelector('.mem-pic');
       b.querySelector('img').src = m.thumb || m.image || C.images[m.stand] || C.images.normal;
       if (!m.image) { pic.classList.add('stand'); pic.style.background = 'linear-gradient(' + m.bg[0] + ', ' + m.bg[1] + ')'; }
-      b.querySelector('.mem-t').textContent = '💖' + m.hearts + ' ' + m.title;
+      b.querySelector('.mem-t').textContent = (m.secret ? '🌺 ' : '💖' + m.hearts + ' ') + m.title;
       b.addEventListener('click', () => { closeSheet(); playMemory(m, false); });
     });
   });
@@ -1089,7 +1129,14 @@
         '<div class="test-hearts">' +
         ['ふつう', 0, 1, 2, 3, 4, 5].map((n) => '<button class="btn" type="button" data-h="' + (n === 'ふつう' ? '' : n) + '">' +
           (n === 'ふつう' ? n : '💖' + n) + '</button>').join('') + '</div>' +
-        '<p class="note small">記録は変わりません。アプリを開き直すと「ふつう」に戻ります</p>' : ''));
+        '<p class="note small">記録は変わりません。アプリを開き直すと「ふつう」に戻ります</p>' +
+        '<button id="btn-test-clear" class="btn" type="button">🌺 ひみつの思い出とクリア画面を見る</button>' : ''));
+    if (C.testHearts && $('btn-test-clear')) {
+      $('btn-test-clear').addEventListener('click', () => {
+        closeSheet();
+        playMemory(CLR.memory, true).then(showClear);   // 確認用：記録は変えない
+      });
+    }
     if (C.testHearts) {
       const cur = SAVE.testHearts;
       $('sheet-body').querySelectorAll('.test-hearts .btn').forEach((b) => {
