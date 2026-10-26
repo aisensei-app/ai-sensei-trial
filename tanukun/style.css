@@ -148,8 +148,25 @@ html, body {
   cursor: pointer;
 }
 #play-hearts { position: absolute; right: 0; }
-.hearts { font-size: 15px; letter-spacing: 1px; white-space: nowrap; }
+.hearts { display: inline-flex; gap: 2px; white-space: nowrap; vertical-align: middle; }
 .hearts.pop { animation: pop .45s cubic-bezier(.3, 1.6, .5, 1); }
+/* ハート1個：白いハートの上に、ピンクのハートを下から「高さ％」だけ重ねる */
+.hrt { position: relative; display: inline-block; width: 20px; height: 20px; }
+.hrt svg { position: absolute; left: 0; bottom: 0; width: 20px; height: 20px;
+  fill: #FFF; stroke: #E9A9BE; stroke-width: 1.6; }
+.hrt .fill { position: absolute; left: 0; right: 0; bottom: 0; overflow: hidden; transition: height .35s ease-out; }
+.hrt .fill svg { fill: #FF5E95; stroke: #E0457C; }
+.hrt.next .fill svg { fill: #FF8DB5; }
+/* 次のハート（いま貯めているハート）：少し大きく、ふんわり光らせる */
+.hrt.next { transform: scale(1.12); filter: drop-shadow(0 0 3px rgba(255, 94, 149, .55)); }
+.hrt.beat { animation: pop .35s cubic-bezier(.3, 1.6, .5, 1); }
+.btn-main .hrt svg { stroke: #fff; }
+/* さわったときに飛んでいく「+1」のハート */
+.fly-heart { position: fixed; z-index: 30; pointer-events: none; width: 26px; height: 26px; }
+.fly-heart svg { width: 26px; height: 26px; fill: #FF5E95; stroke: #fff; stroke-width: 1.5;
+  filter: drop-shadow(0 2px 3px rgba(224, 69, 124, .4)); }
+.fly-heart b { position: absolute; left: 20px; top: -6px; font-size: 13px; color: #E0457C;
+  -webkit-text-stroke: 3px #fff; paint-order: stroke fill; }
 
 /* ---- メニューのボタン ---- */
 #menu {
@@ -258,11 +275,15 @@ html, body {
   z-index: 20;
   transform: translate(-50%, 10px);
   background: #fff;
-  border-radius: 999px;
+  border-radius: 22px;
   padding: 10px 18px;
   font-size: 15px;
   font-weight: 700;
-  white-space: nowrap;
+  white-space: pre-line;
+  text-align: center;
+  width: max-content;
+  max-width: 90vw;
+  line-height: 1.5;
   box-shadow: 0 4px 14px rgba(74, 46, 22, .2);
   opacity: 0;
   pointer-events: none;

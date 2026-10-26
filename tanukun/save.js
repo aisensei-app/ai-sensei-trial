@@ -113,16 +113,31 @@ window.TanuSave = (function () {
   }
 
   /* ---------- なかよしポイント（タップ）----------
-     1日の上限つき。戻り値は「ハートが増えたか」 */
+     1日の上限つき。戻り値 { added: ポイントが入ったか, heartUp: ハートが増えたか } */
   function addTapPoint() {
     const d = today();
     if (data.tapPointsDay !== d) { data.tapPointsDay = d; data.tapPointsToday = 0; }
-    if (data.tapPointsToday >= C.friendship.tapDailyMax) return false;
+    if (data.tapPointsToday >= C.friendship.tapDailyMax) return { added: false, heartUp: false };
     const before = hearts();
     data.tapPointsToday += C.friendship.tapPoints;
     data.points += C.friendship.tapPoints;
     save();
-    return hearts() > before;
+    return { added: true, heartUp: hearts() > before };
+  }
+
+  // 今日のタップのポイントが上限に達したか
+  function tapCapped() {
+    return data.tapPointsDay === today() && data.tapPointsToday >= C.friendship.tapDailyMax;
+  }
+
+  /* 次のハートまで、どのくらいたまったか（0〜1）。ハートが最大なら 1。
+     例：ハート2個（50）と3個（120）のあいだで 85 ポイントなら 0.5 */
+  function heartProgress() {
+    const at = C.friendship.heartAt, n = hearts();
+    if (n >= at.length) return 1;
+    if (testHearts != null) return 0;
+    const prev = n ? at[n - 1] : 0;
+    return Math.max(0, Math.min(1, (data.points - prev) / (at[n] - prev)));
   }
 
   // ハートの数（0〜最大）
@@ -176,6 +191,8 @@ window.TanuSave = (function () {
     today: today,
     checkIn: checkIn,
     addTapPoint: addTapPoint,
+    tapCapped: tapCapped,
+    heartProgress: heartProgress,
     hearts: hearts,
     count: count,
     seeLine: seeLine,

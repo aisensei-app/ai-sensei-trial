@@ -177,8 +177,10 @@
   const toImg = () => img.naturalWidth / area.clientWidth;   // 画面 → 画像の倍率
   const DRAG_START = 8;   // この距離（画面のピクセル）以上動いたら「引っぱり」
 
+  let lastPointer = null;   // さわった場所（画面の位置）。「+1」のハートを飛ばすのに使う
   area.addEventListener('pointerdown', (e) => {
     e.preventDefault();
+    lastPointer = { x: e.clientX, y: e.clientY };
     if (mode === 'name') return;
     if (mode === 'home') { enterPlay(); return; }
     if (state.phase === 'hidden') { onHiddenTap(); return; }
@@ -259,7 +261,7 @@
     state.mood = mood;
 
     track('tap.' + place);
-    if (!DEMO && SAVE.addTapPoint()) heartUp();
+    gainTapPoint();
 
     let scene = 'tap';
     if (place === 'head')  scene = petHead(t);
@@ -311,7 +313,7 @@
     const mood = moodFromCount(tapCount(t));
     if (mood === 'angry') { getAngry({ place: 'crotch' }); return; }
     state.mood = mood;
-    if (!DEMO && SAVE.addTapPoint()) heartUp();
+    gainTapPoint();
 
     const B = CR.bulge;
     const bulge = stage === 'dere' && B && B.amount > 0 && SAVE.hearts() >= B.hearts;
@@ -705,7 +707,60 @@
   $('btn-play').addEventListener('click', enterPlay);
   $('back').addEventListener('click', backHome);
 
-  // ハートの表示（例：💖💖🤍🤍🤍）
+  /* ---- なかよし度のハート ----
+     もらったハートはピンク、次のハートは下から少しずつピンクに満ちていく、まだのハートは白 */
+  const HEART = '<svg viewBox="0 0 24 24"><path d="M12 21.2S2.6 15.6 2.6 8.9C2.6 5.9 4.9 3.6 7.7 3.6c1.9 0 3.4 1 4.3 2.5.9-1.5 2.4-2.5 4.3-2.5 2.8 0 5.1 2.3 5.1 5.3 0 6.7-9.4 12.3-9.4 12.3z"/></svg>';
+  function heartsHtml() {
+    const n = SAVE.hearts(), max = C.friendship.heartAt.length, frac = SAVE.heartProgress();
+    let html = '';
+    for (let i = 0; i < max; i++) {
+      const fill = i < n ? 100 : (i === n ? Math.round(frac * 100) : 0);
+      html += '<span class="hrt' + (i < n ? ' got' : '') + (i === n ? ' next' : '') + '">' + HEART +
+        '<span class="fill" style="height:' + fill + '%">' + HEART + '</span></span>';
+    }
+    return html;
+  }
+
+  // さわってポイントが入ったら、さわった場所から「+1」のハートが右上へ飛んでいく
+  let capNotified = null;
+  function gainTapPoint() {
+    if (DEMO) return;
+    const r = SAVE.addTapPoint();
+    if (!r.added) {
+      // 今日の上限に達したら、1日1回だけお知らせ
+      if (SAVE.tapCapped() && capNotified !== SAVE.today()) {
+        capNotified = SAVE.today();
+        toast('今日はたくさん遊んだね！\nまた明日なかよくしよう🌙');
+      }
+      return;
+    }
+    const full = SAVE.hearts() >= C.friendship.heartAt.length && !r.heartUp;
+    if (!full) flyHeart();
+    setTimeout(() => { renderStatus(); if (r.heartUp) heartUp(); }, full ? 0 : 520);
+  }
+
+  function flyHeart() {
+    const target = document.querySelector('#play-hearts .next') || $('play-hearts');
+    if (!target || !lastPointer) return;
+    const t = target.getBoundingClientRect();
+    const el = document.createElement('div');
+    el.className = 'fly-heart';
+    el.innerHTML = HEART + '<b>+1</b>';
+    document.body.appendChild(el);
+    const dx = t.left + t.width / 2 - lastPointer.x, dy = t.top + t.height / 2 - lastPointer.y;
+    el.style.left = lastPointer.x + 'px';
+    el.style.top = lastPointer.y + 'px';
+    el.animate([
+      { transform: 'translate(-50%, -50%) scale(.6)', opacity: 0 },
+      { transform: 'translate(-50%, -120%) scale(1.15)', opacity: 1, offset: .2 },
+      { transform: 'translate(calc(-50% + ' + dx + 'px), calc(-50% + ' + dy + 'px)) scale(.5)', opacity: .9 }
+    ], { duration: 520, easing: 'cubic-bezier(.5, 0, .8, .6)' }).finished.then(() => {
+      el.remove();
+      target.classList.remove('beat'); void target.offsetWidth; target.classList.add('beat');
+    });
+  }
+
+  // ハートの文字だけの表示（例：💖💖🤍🤍🤍。レポートのポストなどで使う）
   function heartsText() {
     const n = SAVE.hearts();
     const max = C.friendship.heartAt.length;
@@ -716,24 +771,25 @@
     const d = SAVE.data;
     $('days-total').textContent = Math.max(1, d.totalDays);
     $('days-streak').textContent = d.streak >= 2 ? 'れんぞく ' + d.streak + ' 日' : '';
-    $('menu-hearts').textContent = heartsText();
-    $('play-hearts').textContent = heartsText();
+    $('menu-hearts').innerHTML = heartsHtml();
+    $('play-hearts').innerHTML = heartsHtml();
   }
 
   function heartUp() {
     renderStatus();
-    toast('💖 なかよし度がアップした！');
+    const msg = (C.friendship.rewards || [])[SAVE.hearts() - 1];
+    toast('💖 ハートをゲット！' + (msg ? '\n' + msg : ''), 3600);
     const h = $('play-hearts');
     h.classList.remove('pop'); void h.offsetWidth; h.classList.add('pop');
   }
 
   let toastTimer = null;
-  function toast(text) {
+  function toast(text, ms) {
     const el = $('toast');
     el.textContent = text;
     el.classList.add('on');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => el.classList.remove('on'), 2400);
+    toastTimer = setTimeout(() => el.classList.remove('on'), ms || 2400);
   }
 
   // その日はじめてなら記録して、あいさつ
@@ -747,6 +803,8 @@
       return true;
     }
     if (r.heartUp) setTimeout(heartUp, 900);
+    // その日はじめて来てくれたら、ボーナスをお知らせ（ハートが増えたときは、そちらを優先）
+    else if (r.visit !== 'again' && !DEMO) setTimeout(() => toast('来てくれてありがとう！ 💗+' + C.friendship.visitPoints), 900);
     if (r.visit === 'again') return false;
     if (mode === 'home') say({ scene: 'home', visit: r.visit });
     return true;
