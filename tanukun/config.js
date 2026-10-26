@@ -16,7 +16,9 @@ window.TANU_CONFIG = {
     bush:     'images/bush.webp',      // 茂み
     muni:     'images/muni.webp',      // お腹むにむに
     ponpoko1: 'images/ponpoko1.webp',  // お腹ぽんぽこ①
-    ponpoko2: 'images/ponpoko2.webp'   // お腹ぽんぽこ②
+    ponpoko2: 'images/ponpoko2.webp',  // お腹ぽんぽこ②
+    mojimoji: 'images/mojimoji.webp',  // おまた：モジモジ（両手で腰みのの前を押さえる）
+    dere:     'images/dere.webp'       // おまた：デレ（胸の前で指をちょんちょん）
   },
   // ※ きせかえパーツの絵は、下の parts で設定します
 
@@ -75,13 +77,16 @@ window.TANU_CONFIG = {
                   ※ x, y, width を書かなければ、720×900 の絵全体に重ねる部品になります
                     （タヌくんの絵と同じ大きさの透明な絵に、部品だけ描いておく方式）
          hearts … 付けられるようになる、なかよし度（ハートの数）。0 なら最初から
-         hideOn … この絵のときは表示しない（茂みに隠れているときなど）。省略時 ['bush'] */
+         hideOn … この絵のときは表示しない（茂みに隠れているときなど）。省略時 ['bush']
+         faces  … 絵によって位置がちがうときの、その絵での x, y（例：{ dere: { x: 28, y: 51 } }） */
   parts: {
     navel: {
       label: 'おへそ',
       items: [
-        // 720×900 の絵で中心 (192, 461)、横幅 56 ピクセル。どの表情の絵でも、おへその位置は同じ
-        { id: 'debeso', name: 'デベソ', image: 'images/parts/debeso.webp', x: 26.67, y: 51.22, width: 7.78, hearts: 0 }
+        // 720×900 の絵で中心 (192, 461)、横幅 56 ピクセル。もとの表情の絵は、どれもおへその位置が同じ。
+        // モジモジ・デレの絵だけ体が右に寄っているので、位置を別に指定（(236, 463)・(202, 462)）
+        { id: 'debeso', name: 'デベソ', image: 'images/parts/debeso.webp', x: 26.67, y: 51.22, width: 7.78, hearts: 0,
+          faces: { mojimoji: { x: 32.78, y: 51.44 }, dere: { x: 28.06, y: 51.33 } } }
       ]
     }
   },
@@ -110,13 +115,13 @@ window.TANU_CONFIG = {
        moji  … モジモジ（はずかしがる。続けてさわると怒る）
        dere  … デレる（ハートが最大になると、腰みのが少しだけ「むくっ」とふくらむ）
      stages … それぞれの反応になるハートの数（この数以上で切りかえ）
-     faces  … それぞれの反応で出す絵（専用の絵ができたら images に足して、ここを書きかえる）
+     faces  … それぞれの反応で出す絵（images の名前）。bulge はふくらんだときの絵（デレ2ができたら書きかえる）
      weight … 1回を何回分と数えるか（大きいほど怒りやすい）
      bulge  … ふくらみ。x, y, rx, ry は場所（％）、amount は大きさ（0.1 で1割）、seconds は戻るまでの秒数
               hearts 以上のときだけ。amount を 0 にすると、ふくらまない */
   crotch: {
     stages: { angry: 0, moji: 2, dere: 4 },
-    faces:  { moji: 'shy', dere: 'melt' },
+    faces:  { moji: 'mojimoji', dere: 'dere', bulge: 'dere' },
     weight: { moji: 2, dere: 0.5 },
     bulge:  { hearts: 5, x: 30.7, y: 69, rx: 7, ry: 6.5, amount: 0.18, seconds: 3.5 }
   },

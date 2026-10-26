@@ -105,7 +105,8 @@
       const it = findPart(slot, wear[slot]);
       if (!it || !unlocked(it)) return;
       if ((it.hideOn || ['bush']).indexOf(face) >= 0) return;
-      out.push({ img: partImgs[it.id], x: it.x, y: it.y, width: it.width });
+      const at = (it.faces && it.faces[face]) || it;   // 絵によって位置がちがうとき
+      out.push({ img: partImgs[it.id], x: at.x, y: at.y, width: it.width });
     });
     return out;
   }
@@ -296,8 +297,9 @@
 
     say({ scene: 'tap', place: 'crotch', stage: bulge ? 'bulge' : stage, mood: mood });
     // セリフに絵の指定がないときは、反応ごとの絵にする
-    if (!state.faceOverride && CR.faces[stage] && C.images[CR.faces[stage]]) {
-      state.faceOverride = CR.faces[stage];
+    const face = CR.faces[bulge ? 'bulge' : stage] || CR.faces[stage];
+    if (!state.faceOverride && face && C.images[face]) {
+      state.faceOverride = face;
       state.faceOverrideUntil = now() + C.bubbleSeconds * 1000;
     }
     state.faceSeq = null;
@@ -658,7 +660,7 @@
   function enterPlay() {
     setMode('play');
     const C2 = C.images;
-    belly.warm([C2.normal, C2.shy, C2.troubled, C2.ponpoko1, C2.ponpoko2, C2.muni].filter(Boolean));
+    belly.warm([C2.normal, C2.shy, C2.troubled, C2.ponpoko1, C2.ponpoko2, C2.muni, C2.dere].filter(Boolean));
     showBubble('なにしてあそぶ？');
   }
 

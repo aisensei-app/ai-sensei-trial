@@ -110,17 +110,17 @@ window.TANU_LINES = [
   { text: 'そ、そこは…まだダメ…',       when: { scene: 'tap', place: 'crotch', stage: 'moji' } },
   { text: 'も、もじもじ…',               when: { scene: 'tap', place: 'crotch', stage: 'moji' } },
   { text: 'は、はずかしいってば…',       when: { scene: 'tap', place: 'crotch', stage: 'moji' } },
-  { text: 'うぅ…どこさわってるの…',     when: { scene: 'tap', place: 'crotch', stage: 'moji', mood: ['shy', 'troubled'] }, face: 'troubled' },
-  { text: 'これ以上は、怒るからね…！',   when: { scene: 'tap', place: 'crotch', stage: 'moji', mood: 'troubled' }, face: 'troubled', weight: 2 },
+  { text: 'うぅ…どこさわってるの…',     when: { scene: 'tap', place: 'crotch', stage: 'moji', mood: ['shy', 'troubled'] } },
+  { text: 'これ以上は、怒るからね…！',   when: { scene: 'tap', place: 'crotch', stage: 'moji', mood: 'troubled' }, weight: 2 },
   // デレ（ハート4〜）
   { text: '{name}だけ、とくべつだよ…',  when: { scene: 'tap', place: 'crotch', stage: ['dere', 'bulge'] }, weight: 2 },
   { text: 'えへへ…くすぐったい',         when: { scene: 'tap', place: 'crotch', stage: ['dere', 'bulge'] } },
-  { text: 'もう…しょうがないなぁ',       when: { scene: 'tap', place: 'crotch', stage: ['dere', 'bulge'] }, face: 'shy' },
-  { text: '{name}になら、いいよ…？',     when: { scene: 'tap', place: 'crotch', stage: ['dere', 'bulge'] }, face: 'shy' },
+  { text: 'もう…しょうがないなぁ',       when: { scene: 'tap', place: 'crotch', stage: ['dere', 'bulge'] } },
+  { text: '{name}になら、いいよ…？',     when: { scene: 'tap', place: 'crotch', stage: ['dere', 'bulge'] } },
   // デレて、少しふくらんだ（ハート最大）
-  { text: 'あっ…み、見ないで…！',       when: { scene: 'tap', place: 'crotch', stage: 'bulge' }, face: 'shy', weight: 2 },
-  { text: 'な、なんでもないから…！',     when: { scene: 'tap', place: 'crotch', stage: 'bulge' }, face: 'troubled', weight: 2 },
-  { text: '{name}のせいだからね…',       when: { scene: 'tap', place: 'crotch', stage: 'bulge' }, face: 'shy' },
+  { text: 'あっ…み、見ないで…！',       when: { scene: 'tap', place: 'crotch', stage: 'bulge' }, weight: 2 },
+  { text: 'な、なんでもないから…！',     when: { scene: 'tap', place: 'crotch', stage: 'bulge' }, weight: 2 },
+  { text: '{name}のせいだからね…',       when: { scene: 'tap', place: 'crotch', stage: 'bulge' } },
 
   /* ---------- 頭を続けてなでる（とろけ） ---------- */
   { text: 'ふにゃ〜…',            when: { scene: 'melt' } },
