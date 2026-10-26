@@ -823,14 +823,25 @@
     reportOpen = true;
     openSheet('なでなでレポート',
       '<p class="rep-day"></p>' +
-      '<img class="res-img" alt="">' +
+      '<div class="rep-pic"><img class="res-img" alt=""></div>' +
       '<table class="rep">' + REP_PLACES.map((p) => '<tr' + (p === 'crotch' ? ' class="secret"' : '') + '>' +
         '<th></th><td class="bar"></td><td class="num"></td></tr>').join('') + '</table>' +
       '<p class="res-comment"></p>' +
       shareButtonsHtml());
     const body = $('sheet-body');
     body.querySelector('.rep-day').textContent = 'なかよし ' + days + ' 日目　' + heartsText();
-    body.querySelector('.res-img').src = C.images[REP.faces[top]] || C.images.normal;
+    const face = C.images[REP.faces[top]] ? REP.faces[top] : 'normal';
+    body.querySelector('.res-img').src = C.images[face];
+    // 付けているきせかえ（デベソなど）も、レポートの絵に重ねる
+    const pic = body.querySelector('.rep-pic');
+    wornLayers(face).forEach((l) => {
+      const el = document.createElement('img');
+      el.src = l.img.src;
+      el.alt = '';
+      if (l.width != null) Object.assign(el.style, { left: l.x + '%', top: l.y + '%', width: l.width + '%' });
+      else el.className = 'full';
+      pic.appendChild(el);
+    });
     body.querySelector('.res-comment').textContent = '「' + comment + '」';
     body.querySelectorAll('.rep tr').forEach((tr, i) => {
       const p = REP_PLACES[i], n = repCount[p];
