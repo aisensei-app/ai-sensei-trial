@@ -249,6 +249,7 @@
     if (state.phase !== 'active') return;
     const place = PLACE_OF[zonePlace] || zonePlace;   // chestL / chestR → chest
     const t = now();
+    countReport(place);
     if (place === 'crotch' && C.crotch) { touchCrotch(t); return; }
     const w = C.countWeight[place] != null ? C.countWeight[place] : 1;
     state.taps.push({ time: t, weight: w });
@@ -765,7 +766,86 @@
     $('sheet-body').innerHTML = html;
     sheet.hidden = false;
   }
-  function closeSheet() { sheet.hidden = true; }
+  function closeSheet() {
+    sheet.hidden = true;
+    if (reportOpen) { reportOpen = false; resetReport(); }
+  }
+
+  /* =========================================================
+     なでなでレポート（本編だけ。config.js の report）
+     さわるごとに葉っぱのゲージが1枚ずつ緑になり、たまるとレポート → X にポスト
+     ========================================================= */
+  const REP = C.report || null;
+  const REP_PLACES = ['head', 'chest', 'belly', 'tail', 'crotch'];
+  const repCount = {};
+  let repTotal = 0, reportOpen = false;
+  const gauge = $('gauge');
+  const LEAF = '<svg viewBox="0 0 24 24"><path d="M20 3C10 3 4 8 4 15c0 2 .6 3.8 1.6 5.2L3.5 22.3l1.4 1.4 2.2-2.2C8.4 22.5 10 23 12 23c7 0 10-8 8-20z"/></svg>';
+  function resetReport() {
+    REP_PLACES.forEach((p) => { repCount[p] = 0; });
+    repTotal = 0;
+    if (gauge && REP) {
+      gauge.classList.remove('full');
+      gauge.innerHTML = LEAF.repeat(REP.taps);
+    }
+  }
+  if (REP && !DEMO) resetReport();
+
+  function countReport(place) {
+    if (!REP || DEMO || reportOpen || repTotal >= REP.taps || !(place in repCount)) return;
+    repCount[place] += 1;
+    repTotal += 1;
+    const leaf = gauge.children[repTotal - 1];
+    if (leaf) leaf.classList.add('on');
+    if (repTotal === REP.taps) {
+      gauge.classList.add('full');
+      // さいごの反応（セリフ・動き）を見てから、レポートを出す
+      setTimeout(() => { if (mode === 'play' && sheet.hidden) showReport(); }, 1500);
+    }
+  }
+
+  function showReport() {
+    const days = Math.max(1, SAVE.data.totalDays);
+    // いちばん多くさわった場所（同じ数がいくつもあるときは even）
+    const max = Math.max.apply(null, REP_PLACES.map((p) => repCount[p]));
+    const tops = REP_PLACES.filter((p) => repCount[p] === max);
+    const top = tops.length === 1 ? tops[0] : 'even';
+    const comment = REP.comments[top] || REP.comments.even;
+    const L = REP.labels;
+    const pad = (s) => s + '　'.repeat(Math.max(0, 4 - s.length));   // 名前の幅をそろえる（全角。後ろに1文字あける）
+    // ポストの文章：？？？は回数を出さない
+    const lines = REP_PLACES.map((p) => p === 'crotch'
+      ? pad(L[p]) + '❓'
+      : pad(L[p]) + '🟧'.repeat(repCount[p]) + ' ' + repCount[p]);
+    const postText = 'タヌくんと遊んだよ！（なかよし' + days + '日目）\n' + lines.join('\n') +
+      '\n「' + comment + '」' + (REP.hashtag ? '\n#' + REP.hashtag : '');
+
+    reportOpen = true;
+    openSheet('なでなでレポート',
+      '<p class="rep-day"></p>' +
+      '<img class="res-img" alt="">' +
+      '<table class="rep">' + REP_PLACES.map((p) => '<tr' + (p === 'crotch' ? ' class="secret"' : '') + '>' +
+        '<th></th><td class="bar"></td><td class="num"></td></tr>').join('') + '</table>' +
+      '<p class="res-comment"></p>' +
+      shareButtonsHtml());
+    const body = $('sheet-body');
+    body.querySelector('.rep-day').textContent = 'なかよし ' + days + ' 日目　' + heartsText();
+    body.querySelector('.res-img').src = C.images[REP.faces[top]] || C.images.normal;
+    body.querySelector('.res-comment').textContent = '「' + comment + '」';
+    body.querySelectorAll('.rep tr').forEach((tr, i) => {
+      const p = REP_PLACES[i], n = repCount[p];
+      tr.querySelector('th').textContent = L[p];
+      if (p === 'crotch') {
+        // ひみつ：回数は出さない（見つけたかどうかだけ分かる）
+        tr.querySelector('.bar').textContent = n ? '✨' : '';
+        tr.querySelector('.num').textContent = n ? 'ひみつ' : '？';
+      } else {
+        tr.querySelector('.bar').textContent = '🟧'.repeat(n);
+        tr.querySelector('.num').textContent = n + ' 回';
+      }
+    });
+    bindShare(body, postText, REP.url);
+  }
   $('sheet-close').addEventListener('click', closeSheet);
   sheet.addEventListener('click', (e) => { if (e.target === sheet) closeSheet(); });
 
@@ -914,24 +994,14 @@
     }
     const r = demoResult();
     $('toast').classList.remove('on');
-    // ハッシュタグは本文に直接書く（hashtags= で渡すと X アプリで消えることがあるため）
     const postText = DEMO.shareText(r) + (DEMO.hashtag ? '\n#' + DEMO.hashtag : '');
-    const intent = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(postText) +
-      '&url=' + encodeURIComponent(shareUrl(r));
     openSheet('診断結果',
       '<p class="res-lead">きみは…</p>' +
       '<p class="res-title"></p>' +
       '<p class="res-prev" hidden></p>' +
       '<img class="res-img" alt="">' +
       '<p class="res-comment"></p>' +
-      '<a class="btn btn-main btn-x" target="_blank" rel="noopener">𝕏 でポストする</a>' +
-      '<div class="share-row">' +
-      (navigator.share ? '<button class="btn btn-share" type="button">📤 アプリでシェア</button>' : '') +
-      '<button class="btn btn-copy" type="button">📋 文章をコピー</button>' +
-      '</div>' +
-      (navigator.share
-        ? '<p class="note small center">X のログイン画面が出たら、「アプリでシェア」から X アプリを選んでね</p>'
-        : '<p class="note small center">X のログイン画面が出たら、「文章をコピー」して X アプリに貼りつけてね</p>') +
+      shareButtonsHtml() +
       '<p class="note small center">タヌくんは、ただいま制作中！<br>完成したら公開するよ。待っててね🦝</p>' +
       (DEMO.followId ? '<a class="btn btn-follow" target="_blank" rel="noopener"></a>' : ''));
     // 文字や URL は、あとから入れる（記号が入っても安全なように）
@@ -952,25 +1022,40 @@
     }
     lastResult = r;
     resultOpen = true;
-    body.querySelector('.btn-x').href = intent;
+    bindShare(body, postText, shareUrl(r));
     const follow = body.querySelector('.btn-follow');
     if (follow) {
       follow.textContent = '🔔 @' + DEMO.followId + ' をフォローして待つ';
       follow.href = 'https://twitter.com/intent/follow?screen_name=' + encodeURIComponent(DEMO.followId);
     }
+  }
 
+  /* ---- X でポストする・アプリでシェア・文章をコピー（お試し版の診断と、本編のレポートで共通） ---- */
+  function shareButtonsHtml() {
+    return '<a class="btn btn-main btn-x" target="_blank" rel="noopener">𝕏 でポストする</a>' +
+      '<div class="share-row">' +
+      (navigator.share ? '<button class="btn btn-share" type="button">📤 アプリでシェア</button>' : '') +
+      '<button class="btn btn-copy" type="button">📋 文章をコピー</button>' +
+      '</div>' +
+      (navigator.share
+        ? '<p class="note small center">X のログイン画面が出たら、「アプリでシェア」から X アプリを選んでね</p>'
+        : '<p class="note small center">X のログイン画面が出たら、「文章をコピー」して X アプリに貼りつけてね</p>');
+  }
+
+  function bindShare(body, text, url) {
+    // ハッシュタグは本文に直接書く（hashtags= で渡すと X アプリで消えることがあるため）
+    body.querySelector('.btn-x').href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text) +
+      (url ? '&url=' + encodeURIComponent(url) : '');
     // スマホの「共有」メニューから X アプリなどで投稿（アプリはログイン済みなので、ログイン画面が出ない）
-    const text = postText;
-    const url = shareUrl(r);
     const share = body.querySelector('.btn-share');
     if (share) {
       share.addEventListener('click', () => {
-        navigator.share({ text: text, url: url }).catch(() => {});
+        navigator.share(url ? { text: text, url: url } : { text: text }).catch(() => {});
       });
     }
     // 文章と URL をコピー（自分で X に貼りつけて投稿）
     body.querySelector('.btn-copy').addEventListener('click', (e) => {
-      const btn = e.currentTarget, all = text + '\n' + url;
+      const btn = e.currentTarget, all = url ? text + '\n' + url : text;
       const done = () => { btn.textContent = '✅ コピーしました'; };
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(all).then(done, () => copyFallback(all, done));

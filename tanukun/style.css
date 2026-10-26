@@ -439,6 +439,23 @@ html, body {
   transition: opacity .12s, transform .25s cubic-bezier(.3, 1.6, .5, 1);
 }
 
+/* ---- なでなでゲージ（本編の遊ぶ画面だけ） ---- */
+.gauge { display: none; gap: 4px; margin-top: 14px; }
+body.mode-play:not(.demo) .gauge { display: flex; }
+.gauge svg { width: 18px; height: 18px; fill: #CDBFA8; opacity: .55; transition: fill .2s, opacity .2s; }
+.gauge svg.on { fill: #6FA544; opacity: 1; animation: pop .35s cubic-bezier(.3, 1.6, .5, 1); }
+.gauge.full svg { animation: leaf-shine .9s ease-in-out; }
+@keyframes leaf-shine { 50% { transform: translateY(-3px) scale(1.15); } }
+
+/* ---- なでなでレポート ---- */
+.rep-day { margin: 0; text-align: center; font-size: 15px; opacity: .75; }
+.rep { width: 100%; border-collapse: collapse; font-size: 15px; }
+.rep th { text-align: left; font-weight: 700; padding: 5px 4px; white-space: nowrap; width: 4.5em; }
+.rep td { padding: 5px 4px; }
+.rep .bar { letter-spacing: -2px; font-size: 14px; }
+.rep .num { text-align: right; font-weight: 700; white-space: nowrap; width: 3em; }
+.rep tr.secret th, .rep tr.secret .num { color: #8A6FB0; }
+
 /* 本編では、さわる場所の案内は出さない（どこが反応するかは、自分で探してもらう）。お試し版だけ表示 */
 body:not(.demo) .hint { display: none; }
 .hint {

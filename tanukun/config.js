@@ -179,6 +179,22 @@ window.TANU_CONFIG = {
   bubbleSeconds: 2.6,   // ふきだしを表示しておく秒数
   vibrate: true,        // おなかタップで軽く振動（Android のみ対応）
 
+  /* ---- なでなでレポート（本編だけ） ----
+     遊ぶ画面の下に葉っぱのゲージ（taps 枚）。さわるごとに1枚ずつ緑になり、たまるとレポートが出て X にポストできる。
+     数えるのは「アプリを開いてから（前のレポートのあとから）」さわった回数。
+     labels … レポートでの場所の名前（crotch は回数を出さず「ひみつ」にする）
+     comments / faces … いちばん多くさわった場所ごとの、タヌくんのひとことと絵（同じ数なら even）
+     url … 本編を公開したら、その URL を入れる（ポストに付く。空なら付けない） */
+  report: {
+    taps: 10,
+    url: '',
+    hashtag: 'タヌくん',
+    labels:   { head: 'あたま', chest: 'むね', belly: 'おなか', tail: 'しっぽ', crotch: '？？？' },
+    comments: { head: 'なでなで、ありがと〜♪', chest: 'むね、さわりすぎ…！', belly: 'おなかばっかり〜！',
+                tail: 'しっぽ、ふわふわでしょ？', crotch: 'ひ、ひみつの場所ばっかり…！', even: 'いろんな所をさわってくれた〜' },
+    faces:    { head: 'melt', chest: 'shy', belly: 'ponpoko1', tail: 'normal', crotch: 'troubled', even: 'happy' }
+  },
+
   /* 確認用：設定画面に「なかよし度を切りかえて試す」を出す（記録は変わらない。開き直すと元に戻る）
      ※ 本番で公開する前に false にしてください */
   testHearts: true
