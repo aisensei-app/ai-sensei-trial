@@ -265,6 +265,8 @@ html, body {
 .rec th, .rec td { padding: 8px 4px; border-bottom: 1px solid rgba(74, 46, 22, .12); }
 .rec th { text-align: left; font-weight: 400; }
 .rec td { text-align: right; font-weight: 700; white-space: nowrap; }
+.note.notice { font-size: 15px; line-height: 1.8; opacity: 1; }
+#notice-ok { width: 100%; }
 .note { margin: 4px 0; font-size: 14px; line-height: 1.6; opacity: .8; }
 
 /* ---- お知らせ ---- */

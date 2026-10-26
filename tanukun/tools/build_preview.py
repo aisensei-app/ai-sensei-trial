@@ -35,6 +35,8 @@ def build(demo, out):
         body = body.replace('<p class="hint">頭・むね・おなか・しっぽをさわってね</p>',
                             '<p class="hint">頭をなでたり、おなかをぽんぽこしてね</p>')
     scripts = ''.join('<script>\n' + js(n) + '\n</script>\n' for n in names)
+    # 確認用リンクでは、確認用の機能（ハートの切りかえ・クリア画面を見る）を出す
+    scripts = scripts.replace('testHearts: false,', 'testHearts: true,', 1)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text('<title>' + title + '</title>\n'
                    '<meta name="claude:viewport-fit-sides" content="cover">\n'

@@ -919,6 +919,22 @@
     bindShare(body, text, C.report && C.report.url);
   }
 
+  /* ---- はじめてのお知らせ（config.js の notice）。done は閉じたあとにすること ---- */
+  function showNotice(done) {
+    const N = C.notice;
+    openSheet(N.title, '<p class="note notice">' + N.text.split('\n').join('<br>') + '</p>' +
+      (done ? '<button id="notice-ok" class="btn btn-main" type="button"></button>' : ''));
+    if (!done) return;
+    $('sheet-close').hidden = true;   // OK を押すまで閉じない
+    $('notice-ok').textContent = N.ok;
+    $('notice-ok').addEventListener('click', () => {
+      SAVE.setFlag('noticeOk');
+      $('sheet-close').hidden = false;
+      closeSheet();
+      done();
+    });
+  }
+
   // 2日目以降、メニューに戻ったときに一度だけ「ホーム画面に追加」をすすめる（記録を消えにくくするため）
   const standalone = () => (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone;
   function suggestHomeScreen() {
@@ -1035,7 +1051,7 @@
     bindShare(body, postText, REP.url);
   }
   $('sheet-close').addEventListener('click', closeSheet);
-  sheet.addEventListener('click', (e) => { if (e.target === sheet) closeSheet(); });
+  sheet.addEventListener('click', (e) => { if (e.target === sheet && !$('sheet-close').hidden) closeSheet(); });
 
   // 実績（いまは記録の一覧。バッジは次の段階で）
   $('btn-record').addEventListener('click', () => {
@@ -1126,6 +1142,7 @@
       '<b>ホーム画面に追加</b>して使うと、記録が消えにくくなります。</p>' +
       '<p class="note">iPhone：共有ボタン →「ホーム画面に追加」<br>Android：右上のメニュー →「ホーム画面に追加」</p>' +
       '<button id="btn-reset" class="btn btn-danger" type="button">記録をリセット</button>' +
+      (C.notice ? '<button id="btn-about" class="btn" type="button">このアプリについて</button>' : '') +
       // ことば（使える言語が2つ以上になったら出る）
       (Object.keys(I18N.LANGS).length > 1 ? '<h3>ことば / Language</h3><div class="set-row"><select id="set-lang" class="name-input">' +
         Object.keys(I18N.LANGS).map((l) => '<option value="' + l + '"' + (l === I18N.lang ? ' selected' : '') + '>' + I18N.LANGS[l] + '</option>').join('') +
@@ -1136,6 +1153,7 @@
           (n === 'ふつう' ? n : '💖' + n) + '</button>').join('') + '</div>' +
         '<p class="note small">記録は変わりません。アプリを開き直すと「ふつう」に戻ります</p>' +
         '<button id="btn-test-clear" class="btn" type="button">🌺 ひみつの思い出とクリア画面を見る</button>' : ''));
+    if ($('btn-about')) $('btn-about').addEventListener('click', () => showNotice(null));
     if ($('set-lang')) $('set-lang').addEventListener('change', (e) => I18N.set(e.target.value));
     if (C.testHearts && $('btn-test-clear')) {
       $('btn-test-clear').addEventListener('click', () => {
@@ -1328,7 +1346,9 @@
     setMode('home');
     refreshFace();
     renderStatus();
-    setTimeout(() => { if (!checkIn()) say({ scene: 'home', visit: 'again' }); }, 400);
+    // はじめての人には、先にお知らせ（ちょっぴり大人向け・AI イラスト・記録のこと）
+    const start = () => setTimeout(() => { if (!checkIn()) say({ scene: 'home', visit: 'again' }); }, 400);
+    if (C.notice && !SAVE.data.noticeOk) showNotice(start); else start();
 
     /* ---------- ホーム画面に追加して使うための準備（PWA） ----------
        ファイルを直接開いたとき（file://）は動かないので、そのときは何もしません */

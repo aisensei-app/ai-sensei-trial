@@ -41,7 +41,8 @@ window.TanuSave = (function () {
       heart5Day: null,       // ハートが最大になった日（のべ日数）。クリアの計算に使う
       cleared: false,        // ひみつの思い出を見た（クリアした）
       clearDay: null,        // クリアした日（のべ日数）
-      a2hsShown: false       // 「ホーム画面に追加」の案内を出した
+      a2hsShown: false,      // 「ホーム画面に追加」の案内を出した
+      noticeOk: false        // はじめてのお知らせ（ちょっぴり大人向け など）を見た
     };
   }
 
@@ -71,7 +72,8 @@ window.TanuSave = (function () {
   /* ---------- 日付 ---------- */
   const pad = (n) => (n < 10 ? '0' : '') + n;
   const testDay = (location.search.match(/[?&]today=(\d{4}-\d{2}-\d{2})/) || [])[1];
-  let testHearts = (location.search.match(/[?&]hearts=(\d)/) || [])[1];
+  // 確認用：?hearts=5 でハートの数を変えられる（config.js の testHearts が true のときだけ）
+  let testHearts = C.testHearts ? (location.search.match(/[?&]hearts=(\d)/) || [])[1] : undefined;
 
   // 「今日」を 'YYYY-MM-DD' で返す（config.js の dayStartHour 時に日付が変わる）
   function today() {
