@@ -248,6 +248,7 @@
   - index.html にカード（OGP、og/main.jpg）、config.js の report.url を公開先に、testHearts が true なら止まる、
     身元につながる言葉（大学名・メールアドレスの一部など）が入っていたら止まる
   - demo.js・メモ・道具・確認用ファイル・元の絵は入れない
+- コマンド（Wrangler）で公開する手順は `CLOUDFLARE_DEPLOY.md`（ChatGPT に渡す用。トークンは絶対にチャットに出さない）
 - Cloudflare Pages に本編用のプロジェクトを作る（お試し版と同じく「Continue to Pages」→ 直接アップロード）。
   プロジェクト名の案は tanukun（URL が tanukun.pages.dev にならなかったら、その URL で作り直してアップロードし直す）
 - そのあと：Web Analytics を有効に、お試し版の結果画面に「本編で遊ぶ」ボタン、実機確認
