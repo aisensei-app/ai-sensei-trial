@@ -856,6 +856,7 @@
       }
       function next(e) {
         if (e) e.stopPropagation();
+        if (introOn) { endIntro(); return; }
         if (typing) { clearInterval(typing); typing = null; text.textContent = shown; return; }
         i += 1;
         if (i < lines.length) { show(); return; }
@@ -872,10 +873,28 @@
       const onSkip = (e) => { e.stopPropagation(); close(); };
       evEl.addEventListener('click', next);
       skip.addEventListener('click', onSkip);
+      // はじめて見るときは、先に「ハートがたまった → 思い出がひらく」の合図を出す（いきなり絵にならないように）
+      const intro = evEl.querySelector('.ev-intro');
+      let introOn = !!fresh, introTimer = null;
+      function endIntro() {
+        if (!introOn) return;
+        introOn = false;
+        clearTimeout(introTimer);
+        intro.classList.add('out');
+        setTimeout(() => { intro.hidden = true; intro.classList.remove('out'); evEl.classList.remove('intro'); setTimeout(show, 450); }, 450);
+      }
+      evEl.querySelector('.ev-text').textContent = '';
+      if (introOn) {
+        intro.querySelector('.ev-i1').textContent = m.hearts ? 'ハートが ' + m.hearts + 'こ たまった！' : 'ひみつの思い出が ひらいた…！';
+        intro.querySelector('.ev-i2').textContent = 'タヌくんとの思い出「' + m.title + '」';
+        intro.hidden = false;
+        evEl.classList.add('intro');
+        introTimer = setTimeout(endIntro, 3200);   // タップしなくても、少し待つと始まる
+      }
       evEl.hidden = false;
       void evEl.offsetWidth;
       evEl.classList.add('on');
-      setTimeout(show, 500);
+      if (!introOn) setTimeout(show, 500);
     });
   }
 

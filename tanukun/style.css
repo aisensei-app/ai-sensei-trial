@@ -488,6 +488,22 @@ html, body {
   padding: 6px 16px; border-radius: 999px; white-space: nowrap; }
 .ev-skip { position: absolute; top: calc(env(safe-area-inset-top) + 12px); right: 12px; width: 36px; height: 36px;
   border: 0; border-radius: 50%; background: rgba(0, 0, 0, .35); color: #fff; font-size: 20px; cursor: pointer; }
+/* 思い出が始まる前の合図 */
+.ev-intro { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px; text-align: center; padding: 24px;
+  background: radial-gradient(circle at 50% 42%, #FFE3EE 0%, #FFC2D6 45%, #F59AB8 100%); transition: opacity .45s; }
+.ev-intro[hidden] { display: none; }
+.ev-intro.out { opacity: 0; }
+.ev-bigheart { font-size: 110px; line-height: 1; animation: bigheart 1.1s cubic-bezier(.3, 1.6, .5, 1) both, beat 1.2s ease-in-out 1.1s infinite; }
+@keyframes bigheart { from { transform: scale(0) rotate(-20deg); } to { transform: scale(1); } }
+@keyframes beat { 50% { transform: scale(1.12); } }
+.ev-i1 { margin: 6px 0 0; font-size: 24px; font-weight: 900; color: #fff; -webkit-text-stroke: 6px #E0457C; paint-order: stroke fill;
+  animation: fadeup .6s .5s both; }
+.ev-i2 { margin: 0; font-size: 17px; font-weight: 800; color: #8A2E52; animation: fadeup .6s .9s both; }
+.ev-i3 { margin: 18px 0 0; font-size: 13px; color: #8A2E52; opacity: .7; animation: fadeup .6s 1.6s both, blink 1.4s 2.2s infinite; }
+@keyframes fadeup { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+/* 合図の間は、絵と台詞の枠をかくしておく */
+.event.intro .ev-box, .event.intro .ev-title { visibility: hidden; }
 .ev-box { position: absolute; left: 12px; right: 12px; bottom: calc(env(safe-area-inset-bottom) + 16px);
   min-height: 112px; padding: 26px 18px 18px; border-radius: 18px;
   background: rgba(255, 249, 239, .93); border: 2px solid #F0C9A0; box-shadow: 0 6px 20px rgba(0, 0, 0, .3); }
