@@ -2,14 +2,15 @@
    ぽんぽこリズム（試作）
    ・リズムは 8ビート「ぽん・ぽこ・ぽんぽん・ぽこ」のくり返し
    ・BPM（1分間の拍の数）が 80 → 120 とだんだん速くなる（約50秒）
-   ・遊び方は2つ（はじめる前に選ぶ）
-       おなかモード … ◉ がおなかの上のランダムな場所にふわっと出る。まわりの輪が縮んで、
+   ・ステージは2つ（はじめる前に選ぶ）
+       ステージ2 おなか … ◉ がおなかの上のランダムな場所にふわっと出る。まわりの輪が縮んで、
                       ◉ にぴったり重なったときにたたく（目線がおなかから離れないので、揺れを楽しめる）
-       ながれるモード … ◉ が右から左に流れてきて、左のわくに重なったときにたたく
+       ステージ1 ながれる … ◉ が右から左に流れてきて、左のわくに重なったときにたたく
    ・ピンクの「〜」は、指でおなかをさっとすべらせて「ぷるん」（たたくのとは別のアクション）
    ・タイミングが合うほど点数が高い。続けて合わせると右上のタヌくんが笑顔になる
    ・音はすべてプログラムで作る（Web Audio）。音の素材ファイルは使わない
    ・おなかの「ぷるん」は本編と同じ仕組み（belly.js）
+   ・たたくたびに、タヌくんの腕が「ビクン」、ネックレスが「ぷるん」と反応する
    ========================================================= */
 (function () {
   'use strict';
@@ -58,8 +59,10 @@
     normal: IMG('normal'),
     happy: IMG('happy'),       // 笑顔（いい調子のとき）
     melt: IMG('melt'),         // とろける笑顔（とても長く続いたとき）
-    troubled: IMG('troubled')  // ミスしたすぐあと
+    troubled: IMG('troubled'), // ミスしたすぐあと
+    shy: IMG('shy')            // コンボの節目（10ごと）に、一瞬だけ照れる
   };
+  const SHY_EVERY = 10, SHY_SECONDS = 0.7;
   const SMILE_COMBO = 8;       // このコンボ以上で笑顔
   const MELT_COMBO = 24;       // このコンボ以上で、とろける笑顔
 
@@ -78,12 +81,36 @@
     tapDent: 0.15, damp: 6, reboundBoost: 0.9, pullMax: 13,
     poke: Object.assign({}, C.bellyJiggle.poke, { depth: 0.45 })
   });
-  const belly = window.TanuBelly({ config: JIGGLE, img: img, canvas: $('belly-canvas') });
+  /* たたいたときのリアクション（720×900 の絵の％）
+     armL / armR … 腕。肩（pivot）を軸に「ビクン」と回る。angle は1回の角度（度）
+     neck        … ネックレス。上下に「ぷるん」。kick は沈む深さ（ピクセル） */
+  const REACT = {
+    armL: { type: 'twist', x: 12.2, y: 44.4, rx: 6.3, ry: 16.7, pivotX: 18.1, pivotY: 30, reach: 38.9, angle: 4 },
+    armR: { type: 'twist', x: 66.7, y: 44.4, rx: 9.0, ry: 16.7, pivotX: 61.1, pivotY: 30, reach: 38.9, angle: -4 },
+    neck: { type: 'bob', x: 38.2, y: 25.3, rx: 13.9, ry: 4.4, kick: 5 },
+    purun: 2   // 「ぷるん」のときは、この倍だけ大きく反応する
+  };
+  const belly = window.TanuBelly({ config: JIGGLE, img: img, canvas: $('belly-canvas'),
+    extra: { armL: REACT.armL, armR: REACT.armR, neck: REACT.neck } });
+  let armSide = 0;
+  function react(big) {
+    const k = big ? REACT.purun : 1;
+    if (big) {
+      belly.twitch('armL', REACT.armL.angle * k);
+      belly.twitch('armR', REACT.armR.angle * k);
+    } else {
+      // 腕は左右かわりばんこに
+      const arm = (armSide++ % 2) ? 'armR' : 'armL';
+      belly.twitch(arm, REACT[arm].angle);
+    }
+    belly.kick('neck', REACT.neck.kick * k);
+    wipeFace.classList.remove('tick'); void wipeFace.offsetWidth; wipeFace.classList.add('tick');
+  }
   img.addEventListener('load', () => belly.warm([img.src]), { once: true });
 
   /* ---------- おなかのアップ ----------
      720×900 の絵のうち、おなか（中心 255, 420）を画面いっぱいに映す */
-  const VIEW = { cx: 255, cy: 420, w: 340 };
+  const VIEW = { cx: 270, cy: 410, w: 420 };   // 横幅は、両腕が入るくらい
   let scale = 1, offX = 0, offY = 0;
   function layout() {
     const sw = stage.clientWidth, sh = stage.clientHeight;
@@ -218,7 +245,7 @@
   /* ---------- 遊んでいる間の状態 ---------- */
   let chart = null, t0 = 0, playing = false, nextNote = 0, nextBanner = 0;
   let mode = 'belly';   // 'belly'＝おなかモード／'lane'＝ながれるモード
-  let score = 0, combo = 0, maxCombo = 0, lastMiss = -9;
+  let score = 0, combo = 0, maxCombo = 0, lastMiss = -9, shyUntil = -9;
   let counts = { perfect: 0, good: 0, ok: 0, miss: 0 };
 
   // いま聞こえている音が「曲の始まりから何秒目か」
@@ -264,7 +291,7 @@
       }
     });
     nextNote = 0; nextBanner = 0;
-    score = 0; combo = 0; maxCombo = 0; lastMiss = -9;
+    score = 0; combo = 0; maxCombo = 0; lastMiss = -9; shyUntil = -9;
     counts = { perfect: 0, good: 0, ok: 0, miss: 0 };
     $('score').textContent = '0';
     showCombo();
@@ -318,6 +345,7 @@
     }
     // ワイプ：ミスのあと少しは困り顔、その後はコンボで笑顔に
     if (now - lastMiss < 0.8) setFace('troubled');
+    else if (now < shyUntil) setFace('shy');
     else if (combo >= MELT_COMBO) setFace('melt');
     else if (combo >= SMILE_COMBO) setFace('happy');
     else setFace('normal');
@@ -357,12 +385,14 @@
     const found = playing ? nearest(p.now, ['pon', 'poko'], p) : null;
     const kind = found && found.d < 0.25 ? found.note.kind : 'pon';
     if (ac) (kind === 'poko' ? soundPoko : soundPon)(ac.currentTime, 1);
+    react(false);
     popWord(kind === 'poko' ? 'ぽこ！' : 'ぽん！', p.sx, p.sy, kind);
     if (playing) hit(found, p.now);
   }
   function purun(p) {
     p.purun = true;
     if (ac) soundPurun(ac.currentTime);
+    react(true);
     popWord('ぷるん！', p.sx, p.sy, 'purun');
     if (playing) hit(nearest(p.now, ['purun'], p), p.now);
   }
@@ -419,6 +449,7 @@
       counts[j.key]++;
       combo++;
       maxCombo = Math.max(maxCombo, combo);
+      if (combo % SHY_EVERY === 0) shyUntil = now + SHY_SECONDS;
       // コンボ10ごとに、1回の点数が10点ずつ増える（最大 +50）
       score += j.point + Math.min(50, Math.floor(combo / 10) * 10);
       $('score').textContent = score;
@@ -486,8 +517,9 @@
     $('r-combo').textContent = maxCombo;
     $('r-line').textContent = 'タヌくん「' + rank.line + '」';
     const url = /^https?:/.test(location.href) ? location.href.split(/[?#]/)[0] : 'https://tanukun.pages.dev/pon/';
-    const text = '🥁 ぽんぽこリズム（' + (mode === 'belly' ? 'おなかモード' : 'ながれるモード') + '）\n' + score + 'てん「' + rank.title + '」さいだい' + maxCombo + 'コンボ\n#タヌくん #ぽんぽこリズム\n' + url;
+    const text = '🥁 ぽんぽこリズム ' + (mode === 'belly' ? 'ステージ2（おなか）' : 'ステージ1（ながれる）') + '\n' + score + 'てん「' + rank.title + '」さいだい' + maxCombo + 'コンボ\n#タヌくん #ぽんぽこリズム\n' + url;
     $('btn-post').href = 'https://x.com/intent/post?text=' + encodeURIComponent(text);
+    $('btn-next').hidden = mode !== 'lane';   // ステージ1のあとは「ステージ2へ」
     $('result').hidden = false;
   }
 
@@ -505,6 +537,7 @@
   $('btn-belly').addEventListener('click', () => start('belly'));
   $('btn-lane').addEventListener('click', () => start('lane'));
   $('btn-again').addEventListener('click', () => start());
+  $('btn-next').addEventListener('click', () => start('belly'));
   $('btn-mode').addEventListener('click', () => {
     $('result').hidden = true;
     molesEl.textContent = '';

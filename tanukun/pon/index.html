@@ -42,10 +42,10 @@
     <h1>🥁 ぽんぽこリズム</h1>
     <p><b>◉</b> は タップで <b>ぽんっ</b>！<br>ピンクの <b class="purun-mark">〜</b> は 指で さっと すべらせて <b>ぷるん</b>！</p>
     <p class="small">リズムは「8ビート」。だんだん速くなるよ（約1分）<br>🔊 音を出して遊んでね</p>
-    <button id="btn-belly" class="btn" type="button">おなかモード</button>
-    <p class="mode-note">◉ がおなかの上に出てくるよ。<br>まわりの輪が ◉ に重なったら たたいてね</p>
-    <button id="btn-lane" class="btn btn-sub" type="button">ながれるモード</button>
-    <p class="mode-note">◉ が右から流れてくるよ。<br>左のわくに来たら たたいてね</p>
+    <button id="btn-lane" class="btn btn-stage" type="button"><small>ステージ1</small>ながれる</button>
+    <p class="mode-note">◉ が右から流れてくるよ。左のわくに来たら たたいてね</p>
+    <button id="btn-belly" class="btn btn-stage" type="button"><small>ステージ2</small>おなか</button>
+    <p class="mode-note">◉ がおなかの上に出てくるよ。まわりの輪が ◉ に重なったら たたいてね</p>
   </section>
 
   <!-- 結果 -->
@@ -61,8 +61,9 @@
     </ul>
     <p id="r-line" class="r-line"></p>
     <a id="btn-post" class="btn btn-x" target="_blank" rel="noopener">𝕏 でポストする</a>
+    <button id="btn-next" class="btn" type="button" hidden>ステージ2 へ ▶</button>
     <button id="btn-again" class="btn btn-sub" type="button">もう一回</button>
-    <button id="btn-mode" class="btn btn-sub" type="button">モードをえらぶ</button>
+    <button id="btn-mode" class="btn btn-sub" type="button">ステージをえらぶ</button>
   </section>
 
 </main>

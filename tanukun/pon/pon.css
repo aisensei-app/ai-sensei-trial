@@ -1,5 +1,6 @@
 /* ぽんぽこリズム（おなかを太鼓のようにたたく音ゲー） */
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }   /* .btn などの display より「隠す」を優先 */
 html, body {
   margin: 0;
   height: 100%;
@@ -320,4 +321,20 @@ html, body {
 .mode-note { margin: 4px 0 0; font-size: 12px; color: #8A6A4A; line-height: 1.5; }
 @media (prefers-reduced-motion: reduce) {
   .pop, .mole.hit { animation-duration: .01s; }
+}
+
+/* ---- ステージを選ぶボタン ---- */
+.btn-stage { display: flex; align-items: baseline; justify-content: center; gap: 10px; }
+.btn-stage small { font-size: 12px; font-weight: bold; opacity: .85; }
+/* たたくたびに、ワイプの顔が「ぴくっ」 */
+#wipe-face.tick { animation: tick .14s; }
+@keyframes tick { 50% { transform: scale(1.06, .94) translateY(2px); } }
+/* 映す範囲の上（タヌくんの口もと）を、背景の色でふんわり隠す。顔は右上のワイプで見せる */
+#stage::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  height: 16%;
+  background: linear-gradient(#FFF4E0 25%, rgba(255, 244, 224, 0));
+  pointer-events: none;
 }

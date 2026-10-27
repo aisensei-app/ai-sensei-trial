@@ -14,6 +14,9 @@
    ・きせかえパーツ（デベソなど）は、絵に重ねてから変形するので、いっしょに揺れます
    ・おまた（crotch）は、さわっても揺れず、swell で少しの間だけ「むくっ」とふくらむ
    ・しっぽ（tail）は、twitch で付け根を軸に「ビクン」と動く（付け根は動かず、先ほど大きく動く）
+   ・opts.extra で、ほかの場所も足せる（ぽんぽこリズムの腕・ネックレス）
+       type: 'twist' … twitch で付け根を軸に回る（cutX がなければ、片側を止めない）
+       type: 'bob'   … kick で上下に「ぷるん」と揺れる
 
    ※ PC でファイルを直接開いたとき（file://）は、ブラウザの安全のしくみで
      絵の色を読み取れないため、かんたんな方式（重ね絵の拡大）に切り替わります。
@@ -43,6 +46,10 @@ window.TanuBelly = function (opts) {
   }
   if (BG && BG.amount > 0) parts.crotch = { def: BG, gain: 1, canDrag: false };
   if (TT && TT.angles) parts.tail = { def: TT, gain: 1, canDrag: false, twist: true };
+  const EX = opts.extra || {};
+  Object.keys(EX).forEach((key) => {
+    parts[key] = { def: EX[key], gain: 1, canDrag: false, twist: EX[key].type === 'twist' };
+  });
   const regions = Object.keys(parts).map((key) => {
     const r = parts[key];
     r.key = key;
@@ -134,9 +141,10 @@ window.TanuBelly = function (opts) {
       r.x0 = Math.max(0, Math.floor(r.cx - r.rx) - bx); r.y0 = Math.max(0, Math.floor(r.cy - r.ry) - by);
       r.x1 = Math.min(bw, Math.ceil(r.cx + r.rx) - bx); r.y1 = Math.min(bh, Math.ceil(r.cy + r.ry) - by);
       if (r.twist) {
-        r.pvx = r.def.pivotX / 100 * W; r.pvy = r.def.pivotY / 100 * H;
+        // 付け根の位置（pvx, pvy は引っぱりの速さに使っているので、別の名前にする）
+        r.pivX = r.def.pivotX / 100 * W; r.pivY = r.def.pivotY / 100 * H;
         r.reach = r.def.reach / 100 * W;
-        r.cut = r.def.cutX / 100 * W;
+        r.cut = r.def.cutX == null ? -Infinity : r.def.cutX / 100 * W;   // なければ片側を止めない
       }
       for (let y = 0; y < bh; y++) {
         for (let x = 0; x < bw; x++) {
@@ -146,7 +154,7 @@ window.TanuBelly = function (opts) {
             if (r2 >= 1) continue;
             const edge = Math.min(1, (1 - r2) / 0.3);                                  // 楕円のふちだけ弱く
             const cut = clamp((x + bx - r.cut + 15) / 30, 0, 1);                        // 腰みの側（左）は動かさない
-            const far = clamp(Math.hypot(x + bx - r.pvx, y + by - r.pvy) / r.reach, 0, 1);  // 付け根から遠いほど大きく
+            const far = clamp(Math.hypot(x + bx - r.pivX, y + by - r.pivY) / r.reach, 0, 1);  // 付け根から遠いほど大きく
             r.weight[y * bw + x] = edge * cut * far * (2 - far);
             continue;
           }
@@ -196,11 +204,11 @@ window.TanuBelly = function (opts) {
           if (r.twist) {
             // しっぽ：付け根を軸に、角度 r.x（ラジアン）× 強さ だけ回したところの色を取る
             const a = clamp(r.x, -0.6, 0.6) * f, c = Math.cos(a), s = Math.sin(a);
-            const dx = X - r.pvx, dy = Y - r.pvy;
-            sx += r.pvx + c * dx + s * dy - X;
-            sy += r.pvy - s * dx + c * dy - Y;
+            const dx = X - r.pivX, dy = Y - r.pivY;
+            sx += r.pivX + c * dx + s * dy - X;
+            sy += r.pivY - s * dx + c * dy - Y;
             // しっぽが動いてあいた所に、足や腰みのの色を持ってこない（透明にする）
-            if (r.pvx + c * dx + s * dy < r.cut - 15) clear = true;
+            if (r.pivX + c * dx + s * dy < r.cut - 15) clear = true;
             continue;
           }
           // 中心に近い点ほど、ふくらみ（またはへこみ）と引っぱりの分だけずらして色を取る
@@ -395,6 +403,14 @@ window.TanuBelly = function (opts) {
       const r = parts[part];
       if (!r || !ready()) return;
       r.v -= angle * Math.PI / 180 / peak;
+      start();
+    },
+
+    // 上下に「ぷるん」：px ピクセルだけ下に沈んでから、ばねで揺れて戻る（extra の type: 'bob'）
+    kick: function (part, px) {
+      const r = parts[part];
+      if (!r || !ready()) return;
+      r.pvy += px / peak;
       start();
     },
 
