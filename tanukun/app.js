@@ -83,8 +83,8 @@
      きせかえパーツ（config.js の parts）
      ========================================================= */
   const PARTS = C.parts || {};
-  const partImgs = {};   // 部品の絵（先に読み込んでおく）
-  Object.keys(PARTS).forEach((slot) => {
+  const partImgs = {};   // 部品の絵（先に読み込んでおく。お試し版では使わないので読まない）
+  if (!DEMO) Object.keys(PARTS).forEach((slot) => {
     PARTS[slot].items.forEach((it) => {
       const im = new Image();
       im.src = it.image;

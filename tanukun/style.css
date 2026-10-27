@@ -311,6 +311,9 @@ html, body {
 /* ---- タヌくん ---- */
 #tanu-area {
   position: relative;
+  /* タヌくんの上では、指を動かしてもブラウザにスクロールさせない
+     （スクロールと判断されるとタッチが取り消され、さわったことにならないため） */
+  touch-action: none;
   width: min(90vw, 56vh * 0.8, 460px);
   aspect-ratio: 4 / 5;
 }
