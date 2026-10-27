@@ -738,23 +738,66 @@
 
   // さわってポイントが入ったら、さわった場所から「+1」のハートが右上へ飛んでいく
   let capNotified = null;
+  const heartsFull = () => SAVE.hearts() >= C.friendship.heartAt.length;
   function gainTapPoint() {
     if (DEMO) return;
     const r = SAVE.addTapPoint();
     if (!r.added) {
-      // 今日の上限に達したら、1日1回だけお知らせ
-      if (SAVE.tapCapped() && capNotified !== SAVE.today()) {
-        capNotified = SAVE.today();
-        // 明日の予告（いまのハートの数ごと。クリアしていたら最後の文）
-        const T = C.friendship.teasers || [];
-        const teaser = SAVE.data.cleared ? T[T.length - 1] : T[Math.min(SAVE.hearts(), T.length - 2)];
-        toast('今日はたくさん遊んだね！\n' + (teaser || 'また明日なかよくしよう') + '🌙', 3600);
-      }
+      // 今日の上限のあと：ハートの代わりに「💤」（今はためられない）。お知らせがまだなら出す
+      if (!heartsFull()) { floatMark('💤'); notifyCap(); }
       return;
     }
-    const full = SAVE.hearts() >= C.friendship.heartAt.length && !r.heartUp;
+    const full = heartsFull() && !r.heartUp;
     if (!full) flyHeart();
-    setTimeout(() => { renderStatus(); if (r.heartUp) heartUp(); }, full ? 0 : 520);
+    setTimeout(() => {
+      renderStatus();
+      if (r.heartUp) heartUp();
+      // ちょうど上限になったら、その場でお知らせ（ハートが増えたときは、思い出のあとの次のタップで）
+      else if (SAVE.tapCapped() && !full) notifyCap();
+    }, full ? 0 : 520);
+  }
+
+  /* ---- 今日のハートの上限 ----
+     お知らせ（1日1回）と、ハートの下の「🌙 あと○時間○分」（次の日付の切りかわり＝午前4時まで） */
+  function untilTomorrow() {
+    const now = new Date(), next = new Date(now);
+    next.setHours(C.days.dayStartHour || 0, 0, 0, 0);
+    if (next <= now) next.setDate(next.getDate() + 1);
+    const min = Math.max(1, Math.ceil((next - now) / 60000));
+    const h = Math.floor(min / 60), m = min % 60;
+    return (h ? h + '時間' : '') + (m || !h ? m + '分' : '');
+  }
+  function notifyCap() {
+    if (capNotified === SAVE.today()) return;
+    capNotified = SAVE.today();
+    // 明日の予告（いまのハートの数ごと。クリアしていたら最後の文）
+    const T = C.friendship.teasers || [];
+    const teaser = SAVE.data.cleared ? T[T.length - 1] : T[Math.min(SAVE.hearts(), T.length - 2)];
+    toast('今日のハートは ここまで！🌙\n' + (teaser || 'また明日なかよくしよう') +
+      '\nあと ' + untilTomorrow() + ' で、またためられるよ', 4200);
+  }
+  function renderCapNote() {
+    const el = $('cap-note');
+    const on = !DEMO && SAVE.tapCapped() && !heartsFull();
+    el.hidden = !on;
+    if (on) el.textContent = '🌙 あと' + untilTomorrow();
+  }
+  setInterval(renderCapNote, 30000);
+
+  // さわった所に、小さな印をふわっと出す（💤 など）
+  function floatMark(text) {
+    if (!lastPointer) return;
+    const el = document.createElement('div');
+    el.className = 'float-mark';
+    el.textContent = text;
+    el.style.left = lastPointer.x + 'px';
+    el.style.top = lastPointer.y + 'px';
+    document.body.appendChild(el);
+    el.animate([
+      { transform: 'translate(-50%, -50%) scale(.6)', opacity: 0 },
+      { transform: 'translate(-50%, -120%) scale(1)', opacity: .9, offset: .25 },
+      { transform: 'translate(-30%, -240%) scale(1)', opacity: 0 }
+    ], { duration: 900, easing: 'ease-out' }).finished.then(() => el.remove(), () => el.remove());
   }
 
   function flyHeart() {
@@ -791,6 +834,7 @@
     $('days-streak').textContent = d.streak >= 2 ? 'れんぞく ' + d.streak + ' 日' : '';
     $('menu-hearts').innerHTML = heartsHtml();
     $('play-hearts').innerHTML = heartsHtml();
+    renderCapNote();
   }
 
   function heartUp() {
