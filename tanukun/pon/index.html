@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="pon.css">
 </head>
 <body>
-<main id="pon">
+<main id="pon" class="mode-belly">
 
   <!-- 上のバー：もどる・点数・コンボ。右上はタヌくんの顔のワイプ -->
   <header class="bar">
@@ -33,16 +33,19 @@
       <img id="tanu-img" alt="タヌくんのおなか" draggable="false">
       <canvas id="belly-canvas" aria-hidden="true"></canvas>
     </div>
+    <div id="moles" aria-hidden="true"></div>
     <div id="pops" aria-hidden="true"></div>
   </div>
 
   <!-- はじめる前 -->
   <section id="start" class="sheet">
     <h1>🥁 ぽんぽこリズム</h1>
-    <p>流れてくる <b>◉</b> が 左のわくに来たら<br>タヌくんのおなかを <b>ぽんっ</b>！</p>
-    <p>ピンクの <b class="purun-mark">〜</b> は<br>おなかを 指で さっと すべらせて <b>ぷるん</b>！</p>
+    <p><b>◉</b> は タップで <b>ぽんっ</b>！<br>ピンクの <b class="purun-mark">〜</b> は 指で さっと すべらせて <b>ぷるん</b>！</p>
     <p class="small">リズムは「8ビート」。だんだん速くなるよ（約1分）<br>🔊 音を出して遊んでね</p>
-    <button id="btn-start" class="btn" type="button">はじめる</button>
+    <button id="btn-belly" class="btn" type="button">おなかモード</button>
+    <p class="mode-note">◉ がおなかの上に出てくるよ。<br>まわりの輪が ◉ に重なったら たたいてね</p>
+    <button id="btn-lane" class="btn btn-sub" type="button">ながれるモード</button>
+    <p class="mode-note">◉ が右から流れてくるよ。<br>左のわくに来たら たたいてね</p>
   </section>
 
   <!-- 結果 -->
@@ -59,6 +62,7 @@
     <p id="r-line" class="r-line"></p>
     <a id="btn-post" class="btn btn-x" target="_blank" rel="noopener">𝕏 でポストする</a>
     <button id="btn-again" class="btn btn-sub" type="button">もう一回</button>
+    <button id="btn-mode" class="btn btn-sub" type="button">モードをえらぶ</button>
   </section>
 
 </main>

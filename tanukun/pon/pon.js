@@ -2,7 +2,10 @@
    ぽんぽこリズム（試作）
    ・リズムは 8ビート「ぽん・ぽこ・ぽんぽん・ぽこ」のくり返し
    ・BPM（1分間の拍の数）が 80 → 120 とだんだん速くなる（約50秒）
-   ・◉ が右から左に流れてきて、左のわくに重なったときにおなかをたたく
+   ・遊び方は2つ（はじめる前に選ぶ）
+       おなかモード … ◉ がおなかの上のランダムな場所にふわっと出る。まわりの輪が縮んで、
+                      ◉ にぴったり重なったときにたたく（目線がおなかから離れないので、揺れを楽しめる）
+       ながれるモード … ◉ が右から左に流れてきて、左のわくに重なったときにたたく
    ・ピンクの「〜」は、指でおなかをさっとすべらせて「ぷるん」（たたくのとは別のアクション）
    ・タイミングが合うほど点数が高い。続けて合わせると右上のタヌくんが笑顔になる
    ・音はすべてプログラムで作る（Web Audio）。音の素材ファイルは使わない
@@ -34,7 +37,13 @@
     pattern: { 0: 'pon', 2: 'poko', 4: 'pon', 5: 'pon', 6: 'poko' },
     purun: { every: 2, at: 6 }
   };
-  const SWIPE_PX = 18;   // 指がこれだけ動いたら「すべらせた」とみなす（画面のピクセル）
+  const SWIPE_PX = 18;
+  /* おなかモード
+     appear … ◉ が出てから、たたく時までの秒数（この間に輪が縮む）
+     area   … ◉ が出る範囲（720×900 の絵で、おなかの楕円。x, y は中心、rx, ry は半径）
+     gap    … 続けて出る ◉ どうしの、最低限の離れ具合（絵のピクセル）
+     hitR   … 指が ◉ の中心からこれだけ（画面のピクセル）以内なら当たり */
+  const MOLE = { appear: 1.0, area: { x: 255, y: 405, rx: 112, ry: 80 }, gap: 80, hitR: 56 };   // 指がこれだけ動いたら「すべらせた」とみなす（画面のピクセル）
 
   /* ---------- 判定（秒）。音ゲーに慣れていない人向けに、ゆるめ ---------- */
   const JUDGE = [
@@ -56,6 +65,7 @@
 
   /* ---------- 画面の部品 ---------- */
   const stage = $('stage'), body = $('body'), img = $('tanu-img');
+  const app = $('pon'), molesEl = $('moles');
   const notesEl = $('notes'), judgeEl = $('judge'), target = document.querySelector('.target');
   const wipe = $('wipe'), wipeFace = $('wipe-face');
   img.src = IMG('normal');
@@ -191,11 +201,23 @@
     });
     // 最後に「ぽん！」で決める
     notes.push({ t: t, kind: 'pon', last: true });
+    // おなかモード：◉ の出る場所をランダムに（前の2つの ◉ から gap 以上はなす）
+    const A = MOLE.area;
+    notes.forEach((n, i) => {
+      for (let k = 0; k < 30; k++) {
+        const a = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random());
+        n.ix = A.x + Math.cos(a) * r * A.rx;
+        n.iy = A.y + Math.sin(a) * r * A.ry;
+        const near = notes.slice(Math.max(0, i - 2), i).some((m) => Math.hypot(m.ix - n.ix, m.iy - n.iy) < MOLE.gap);
+        if (!near) break;
+      }
+    });
     return { notes: notes, hats: hats, clicks: clicks, banners: banners, end: t + 1.2 };
   }
 
   /* ---------- 遊んでいる間の状態 ---------- */
   let chart = null, t0 = 0, playing = false, nextNote = 0, nextBanner = 0;
+  let mode = 'belly';   // 'belly'＝おなかモード／'lane'＝ながれるモード
   let score = 0, combo = 0, maxCombo = 0, lastMiss = -9;
   let counts = { perfect: 0, good: 0, ok: 0, miss: 0 };
 
@@ -210,7 +232,11 @@
     return ac.currentTime - (ac.outputLatency || ac.baseLatency || 0) - t0;
   }
 
-  function start() {
+  function start(m) {
+    if (typeof m === 'string') mode = m;
+    app.classList.toggle('mode-belly', mode === 'belly');
+    app.classList.toggle('mode-lane', mode === 'lane');
+    layout();   // モードで、おなかを映す広さが変わる
     if (ac) ac.close();
     ac = makeAudio();
     if (!ac) { $('start').querySelector('.small').textContent = 'このブラウザでは音が出せません。別のブラウザで開いてね'; return; }
@@ -221,12 +247,21 @@
     chart.hats.forEach((h) => soundHat(t0 + h.t, h.accent));
 
     notesEl.textContent = '';
+    molesEl.textContent = '';
     chart.notes.forEach((n) => {
       n.el = document.createElement('div');
-      n.el.className = 'note' + (n.kind === 'pon' ? '' : ' ' + n.kind);
-      n.el.style.transform = 'translateX(-100px)';
-      notesEl.appendChild(n.el);
       n.done = false;
+      if (mode === 'belly') {
+        n.el.className = 'mole' + (n.kind === 'pon' ? '' : ' ' + n.kind);
+        n.ring = document.createElement('div');
+        n.ring.className = 'ring';
+        n.el.appendChild(n.ring);
+        molesEl.appendChild(n.el);
+      } else {
+        n.el.className = 'note' + (n.kind === 'pon' ? '' : ' ' + n.kind);
+        n.el.style.transform = 'translateX(-100px)';
+        notesEl.appendChild(n.el);
+      }
     });
     nextNote = 0; nextBanner = 0;
     score = 0; combo = 0; maxCombo = 0; lastMiss = -9;
@@ -253,13 +288,28 @@
     for (let i = nextNote; i < chart.notes.length; i++) {
       const n = chart.notes[i];
       if (n.t > now - MISS_AFTER) break;
-      if (!n.done) { n.done = true; n.el.classList.add('done'); judge(null, now); }
+      if (!n.done) { n.done = true; n.el.classList.add('done'); judge(null, now, n); }
     }
-    for (let i = nextNote; i < chart.notes.length; i++) {
-      const n = chart.notes[i];
-      const dt = n.t - now;
-      if (dt > SONG.travel + 0.2) break;
-      if (!n.done) n.el.style.transform = 'translateX(' + (TARGET_X + dt * speed) + 'px)';
+    if (mode === 'belly') {
+      // おなかモード：◉ がふわっと出て、まわりの輪が縮み、たたく時に ◉ と重なる
+      for (let i = nextNote; i < chart.notes.length; i++) {
+        const n = chart.notes[i];
+        const dt = n.t - now;
+        if (dt > MOLE.appear) break;
+        if (n.done) continue;
+        const q = 1 - Math.max(0, dt) / MOLE.appear;   // 0（出たところ）→ 1（たたく時）
+        n.el.style.left = (offX + n.ix * scale) + 'px';
+        n.el.style.top = (offY + n.iy * scale) + 'px';
+        n.el.style.opacity = Math.min(1, q * 3);
+        n.ring.style.transform = 'scale(' + (1 + 1.6 * (1 - q)) + ')';
+      }
+    } else {
+      for (let i = nextNote; i < chart.notes.length; i++) {
+        const n = chart.notes[i];
+        const dt = n.t - now;
+        if (dt > SONG.travel + 0.2) break;
+        if (!n.done) n.el.style.transform = 'translateX(' + (TARGET_X + dt * speed) + 'px)';
+      }
     }
     // 速さが変わるお知らせ
     if (nextBanner < chart.banners.length && now >= chart.banners[nextBanner].t - 0.4) {
@@ -282,12 +332,15 @@
        動いた → ぷるん（判定は指が触れた瞬間で行う）／動かずに離れた → たたいた */
   const pointers = {};
   // いちばん近い、まだ判定していない音符（kinds に入っている種類だけ）
-  function nearest(now, kinds) {
+  // おなかモードでは、指の位置（p）が ◉ の近くのものだけ
+  function nearest(now, kinds, p) {
     let best = null, bestD = 9;
     for (let i = nextNote; i < chart.notes.length; i++) {
       const n = chart.notes[i];
       if (n.t - now > 0.3) break;
       if (n.done || kinds.indexOf(n.kind) < 0) continue;
+      if (mode === 'belly' && p &&
+          Math.hypot(offX + n.ix * scale - p.sx, offY + n.iy * scale - p.sy) > MOLE.hitR) continue;
       const d = Math.abs(n.t - now);
       if (d < bestD) { best = n; bestD = d; }
     }
@@ -297,11 +350,11 @@
     const j = found && JUDGE.find((x) => found.d <= x.within);
     if (!j) return;
     found.note.done = true;
-    found.note.el.classList.add('done');
-    judge(j, now);
+    found.note.el.classList.add(mode === 'belly' ? 'hit' : 'done');
+    judge(j, now, found.note);
   }
   function tap(p) {
-    const found = playing ? nearest(p.now, ['pon', 'poko']) : null;
+    const found = playing ? nearest(p.now, ['pon', 'poko'], p) : null;
     const kind = found && found.d < 0.25 ? found.note.kind : 'pon';
     if (ac) (kind === 'poko' ? soundPoko : soundPon)(ac.currentTime, 1);
     popWord(kind === 'poko' ? 'ぽこ！' : 'ぽん！', p.sx, p.sy, kind);
@@ -311,7 +364,7 @@
     p.purun = true;
     if (ac) soundPurun(ac.currentTime);
     popWord('ぷるん！', p.sx, p.sy, 'purun');
-    if (playing) hit(nearest(p.now, ['purun']), p.now);
+    if (playing) hit(nearest(p.now, ['purun'], p), p.now);
   }
 
   stage.addEventListener('pointerdown', (e) => {
@@ -326,7 +379,7 @@
       // 指が触れた瞬間（イベントが届くまでの遅れを差し引く）
       const late = Math.min(0.1, Math.max(0, (performance.now() - e.timeStamp) / 1000));
       p.now = songTime() - late;
-      const t = nearest(p.now, ['pon', 'poko']), pr = nearest(p.now, ['purun']);
+      const t = nearest(p.now, ['pon', 'poko'], p), pr = nearest(p.now, ['purun'], p);
       if (pr && pr.d <= MISS_AFTER && (!t || pr.d < t.d)) { p.wait = true; return; }
     }
     p.wait = true;   // 遊んでいないとき：すべらせたら「ぷるん」、離したら「ぽん」
@@ -356,12 +409,12 @@
   stage.addEventListener('pointerup', lift);
   stage.addEventListener('pointercancel', lift);
 
-  function judge(j, now) {
+  function judge(j, now, n) {
     if (!j) {
       counts.miss++;
       combo = 0;
       lastMiss = now;
-      showJudge('ミス', 'miss');
+      showJudge('ミス', 'miss', n);
     } else {
       counts[j.key]++;
       combo++;
@@ -369,13 +422,18 @@
       // コンボ10ごとに、1回の点数が10点ずつ増える（最大 +50）
       score += j.point + Math.min(50, Math.floor(combo / 10) * 10);
       $('score').textContent = score;
-      showJudge(j.label, j.key);
+      showJudge(j.label, j.key, n);
       target.classList.remove('hit'); void target.offsetWidth; target.classList.add('hit');
     }
     showCombo();
   }
 
-  function showJudge(text, cls) {
+  function showJudge(text, cls, n) {
+    // おなかモード：◉ のあった場所の少し上に出す
+    if (mode === 'belly') {
+      if (n) popWord(text, offX + n.ix * scale, offY + n.iy * scale - 44, 'jd ' + cls);
+      return;
+    }
     judgeEl.textContent = text;
     judgeEl.className = 'judge ' + cls;
     void judgeEl.offsetWidth;
@@ -428,7 +486,7 @@
     $('r-combo').textContent = maxCombo;
     $('r-line').textContent = 'タヌくん「' + rank.line + '」';
     const url = /^https?:/.test(location.href) ? location.href.split(/[?#]/)[0] : 'https://tanukun.pages.dev/pon/';
-    const text = '🥁 ぽんぽこリズム\n' + score + 'てん「' + rank.title + '」さいだい' + maxCombo + 'コンボ\n#タヌくん #ぽんぽこリズム\n' + url;
+    const text = '🥁 ぽんぽこリズム（' + (mode === 'belly' ? 'おなかモード' : 'ながれるモード') + '）\n' + score + 'てん「' + rank.title + '」さいだい' + maxCombo + 'コンボ\n#タヌくん #ぽんぽこリズム\n' + url;
     $('btn-post').href = 'https://x.com/intent/post?text=' + encodeURIComponent(text);
     $('result').hidden = false;
   }
@@ -439,11 +497,19 @@
       playing = false;
       if (ac) { ac.close(); ac = null; }
       notesEl.textContent = '';
+      molesEl.textContent = '';
       $('start').hidden = false;
     }
   });
 
-  $('btn-start').addEventListener('click', start);
-  $('btn-again').addEventListener('click', start);
+  $('btn-belly').addEventListener('click', () => start('belly'));
+  $('btn-lane').addEventListener('click', () => start('lane'));
+  $('btn-again').addEventListener('click', () => start());
+  $('btn-mode').addEventListener('click', () => {
+    $('result').hidden = true;
+    molesEl.textContent = '';
+    notesEl.textContent = '';
+    $('start').hidden = false;
+  });
   setFace('normal');
 })();
