@@ -116,6 +116,20 @@ html, body {
   margin: -16px 0 0 -16px;
   background: radial-gradient(circle, #B5602A 0 30%, #fff 31% 45%, #F0A050 46%);
 }
+/* ぷるん（指ですべらせる）は、ピンクの「〜」 */
+.note.purun {
+  width: 58px; height: 38px;
+  margin: -19px 0 0 -29px;
+  border-radius: 19px;
+  background: #FF8FB1;
+  border: 3px solid #fff;
+  color: #fff;
+  font-weight: 900;
+  font-size: 22px;
+  line-height: 30px;
+  text-align: center;
+}
+.note.purun::after { content: "〜"; }
 .note.done { opacity: 0; transition: opacity .12s; }
 .judge {
   position: absolute;
@@ -190,6 +204,7 @@ html, body {
   transform: translate(-50%, -50%);
   animation: popUp .55s ease-out forwards;
 }
+.pop.purun { font-size: 30px; -webkit-text-stroke-color: #D9487A; }
 .pop.poko { font-size: 22px; -webkit-text-stroke-color: #C0602A; }
 @keyframes popUp {
   0% { opacity: 1; transform: translate(-50%, -50%) scale(.7); }
@@ -245,3 +260,10 @@ html, body {
 }
 .r-list b { float: right; }
 .r-line { font-weight: bold; }
+.purun-mark {
+  display: inline-block;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: #FF8FB1;
+  color: #fff;
+}

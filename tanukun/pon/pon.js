@@ -3,6 +3,7 @@
    ・リズムは 8ビート「ぽん・ぽこ・ぽんぽん・ぽこ」のくり返し
    ・BPM（1分間の拍の数）が 80 → 120 とだんだん速くなる（約50秒）
    ・◉ が右から左に流れてきて、左のわくに重なったときにおなかをたたく
+   ・ピンクの「〜」は、指でおなかをさっとすべらせて「ぷるん」（たたくのとは別のアクション）
    ・タイミングが合うほど点数が高い。続けて合わせると右上のタヌくんが笑顔になる
    ・音はすべてプログラムで作る（Web Audio）。音の素材ファイルは使わない
    ・おなかの「ぷるん」は本編と同じ仕組み（belly.js）
@@ -17,7 +18,8 @@
 
   /* ---------- 譜面のもと ----------
      sections … 速さ（bpm）と小節の数。上から順に速くなる
-     pattern  … 1小節を8つに分けた位置に、たたく音（pon＝低い音、poko＝高い音） */
+     pattern  … 1小節を8つに分けた位置に、たたく音（pon＝低い音、poko＝高い音）
+     purun    … 何小節に1回、どの位置を「ぷるん」（指ですべらせる）にするか */
   const SONG = {
     lead: 0.8,              // はじめるボタンから、音が鳴りはじめるまで（秒）
     countIn: 4,             // 最初の「カッ・カッ・カッ・カッ」（数を数える拍）
@@ -29,8 +31,10 @@
       { bpm: 110, bars: 4 },
       { bpm: 120, bars: 4 }
     ],
-    pattern: { 0: 'pon', 2: 'poko', 4: 'pon', 5: 'pon', 6: 'poko' }
+    pattern: { 0: 'pon', 2: 'poko', 4: 'pon', 5: 'pon', 6: 'poko' },
+    purun: { every: 2, at: 6 }
   };
+  const SWIPE_PX = 18;   // 指がこれだけ動いたら「すべらせた」とみなす（画面のピクセル）
 
   /* ---------- 判定（秒）。音ゲーに慣れていない人向けに、ゆるめ ---------- */
   const JUDGE = [
@@ -57,7 +61,14 @@
   img.src = IMG('normal');
   Object.values(FACES).forEach((src) => { new Image().src = src; });
 
-  const belly = window.TanuBelly({ config: C.bellyJiggle, img: img, canvas: $('belly-canvas') });
+  /* おなかの揺れ：本編の設定をもとに、このページだけ「ポヨン」を強めにする
+     tapDent … たたいたときのへこみ（本編 0.08）、damp … 小さいほど長く揺れる（本編 9）
+     pullMax … 「ぷるん」で引っぱられる最大の長さ（本編 8.6） */
+  const JIGGLE = Object.assign({}, C.bellyJiggle, {
+    tapDent: 0.15, damp: 6, reboundBoost: 0.9, pullMax: 13,
+    poke: Object.assign({}, C.bellyJiggle.poke, { depth: 0.45 })
+  });
+  const belly = window.TanuBelly({ config: JIGGLE, img: img, canvas: $('belly-canvas') });
   img.addEventListener('load', () => belly.warm([img.src]), { once: true });
 
   /* ---------- おなかのアップ ----------
@@ -117,6 +128,21 @@
     o.start(t); o.stop(t + 0.2);
     hitNoise(t, 2200, 0.3 * vol, 0.06);
   }
+  // ぷるん：音がふるえながら下がる「ぷるるん」
+  function soundPurun(t) {
+    const o = ac.createOscillator(), g = ac.createGain();
+    const lfo = ac.createOscillator(), depth = ac.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(340, t);
+    o.frequency.exponentialRampToValueAtTime(150, t + 0.45);
+    lfo.frequency.value = 16;
+    depth.gain.value = 45;
+    lfo.connect(depth).connect(o.frequency);
+    env(g, t, 0.7, 0.55);
+    o.connect(g).connect(ac.destination);
+    o.start(t); o.stop(t + 0.6);
+    lfo.start(t); lfo.stop(t + 0.6);
+  }
   // シャカシャカ（ハイハット）。accent は拍の頭
   function soundHat(t, accent) {
     const s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
@@ -157,7 +183,8 @@
       for (let b = 0; b < sec.bars; b++) {
         for (let e = 0; e < 8; e++) {
           hats.push({ t: t, accent: e % 2 === 0 });
-          if (SONG.pattern[e]) notes.push({ t: t, kind: SONG.pattern[e] });
+          const purun = b % SONG.purun.every === SONG.purun.every - 1 && e === SONG.purun.at;
+          if (SONG.pattern[e]) notes.push({ t: t, kind: purun ? 'purun' : SONG.pattern[e] });
           t += eighth;
         }
       }
@@ -196,7 +223,7 @@
     notesEl.textContent = '';
     chart.notes.forEach((n) => {
       n.el = document.createElement('div');
-      n.el.className = 'note' + (n.kind === 'poko' ? ' poko' : '');
+      n.el.className = 'note' + (n.kind === 'pon' ? '' : ' ' + n.kind);
       n.el.style.transform = 'translateX(-100px)';
       notesEl.appendChild(n.el);
       n.done = false;
@@ -249,46 +276,82 @@
     requestAnimationFrame(frame);
   }
 
-  /* ---------- たたいた ---------- */
+  /* ---------- たたいた・すべらせた ----------
+     ・ふつうは、指が触れた瞬間に「たたいた」として判定する
+     ・いちばん近いのが「ぷるん」のときは、指が動くか離れるまで待つ
+       動いた → ぷるん（判定は指が触れた瞬間で行う）／動かずに離れた → たたいた */
   const pointers = {};
+  // いちばん近い、まだ判定していない音符（kinds に入っている種類だけ）
+  function nearest(now, kinds) {
+    let best = null, bestD = 9;
+    for (let i = nextNote; i < chart.notes.length; i++) {
+      const n = chart.notes[i];
+      if (n.t - now > 0.3) break;
+      if (n.done || kinds.indexOf(n.kind) < 0) continue;
+      const d = Math.abs(n.t - now);
+      if (d < bestD) { best = n; bestD = d; }
+    }
+    return best ? { note: best, d: bestD } : null;
+  }
+  function hit(found, now) {
+    const j = found && JUDGE.find((x) => found.d <= x.within);
+    if (!j) return;
+    found.note.done = true;
+    found.note.el.classList.add('done');
+    judge(j, now);
+  }
+  function tap(p) {
+    const found = playing ? nearest(p.now, ['pon', 'poko']) : null;
+    const kind = found && found.d < 0.25 ? found.note.kind : 'pon';
+    if (ac) (kind === 'poko' ? soundPoko : soundPon)(ac.currentTime, 1);
+    popWord(kind === 'poko' ? 'ぽこ！' : 'ぽん！', p.sx, p.sy, kind);
+    if (playing) hit(found, p.now);
+  }
+  function purun(p) {
+    p.purun = true;
+    if (ac) soundPurun(ac.currentTime);
+    popWord('ぷるん！', p.sx, p.sy, 'purun');
+    if (playing) hit(nearest(p.now, ['purun']), p.now);
+  }
+
   stage.addEventListener('pointerdown', (e) => {
     e.preventDefault();
     const r = stage.getBoundingClientRect();
     const sx = e.clientX - r.left, sy = e.clientY - r.top;
     const ix = (sx - offX) / scale, iy = (sy - offY) / scale;
-    pointers[e.pointerId] = true;
+    const p = pointers[e.pointerId] = { sx: sx, sy: sy, x0: e.clientX, y0: e.clientY, now: 0, wait: false, purun: false, pull: false };
     if (belly.ready()) belly.press('belly', ix, iy);
     else { body.classList.remove('bounce'); void body.offsetWidth; body.classList.add('bounce'); }
-    if (!playing || !ac) { popWord('ぽん！', sx, sy, 'pon'); return; }
-
-    // 指が触れた瞬間（イベントが届くまでの遅れを差し引く）
-    const late = Math.min(0.1, Math.max(0, (performance.now() - e.timeStamp) / 1000));
-    const now = songTime() - late;
-    // いちばん近い、まだたたいていない ◉
-    let best = null, bestD = 9;
-    for (let i = nextNote; i < chart.notes.length; i++) {
-      const n = chart.notes[i];
-      if (n.t - now > 0.3) break;
-      if (n.done) continue;
-      const d = Math.abs(n.t - now);
-      if (d < bestD) { best = n; bestD = d; }
+    if (playing && ac) {
+      // 指が触れた瞬間（イベントが届くまでの遅れを差し引く）
+      const late = Math.min(0.1, Math.max(0, (performance.now() - e.timeStamp) / 1000));
+      p.now = songTime() - late;
+      const t = nearest(p.now, ['pon', 'poko']), pr = nearest(p.now, ['purun']);
+      if (pr && pr.d <= MISS_AFTER && (!t || pr.d < t.d)) { p.wait = true; return; }
     }
-    // 音は近い ◉ に合わせる（ぽこの所でたたけば「ぽこ」）
-    const kind = best && bestD < 0.25 ? best.kind : 'pon';
-    (kind === 'poko' ? soundPoko : soundPon)(ac.currentTime, 1);
-    popWord(kind === 'poko' ? 'ぽこ！' : 'ぽん！', sx, sy, kind);
-
-    const j = best && JUDGE.find((x) => bestD <= x.within);
-    if (j) {
-      best.done = true;
-      best.el.classList.add('done');
-      judge(j, now);
-    }
+    p.wait = true;   // 遊んでいないとき：すべらせたら「ぷるん」、離したら「ぽん」
+    if (playing && ac) { p.wait = false; tap(p); }
   });
+
+  stage.addEventListener('pointermove', (e) => {
+    const p = pointers[e.pointerId];
+    if (!p) return;
+    const dx = e.clientX - p.x0, dy = e.clientY - p.y0;
+    if (!p.pull && Math.hypot(dx, dy) < SWIPE_PX) return;
+    if (p.wait) { p.wait = false; purun(p); }
+    // すべらせたら、指の動きの2.5倍おなかを引っぱる（短くすべらせても大きく揺れる）
+    // 「〜」が近くにないときも引っぱって揺らす（点数には数えない）
+    p.pull = true;
+    belly.drag('belly', dx * 2.5, dy * 2.5, 1 / scale);
+  });
+
   function lift(e) {
-    if (!pointers[e.pointerId]) return;
+    const p = pointers[e.pointerId];
+    if (!p) return;
     delete pointers[e.pointerId];
-    belly.release('belly', e.type === 'pointerup');
+    if (p.wait && e.type === 'pointerup') tap(p);
+    // ぷるん：引っぱった所から、はなすと大きく揺れて戻る
+    belly.release('belly', e.type === 'pointerup' && !p.pull);
   }
   stage.addEventListener('pointerup', lift);
   stage.addEventListener('pointercancel', lift);
