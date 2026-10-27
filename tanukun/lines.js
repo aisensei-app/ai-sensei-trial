@@ -60,8 +60,11 @@ window.TANU_LINES = [
   { text: '{name}、まってたよ！',       when: { scene: 'home', visit: 'new', friendship: { min: 2 } }, weight: 2 },
   { text: '{name}に会えると、元気でるなあ', when: { scene: 'home', visit: 'new', friendship: { min: 4 } }, weight: 3 },
   { text: '{name}、おかえり〜！待ってたよ', when: { scene: 'home', visit: 'comeback', friendship: { min: 2 } }, face: 'shy', weight: 2 },
-  { text: 'また来てくれたの？',         when: { scene: 'home', visit: 'again' } },
-  { text: 'おかえり、{name}！',         when: { scene: 'home', visit: 'again', friendship: { min: 2 } }, weight: 2 },
+  // again … 今日2回目以降に開いたとき・遊ぶ画面からメニューに戻ったとき（何回目でも不自然にならない言葉に）
+  { text: 'なにしてあそぶ？',           when: { scene: 'home', visit: 'again' } },
+  { text: 'えへへ、いっしょにいようね', when: { scene: 'home', visit: 'again' } },
+  { text: 'ふぁ〜…のんびりしよっか',    when: { scene: 'home', visit: 'again' } },
+  { text: '{name}、つぎはどうする？',   when: { scene: 'home', visit: 'again', friendship: { min: 2 } }, weight: 2 },
   { text: 'なにしてあそぶ？',           when: { scene: 'home', visit: 'again' } },
   { text: 'ふぁ〜あ…',                  when: { scene: 'home', visit: 'again', timeOfDay: 'night' } },
 

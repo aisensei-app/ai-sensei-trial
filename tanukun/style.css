@@ -234,6 +234,7 @@ html, body {
   font-size: 18px;
 }
 .wear-thumb img { width: 34px; height: auto; }
+.btn-wide { width: 100%; }
 .btn-danger { color: #C0392B; width: 100%; margin-top: 6px; }
 
 /* ---- 実績・設定のパネル ---- */

@@ -1146,12 +1146,13 @@
       '<div class="set-row"><input id="set-name" class="name-input" type="text" maxlength="' + SAVE.NAME_MAX + '" placeholder="名前なし">' +
       '<button id="set-name-ok" class="btn" type="button">変更</button></div>' +
       '<p class="note small">空にすると、名前なしで話しかけます</p>' +
+      (C.notice ? '<h3>このアプリ</h3><button id="btn-about" class="btn btn-wide" type="button">このアプリについて</button>' : '') +
       '<h3>記録</h3>' +
       '<p class="note">記録はこのスマホのブラウザの中だけに保存されます。' +
       '<b>ホーム画面に追加</b>して使うと、記録が消えにくくなります。</p>' +
       '<p class="note">iPhone：共有ボタン →「ホーム画面に追加」<br>Android：右上のメニュー →「ホーム画面に追加」</p>' +
       '<button id="btn-reset" class="btn btn-danger" type="button">記録をリセット</button>' +
-      (C.notice ? '<button id="btn-about" class="btn" type="button">このアプリについて</button>' : '') +
+
       // ことば（使える言語が2つ以上になったら出る）
       (Object.keys(I18N.LANGS).length > 1 ? '<h3>ことば / Language</h3><div class="set-row"><select id="set-lang" class="name-input">' +
         Object.keys(I18N.LANGS).map((l) => '<option value="' + l + '"' + (l === I18N.lang ? ' selected' : '') + '>' + I18N.LANGS[l] + '</option>').join('') +
@@ -1161,7 +1162,7 @@
         ['ふつう', 0, 1, 2, 3, 4, 5].map((n) => '<button class="btn" type="button" data-h="' + (n === 'ふつう' ? '' : n) + '">' +
           (n === 'ふつう' ? n : '💖' + n) + '</button>').join('') + '</div>' +
         '<p class="note small">記録は変わりません。アプリを開き直すと「ふつう」に戻ります</p>' +
-        '<button id="btn-test-clear" class="btn" type="button">🌺 ひみつの思い出とクリア画面を見る</button>' : ''));
+        '<button id="btn-test-clear" class="btn btn-wide" type="button">🌺 ひみつの思い出とクリア画面を見る</button>' : ''));
     if ($('btn-about')) $('btn-about').addEventListener('click', () => showNotice(null));
     if ($('set-lang')) $('set-lang').addEventListener('change', (e) => I18N.set(e.target.value));
     if (C.testHearts && $('btn-test-clear')) {
