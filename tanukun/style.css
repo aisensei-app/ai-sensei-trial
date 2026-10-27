@@ -203,7 +203,7 @@ html, body {
 }
 .btn-main:active { box-shadow: 0 2px 0 #C8641E; }
 .btn-row { display: flex; gap: 10px; }
-.btn-row .btn { flex: 1; }
+.btn-row .btn { flex: 1; white-space: nowrap; padding-left: 6px; padding-right: 6px; }
 .test-hearts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .test-hearts .btn { font-size: 14px; padding: 9px 4px; border: 2px solid transparent; }
 .test-hearts .btn.on { border-color: #F08A3C; }
@@ -262,6 +262,10 @@ html, body {
   gap: 10px;
 }
 .sheet-box h2 { margin: 0; font-size: 20px; text-align: center; }
+/* パネルの中身も、部品どうしの間をあける（以前は中身がくっついて、ボタンが文字にかぶって見えた） */
+#sheet-body { display: flex; flex-direction: column; gap: 10px; }
+#sheet-body > * { flex-shrink: 0; margin-top: 0; margin-bottom: 0; }
+#sheet-body > h3 { margin-top: 8px; }
 .rec { width: 100%; border-collapse: collapse; font-size: 15px; }
 .rec th, .rec td { padding: 8px 4px; border-bottom: 1px solid rgba(74, 46, 22, .12); }
 .rec th { text-align: left; font-weight: 400; }
