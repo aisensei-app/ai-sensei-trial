@@ -214,7 +214,13 @@
     if (!press || e.pointerId !== press.id) return;
     const p = press;
     press = null;
-    if (p.pulling || cancel) { belly.release(p.part, false); return; }
+    if (cancel) { belly.release(p.part, false); return; }
+    if (p.pulling) {
+      // 引っぱってはなした：ばねで「びよ〜ん」と戻る。さわった1回として数える（ハート・レポート・セリフ）
+      belly.release(p.part, false);
+      onTap(p.part, e, true);
+      return;
+    }
     belly.release(p.part, state.phase === 'active');
     onTap(p.part, e);
   }
@@ -248,7 +254,7 @@
   /* =========================================================
      タップしたとき
      ========================================================= */
-  function onTap(zonePlace, ev) {
+  function onTap(zonePlace, ev, pulled) {
     if (state.phase !== 'active') return;
     const place = PLACE_OF[zonePlace] || zonePlace;   // chestL / chestR → chest
     const t = now();
@@ -266,8 +272,9 @@
 
     let scene = 'tap';
     if (place === 'head')  scene = petHead(t);
-    if (place === 'belly') { jiggleBelly(); popWord(ev); }
+    if (place === 'belly') { jiggleBelly(); popWord(ev, pulled ? C.bellyWords.pull : null); }
     if (place === 'tail')  wiggleTail();
+    if (pulled) scene = 'pull';   // 引っぱったときのセリフ（lines.js の scene: 'pull'）
 
     say({ scene: scene, place: place, mood: mood });
     if (place === 'belly') playFaces(C.bellyFaces && C.bellyFaces[mood]);
@@ -432,18 +439,20 @@
 
   /* ---- 「ぽん！」「ぽこ！」：タップした場所から文字がとび出す ---- */
   let wordIndex = 0, lastWordTime = 0;
-  function popWord(ev) {
+  function popWord(ev, word) {
     const W = C.bellyWords;
     if (!W || !W.words || !W.words.length) return;
     const t = now();
-    wordIndex = t - lastWordTime < W.comboSeconds * 1000 ? (wordIndex + 1) % W.words.length : 0;
-    lastWordTime = t;
+    if (!word) {
+      wordIndex = t - lastWordTime < W.comboSeconds * 1000 ? (wordIndex + 1) % W.words.length : 0;
+      lastWordTime = t;
+    }
     const r = area.getBoundingClientRect();
     const x = ev ? ev.clientX - r.left : r.width * BJ.x / 100;
     const y = ev ? ev.clientY - r.top  : r.height * BJ.y / 100;
     const el = document.createElement('span');
     el.className = 'pop-word';
-    el.textContent = W.words[wordIndex];
+    el.textContent = word || W.words[wordIndex];
     el.style.left = x + 'px';
     el.style.top = y + 'px';
     area.appendChild(el);

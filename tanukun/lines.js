@@ -8,6 +8,7 @@
                         / hiddenTap（隠れ中にタップ）/ return（戻ってくる）
                         / wear（きせかえで部品を付けた・はずした）
                         / heartUp（ハートをゲットしたとき。friendship で何個目かを指定）
+                        / pull（おなかを引っぱって、はなしたとき）
      part      … 付けた部品の id（wear のときだけ）。はずしたときは none
      stage     … おまたの反応（place: 'crotch' のときだけ）
                         warn（なかよしになる前の1回目。注意する）/ moji（モジモジ）
@@ -107,6 +108,15 @@ window.TANU_LINES = [
   { text: 'くすぐったいってば',   when: { scene: 'tap', place: 'tail', mood: 'shy' } },
   { text: 'もう〜！',             when: { scene: 'tap', place: 'tail', mood: 'troubled' } },
   { text: 'しっぽ、引っぱらないで〜', when: { scene: 'tap', place: 'tail', mood: 'troubled' } },
+
+  /* ---------- おなかを引っぱって、はなしたとき ---------- */
+  { text: 'びよ〜んって、のびた〜！',          when: { scene: 'pull', mood: 'normal' } },
+  { text: 'おなか、もちみたいでしょ？',        when: { scene: 'pull', mood: 'normal' } },
+  { text: 'ひっぱっちゃ、やだ〜',              when: { scene: 'pull', mood: 'normal' }, face: 'shy' },
+  { text: 'ばいんって戻ったね♪',               when: { scene: 'pull', mood: 'normal' } },
+  { text: 'のびる、のびる〜',                  when: { scene: 'pull', mood: ['shy', 'troubled'] }, face: 'troubled' },
+  { text: '{name}、のばしすぎ〜！',            when: { scene: 'pull', mood: ['shy', 'troubled'] }, face: 'shy' },
+  { text: '{name}になら、いっぱいのばされてもいいよ', when: { scene: 'pull', mood: 'normal', friendship: { min: 4 } }, weight: 2 },
 
   /* ---------- なかよし度で深まるセリフ（ハート2〜3：だんだん慣れてくる／ハート4〜5：甘えん坊） ---------- */
   // 頭
