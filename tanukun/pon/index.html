@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ぽんぽこリズム｜タヌくん</title>
+<meta name="theme-color" content="#FFF4E0">
+<link rel="icon" href="../images/icon-192.png">
+<link rel="stylesheet" href="pon.css">
+</head>
+<body>
+<main id="pon">
+
+  <!-- 上のバー：もどる・点数・コンボ。右上はタヌくんの顔のワイプ -->
+  <header class="bar">
+    <a class="back" href="../">‹ もどる</a>
+    <div class="score"><span id="score">0</span><small>てん</small></div>
+    <div class="combo" id="combo"></div>
+  </header>
+  <div id="wipe" class="wipe" aria-hidden="true"><div id="wipe-face"></div></div>
+
+  <!-- ◉ が右から左に流れてくる道。左のわくに重なったときにたたく -->
+  <div id="lane" class="lane" aria-hidden="true">
+    <div class="target"></div>
+    <div id="notes"></div>
+    <div id="judge" class="judge"></div>
+  </div>
+  <div id="bpm" class="bpm"></div>
+
+  <!-- おなかのアップ。どこをたたいてもOK -->
+  <div id="stage">
+    <div id="body">
+      <img id="tanu-img" alt="タヌくんのおなか" draggable="false">
+      <canvas id="belly-canvas" aria-hidden="true"></canvas>
+    </div>
+    <div id="pops" aria-hidden="true"></div>
+  </div>
+
+  <!-- はじめる前 -->
+  <section id="start" class="sheet">
+    <h1>🥁 ぽんぽこリズム</h1>
+    <p>流れてくる <b>◉</b> が 左のわくに来たら<br>タヌくんのおなかを <b>ぽんっ</b>！</p>
+    <p class="small">リズムは「8ビート」。だんだん速くなるよ（約1分）<br>🔊 音を出して遊んでね</p>
+    <button id="btn-start" class="btn" type="button">はじめる</button>
+  </section>
+
+  <!-- 結果 -->
+  <section id="result" class="sheet" hidden>
+    <h2 id="r-title"></h2>
+    <div class="r-score"><b id="r-score">0</b> てん</div>
+    <ul class="r-list">
+      <li>ぴったり <b id="r-perfect">0</b></li>
+      <li>いいね <b id="r-good">0</b></li>
+      <li>おしい <b id="r-ok">0</b></li>
+      <li>ミス <b id="r-miss">0</b></li>
+      <li>さいだいコンボ <b id="r-combo">0</b></li>
+    </ul>
+    <p id="r-line" class="r-line"></p>
+    <a id="btn-post" class="btn btn-x" target="_blank" rel="noopener">𝕏 でポストする</a>
+    <button id="btn-again" class="btn btn-sub" type="button">もう一回</button>
+  </section>
+
+</main>
+<!-- 本編と同じ設定（おなかの揺れ）と揺れの仕組みを使う -->
+<script src="../config.js"></script>
+<script src="../belly.js"></script>
+<script src="pon.js"></script>
+</body>
+</html>

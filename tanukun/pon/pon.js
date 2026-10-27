@@ -1,0 +1,386 @@
+/* =========================================================
+   ぽんぽこリズム（試作）
+   ・リズムは 8ビート「ぽん・ぽこ・ぽんぽん・ぽこ」のくり返し
+   ・BPM（1分間の拍の数）が 80 → 120 とだんだん速くなる（約50秒）
+   ・◉ が右から左に流れてきて、左のわくに重なったときにおなかをたたく
+   ・タイミングが合うほど点数が高い。続けて合わせると右上のタヌくんが笑顔になる
+   ・音はすべてプログラムで作る（Web Audio）。音の素材ファイルは使わない
+   ・おなかの「ぷるん」は本編と同じ仕組み（belly.js）
+   ========================================================= */
+(function () {
+  'use strict';
+
+  const C = window.TANU_CONFIG;
+  const $ = (id) => document.getElementById(id);
+  // 本編の設定の絵は 'images/…' なので、このページ（pon/）からは '../' を付ける
+  const IMG = (name) => (/^data:/.test(C.images[name]) ? '' : '../') + C.images[name];
+
+  /* ---------- 譜面のもと ----------
+     sections … 速さ（bpm）と小節の数。上から順に速くなる
+     pattern  … 1小節を8つに分けた位置に、たたく音（pon＝低い音、poko＝高い音） */
+  const SONG = {
+    lead: 0.8,              // はじめるボタンから、音が鳴りはじめるまで（秒）
+    countIn: 4,             // 最初の「カッ・カッ・カッ・カッ」（数を数える拍）
+    travel: 1.6,            // ◉ が右はしから、わくに着くまでの時間（秒）
+    sections: [
+      { bpm: 80, bars: 4 },
+      { bpm: 90, bars: 4 },
+      { bpm: 100, bars: 4 },
+      { bpm: 110, bars: 4 },
+      { bpm: 120, bars: 4 }
+    ],
+    pattern: { 0: 'pon', 2: 'poko', 4: 'pon', 5: 'pon', 6: 'poko' }
+  };
+
+  /* ---------- 判定（秒）。音ゲーに慣れていない人向けに、ゆるめ ---------- */
+  const JUDGE = [
+    { key: 'perfect', label: 'ぴったり！', within: 0.06, point: 100 },
+    { key: 'good',    label: 'いいね',     within: 0.11, point: 60 },
+    { key: 'ok',      label: 'おしい',     within: 0.16, point: 20 }
+  ];
+  const MISS_AFTER = 0.16;
+
+  /* ---------- 右上のワイプの表情 ---------- */
+  const FACES = {
+    normal: IMG('normal'),
+    happy: IMG('happy'),       // 笑顔（いい調子のとき）
+    melt: IMG('melt'),         // とろける笑顔（とても長く続いたとき）
+    troubled: IMG('troubled')  // ミスしたすぐあと
+  };
+  const SMILE_COMBO = 8;       // このコンボ以上で笑顔
+  const MELT_COMBO = 24;       // このコンボ以上で、とろける笑顔
+
+  /* ---------- 画面の部品 ---------- */
+  const stage = $('stage'), body = $('body'), img = $('tanu-img');
+  const notesEl = $('notes'), judgeEl = $('judge'), target = document.querySelector('.target');
+  const wipe = $('wipe'), wipeFace = $('wipe-face');
+  img.src = IMG('normal');
+  Object.values(FACES).forEach((src) => { new Image().src = src; });
+
+  const belly = window.TanuBelly({ config: C.bellyJiggle, img: img, canvas: $('belly-canvas') });
+  img.addEventListener('load', () => belly.warm([img.src]), { once: true });
+
+  /* ---------- おなかのアップ ----------
+     720×900 の絵のうち、おなか（中心 255, 420）を画面いっぱいに映す */
+  const VIEW = { cx: 255, cy: 420, w: 340 };
+  let scale = 1, offX = 0, offY = 0;
+  function layout() {
+    const sw = stage.clientWidth, sh = stage.clientHeight;
+    scale = sw / VIEW.w;
+    offX = sw / 2 - VIEW.cx * scale;
+    offY = sh * 0.48 - VIEW.cy * scale;
+    body.style.width = 720 * scale + 'px';
+    body.style.height = 900 * scale + 'px';
+    body.style.left = offX + 'px';
+    body.style.top = offY + 'px';
+  }
+  window.addEventListener('resize', layout);
+  layout();
+
+  /* ---------- 音（Web Audio でその場で作る） ---------- */
+  let ac = null, noise = null;
+  function makeAudio() {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    // iPhone：マナーモードでも鳴るようにする（対応しているブラウザだけ）
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+    const a = new AC({ latencyHint: 'interactive' });
+    noise = a.createBuffer(1, a.sampleRate * 0.3, a.sampleRate);
+    const d = noise.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    return a;
+  }
+  function env(g, t, peak, dur) {
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(peak, t + 0.004);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  }
+  // ぽん：低い音が「ぼわん」と下がる（おなか太鼓）
+  function soundPon(t, vol) {
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(190, t);
+    o.frequency.exponentialRampToValueAtTime(70, t + 0.18);
+    env(g, t, 0.9 * vol, 0.38);
+    o.connect(g).connect(ac.destination);
+    o.start(t); o.stop(t + 0.4);
+    hitNoise(t, 900, 0.25 * vol, 0.04);
+  }
+  // ぽこ：少し高く、短く「ぽこっ」
+  function soundPoko(t, vol) {
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'triangle';
+    o.frequency.setValueAtTime(420, t);
+    o.frequency.exponentialRampToValueAtTime(240, t + 0.09);
+    env(g, t, 0.7 * vol, 0.16);
+    o.connect(g).connect(ac.destination);
+    o.start(t); o.stop(t + 0.2);
+    hitNoise(t, 2200, 0.3 * vol, 0.06);
+  }
+  // シャカシャカ（ハイハット）。accent は拍の頭
+  function soundHat(t, accent) {
+    const s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+    s.buffer = noise;
+    f.type = 'highpass'; f.frequency.value = 7000;
+    env(g, t, accent ? 0.22 : 0.1, accent ? 0.06 : 0.035);
+    s.connect(f).connect(g).connect(ac.destination);
+    s.start(t); s.stop(t + 0.08);
+  }
+  // 数を数える音（カッ）
+  function soundClick(t, high) {
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'square';
+    o.frequency.value = high ? 1400 : 1000;
+    env(g, t, 0.12, 0.05);
+    o.connect(g).connect(ac.destination);
+    o.start(t); o.stop(t + 0.06);
+  }
+  function hitNoise(t, freq, vol, dur) {
+    const s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+    s.buffer = noise;
+    f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = 1.2;
+    env(g, t, vol, dur);
+    s.connect(f).connect(g).connect(ac.destination);
+    s.start(t); s.stop(t + dur + 0.02);
+  }
+
+  /* ---------- 譜面をつくる（すべて「曲の始まりからの秒」） ---------- */
+  function buildChart() {
+    const notes = [], hats = [], clicks = [], banners = [];
+    let t = 0;
+    const first = SONG.sections[0].bpm;
+    for (let i = 0; i < SONG.countIn; i++) clicks.push({ t: t + i * 60 / first, high: i === 0 });
+    t += SONG.countIn * 60 / first;
+    SONG.sections.forEach((sec, si) => {
+      const eighth = 30 / sec.bpm;
+      banners.push({ t: t, bpm: sec.bpm, first: si === 0 });
+      for (let b = 0; b < sec.bars; b++) {
+        for (let e = 0; e < 8; e++) {
+          hats.push({ t: t, accent: e % 2 === 0 });
+          if (SONG.pattern[e]) notes.push({ t: t, kind: SONG.pattern[e] });
+          t += eighth;
+        }
+      }
+    });
+    // 最後に「ぽん！」で決める
+    notes.push({ t: t, kind: 'pon', last: true });
+    return { notes: notes, hats: hats, clicks: clicks, banners: banners, end: t + 1.2 };
+  }
+
+  /* ---------- 遊んでいる間の状態 ---------- */
+  let chart = null, t0 = 0, playing = false, nextNote = 0, nextBanner = 0;
+  let score = 0, combo = 0, maxCombo = 0, lastMiss = -9;
+  let counts = { perfect: 0, good: 0, ok: 0, miss: 0 };
+
+  // いま聞こえている音が「曲の始まりから何秒目か」
+  function songTime() {
+    if (ac.getOutputTimestamp) {
+      const ts = ac.getOutputTimestamp();
+      if (ts.contextTime > 0 && ts.performanceTime > 0) {
+        return ts.contextTime + (performance.now() - ts.performanceTime) / 1000 - t0;
+      }
+    }
+    return ac.currentTime - (ac.outputLatency || ac.baseLatency || 0) - t0;
+  }
+
+  function start() {
+    if (ac) ac.close();
+    ac = makeAudio();
+    if (!ac) { $('start').querySelector('.small').textContent = 'このブラウザでは音が出せません。別のブラウザで開いてね'; return; }
+    ac.resume();
+    chart = buildChart();
+    t0 = ac.currentTime + SONG.lead;
+    chart.clicks.forEach((c) => soundClick(t0 + c.t, c.high));
+    chart.hats.forEach((h) => soundHat(t0 + h.t, h.accent));
+
+    notesEl.textContent = '';
+    chart.notes.forEach((n) => {
+      n.el = document.createElement('div');
+      n.el.className = 'note' + (n.kind === 'poko' ? ' poko' : '');
+      n.el.style.transform = 'translateX(-100px)';
+      notesEl.appendChild(n.el);
+      n.done = false;
+    });
+    nextNote = 0; nextBanner = 0;
+    score = 0; combo = 0; maxCombo = 0; lastMiss = -9;
+    counts = { perfect: 0, good: 0, ok: 0, miss: 0 };
+    $('score').textContent = '0';
+    showCombo();
+    setFace('normal');
+    $('start').hidden = true;
+    $('result').hidden = true;
+    playing = true;
+    requestAnimationFrame(frame);
+  }
+
+  /* ---------- 毎フレーム：◉ を動かす・見のがしをミスにする ---------- */
+  const TARGET_X = 48;
+  function frame() {
+    if (!playing) return;
+    const now = songTime();
+    const laneW = notesEl.clientWidth;
+    const speed = (laneW + 20 - TARGET_X) / SONG.travel;   // 1秒に何ピクセル進むか
+
+    // 見のがした ◉ はミス
+    while (nextNote < chart.notes.length && chart.notes[nextNote].done) nextNote++;
+    for (let i = nextNote; i < chart.notes.length; i++) {
+      const n = chart.notes[i];
+      if (n.t > now - MISS_AFTER) break;
+      if (!n.done) { n.done = true; n.el.classList.add('done'); judge(null, now); }
+    }
+    for (let i = nextNote; i < chart.notes.length; i++) {
+      const n = chart.notes[i];
+      const dt = n.t - now;
+      if (dt > SONG.travel + 0.2) break;
+      if (!n.done) n.el.style.transform = 'translateX(' + (TARGET_X + dt * speed) + 'px)';
+    }
+    // 速さが変わるお知らせ
+    if (nextBanner < chart.banners.length && now >= chart.banners[nextBanner].t - 0.4) {
+      const b = chart.banners[nextBanner++];
+      banner(b.first ? 'スタート！ BPM ' + b.bpm : 'スピードアップ！ BPM ' + b.bpm);
+    }
+    // ワイプ：ミスのあと少しは困り顔、その後はコンボで笑顔に
+    if (now - lastMiss < 0.8) setFace('troubled');
+    else if (combo >= MELT_COMBO) setFace('melt');
+    else if (combo >= SMILE_COMBO) setFace('happy');
+    else setFace('normal');
+
+    if (now >= chart.end) { finish(); return; }
+    requestAnimationFrame(frame);
+  }
+
+  /* ---------- たたいた ---------- */
+  const pointers = {};
+  stage.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    const r = stage.getBoundingClientRect();
+    const sx = e.clientX - r.left, sy = e.clientY - r.top;
+    const ix = (sx - offX) / scale, iy = (sy - offY) / scale;
+    pointers[e.pointerId] = true;
+    if (belly.ready()) belly.press('belly', ix, iy);
+    else { body.classList.remove('bounce'); void body.offsetWidth; body.classList.add('bounce'); }
+    if (!playing || !ac) { popWord('ぽん！', sx, sy, 'pon'); return; }
+
+    // 指が触れた瞬間（イベントが届くまでの遅れを差し引く）
+    const late = Math.min(0.1, Math.max(0, (performance.now() - e.timeStamp) / 1000));
+    const now = songTime() - late;
+    // いちばん近い、まだたたいていない ◉
+    let best = null, bestD = 9;
+    for (let i = nextNote; i < chart.notes.length; i++) {
+      const n = chart.notes[i];
+      if (n.t - now > 0.3) break;
+      if (n.done) continue;
+      const d = Math.abs(n.t - now);
+      if (d < bestD) { best = n; bestD = d; }
+    }
+    // 音は近い ◉ に合わせる（ぽこの所でたたけば「ぽこ」）
+    const kind = best && bestD < 0.25 ? best.kind : 'pon';
+    (kind === 'poko' ? soundPoko : soundPon)(ac.currentTime, 1);
+    popWord(kind === 'poko' ? 'ぽこ！' : 'ぽん！', sx, sy, kind);
+
+    const j = best && JUDGE.find((x) => bestD <= x.within);
+    if (j) {
+      best.done = true;
+      best.el.classList.add('done');
+      judge(j, now);
+    }
+  });
+  function lift(e) {
+    if (!pointers[e.pointerId]) return;
+    delete pointers[e.pointerId];
+    belly.release('belly', e.type === 'pointerup');
+  }
+  stage.addEventListener('pointerup', lift);
+  stage.addEventListener('pointercancel', lift);
+
+  function judge(j, now) {
+    if (!j) {
+      counts.miss++;
+      combo = 0;
+      lastMiss = now;
+      showJudge('ミス', 'miss');
+    } else {
+      counts[j.key]++;
+      combo++;
+      maxCombo = Math.max(maxCombo, combo);
+      // コンボ10ごとに、1回の点数が10点ずつ増える（最大 +50）
+      score += j.point + Math.min(50, Math.floor(combo / 10) * 10);
+      $('score').textContent = score;
+      showJudge(j.label, j.key);
+      target.classList.remove('hit'); void target.offsetWidth; target.classList.add('hit');
+    }
+    showCombo();
+  }
+
+  function showJudge(text, cls) {
+    judgeEl.textContent = text;
+    judgeEl.className = 'judge ' + cls;
+    void judgeEl.offsetWidth;
+    judgeEl.classList.add('show');
+  }
+  function showCombo() {
+    const el = $('combo');
+    el.textContent = combo >= 2 ? combo + ' コンボ' : '';
+    if (combo >= 2) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
+  }
+  function banner(text) {
+    const el = $('bpm');
+    el.textContent = text;
+    el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+  }
+  function popWord(text, x, y, kind) {
+    const el = document.createElement('div');
+    el.className = 'pop ' + kind;
+    el.textContent = text;
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    $('pops').appendChild(el);
+    setTimeout(() => el.remove(), 600);
+  }
+
+  let face = '';
+  function setFace(name) {
+    if (face === name) return;
+    face = name;
+    wipeFace.style.backgroundImage = 'url("' + FACES[name] + '")';
+    wipe.classList.remove('bump'); void wipe.offsetWidth; wipe.classList.add('bump');
+  }
+
+  /* ---------- 結果 ---------- */
+  const RANKS = [
+    { rate: 0.9, title: 'ぽんぽこ名人！', line: 'すごい！おなかが最高の太鼓になったよ！', face: 'melt' },
+    { rate: 0.7, title: 'いいリズム！', line: 'いい音だったね〜。またたたいてね！', face: 'happy' },
+    { rate: 0.4, title: 'なかなか！', line: 'だんだん速くなるの、むずかしいよね。', face: 'normal' },
+    { rate: 0, title: 'れんしゅう中', line: 'ゆっくりでいいよ。おなかはいつでも貸すからね！', face: 'troubled' }
+  ];
+  function finish() {
+    playing = false;
+    const total = chart.notes.length;
+    const rate = (counts.perfect + counts.good * 0.6 + counts.ok * 0.2) / total;
+    const rank = RANKS.find((r) => rate >= r.rate);
+    setFace(rank.face);
+    $('r-title').textContent = rank.title;
+    $('r-score').textContent = score;
+    ['perfect', 'good', 'ok', 'miss'].forEach((k) => { $('r-' + k).textContent = counts[k]; });
+    $('r-combo').textContent = maxCombo;
+    $('r-line').textContent = 'タヌくん「' + rank.line + '」';
+    const url = /^https?:/.test(location.href) ? location.href.split(/[?#]/)[0] : 'https://tanukun.pages.dev/pon/';
+    const text = '🥁 ぽんぽこリズム\n' + score + 'てん「' + rank.title + '」さいだい' + maxCombo + 'コンボ\n#タヌくん #ぽんぽこリズム\n' + url;
+    $('btn-post').href = 'https://x.com/intent/post?text=' + encodeURIComponent(text);
+    $('result').hidden = false;
+  }
+
+  // とちゅうで別のアプリに切りかえたら、やめて最初の画面に
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && playing) {
+      playing = false;
+      if (ac) { ac.close(); ac = null; }
+      notesEl.textContent = '';
+      $('start').hidden = false;
+    }
+  });
+
+  $('btn-start').addEventListener('click', start);
+  $('btn-again').addEventListener('click', start);
+  setFace('normal');
+})();
