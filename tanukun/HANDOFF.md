@@ -265,7 +265,15 @@
 - 以前は、引っぱってはなすと揺れるだけで、ハート・レポートの葉っぱ・セリフが何も出なかった（ユーザーの指摘）
 - 今は1回さわったのと同じに数える：「びよ〜ん！」の文字（config.js の bellyWords.pull）、+1 のハート、葉っぱ、専用のセリフ（lines.js の scene: 'pull'）
 
-### 公開の準備②：本編の公開（2026-10-27。進行中）
+### 🎉 本編（日本語版）を公開（2026-10-27）
+- URL：https://tanukun.pages.dev/ （Cloudflare Pages の `tanukun`。お試し版は `tanukun-demo` のまま）
+- 告知ポストは「公開中！」のプロモーション画像（正方形）＋ URL。リンクのカードは og/main.jpg
+- 公開後に残っていること：
+  - お試し版の結果画面に「本編で遊ぶ」ボタン（今は「フォローして待つ」）
+  - Web Analytics を有効にして、海外からのアクセスの割合を見る → 1〜2割以上なら英語版（土台は i18n.js）
+  - 反応を見ながら：思い出・きせかえ・セリフの追加、「ぽんぽこリズム」、#タヌくんクリア 10人で記念イラスト
+
+### 公開の準備②：本編の公開（2026-10-27）
 - `python3 tools/build_app.py --base-url https://<プロジェクト名>.pages.dev/` → `app-dist/` と `app-dist.zip`（git には入れない）
   - index.html にカード（OGP、og/main.jpg）、config.js の report.url を公開先に、testHearts が true なら止まる、
     身元につながる言葉（大学名・メールアドレスの一部など）が入っていたら止まる
