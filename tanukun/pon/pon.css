@@ -345,3 +345,54 @@ html, body {
   background: linear-gradient(#FFF4E0 25%, rgba(255, 244, 224, 0));
   pointer-events: none;
 }
+
+/* ---- 中断ボタン ---- */
+.pause {
+  width: 40px; height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: #F3DDBF;
+  color: #5A3A1E;
+  font-size: 20px;
+  font-weight: 900;
+  cursor: pointer;
+  flex: none;
+}
+.count {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 96px;
+  font-weight: 900;
+  color: #fff;
+  -webkit-text-stroke: 8px #E0671F;
+  paint-order: stroke;
+  z-index: 11;
+  pointer-events: none;
+}
+.count.show { animation: countPop .6s ease-out; }
+@keyframes countPop { 0% { transform: scale(1.6); opacity: 0; } 30% { transform: scale(1); opacity: 1; } }
+
+/* ---- クリアまでのバー ---- */
+.progress {
+  position: absolute;
+  left: 12px; right: 112px;
+  top: calc(max(8px, env(safe-area-inset-top)) + 66px);
+  height: 10px;
+  border-radius: 5px;
+  background: rgba(138, 90, 43, .15);
+  z-index: 5;
+}
+#progress-fill {
+  height: 100%;
+  width: 0;
+  border-radius: 5px;
+  background: linear-gradient(90deg, #F0A050, #E0671F);
+}
+.progress span {
+  position: absolute;
+  right: -6px; top: 50%;
+  transform: translate(50%, -50%);
+  font-size: 18px;
+}

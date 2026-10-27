@@ -11,12 +11,15 @@
 <body>
 <main id="pon" class="mode-belly">
 
-  <!-- 上のバー：もどる・点数・コンボ。右上はタヌくんの顔のワイプ -->
+  <!-- 上のバー：中断（プレイ中）または本編へ・点数・コンボ。右上はタヌくんの顔のワイプ -->
   <header class="bar">
-    <a class="back" href="../">‹ もどる</a>
+    <button id="btn-pause" class="pause" type="button" aria-label="中断" hidden>⏸</button>
+    <a id="back-home" class="back" href="../" hidden>‹ タヌくん</a>
     <div class="score"><span id="score">0</span><small>てん</small></div>
     <div class="combo" id="combo"></div>
   </header>
+  <!-- クリアまでのバー（左から右へのびる。右はしの 🏁 でクリア） -->
+  <div class="progress" aria-hidden="true"><div id="progress-fill"></div><span>🏁</span></div>
   <div id="wipe" class="wipe" aria-hidden="true"><div id="wipe-face"></div></div>
 
   <!-- ◉ が右から左に流れてくる道。左のわくに重なったときにたたく -->
@@ -41,12 +44,23 @@
   <section id="start" class="sheet">
     <h1>🥁 ぽんぽこリズム</h1>
     <p><b>◉</b> は タップで <b>ぽんっ</b>！<br>ピンクの <b class="purun-mark">〜</b> は 指で さっと すべらせて <b>ぷるん</b>！</p>
-    <p class="small">リズムは「8ビート」。だんだん速くなるよ（約1分）<br>🔊 音を出して遊んでね</p>
+    <p class="small">リズムは「8ビート」。だんだん速くなるよ（約30秒）<br>🔊 音を出して遊んでね</p>
     <button id="btn-lane" class="btn btn-stage" type="button"><small>ステージ1</small>ながれる</button>
     <p class="mode-note">◉ が右から流れてくるよ。左のわくに来たら たたいてね</p>
     <button id="btn-belly" class="btn btn-stage" type="button"><small>ステージ2</small>おなか</button>
     <p class="mode-note">◉ がおなかの上に出てくるよ。まわりの輪が ◉ に重なったら たたいてね</p>
   </section>
+
+  <!-- 中断 -->
+  <section id="pause" class="sheet" hidden>
+    <h2>ひとやすみ</h2>
+    <button id="btn-resume" class="btn" type="button">つづける</button>
+    <button id="btn-retry" class="btn btn-sub" type="button">さいしょから</button>
+    <button id="btn-quit" class="btn btn-sub" type="button">ステージをえらぶ</button>
+    <a id="pause-home" class="btn btn-sub" href="../">タヌくんのところへ もどる</a>
+  </section>
+  <!-- 再開する前の「3・2・1」 -->
+  <div id="count" class="count" hidden></div>
 
   <!-- 結果 -->
   <section id="result" class="sheet" hidden>

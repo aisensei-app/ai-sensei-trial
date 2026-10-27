@@ -1,7 +1,8 @@
 /* =========================================================
    ぽんぽこリズム（試作）
    ・リズムは 8ビート「ぽん・ぽこ・ぽんぽん・ぽこ」のくり返し
-   ・BPM（1分間の拍の数）が 80 → 120 とだんだん速くなる（約50秒）
+   ・BPM（1分間の拍の数）が 80 → 120 とだんだん速くなる（1ステージ約30秒。上のバーで残りが分かる）
+   ・プレイ中は ⏸ で中断できる（つづける・さいしょから・ステージをえらぶ・タヌくんのところへ）
    ・ステージは2つ（はじめる前に選ぶ）
        ステージ2 おなか … ◉ がおなかの上のランダムな場所にふわっと出る。まわりの輪が縮んで、
                       ◉ にぴったり重なったときにたたく（目線がおなかから離れないので、揺れを楽しめる）
@@ -32,11 +33,11 @@
     countIn: 4,             // 最初の「カッ・カッ・カッ・カッ」（数を数える拍）
     travel: 1.6,            // ◉ が右はしから、わくに着くまでの時間（秒）
     sections: [
-      { bpm: 80, bars: 4 },
-      { bpm: 90, bars: 4 },
-      { bpm: 100, bars: 4 },
-      { bpm: 110, bars: 4 },
-      { bpm: 120, bars: 4 }
+      { bpm: 80, bars: 2 },
+      { bpm: 90, bars: 2 },
+      { bpm: 100, bars: 2 },
+      { bpm: 110, bars: 2 },
+      { bpm: 120, bars: 2 }
     ],
     pattern: { 0: 'pon', 2: 'poko', 4: 'pon', 5: 'pon', 6: 'poko' },
     purun: { every: 2, at: 6 }
@@ -255,6 +256,7 @@
 
   /* ---------- 遊んでいる間の状態 ---------- */
   let chart = null, t0 = 0, playing = false, nextNote = 0, nextBanner = 0;
+  let paused = false;
   let mode = 'belly';   // 'belly'＝おなかモード／'lane'＝ながれるモード
   let score = 0, combo = 0, maxCombo = 0, lastMiss = -9, shyUntil = -9;
   let counts = { perfect: 0, good: 0, ok: 0, miss: 0 };
@@ -263,7 +265,8 @@
   function songTime() {
     if (ac.getOutputTimestamp) {
       const ts = ac.getOutputTimestamp();
-      if (ts.contextTime > 0 && ts.performanceTime > 0) {
+      // 中断から戻った直後などで、記録が古い（0.1秒より前）ときは使わない
+      if (ts.contextTime > 0 && ts.performanceTime > 0 && performance.now() - ts.performanceTime < 100) {
         return ts.contextTime + (performance.now() - ts.performanceTime) / 1000 - t0;
       }
     }
@@ -309,7 +312,12 @@
     setFace('normal');
     $('start').hidden = true;
     $('result').hidden = true;
+    $('pause').hidden = true;
+    $('count').hidden = true;
+    $('progress-fill').style.width = '0%';
+    paused = false;
     playing = true;
+    showBar();
     requestAnimationFrame(frame);
   }
 
@@ -318,6 +326,8 @@
   function frame() {
     if (!playing) return;
     const now = songTime();
+    // クリアまでのバー
+    $('progress-fill').style.width = Math.max(0, Math.min(100, now / chart.end * 100)) + '%';
     const laneW = notesEl.clientWidth;
     const speed = (laneW + 20 - TARGET_X) / SONG.travel;   // 1秒に何ピクセル進むか
 
@@ -518,6 +528,8 @@
   ];
   function finish() {
     playing = false;
+    $('progress-fill').style.width = '100%';
+    showBar();
     const total = chart.notes.length;
     const rate = (counts.perfect + counts.good * 0.6 + counts.ok * 0.2) / total;
     const rank = RANKS.find((r) => rate >= r.rate);
@@ -534,26 +546,82 @@
     $('result').hidden = false;
   }
 
-  // とちゅうで別のアプリに切りかえたら、やめて最初の画面に
+  /* ---------- 中断・再開 ----------
+     中断すると音も止まる（AudioContext を一時停止。予約した音も、止まった所から続く）
+     再開は「3・2・1」と数えてから */
+  function pause() {
+    if (!playing || paused) return;
+    paused = true;
+    playing = false;   // 中断中は、たたいても判定しない
+    if (ac) ac.suspend();
+    Object.keys(pointers).forEach((id) => { delete pointers[id]; });
+    belly.stop();
+    $('count').hidden = true;
+    $('pause').hidden = false;
+    showBar();
+  }
+  function resume() {
+    if (!paused) return;
+    $('pause').hidden = true;
+    const el = $('count');
+    el.hidden = false;
+    let n = 3;
+    (function tick() {
+      if (!paused) return;
+      if (n === 0) {
+        el.hidden = true;
+        ac.resume().then(() => {
+          if (!paused) return;
+          paused = false;
+          playing = true;
+          showBar();
+          requestAnimationFrame(frame);
+        });
+        return;
+      }
+      el.textContent = n--;
+      el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+      setTimeout(tick, 600);
+    })();
+  }
+  // やめて、ステージを選ぶ画面に
+  function quit() {
+    playing = false;
+    paused = false;
+    if (ac) { ac.close(); ac = null; }
+    notesEl.textContent = '';
+    molesEl.textContent = '';
+    $('pause').hidden = true;
+    $('count').hidden = true;
+    $('result').hidden = true;
+    $('progress-fill').style.width = '0%';
+    $('start').hidden = false;
+    setFace('normal');
+    showBar();
+  }
+  // 上のバー：プレイ中は ⏸、それ以外は「タヌくん」（本編）へのリンク
+  // 確認用リンク（本編がない所）では、本編へのリンクは出さない
+  const IN_SITE = /\/pon\/(index\.html)?$/.test(location.pathname);
+  function showBar() {
+    $('btn-pause').hidden = !playing;
+    $('back-home').hidden = playing || paused || !IN_SITE;
+  }
+  $('pause-home').hidden = !IN_SITE;
+
+  // とちゅうで別のアプリに切りかえたら、中断する
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden && playing) {
-      playing = false;
-      if (ac) { ac.close(); ac = null; }
-      notesEl.textContent = '';
-      molesEl.textContent = '';
-      $('start').hidden = false;
-    }
+    if (document.hidden) pause();
   });
 
+  $('btn-pause').addEventListener('click', pause);
+  $('btn-resume').addEventListener('click', resume);
+  $('btn-retry').addEventListener('click', () => start());
+  $('btn-quit').addEventListener('click', quit);
   $('btn-belly').addEventListener('click', () => start('belly'));
   $('btn-lane').addEventListener('click', () => start('lane'));
   $('btn-again').addEventListener('click', () => start());
   $('btn-next').addEventListener('click', () => start('belly'));
-  $('btn-mode').addEventListener('click', () => {
-    $('result').hidden = true;
-    molesEl.textContent = '';
-    notesEl.textContent = '';
-    $('start').hidden = false;
-  });
+  $('btn-mode').addEventListener('click', quit);
   setFace('normal');
+  showBar();
 })();
