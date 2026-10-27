@@ -500,7 +500,7 @@ html, body {
 .ev-i1 { margin: 6px 0 0; font-size: 24px; font-weight: 900; color: #fff; -webkit-text-stroke: 6px #E0457C; paint-order: stroke fill;
   animation: fadeup .6s .5s both; }
 .ev-i2 { margin: 0; font-size: 17px; font-weight: 800; color: #8A2E52; animation: fadeup .6s .9s both; }
-.ev-i3 { margin: 18px 0 0; font-size: 13px; color: #8A2E52; opacity: .7; animation: fadeup .6s 1.6s both, blink 1.4s 2.2s infinite; }
+.ev-i3 { margin: 18px 0 0; font-size: 13px; color: #8A2E52; opacity: .7; animation: fadeup .5s 1.4s both, blink 1.4s 2.2s infinite; }
 @keyframes fadeup { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 /* 合図の間は、絵と台詞の枠をかくしておく */
 .event.intro .ev-box, .event.intro .ev-title { visibility: hidden; }

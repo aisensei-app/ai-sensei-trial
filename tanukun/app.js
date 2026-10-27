@@ -834,9 +834,10 @@
         .map((l) => ({ text: withName(l.text), image: l.image }))
         .concat(fresh ? [{ text: '📖 思い出アルバムに追加されました' }] : []);
       lines.forEach((l) => { if (l.image) new Image().src = l.image; });   // 切りかわる絵を先に読んでおく
-      let i = 0, typing = null, shown = '';
+      let i = 0, typing = null, shown = '', lineAt = 0;
       function show() {
         const full = lines[i].text;
+        lineAt = performance.now();
         if (lines[i].image && real) {
           img.src = lines[i].image;
           bgImg.src = lines[i].image;
@@ -856,7 +857,10 @@
       }
       function next(e) {
         if (e) e.stopPropagation();
-        if (introOn) { endIntro(); return; }
+        // 合図の最初は、タップしても進まない（連打のまま飛ばしてしまわないように）
+        if (introOn) { if (introReady) endIntro(); return; }
+        // 台詞が出てから1.1秒は、タップを受けつけない（連打で台詞を飛ばさないように。文字が出きるくらいの長さ）
+        if (performance.now() - lineAt < 1100) return;
         if (typing) { clearInterval(typing); typing = null; text.textContent = shown; return; }
         i += 1;
         if (i < lines.length) { show(); return; }
@@ -870,12 +874,12 @@
         setTimeout(() => { evEl.hidden = true; resolve(); }, 300);
       }
       const skip = evEl.querySelector('.ev-skip');
-      const onSkip = (e) => { e.stopPropagation(); close(); };
+      const onSkip = (e) => { e.stopPropagation(); if (!introOn || introReady) close(); };
       evEl.addEventListener('click', next);
       skip.addEventListener('click', onSkip);
       // はじめて見るときは、先に「ハートがたまった → 思い出がひらく」の合図を出す（いきなり絵にならないように）
       const intro = evEl.querySelector('.ev-intro');
-      let introOn = !!fresh, introTimer = null;
+      let introOn = !!fresh, introTimer = null, introReady = false;
       function endIntro() {
         if (!introOn) return;
         introOn = false;
@@ -889,7 +893,9 @@
         intro.querySelector('.ev-i2').textContent = 'タヌくんとの思い出「' + m.title + '」';
         intro.hidden = false;
         evEl.classList.add('intro');
-        introTimer = setTimeout(endIntro, 3200);   // タップしなくても、少し待つと始まる
+        // 「タップしてつづける」が出るまで（約1.8秒）は、タップを受けつけない
+        setTimeout(() => { introReady = true; }, 1800);
+        introTimer = setTimeout(endIntro, 4000);   // タップしなくても、少し待つと始まる
       }
       evEl.hidden = false;
       void evEl.offsetWidth;
