@@ -70,11 +70,18 @@ html, body {
 #wipe-face {
   position: absolute;
   inset: 0;
-  background-repeat: no-repeat;
-  /* 720×900 の絵の顔（中心 300, 120 あたり）を丸の中に。絵の幅 = ワイプの 3.3 倍 */
-  background-size: 330% auto;
-  background-position: 38% 2%;
 }
+/* 720×900 の絵の顔（中心 300, 120 あたり）を丸の中に。絵の幅 = ワイプの 3.3 倍 */
+#wipe-face img {
+  position: absolute;
+  width: 330%;
+  max-width: none;
+  left: -87.4%;
+  top: -6.25%;
+  visibility: hidden;
+  pointer-events: none;
+}
+#wipe-face img.on { visibility: visible; }
 .wipe.bump { animation: wipePop .3s cubic-bezier(.3, 1.6, .5, 1); }
 @keyframes wipePop { 0% { transform: scale(.85); } 100% { transform: scale(1); } }
 

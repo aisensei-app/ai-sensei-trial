@@ -18,7 +18,10 @@
   const C = window.TANU_CONFIG;
   const $ = (id) => document.getElementById(id);
   // 本編の設定の絵は 'images/…' なので、このページ（pon/）からは '../' を付ける
-  const IMG = (name) => (/^data:/.test(C.images[name]) ? '' : '../') + C.images[name];
+  const IMG = (name) => {
+    const src = C.images[name] || name;   // 本編の一覧にない絵は、ファイルの場所をそのまま書く
+    return (/^data:/.test(src) ? '' : '../') + src;
+  };
 
   /* ---------- 譜面のもと ----------
      sections … 速さ（bpm）と小節の数。上から順に速くなる
@@ -57,7 +60,7 @@
   /* ---------- 右上のワイプの表情 ---------- */
   const FACES = {
     normal: IMG('normal'),
-    happy: IMG('happy'),       // 笑顔（いい調子のとき）
+    happy: IMG('images/happy.webp'),   // 笑顔（本編の config.js の一覧にはないので、場所を直接）       // 笑顔（いい調子のとき）
     melt: IMG('melt'),         // とろける笑顔（とても長く続いたとき）
     troubled: IMG('troubled'), // ミスしたすぐあと
     shy: IMG('shy')            // コンボの節目（10ごと）に、一瞬だけ照れる
@@ -72,7 +75,17 @@
   const notesEl = $('notes'), judgeEl = $('judge'), target = document.querySelector('.target');
   const wipe = $('wipe'), wipeFace = $('wipe-face');
   img.src = IMG('normal');
-  Object.values(FACES).forEach((src) => { new Image().src = src; });
+  // ワイプの表情：全部の絵を最初から重ねて置き、見せる絵だけを切りかえる
+  // （切りかえのたびに絵を読み直すと、表示されない時間ができるため）
+  const faceImgs = {};
+  Object.keys(FACES).forEach((name) => {
+    const im = document.createElement('img');
+    im.src = FACES[name];
+    im.alt = '';
+    im.draggable = false;
+    wipeFace.appendChild(im);
+    faceImgs[name] = im;
+  });
 
   /* おなかの揺れ：本編の設定をもとに、このページだけ「ポヨン」を強めにする
      tapDent … たたいたときのへこみ（本編 0.08）、damp … 小さいほど長く揺れる（本編 9）
@@ -83,15 +96,14 @@
   });
   /* たたいたときのリアクション（720×900 の絵の％）
      armL / armR … 腕。肩（pivot）を軸に「ビクン」と回る。angle は1回の角度（度）
-     neck        … ネックレス。上下に「ぷるん」。kick は沈む深さ（ピクセル） */
+     ※ ネックレスを上下に揺らすのは、首もとが揺れて不自然だったのでやめた */
   const REACT = {
     armL: { type: 'twist', x: 12.2, y: 44.4, rx: 6.3, ry: 16.7, pivotX: 18.1, pivotY: 30, reach: 38.9, angle: 4 },
     armR: { type: 'twist', x: 66.7, y: 44.4, rx: 9.0, ry: 16.7, pivotX: 61.1, pivotY: 30, reach: 38.9, angle: -4 },
-    neck: { type: 'bob', x: 38.2, y: 25.3, rx: 13.9, ry: 4.4, kick: 5 },
     purun: 2   // 「ぷるん」のときは、この倍だけ大きく反応する
   };
   const belly = window.TanuBelly({ config: JIGGLE, img: img, canvas: $('belly-canvas'),
-    extra: { armL: REACT.armL, armR: REACT.armR, neck: REACT.neck } });
+    extra: { armL: REACT.armL, armR: REACT.armR } });
   let armSide = 0;
   function react(big) {
     const k = big ? REACT.purun : 1;
@@ -103,7 +115,6 @@
       const arm = (armSide++ % 2) ? 'armR' : 'armL';
       belly.twitch(arm, REACT[arm].angle);
     }
-    belly.kick('neck', REACT.neck.kick * k);
     wipeFace.classList.remove('tick'); void wipeFace.offsetWidth; wipeFace.classList.add('tick');
   }
   img.addEventListener('load', () => belly.warm([img.src]), { once: true });
@@ -494,7 +505,7 @@
   function setFace(name) {
     if (face === name) return;
     face = name;
-    wipeFace.style.backgroundImage = 'url("' + FACES[name] + '")';
+    Object.keys(faceImgs).forEach((n) => faceImgs[n].classList.toggle('on', n === name));
     wipe.classList.remove('bump'); void wipe.offsetWidth; wipe.classList.add('bump');
   }
 

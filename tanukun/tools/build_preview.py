@@ -53,7 +53,7 @@ def build_pon(out):
     page = (ROOT / 'pon' / 'index.html').read_text(encoding='utf8')
     body = page[page.index('<main id="pon"'):page.index('<!-- 本編と同じ設定')]
     scripts = ''.join('<script>\n' + text + '\n</script>\n' for text in
-                      [js('config.js'), js('belly.js'), (ROOT / 'pon' / 'pon.js').read_text(encoding='utf8')])
+                      [js('config.js'), js('belly.js'), js('pon/pon.js')])
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text('<title>ぽんぽこリズム</title>\n'
                    '<meta name="claude:viewport-fit-sides" content="cover">\n'
