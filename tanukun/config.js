@@ -173,7 +173,8 @@ window.TANU_CONFIG = {
     tapDailyMax: 20,   // タップでもらえるポイントの1日の上限（連打で上がりすぎないように）
     // ハート1〜5個になるポイント（毎日来て、そこそこ遊ぶと2週間弱で5個）
     // しっかり遊ぶと（1日最大30ポイント）💖5 は最短5日目、ゆっくりでも10日目くらい
-    heartAt: [10, 40, 70, 110, 150],
+    // 1つ目は、はじめて来た日に5回ほどさわるともらえる（開いただけではもらえない）
+    heartAt: [15, 40, 70, 110, 150],
     // ハートが増えたときのお知らせ（1個目〜5個目）。何が変わるかを、ひみつ感を残して伝える
     rewards: [
       '名前で呼んでくれることが増えるよ',
@@ -207,7 +208,7 @@ window.TANU_CONFIG = {
      thumb … アルバムの小さな絵（なければ image） */
   memories: [
     { hearts: 1, title: 'はじめまして', image: 'images/memories/1.webp', stand: 'happy', bg: ['#FFE9C7', '#B9DFA0'],
-      lines: ['…あ、また来てくれたんだ', 'えへへ、{name}って、なんだか話しやすいな', 'これから、よろしくね！'] },
+      lines: ['…えへへ。{name}の手、やさしいね', 'なんだか、もっとなかよくなれそう', 'これから、よろしくね！'] },
     { hearts: 2, title: 'おやつ半分こ', image: 'images/memories/2.webp', stand: 'ponpoko1', bg: ['#FFE2B8', '#E7B97A'],
       lines: ['これ、森でいちばんおいしい木の実なんだ', '…はい、半分こ！', '{name}と食べると、もっとおいしいね'] },
     { hearts: 3, title: 'ひなたぼっこ', image: 'images/memories/3.webp', stand: 'melt', bg: ['#FFF4C9', '#A8D88A'],
