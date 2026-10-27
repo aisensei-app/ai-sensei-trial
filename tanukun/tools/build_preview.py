@@ -51,7 +51,7 @@ def build_pon(out):
     css = (ROOT / 'pon' / 'pon.css').read_text(encoding='utf8')
     css = css.replace('height: 100vh;\n  height: 100dvh;', 'height: 100%;')
     page = (ROOT / 'pon' / 'index.html').read_text(encoding='utf8')
-    body = page[page.index('<main id="pon">'):page.index('<!-- 本編と同じ設定')]
+    body = page[page.index('<main id="pon"'):page.index('<!-- 本編と同じ設定')]
     scripts = ''.join('<script>\n' + text + '\n</script>\n' for text in
                       [js('config.js'), js('belly.js'), (ROOT / 'pon' / 'pon.js').read_text(encoding='utf8')])
     out.parent.mkdir(parents=True, exist_ok=True)
