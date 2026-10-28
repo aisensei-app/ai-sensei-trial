@@ -48,14 +48,10 @@
   <!-- はじめる前 -->
   <section id="start" class="sheet">
     <h1>🥁 ぽんぽこリズム</h1>
-    <p><b>◉</b> は タップで <b>ぽんっ</b>！<br>ピンクの <b class="purun-mark">〜</b> は 指で さっと すべらせて <b>ぷるん</b>！</p>
-    <p class="small">リズムは「8ビート」。だんだん速くなるよ（約30秒）<br>🔊 音を出して遊んでね</p>
+    <p class="small">🔊 音を出して遊んでね</p>
     <button id="btn-lane" class="btn btn-stage" type="button"><small>ステージ1</small>ながれる</button>
-    <p class="mode-note">◉ が右から流れてくるよ。左のわくに来たら たたいてね</p>
     <button id="btn-belly" class="btn btn-stage" type="button"><small>ステージ2</small>おなか</button>
-    <p class="mode-note">◉ がおなかの上に出てくるよ。まわりの輪が ◉ に重なったら たたいてね</p>
     <button id="btn-food" class="btn btn-stage" type="button"><small>ステージ3</small>まんぷく</button>
-    <p class="mode-note">吹き出しの「たべたい！」と同じ食べものだけ たたいてね。いっぱい食べると…？</p>
     <!-- きせかえ（本編と同じ記録。ここで変えると本編にも反映） -->
     <div id="wear" class="wear" hidden></div>
   </section>
@@ -68,6 +64,8 @@
     <button id="btn-quit" class="btn btn-sub" type="button">ステージをえらぶ</button>
     <a id="pause-home" class="btn btn-sub" href="../">タヌくんのところへ もどる</a>
   </section>
+  <!-- ステージが始まってから、最初の ◉ が出るまでの間に出す、遊び方の説明 -->
+  <div id="howto" class="howto" hidden></div>
   <!-- 再開する前の「3・2・1」 -->
   <div id="count" class="count" hidden></div>
 

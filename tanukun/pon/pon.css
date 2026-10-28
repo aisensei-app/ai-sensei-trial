@@ -268,13 +268,6 @@ html, body {
 }
 .r-list b { float: right; }
 .r-line { font-weight: bold; }
-.purun-mark {
-  display: inline-block;
-  padding: 0 10px;
-  border-radius: 999px;
-  background: #FF8FB1;
-  color: #fff;
-}
 
 /* ---- おなかモード：◉ がおなかの上に出てくる ---- */
 #pon.mode-belly .lane { display: none; }
@@ -325,7 +318,6 @@ html, body {
 .pop.jd.good { -webkit-text-stroke-color: #3A9A4A; }
 .pop.jd.ok { -webkit-text-stroke-color: #5A7AB0; }
 .pop.jd.miss { -webkit-text-stroke-color: #999; }
-.mode-note { margin: 4px 0 0; font-size: 12px; color: #8A6A4A; line-height: 1.5; }
 @media (prefers-reduced-motion: reduce) {
   .pop, .mole.hit { animation-duration: .01s; }
 }
@@ -548,3 +540,39 @@ html, body {
 #wipe-face img.face-only { width: 100%; left: 0; top: 0; }
 .want-food { font-size: 44px; line-height: 1.1; }   /* 吹き出しの食べものは大きく */
 .want[hidden] { display: none; }
+
+/* ---- 遊び方の説明（ステージが始まってから、最初の ◉ が出るまで） ---- */
+.howto {
+  position: absolute;
+  left: 24px; right: 24px;
+  top: 46%;
+  transform: translateY(-50%);
+  padding: 16px 12px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, .92);
+  box-shadow: 0 4px 16px rgba(90, 58, 30, .2);
+  text-align: center;
+  font-size: 18px;
+  font-weight: bold;
+  z-index: 7;
+  pointer-events: none;
+  animation: howIn .35s ease-out;
+}
+.howto p { margin: 6px 0; }
+.howto b { color: #E0671F; }
+.howto .howto-sub { font-size: 13px; color: #8A6A4A; }
+.howto.out { opacity: 0; transition: opacity .3s; }
+@keyframes howIn { from { opacity: 0; transform: translateY(-40%); } }
+.ic-note, .ic-purun { display: inline-block; vertical-align: middle; font-style: normal; }
+.ic-note {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #7A4A22 0 30%, #fff 31% 45%, #C77A3A 46%);
+}
+.ic-purun {
+  padding: 0 10px;
+  border-radius: 999px;
+  background: #FF8FB1;
+  color: #fff;
+  line-height: 28px;
+}

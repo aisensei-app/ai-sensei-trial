@@ -100,6 +100,14 @@
     belly: { name: 'ステージ2（おなか）', next: 'food' },
     food:  { name: 'ステージ3（まんぷく）', next: null }
   };
+  /* ステージが始まってから最初の ◉ が出るまでの間（数を数えている間）に出す、遊び方の説明
+     ◉ や 〜 は、ゲームの中と同じ見た目の小さな絵で出す */
+  const NOTE_IC = '<i class="ic-note"></i>', PURUN_IC = '<i class="ic-purun">〜</i>';
+  const HOWTO = {
+    lane:  [NOTE_IC + ' が わくに来たら <b>タップ</b>', PURUN_IC + ' は さっと <b>すべらせる</b>'],
+    belly: [NOTE_IC + ' に 輪が重なったら <b>タップ</b>', PURUN_IC + ' は さっと <b>すべらせる</b>'],
+    food:  ['「🍙 たべたい！」なら 🍙 を <b>タップ</b>', 'ちがうものは たたかないでね']
+  };
   const onBelly = () => mode !== 'lane';   // ◉ がおなかの上に出るステージ（おなか・まんぷく）
   const appearT = () => (mode === 'food' ? FOOD.appear : MOLE.appear);
 
@@ -505,14 +513,27 @@
     paused = false;
     playing = true;
     showBar();
+    // 遊び方の説明：最初の ◉ が見えはじめる少し前に消す
+    const howto = $('howto');
+    howto.innerHTML = HOWTO[mode].map((line) => '<p>' + line + '</p>').join('') + '<p class="howto-sub">8ビート・だんだん速くなるよ</p>';
+    howto.classList.remove('out');
+    howto.hidden = false;
+    howtoUntil = chart.notes[0].t - (mode === 'lane' ? 0.6 : appearT() + 0.1);
     requestAnimationFrame(frame);
   }
+  let howtoUntil = 0;
 
   /* ---------- 毎フレーム：◉ を動かす・見のがしをミスにする ---------- */
   const TARGET_X = 48;
   function frame() {
     if (!playing) return;
     const now = songTime();
+    // 遊び方の説明を消す
+    const howto = $('howto');
+    if (!howto.hidden && !howto.classList.contains('out') && now >= howtoUntil) {
+      howto.classList.add('out');
+      setTimeout(() => { if (howto.classList.contains('out')) howto.hidden = true; }, 300);
+    }
     // クリアまでのバー
     $('progress-fill').style.width = Math.max(0, Math.min(100, now / chart.end * 100)) + '%';
     const laneW = notesEl.clientWidth;
@@ -831,6 +852,7 @@
     $('progress-fill').style.width = '0%';
     $('start').hidden = false;
     $('want').hidden = true;
+    $('howto').hidden = true;
     belly.setBase('fat', 0);
     setFace('normal');
     showBar();
