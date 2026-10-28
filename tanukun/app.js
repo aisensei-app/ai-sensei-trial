@@ -1229,7 +1229,8 @@
       b.querySelector('img').src = m.thumb || m.image || C.images[m.stand] || C.images.normal;
       if (!m.image) { pic.classList.add('stand'); pic.style.background = 'linear-gradient(' + m.bg[0] + ', ' + m.bg[1] + ')'; }
       b.querySelector('.mem-t').textContent = (m.secret ? '🌺 ' : '💖' + m.hearts + ' ') + m.title;
-      b.addEventListener('click', () => { closeSheet(); playMemory(m, false); });
+      // 実績の画面は閉じずに、その上に思い出を重ねて流す（トップ画面が一瞬見えないように。見終わると実績の画面に戻る）
+      b.addEventListener('click', () => playMemory(m, false));
     });
     $('btn-zukan').addEventListener('click', openZukan);
   }
