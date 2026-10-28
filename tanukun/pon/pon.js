@@ -11,6 +11,7 @@
    ・タイミングが合うほど点数が高い。続けて合わせると右上のタヌくんが笑顔になる
    ・音はすべてプログラムで作る（Web Audio）。音の素材ファイルは使わない
    ・おなかの「ぷるん」は本編と同じ仕組み（belly.js）
+   ・きせかえ（デベソなど）は本編の記録をそのまま使う。はじめる前の画面でも付けはずしできる（本編にも反映）
    ・たたくたびに、タヌくんの腕が「ビクン」、ネックレスが「ぷるん」と反応する
    ========================================================= */
 (function () {
@@ -103,8 +104,88 @@
     armR: { type: 'twist', x: 66.7, y: 44.4, rx: 9.0, ry: 16.7, pivotX: 61.1, pivotY: 30, reach: 38.9, angle: -4 },
     purun: 2   // 「ぷるん」のときは、この倍だけ大きく反応する
   };
+  /* ---------- きせかえ ----------
+     本編と同じ記録（localStorage の tanukun-save-v1）の wear を読み書きする。
+     同じサイトの別ページなので、本編で付けた部品がそのまま付く */
+  const SAVE_KEY = 'tanukun-save-v1';
+  const PARTS = C.parts || {};
+  function loadSave() {
+    try { return JSON.parse(localStorage.getItem(SAVE_KEY)) || {}; } catch (e) { return {}; }
+  }
+  let wear = loadSave().wear || {};
+  // なかよし度（ハートの数）。部品の解放に使う
+  const hearts = () => C.friendship.heartAt.filter((pt) => (loadSave().points || 0) >= pt).length;
+  const findPart = (slot, id) => (PARTS[slot] ? PARTS[slot].items : []).filter((it) => it.id === id)[0];
+  const unlocked = (it) => hearts() >= (it.hearts || 0);
+  const partImgs = {};
+  Object.keys(PARTS).forEach((slot) => PARTS[slot].items.forEach((it) => {
+    const im = new Image();
+    im.src = IMG(it.image);
+    partImgs[it.id] = im;
+  }));
+  // いま付けている部品（このページの絵は「通常」だけなので、faces の位置は使わない）
+  function wornLayers() {
+    const out = [];
+    Object.keys(PARTS).forEach((slot) => {
+      const it = findPart(slot, wear[slot]);
+      if (!it || !unlocked(it)) return;
+      out.push({ img: partImgs[it.id], x: it.x, y: it.y, width: it.width });
+    });
+    return out;
+  }
+  const partsLayer = $('parts-layer');
+  function renderParts() {
+    partsLayer.textContent = '';
+    wornLayers().forEach((l) => {
+      const el = document.createElement('img');
+      el.src = l.img.src;
+      el.alt = '';
+      el.draggable = false;
+      if (l.width != null) Object.assign(el.style, { left: l.x + '%', top: l.y + '%', width: l.width + '%' });
+      else el.className = 'full';
+      partsLayer.appendChild(el);
+    });
+  }
+  function setWear(slot, id) {
+    if (id) wear[slot] = id; else delete wear[slot];
+    // 本編の記録のほかの項目はそのままにして、wear だけ書きかえる
+    try {
+      const data = loadSave();
+      data.wear = Object.assign({}, wear);
+      localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+    } catch (e) { /* 保存できない環境では、その回だけ */ }
+    belly.refresh();
+    renderParts();
+    renderWearMenu();
+  }
+  // はじめる前の画面の「きせかえ」
+  function renderWearMenu() {
+    const box = $('wear');
+    box.textContent = '';
+    Object.keys(PARTS).forEach((slot) => {
+      const row = document.createElement('div');
+      row.className = 'wear-row';
+      row.appendChild(Object.assign(document.createElement('span'), { textContent: PARTS[slot].label }));
+      [{ id: '', name: 'なし' }].concat(PARTS[slot].items).forEach((it) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'chip' + ((wear[slot] || '') === it.id ? ' on' : '');
+        const open = !it.id || unlocked(it);
+        b.disabled = !open;
+        b.textContent = open ? it.name : '🔒 💖×' + it.hearts;
+        b.addEventListener('click', () => setWear(slot, it.id));
+        row.appendChild(b);
+      });
+      box.appendChild(row);
+    });
+    box.hidden = !Object.keys(PARTS).length;
+  }
+
   const belly = window.TanuBelly({ config: JIGGLE, img: img, canvas: $('belly-canvas'),
+    overlay: partsLayer, layers: () => wornLayers(),
     extra: { armL: REACT.armL, armR: REACT.armR } });
+  renderParts();
+  renderWearMenu();
   let armSide = 0;
   function react(big) {
     const k = big ? REACT.purun : 1;

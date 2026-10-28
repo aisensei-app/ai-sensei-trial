@@ -34,6 +34,8 @@
   <div id="stage">
     <div id="body">
       <img id="tanu-img" alt="タヌくんのおなか" draggable="false">
+      <!-- きせかえパーツ（デベソなど）。揺れている間は canvas の絵に入る -->
+      <div id="parts-layer" aria-hidden="true"></div>
       <canvas id="belly-canvas" aria-hidden="true"></canvas>
     </div>
     <div id="moles" aria-hidden="true"></div>
@@ -49,6 +51,8 @@
     <p class="mode-note">◉ が右から流れてくるよ。左のわくに来たら たたいてね</p>
     <button id="btn-belly" class="btn btn-stage" type="button"><small>ステージ2</small>おなか</button>
     <p class="mode-note">◉ がおなかの上に出てくるよ。まわりの輪が ◉ に重なったら たたいてね</p>
+    <!-- きせかえ（本編と同じ記録。ここで変えると本編にも反映） -->
+    <div id="wear" class="wear" hidden></div>
   </section>
 
   <!-- 中断 -->
