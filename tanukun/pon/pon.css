@@ -576,3 +576,10 @@ html, body {
   color: #fff;
   line-height: 28px;
 }
+.pop.big {   /* おなかがふくらんだ「ぽよ〜ん！」 */
+  font-size: 40px;
+  -webkit-text-stroke: 7px #FF8A3D;
+  animation-duration: 1.1s;
+}
+.howto .feast { font-size: 30px; font-weight: 900; color: #E0671F; }
+.howto.top { top: calc(max(8px, env(safe-area-inset-top)) + 150px); padding: 10px 12px; }   /* ごちそうさまタイム：おなかが見えるように上へ */

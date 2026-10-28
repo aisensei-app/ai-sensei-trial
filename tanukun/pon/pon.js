@@ -93,8 +93,10 @@
      appear     … 食べものが出てから、たたく時までの秒数（吹き出しを切りかえる間をとるため、おなかモードより短く）
      targetRate … 出てくる食べもののうち、「たべたい！」の食べものの割合
      maxFat     … いちばんふくらんだときの大きさ（0.3 で3割。これより大きいと絵がくずれる）
-     ※ 吹き出しは、速さが変わるごと（2小節ごと）に変わる。変わる前の半小節は休み（食べものが出ない） */
-  const FOOD = { foods: ['🍙', '🍉', '🍡', '🌽'], appear: 0.85, targetRate: 0.6, maxFat: 0.3 };
+     ※ 吹き出しは、速さが変わるごと（2小節ごと）に変わる。変わる前の半小節は休み（食べものが出ない）
+     ※ おなかは、食べるたびではなく、その休みのはじめに、それまでに食べた分だけ「ぽよ〜ん！」と一気にふくらむ
+        （たたいている最中は、おなかの変化に気づけないため）。最後は「ごちそうさまタイム」（feastSeconds 秒）のあとで結果 */
+  const FOOD = { foods: ['🍙', '🍉', '🍡', '🌽'], appear: 0.85, targetRate: 0.6, maxFat: 0.3, feastSeconds: 2.6 };
   const STAGES = {
     lane:  { name: 'ステージ1（ながれる）', next: 'belly' },
     belly: { name: 'ステージ2（おなか）', next: 'food' },
@@ -337,6 +339,21 @@
     o.start(t); o.stop(t + 0.6);
     lfo.start(t); lfo.stop(t + 0.6);
   }
+  // おなかがふくらんだ：低い音から「ぽよよ〜ん」と上がる
+  function soundGrow(t) {
+    const o = ac.createOscillator(), g = ac.createGain();
+    const lfo = ac.createOscillator(), depth = ac.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(110, t);
+    o.frequency.exponentialRampToValueAtTime(330, t + 0.5);
+    lfo.frequency.value = 9;
+    depth.gain.value = 30;
+    lfo.connect(depth).connect(o.frequency);
+    env(g, t, 0.6, 0.7);
+    o.connect(g).connect(ac.destination);
+    o.start(t); o.stop(t + 0.75);
+    lfo.start(t); lfo.stop(t + 0.75);
+  }
   // まちがえた：「ぶぶっ」
   function soundWrong(t) {
     const o = ac.createOscillator(), g = ac.createGain();
@@ -386,7 +403,7 @@
 
   /* ---------- 譜面をつくる（すべて「曲の始まりからの秒」） ---------- */
   function buildChart() {
-    const notes = [], hats = [], clicks = [], banners = [], wants = [];
+    const notes = [], hats = [], clicks = [], banners = [], wants = [], grows = [];
     const food = mode === 'food';
     let want = null;
     let t = 0;
@@ -407,6 +424,7 @@
           hats.push({ t: t, accent: e % 2 === 0 });
           const purun = !food && b % SONG.purun.every === SONG.purun.every - 1 && e === SONG.purun.at;
           const rest = food && b === sec.bars - 1 && e >= 4;   // 吹き出しが変わる前の半小節は休み
+          if (rest && e === 4) grows.push(t);                   // 休みのはじめに、おなかがふくらむ
           if (SONG.pattern[e] && !rest) {
             const n = { t: t, kind: purun ? 'purun' : SONG.pattern[e] };
             if (food) {
@@ -433,7 +451,7 @@
         if (!near) break;
       }
     });
-    return { notes: notes, hats: hats, clicks: clicks, banners: banners, wants: wants, end: t + 1.2 };
+    return { notes: notes, hats: hats, clicks: clicks, banners: banners, wants: wants, grows: grows, end: t + 1.2 };
   }
   const pick = (a) => a[Math.floor(Math.random() * a.length)];
 
@@ -441,7 +459,8 @@
   let chart = null, t0 = 0, playing = false, nextNote = 0, nextBanner = 0;
   let paused = false;
   let mode = 'belly';   // 'lane'＝ステージ1 ながれる／'belly'＝ステージ2 おなか／'food'＝ステージ3 まんぷく
-  let nextWant = 0, fed = 0, targets = 0, wrongs = 0, wrongUntil = -9;   // まんぷく：食べた数・「たべたい」の数・まちがえた時
+  let nextWant = 0, fed = 0, targets = 0, wrongs = 0, wrongUntil = -9;
+  let nextGrow = 0, shownFat = 0;   // まんぷく：次にふくらむ時、いま見せているふくらみ（0〜1）   // まんぷく：食べた数・「たべたい」の数・まちがえた時
   let score = 0, combo = 0, maxCombo = 0, lastMiss = -9, shyUntil = -9;
   let counts = { perfect: 0, good: 0, ok: 0, miss: 0 };
 
@@ -496,6 +515,7 @@
     nextNote = 0; nextBanner = 0;
     // まんぷく
     nextWant = 0; fed = 0; wrongs = 0; wrongUntil = -9;
+    nextGrow = 0; shownFat = 0;
     targets = chart.notes.filter((n) => n.target).length;
     belly.setBase('fat', 0);
     $('want').hidden = true;
@@ -516,7 +536,7 @@
     // 遊び方の説明：最初の ◉ が見えはじめる少し前に消す
     const howto = $('howto');
     howto.innerHTML = HOWTO[mode].map((line) => '<p>' + line + '</p>').join('') + '<p class="howto-sub">8ビート・だんだん速くなるよ</p>';
-    howto.classList.remove('out');
+    howto.classList.remove('out', 'top');
     howto.hidden = false;
     howtoUntil = chart.notes[0].t - (mode === 'lane' ? 0.6 : appearT() + 0.1);
     requestAnimationFrame(frame);
@@ -588,7 +608,16 @@
     else if (combo >= SMILE_COMBO) setFace('happy');
     else setFace('normal');
 
-    if (now >= chart.end) { finish(); return; }
+    // まんぷく：休みのはじめに、食べた分だけ「ぽよ〜ん！」
+    if (mode === 'food' && nextGrow < chart.grows.length && now >= chart.grows[nextGrow]) {
+      nextGrow++;
+      grow(now);
+    }
+
+    if (now >= chart.end) {
+      if (mode === 'food') feast(); else finish();
+      return;
+    }
     requestAnimationFrame(frame);
   }
 
@@ -641,11 +670,41 @@
     if (playing && hit(found, p.now) && eat) feed();
   }
   // まんぷく：食べた数に合わせて、おなかをふくらませる
+  // まんぷく：食べた（ゲージはすぐにたまる。おなかは grow でまとめてふくらむ）
   function feed() {
     fed++;
+    $('full-fill').style.width = Math.min(1, fed / Math.max(1, targets)) * 100 + '%';
+  }
+  // それまでに食べた分だけ、おなかを「ぽよ〜ん！」とふくらませる
+  function grow(now) {
     const level = Math.min(1, fed / Math.max(1, targets));
+    if (level <= shownFat + 0.001) return;
+    shownFat = level;
     belly.setBase('fat', FOOD.maxFat * level);
-    $('full-fill').style.width = level * 100 + '%';
+    belly.bounce('belly', -0.06);   // ふくらむ勢いで、少し大きめに揺れる
+    if (ac) soundGrow(ac.currentTime);
+    const a = ART.fat;
+    // 文字は、おなかにかぶらないように、おなかの上（胸のあたり）に出す
+    popWord('ぽよ〜ん！', offX + a.x / 100 * ART.w * scale, offY + (a.y - a.ry * 0.8) / 100 * ART.h * scale, 'big');
+    if (now != null) shyUntil = now + SHY_SECONDS;
+  }
+  // 最後の「ごちそうさまタイム」：大きくなったおなかを眺めたり、自由にぽんぽこしたりできる時間
+  function feast() {
+    playing = false;
+    showBar();
+    grow(null);
+    const el = $('howto');
+    el.innerHTML = '<p class="feast">ごちそうさま！</p><p>' +
+      (fed / Math.max(1, targets) >= 0.66 ? 'おなか いっぱい〜！' : 'もうちょっと 食べたかったな〜') + '</p>';
+    el.classList.remove('out');
+    el.classList.add('top');   // おなかが見えるように、画面の上のほうに
+    el.hidden = false;
+    $('want').hidden = true;
+    setFace(fed / Math.max(1, targets) >= 0.66 ? 'full' : 'happy');
+    setTimeout(() => {
+      el.classList.add('out');
+      setTimeout(() => { el.hidden = true; finish(); }, 300);
+    }, FOOD.feastSeconds * 1000);
   }
   function showWant(food) {
     const el = $('want');
@@ -754,7 +813,7 @@
     el.style.left = x + 'px';
     el.style.top = y + 'px';
     $('pops').appendChild(el);
-    setTimeout(() => el.remove(), 600);
+    setTimeout(() => el.remove(), kind === 'big' ? 1200 : 600);
   }
 
   let face = '';
