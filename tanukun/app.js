@@ -1132,9 +1132,67 @@
   sheet.addEventListener('click', (e) => { if (e.target === sheet && !$('sheet-close').hidden) closeSheet(); });
 
   // 実績（いまは記録の一覧。バッジは次の段階で）
-  $('btn-record').addEventListener('click', () => {
+  /* =========================================================
+     セリフ図鑑：見たことのあるセリフを、場所ごとに一覧。まだのものは数だけ
+     ========================================================= */
+  const ZUKAN_GROUPS = [
+    ['greet', 'あいさつ'], ['head', '頭'], ['chest', 'むね'], ['belly', 'おなか'], ['tail', 'しっぽ'],
+    ['crotch', 'おまた'], ['melt', 'とろける'], ['angry', 'おこる・かくれる'], ['heart', 'なかよし'], ['wear', 'きせかえ']
+  ];
+  function zukanGroup(l) {
+    const w = l.when || {};
+    const sc = Array.isArray(w.scene) ? w.scene[0] : w.scene;
+    if (sc === 'home' || sc === 'named') return 'greet';
+    if (sc === 'pull') return 'belly';
+    if (sc === 'tap' || (sc === 'angry' && w.place === 'crotch')) return w.place || 'greet';
+    if (sc === 'melt') return 'melt';
+    if (sc === 'angry' || sc === 'hiddenTap' || sc === 'return') return 'angry';
+    if (sc === 'heartUp') return 'heart';
+    if (sc === 'wear') return 'wear';
+    return 'greet';
+  }
+  // セリフを重ならないように集める（同じ文は、最初に出てくる場所だけに入れる）
+  function zukanLines() {
+    const seen = {}, out = [];
+    LINES.forEach((l) => { if (!seen[l.text]) { seen[l.text] = true; out.push({ text: l.text, group: zukanGroup(l) }); } });
+    return out;
+  }
+  // 数えるのは、いまあるセリフだけ（セリフを書きかえて、なくなったものは数えない）
+  function zukanCount() {
+    const all = zukanLines(), got = SAVE.data.seenLines;
+    return { total: all.length, seen: all.filter((l) => got.indexOf(l.text) >= 0).length };
+  }
+  function openZukan() {
+    const all = zukanLines(), got = SAVE.data.seenLines;
+    const secret = !SAVE.data.stats.tap.crotch;   // おまたは、さわるまで「？？？」
+    const zk = zukanCount();
+    let html = '<button id="zukan-back" class="link" type="button">‹ 実績にもどる</button>' +
+      '<p class="note center">見たことのあるセリフ ' + zk.seen + ' ／ ' + zk.total + '</p>';
+    ZUKAN_GROUPS.forEach(([key, label]) => {
+      const list = all.filter((l) => l.group === key);
+      if (!list.length) return;
+      const seenList = list.filter((l) => got.indexOf(l.text) >= 0);
+      const name = key === 'crotch' && secret ? '？？？' : label;
+      html += '<h3>' + name + '（' + seenList.length + ' ／ ' + list.length + '）</h3><div class="zukan">' +
+        seenList.map((l, i) => '<p class="zukan-line" data-g="' + key + '" data-i="' + i + '"></p>').join('') +
+        (list.length > seenList.length ? '<p class="zukan-rest">まだ見ていないセリフが あと ' + (list.length - seenList.length) + ' こ</p>' : '') +
+        '</div>';
+    });
+    openSheet('💬 セリフ図鑑', html);
+    // 文字は、あとから入れる（呼び名を入れて。記号が入っても安全なように）
+    const body = $('sheet-body');
+    ZUKAN_GROUPS.forEach(([key]) => {
+      const seenList = all.filter((l) => l.group === key && got.indexOf(l.text) >= 0);
+      body.querySelectorAll('.zukan-line[data-g="' + key + '"]').forEach((el) => {
+        el.textContent = withName(seenList[+el.dataset.i].text);
+      });
+    });
+    $('zukan-back').addEventListener('click', openRecord);
+  }
+
+  function openRecord() {
     const d = SAVE.data, s = d.stats;
-    const total = new Set(LINES.map((l) => l.text)).size;
+    const zk = zukanCount();
     const rows = [
       ['なかよし', d.totalDays + ' 日'],
       ['れんぞく（いま／最高）', d.streak + ' 日 ／ ' + d.bestStreak + ' 日'],
@@ -1146,7 +1204,7 @@
       [(s.tap.crotch ? 'おまた' : '？？？') + 'をさわった', (s.tap.crotch || 0) + ' 回'],
       ['とろけさせた', s.melt + ' 回'],
       ['怒らせちゃった', s.angry + ' 回'],
-      ['セリフ図鑑', d.seenLines.length + ' ／ ' + total]
+      ['セリフ図鑑', zk.seen + ' ／ ' + zk.total]
     ];
     // 思い出アルバム：ハートの数まで見られる。まだのものは「？」
     // 最後に「ひみつの思い出」（クリアするまで、名前も「？？？」）
@@ -1161,6 +1219,7 @@
       '</div>' : '';
     openSheet('実績',
       album +
+      '<button id="btn-zukan" class="btn btn-wide" type="button">💬 セリフ図鑑（' + zk.seen + ' ／ ' + zk.total + '）</button>' +
       '<h3>きろく</h3>' +
       '<table class="rec">' + rows.map((r) => '<tr><th>' + r[0] + '</th><td>' + r[1] + '</td></tr>').join('') + '</table>' +
       '<p class="note">バッジ（実績のごほうび）は準備中だよ</p>');
@@ -1172,7 +1231,9 @@
       b.querySelector('.mem-t').textContent = (m.secret ? '🌺 ' : '💖' + m.hearts + ' ') + m.title;
       b.addEventListener('click', () => { closeSheet(); playMemory(m, false); });
     });
-  });
+    $('btn-zukan').addEventListener('click', openZukan);
+  }
+  $('btn-record').addEventListener('click', openRecord);
 
   // きせかえ：場所ごとに「なし」と部品を並べる。選ぶとパネルを閉じて、付けた姿を見せる
   $('btn-wear').addEventListener('click', () => {
