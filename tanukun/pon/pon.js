@@ -628,7 +628,9 @@
   }
   function showWant(food) {
     const el = $('want');
-    el.textContent = food + ' たべたい！';
+    el.textContent = '';
+    el.appendChild(Object.assign(document.createElement('span'), { className: 'want-food', textContent: food }));
+    el.appendChild(document.createTextNode('たべたい！'));
     el.hidden = false;
     el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
     if (ac) soundBell(ac.currentTime);

@@ -494,8 +494,11 @@ html, body {
   position: absolute;
   right: 8px;
   top: calc(max(8px, env(safe-area-inset-top)) + 100px);
-  padding: 8px 14px;
-  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 14px 4px 8px;
+  border-radius: 18px;
   background: #fff;
   border: 3px solid #E0671F;
   font-size: 18px;
@@ -543,3 +546,5 @@ html, body {
 #pon.mode-food .bpm { top: calc(max(8px, env(safe-area-inset-top)) + 150px); }
 .pop.wrong { font-size: 18px; -webkit-text-stroke-color: #777; }
 #wipe-face img.face-only { width: 100%; left: 0; top: 0; }
+.want-food { font-size: 44px; line-height: 1.1; }   /* 吹き出しの食べものは大きく */
+.want[hidden] { display: none; }
