@@ -1,0 +1,37 @@
+<!doctype html>
+<!-- ぽんぽこリズムのリンクのカード（1200×630）の元。M PLUS Rounded 1c を ../fonts/ に置いて、ブラウザで 1200×630 にして画像にする（フォントはリポジトリに入れていない）
+     絵は pon_art.webp（ChatGPT で作った B1。右にタヌくん、左に文字の余白） -->
+<html><head><meta charset="utf-8">
+<style>
+@font-face { font-family: R; src: url(../fonts/MPLUSRounded1c-Black.ttf); font-weight: 900; }
+@font-face { font-family: R; src: url(../fonts/MPLUSRounded1c-ExtraBold.ttf); font-weight: 800; }
+* { box-sizing: border-box; margin: 0; }
+html, body { width: 1200px; height: 630px; overflow: hidden; }
+body { position: relative; font-family: R, sans-serif; }
+/* 絵は少し小さくして右に寄せ（タヌくんが文字にかからないように）、左のあいた所は同じ絵をぼかして埋める */
+.bg { position: absolute; inset: -40px; width: 1280px; height: 710px; object-fit: cover; filter: blur(18px) brightness(.85); }
+.art { position: absolute; right: -40px; top: -30px; width: 1010px; height: 673px; object-fit: cover;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 22%); mask-image: linear-gradient(90deg, transparent, #000 22%); }
+/* 左の背景（ちょうちんなど）が文字のじゃまにならないように、うっすら暗く */
+.shade { position: absolute; left: 0; top: 0; bottom: 0; width: 620px;
+  background: linear-gradient(90deg, rgba(50, 25, 10, .55), rgba(50, 25, 10, .35) 60%, rgba(50, 25, 10, 0)); }
+.box { position: absolute; left: 56px; top: 0; bottom: 0; width: 620px; display: flex; flex-direction: column; justify-content: center; }
+.sub { align-self: flex-start; font-weight: 800; font-size: 28px; color: #fff; background: #E0671F;
+  padding: 5px 22px 7px; border-radius: 999px; box-shadow: 0 4px 0 #9E4410; letter-spacing: 1px; }
+h1 { font-weight: 900; font-size: 104px; line-height: 1.02; margin-top: 14px; letter-spacing: 2px;
+  color: #FFF8EA; -webkit-text-stroke: 13px #8A4A1C; paint-order: stroke fill;
+  text-shadow: 0 9px 0 #5A2F10, 0 14px 24px rgba(0,0,0,.35); }
+h1 span { display: block; color: #FFB25B; }
+.copy { white-space: nowrap; margin-top: 18px; font-weight: 800; font-size: 36px; color: #fff; letter-spacing: 2px;
+  -webkit-text-stroke: 9px #8A4A1C; paint-order: stroke fill; text-shadow: 0 4px 10px rgba(0,0,0,.3); }
+</style></head>
+<body>
+  <img class="bg" src="pon_art.webp">
+  <img class="art" src="pon_art.webp">
+  <div class="shade"></div>
+  <div class="box">
+    <div class="sub">タヌくんの おなかで 音ゲー</div>
+    <h1>ぽんぽこ<span>リズム</span></h1>
+    <div class="copy">おなかを たたいて ノリノリ！</div>
+  </div>
+</body></html>

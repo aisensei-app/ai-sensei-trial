@@ -42,7 +42,10 @@ window.TanuSave = (function () {
       cleared: false,        // ひみつの思い出を見た（クリアした）
       clearDay: null,        // クリアした日（のべ日数）
       a2hsShown: false,      // 「ホーム画面に追加」の案内を出した
-      noticeOk: false        // はじめてのお知らせ（ちょっぴり大人向け など）を見た
+      noticeOk: false,       // はじめてのお知らせ（ちょっぴり大人向け など）を見た
+      ponSeen: false,        // ぽんぽこリズムを開いたことがある（メニューの NEW を消す）
+      ponPoints: 0,          // ぽんぽこリズムのごほうび（まだ受け取っていないなかよしポイント）
+      ponBonusDay: null      // ぽんぽこリズムのごほうびをもらった日（1日1回）
     };
   }
 
@@ -133,6 +136,21 @@ window.TanuSave = (function () {
     return { added: true, heartUp: hearts() > before };
   }
 
+  /* ---------- ぽんぽこリズムのごほうび ----------
+     ぽんぽこリズム（pon/）は、ポイントを ponPoints に預けるだけ。本編を開いたときに、ここで受け取る
+     （本編で受け取れば、ハートが増えたときの思い出の演出がいつもどおり流れるため）
+     戻り値 { added: 受け取ったポイント, heartUp: ハートが増えたか } */
+  function claimPonPoints() {
+    const n = data.ponPoints || 0;
+    if (!n) return { added: 0, heartUp: false };
+    const before = hearts();
+    data.points += n;
+    data.ponPoints = 0;
+    markMax();
+    save();
+    return { added: n, heartUp: hearts() > before };
+  }
+
   // ハートが最大になった日を覚えておく（確認用のハート切りかえのときは覚えない）
   function markMax() {
     if (data.heart5Day == null && testHearts == null && hearts() >= C.friendship.heartAt.length) data.heart5Day = data.totalDays;
@@ -214,6 +232,7 @@ window.TanuSave = (function () {
     today: today,
     checkIn: checkIn,
     addTapPoint: addTapPoint,
+    claimPonPoints: claimPonPoints,
     tapCapped: tapCapped,
     clearReady: clearReady,
     setCleared: setCleared,

@@ -189,6 +189,14 @@
      本編と同じ記録（localStorage の tanukun-save-v1）の wear を読み書きする。
      同じサイトの別ページなので、本編で付けた部品がそのまま付く */
   const SAVE_KEY = 'tanukun-save-v1';
+  /* 本編とのつながり：ステージを最後まで遊ぶと、1日1回、なかよしポイント BONUS を本編に預ける
+     （本編を開いたときに受け取る。save.js の claimPonPoints）。日付は本編と同じく午前4時に切りかわる */
+  const BONUS = 5;
+  function today() {
+    const d = new Date(Date.now() - ((C.days && C.days.dayStartHour) || 0) * 3600 * 1000);
+    const pad = (n) => (n < 10 ? '0' : '') + n;
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  }
   const PARTS = C.parts || {};
   function loadSave() {
     try { return JSON.parse(localStorage.getItem(SAVE_KEY)) || {}; } catch (e) { return {}; }
@@ -228,14 +236,18 @@
       partsLayer.appendChild(el);
     });
   }
-  function setWear(slot, id) {
-    if (id) wear[slot] = id; else delete wear[slot];
-    // 本編の記録のほかの項目はそのままにして、wear だけ書きかえる
+  // 本編の記録のほかの項目はそのままにして、change で一部だけ書きかえる
+  function updateSave(change) {
     try {
       const data = loadSave();
-      data.wear = Object.assign({}, wear);
+      change(data);
       localStorage.setItem(SAVE_KEY, JSON.stringify(data));
     } catch (e) { /* 保存できない環境では、その回だけ */ }
+  }
+  updateSave((d) => { d.ponSeen = true; });   // 本編のメニューの NEW を消す
+  function setWear(slot, id) {
+    if (id) wear[slot] = id; else delete wear[slot];
+    updateSave((d) => { d.wear = Object.assign({}, wear); });
     belly.refresh();
     renderParts();
     renderWearMenu();
@@ -913,6 +925,16 @@
     $('btn-next').hidden = !next;
     if (next) $('btn-next').textContent = STAGES[next].name.replace(/（.*/, '') + ' へ ▶';
     if (mode === 'food') $('r-line').textContent = 'タヌくん「ごちそうさま！' + (fed / Math.max(1, targets) >= 0.66 ? 'おなかいっぱい〜！」' : 'もうちょっと食べたかったな〜」');
+    // 本編とのつながり：1日1回のごほうび
+    let bonus = false;
+    updateSave((d) => {
+      if (d.ponBonusDay === today()) return;
+      d.ponBonusDay = today();
+      d.ponPoints = (d.ponPoints || 0) + BONUS;
+      bonus = true;
+    });
+    $('r-bonus').hidden = !bonus;
+    $('r-bonus').textContent = '💗 なかよしポイント +' + BONUS + '（タヌくんのところで受け取れるよ）';
     $('result').hidden = false;
   }
 
@@ -981,6 +1003,8 @@
     $('back-home').hidden = playing || paused || !IN_SITE;
   }
   $('pause-home').hidden = !IN_SITE;
+  // 本編をまだ遊んだことがない人（X のポストから来た人など）にだけ、本編への入り口を出す
+  $('start-home').hidden = !IN_SITE || !!loadSave().lastDay;
 
   // とちゅうで別のアプリに切りかえたら、中断する
   document.addEventListener('visibilitychange', () => {

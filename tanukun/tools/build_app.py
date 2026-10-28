@@ -10,6 +10,8 @@
 ・X などに URL を貼ったときのカード（OGP）を index.html に入れます（絵は og/main.jpg）
 ・なでなでレポートとクリアのポストに付く URL（config.js の report.url）を、公開先の URL にします
 ・確認用の機能（testHearts）は、config.js のとおり false のまま（公開用では出ない）
+・ぽんぽこリズム（pon/ → 公開先の /pon/）も入れます。カードの絵は og/pon.jpg
+  （pon/art の元の絵・プロンプト集、使っていない「おなかのアップ」の絵 images/pon/belly*.webp は入れない）
 ・お試し版の設定（demo.js）、メモ、道具、確認用ファイル、元の絵などは入れません
 """
 import argparse
@@ -23,23 +25,25 @@ FILES = ['index.html', 'style.css', 'config.js', 'lines.js', 'i18n.js', 'save.js
          'sw.js', 'manifest.webmanifest']
 TITLE = 'タヌくん'
 DESCRIPTION = 'さわって遊ぶ、なでなでアプリ。なでて、ぽんぽこして、毎日なかよくなろう。'
+PON_FILES = ['index.html', 'pon.css', 'pon.js']
+PON_TITLE = 'ぽんぽこリズム｜タヌくん'
+PON_DESCRIPTION = 'タヌくんのおなかをたたく音ゲー。8ビートに合わせて、ぽんっ！ぷるん！だんだん速くなるよ。'
 # 公開してはいけない言葉（身元につながる情報が入っていないかの確認）
 NG_WORDS = ['文京', '大学', 'bgu', 'yishimura', 'aisensei', 'ai-sensei']
 
 
-def og_tags(base):
+def og_tags(url, img, title=TITLE, desc=DESCRIPTION):
     e = html.escape
-    img = base + 'og/main.jpg'
     return '\n'.join([
-        f'<meta name="description" content="{e(DESCRIPTION)}">',
+        f'<meta name="description" content="{e(desc)}">',
         '<meta property="og:type" content="website">',
-        f'<meta property="og:title" content="{e(TITLE)}">',
-        f'<meta property="og:description" content="{e(DESCRIPTION)}">',
+        f'<meta property="og:title" content="{e(title)}">',
+        f'<meta property="og:description" content="{e(desc)}">',
         f'<meta property="og:image" content="{e(img)}">',
-        f'<meta property="og:url" content="{e(base)}">',
+        f'<meta property="og:url" content="{e(url)}">',
         '<meta name="twitter:card" content="summary_large_image">',
-        f'<meta name="twitter:title" content="{e(TITLE)}">',
-        f'<meta name="twitter:description" content="{e(DESCRIPTION)}">',
+        f'<meta name="twitter:title" content="{e(title)}">',
+        f'<meta name="twitter:description" content="{e(desc)}">',
         f'<meta name="twitter:image" content="{e(img)}">',
     ])
 
@@ -50,14 +54,27 @@ def build(base, out):
     out.mkdir(parents=True)
     for f in FILES:
         shutil.copy(ROOT / f, out / f)
-    shutil.copytree(ROOT / 'images', out / 'images')
+    # images/pon/belly*.webp は、使っていない「おなかのアップ」の絵（ARTS.closeup）なので入れない
+    shutil.copytree(ROOT / 'images', out / 'images', ignore=lambda d, names: [
+        n for n in names if Path(d).name == 'pon' and n.startswith('belly')])
     (out / 'og').mkdir()
     shutil.copy(ROOT / 'og' / 'main.jpg', out / 'og' / 'main.jpg')
+    shutil.copy(ROOT / 'og' / 'pon.jpg', out / 'og' / 'pon.jpg')
+    (out / 'pon').mkdir()
+    for f in PON_FILES:
+        shutil.copy(ROOT / 'pon' / f, out / 'pon' / f)
 
     # index.html：カード（OGP）の設定を入れる
     page = (out / 'index.html').read_text(encoding='utf8')
-    page = page.replace('<title>タヌくん</title>', '<title>' + TITLE + '</title>\n' + og_tags(base), 1)
+    page = page.replace('<title>タヌくん</title>', '<title>' + TITLE + '</title>\n' + og_tags(base, base + 'og/main.jpg'), 1)
     (out / 'index.html').write_text(page, encoding='utf8')
+    # pon/index.html：ぽんぽこリズムのカード
+    page = (out / 'pon' / 'index.html').read_text(encoding='utf8')
+    tag = '<title>' + PON_TITLE + '</title>'
+    if tag not in page:
+        raise SystemExit('pon/index.html の <title> が見つかりませんでした')
+    page = page.replace(tag, tag + '\n' + og_tags(base + 'pon/', base + 'og/pon.jpg', PON_TITLE, PON_DESCRIPTION), 1)
+    (out / 'pon' / 'index.html').write_text(page, encoding='utf8')
 
     # config.js：ポストに付く URL を公開先に。確認用の機能は必ず false
     cfg = (out / 'config.js').read_text(encoding='utf8')

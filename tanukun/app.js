@@ -960,6 +960,9 @@
   // その日はじめてなら記録して、あいさつ
   function checkIn() {
     const r = SAVE.checkIn();
+    // ぽんぽこリズムのごほうび（預けてあるなかよしポイント）を受け取る
+    const pb = DEMO ? { added: 0, heartUp: false } : SAVE.claimPonPoints();
+    if (pb.heartUp) r.heartUp = true;
     renderStatus();
     if (!SAVE.data.nameAsked) {
       // 呼び名を聞き終わってから「なかよし度アップ」を出す
@@ -969,7 +972,12 @@
     }
     if (r.heartUp) setTimeout(heartUp, 900);
     // その日はじめて来てくれたら、ボーナスをお知らせ（ハートが増えたときは、そちらを優先）
-    else if (r.visit !== 'again' && !DEMO) setTimeout(() => toast('来てくれてありがとう！ 💗+' + C.friendship.visitPoints), 900);
+    else if (!DEMO && (r.visit !== 'again' || pb.added)) {
+      const msg = [];
+      if (r.visit !== 'again') msg.push('来てくれてありがとう！ 💗+' + C.friendship.visitPoints);
+      if (pb.added) msg.push('ぽんぽこリズムの ごほうび 💗+' + pb.added);
+      setTimeout(() => toast(msg.join('\n')), 900);
+    }
     if (r.visit === 'again') return false;
     if (mode === 'home') say({ scene: 'home', visit: r.visit });
     // ひみつの思い出（クリア）の日なら、あいさつのあとに流す
@@ -1027,6 +1035,12 @@
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible' && !DEMO) checkIn();
   });
+
+  // ぽんぽこリズム：はじめて開くまでメニューに NEW
+  $('pon-new').hidden = DEMO || !!SAVE.data.ponSeen;
+  // ぽんぽこリズムから「戻る」で帰ってきたとき、ブラウザが前の画面をそのまま出すことがある（記録が古いまま）。
+  // そのときは読み直して、ぽんぽこリズムで変わった記録（ごほうび・きせかえ）を取りこむ
+  window.addEventListener('pageshow', (e) => { if (e.persisted) location.reload(); });
 
   /* =========================================================
      実績・設定のパネル

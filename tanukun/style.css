@@ -206,6 +206,27 @@ html, body {
   box-shadow: 0 4px 0 #C8641E;
 }
 .btn-main:active { box-shadow: 0 2px 0 #C8641E; }
+/* ぽんぽこリズムへ（遊ぶの次に大きく。オレンジのふち） */
+.btn-pon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+  color: #C8641E;
+  font-size: 19px;
+  border: 3px solid #F08A3C;
+  padding: 11px 16px;
+}
+.new-badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #FF5E95;
+  color: #fff;
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+.demo .btn-pon { display: none; }   /* お試し版には出さない */
 .btn-row { display: flex; gap: 10px; }
 .btn-row .btn { flex: 1; white-space: nowrap; padding-left: 6px; padding-right: 6px; }
 .test-hearts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
@@ -290,6 +311,8 @@ html, body {
   padding: 10px 18px;
   font-size: 15px;
   font-weight: 700;
+  white-space: pre-line;   /* 2つのお知らせを2行で */
+  text-align: center;
   white-space: pre-line;
   text-align: center;
   width: max-content;

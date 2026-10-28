@@ -639,3 +639,7 @@ html, body {
 @media (prefers-reduced-motion: reduce) {
   .cutin.go .cutin-band { animation: none; }
 }
+
+/* ---- 本編とのつながり ---- */
+.start-home { display: block; margin-top: 12px; font-size: 14px; font-weight: bold; color: #C8641E; }
+.r-bonus { margin: 4px 0 8px; font-size: 13px; font-weight: bold; color: #E0457C; }
