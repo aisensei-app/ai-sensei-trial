@@ -46,10 +46,10 @@
   const SWIPE_PX = 18;
   /* おなかモード
      appear … ◉ が出てから、たたく時までの秒数（この間に輪が縮む）
-     area   … ◉ が出る範囲（720×900 の絵で、おなかの楕円。x, y は中心、rx, ry は半径）
+     area   … ◉ が出る範囲（おなかのアップの絵 640×960 で、おなかの楕円。x, y は中心、rx, ry は半径）
      gap    … 続けて出る ◉ どうしの、最低限の離れ具合（絵のピクセル）
      hitR   … 指が ◉ の中心からこれだけ（画面のピクセル）以内なら当たり */
-  const MOLE = { appear: 1.0, area: { x: 255, y: 405, rx: 112, ry: 80 }, gap: 80, hitR: 56 };   // 指がこれだけ動いたら「すべらせた」とみなす（画面のピクセル）
+  const MOLE = { appear: 1.0, area: { x: 320, y: 345, rx: 170, ry: 105 }, gap: 120, hitR: 56 };
 
   /* ---------- 判定（秒）。音ゲーに慣れていない人向けに、ゆるめ ---------- */
   const JUDGE = [
@@ -76,7 +76,11 @@
   const app = $('pon'), molesEl = $('moles');
   const notesEl = $('notes'), judgeEl = $('judge'), target = document.querySelector('.target');
   const wipe = $('wipe'), wipeFace = $('wipe-face');
-  img.src = IMG('normal');
+  /* ---------- おなかのアップの絵 ----------
+     ChatGPT で作った専用の絵（640×960。tools/make_pon_art.py で背景を透明にして、本編の色にそろえたもの）
+     x, y などの位置は、この絵の％（左上 0・右下 100） */
+  const BELLY_ART = { src: 'images/pon/belly0.webp', w: 640, h: 960 };
+  img.src = IMG(BELLY_ART.src);
   // ワイプの表情：全部の絵を最初から重ねて置き、見せる絵だけを切りかえる
   // （切りかえのたびに絵を読み直すと、表示されない時間ができるため）
   const faceImgs = {};
@@ -93,15 +97,17 @@
      tapDent … たたいたときのへこみ（本編 0.08）、damp … 小さいほど長く揺れる（本編 9）
      pullMax … 「ぷるん」で引っぱられる最大の長さ（本編 8.6） */
   const JIGGLE = Object.assign({}, C.bellyJiggle, {
+    x: 50, y: 36.5, rx: 37.5, ry: 16.7,   // おなかの楕円（中心 320, 350、半径 240, 160）
     tapDent: 0.15, damp: 6, reboundBoost: 0.9, pullMax: 13,
     poke: Object.assign({}, C.bellyJiggle.poke, { depth: 0.45 })
   });
-  /* たたいたときのリアクション（720×900 の絵の％）
+  /* たたいたときのリアクション（おなかのアップの絵の％）
      armL / armR … 腕。肩（pivot）を軸に「ビクン」と回る。angle は1回の角度（度）
      ※ ネックレスを上下に揺らすのは、首もとが揺れて不自然だったのでやめた */
   const REACT = {
-    armL: { type: 'twist', x: 12.2, y: 44.4, rx: 6.3, ry: 16.7, pivotX: 18.1, pivotY: 30, reach: 38.9, angle: 4 },
-    armR: { type: 'twist', x: 66.7, y: 44.4, rx: 9.0, ry: 16.7, pivotX: 61.1, pivotY: 30, reach: 38.9, angle: -4 },
+    // 腕は、肩（左 90, 130・右 550, 130）から手（ゆるいグー。腰みのの横）まで
+    armL: { type: 'twist', x: 7.0, y: 34.4, rx: 7.8, ry: 19.8, pivotX: 14.1, pivotY: 13.5, reach: 59.4, angle: 4 },
+    armR: { type: 'twist', x: 93.0, y: 34.4, rx: 7.8, ry: 19.8, pivotX: 85.9, pivotY: 13.5, reach: 59.4, angle: -4 },
     purun: 2   // 「ぷるん」のときは、この倍だけ大きく反応する
   };
   /* ---------- きせかえ ----------
@@ -123,13 +129,18 @@
     im.src = IMG(it.image);
     partImgs[it.id] = im;
   }));
-  // いま付けている部品（このページの絵は「通常」だけなので、faces の位置は使わない）
+  // 部品の、おなかのアップの絵での位置（本編の config.js の位置は 720×900 の全身の絵のもの）
+  const PART_AT = {
+    debeso: { x: 50, y: 42, width: 13.1 }   // おへそ（320, 403）。おなかが大きく描かれている分、デベソも大きく
+  };
+  // いま付けている部品（位置は PART_AT。書いていない部品は、絵全体に重ねる）
   function wornLayers() {
     const out = [];
     Object.keys(PARTS).forEach((slot) => {
       const it = findPart(slot, wear[slot]);
       if (!it || !unlocked(it)) return;
-      out.push({ img: partImgs[it.id], x: it.x, y: it.y, width: it.width });
+      const at = PART_AT[it.id] || {};
+      out.push({ img: partImgs[it.id], x: at.x, y: at.y, width: at.width });
     });
     return out;
   }
@@ -202,16 +213,16 @@
   img.addEventListener('load', () => belly.warm([img.src]), { once: true });
 
   /* ---------- おなかのアップ ----------
-     720×900 の絵のうち、おなか（中心 255, 420）を画面いっぱいに映す */
-  const VIEW = { cx: 270, cy: 410, w: 420 };   // 横幅は、両腕が入るくらい
+     絵の横幅いっぱい（両腕まで）を画面の横幅に合わせて、まんなかに映す */
+  const VIEW = { cx: 320, cy: 470, w: 640 };
   let scale = 1, offX = 0, offY = 0;
   function layout() {
     const sw = stage.clientWidth, sh = stage.clientHeight;
     scale = sw / VIEW.w;
     offX = sw / 2 - VIEW.cx * scale;
-    offY = sh * 0.48 - VIEW.cy * scale;
-    body.style.width = 720 * scale + 'px';
-    body.style.height = 900 * scale + 'px';
+    offY = sh * 0.5 - VIEW.cy * scale;
+    body.style.width = BELLY_ART.w * scale + 'px';
+    body.style.height = BELLY_ART.h * scale + 'px';
     body.style.left = offX + 'px';
     body.style.top = offY + 'px';
   }
@@ -359,6 +370,9 @@
     app.classList.toggle('mode-belly', mode === 'belly');
     app.classList.toggle('mode-lane', mode === 'lane');
     layout();   // モードで、おなかを映す広さが変わる
+    // 揺れの準備（絵の色の読み取り・変形の計算表）を、音が鳴り出す前にすませておく
+    // （最初にたたいた瞬間にやると、画面が一瞬止まるため）
+    belly.ready();
     if (ac) ac.close();
     ac = makeAudio();
     if (!ac) { $('start').querySelector('.small').textContent = 'このブラウザでは音が出せません。別のブラウザで開いてね'; return; }
@@ -601,12 +615,14 @@
   }
 
   /* ---------- 結果 ---------- */
+  // image … ランク別イラスト（720×1080。tools/make_pon_art.py でつくる）
   const RANKS = [
-    { rate: 0.9, title: 'ぽんぽこ名人！', line: 'すごい！おなかが最高の太鼓になったよ！', face: 'melt' },
-    { rate: 0.7, title: 'いいリズム！', line: 'いい音だったね〜。またたたいてね！', face: 'happy' },
-    { rate: 0.4, title: 'なかなか！', line: 'だんだん速くなるの、むずかしいよね。', face: 'normal' },
-    { rate: 0, title: 'れんしゅう中', line: 'ゆっくりでいいよ。おなかはいつでも貸すからね！', face: 'troubled' }
+    { rate: 0.9, title: 'ぽんぽこ名人！', line: 'すごい！おなかが最高の太鼓になったよ！', face: 'melt', image: 'images/pon/rank1.webp' },
+    { rate: 0.7, title: 'いいリズム！', line: 'いい音だったね〜。またたたいてね！', face: 'happy', image: 'images/pon/rank2.webp' },
+    { rate: 0.4, title: 'なかなか！', line: 'えへへ、だんだん速くなるの、むずかしいよね。', face: 'normal', image: 'images/pon/rank3.webp' },
+    { rate: 0, title: 'れんしゅう中', line: 'ぐぬぬ…もう一回！おなかはいつでも貸すからね！', face: 'troubled', image: 'images/pon/rank4.webp' }
   ];
+  RANKS.forEach((r) => { r.src = IMG(r.image); new Image().src = r.src; });   // 先に読みこんでおく
   function finish() {
     playing = false;
     $('progress-fill').style.width = '100%';
@@ -616,6 +632,8 @@
     const rank = RANKS.find((r) => rate >= r.rate);
     setFace(rank.face);
     $('r-title').textContent = rank.title;
+    $('r-img').src = rank.src;
+    $('result').scrollTop = 0;
     $('r-score').textContent = score;
     ['perfect', 'good', 'ok', 'miss'].forEach((k) => { $('r-' + k).textContent = counts[k]; });
     $('r-combo').textContent = maxCombo;

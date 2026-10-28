@@ -66,22 +66,27 @@
   <!-- 再開する前の「3・2・1」 -->
   <div id="count" class="count" hidden></div>
 
-  <!-- 結果 -->
-  <section id="result" class="sheet" hidden>
-    <h2 id="r-title"></h2>
-    <div class="r-score"><b id="r-score">0</b> てん</div>
-    <ul class="r-list">
-      <li>ぴったり <b id="r-perfect">0</b></li>
-      <li>いいね <b id="r-good">0</b></li>
-      <li>おしい <b id="r-ok">0</b></li>
-      <li>ミス <b id="r-miss">0</b></li>
-      <li>さいだいコンボ <b id="r-combo">0</b></li>
-    </ul>
-    <p id="r-line" class="r-line"></p>
-    <a id="btn-post" class="btn btn-x" target="_blank" rel="noopener">𝕏 でポストする</a>
-    <button id="btn-next" class="btn" type="button" hidden>ステージ2 へ ▶</button>
-    <button id="btn-again" class="btn btn-sub" type="button">もう一回</button>
-    <button id="btn-mode" class="btn btn-sub" type="button">ステージをえらぶ</button>
+  <!-- 結果：上にランク別イラスト、下に点数とボタン -->
+  <section id="result" class="result" hidden>
+    <div class="r-art">
+      <img id="r-img" alt="" draggable="false">
+      <h2 id="r-title"></h2>
+    </div>
+    <div class="r-card">
+      <div class="r-score"><b id="r-score">0</b> てん</div>
+      <ul class="r-list">
+        <li>ぴったり <b id="r-perfect">0</b></li>
+        <li>いいね <b id="r-good">0</b></li>
+        <li>おしい <b id="r-ok">0</b></li>
+        <li>ミス <b id="r-miss">0</b></li>
+        <li>さいだいコンボ <b id="r-combo">0</b></li>
+      </ul>
+      <p id="r-line" class="r-line"></p>
+      <a id="btn-post" class="btn btn-x" target="_blank" rel="noopener">𝕏 でポストする</a>
+      <button id="btn-next" class="btn" type="button" hidden>ステージ2 へ ▶</button>
+      <button id="btn-again" class="btn btn-sub" type="button">もう一回</button>
+      <button id="btn-mode" class="btn btn-sub" type="button">ステージをえらぶ</button>
+    </div>
   </section>
 
 </main>

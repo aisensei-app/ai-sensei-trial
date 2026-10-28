@@ -336,15 +336,6 @@ html, body {
 /* たたくたびに、ワイプの顔が「ぴくっ」 */
 #wipe-face.tick { animation: tick .14s; }
 @keyframes tick { 50% { transform: scale(1.06, .94) translateY(2px); } }
-/* 映す範囲の上（タヌくんの口もと）を、背景の色でふんわり隠す。顔は右上のワイプで見せる */
-#stage::after {
-  content: "";
-  position: absolute;
-  left: 0; right: 0; top: 0;
-  height: 16%;
-  background: linear-gradient(#FFF4E0 25%, rgba(255, 244, 224, 0));
-  pointer-events: none;
-}
 
 /* ---- 中断ボタン ---- */
 .pause {
@@ -430,3 +421,51 @@ html, body {
 }
 .chip.on { background: #E0671F; border-color: #E0671F; color: #fff; }
 .chip:disabled { opacity: .5; cursor: default; }
+
+/* ---- 結果：上にランク別イラスト、下に点数とボタン ---- */
+.result {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  overflow-y: auto;
+  background: #FFF4E0;
+}
+.r-art {
+  position: relative;
+  height: 52%;
+  min-height: 300px;
+  overflow: hidden;
+}
+.r-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 30%;   /* 顔とおなかが入るように */
+  display: block;
+  animation: rIn .5s ease-out;
+}
+@keyframes rIn { from { transform: scale(1.08); opacity: 0; } }
+.r-art h2 {
+  position: absolute;
+  left: 0; right: 0; bottom: 28px;
+  margin: 0;
+  text-align: center;
+  font-size: 30px;
+  font-weight: 900;
+  color: #fff;
+  -webkit-text-stroke: 7px #E0671F;
+  paint-order: stroke;
+  text-shadow: 0 3px 8px rgba(90, 40, 10, .35);
+  animation: rTitle .6s .2s cubic-bezier(.3, 1.6, .5, 1) both;
+}
+@keyframes rTitle { from { transform: scale(.4); opacity: 0; } }
+.r-card {
+  position: relative;
+  margin-top: -18px;
+  padding: 18px 16px max(20px, env(safe-area-inset-bottom));
+  border-radius: 20px 20px 0 0;
+  background: #fff;
+  box-shadow: 0 -4px 16px rgba(90, 58, 30, .15);
+  text-align: center;
+}
+.r-card .r-score { margin-top: 0; }
