@@ -100,8 +100,19 @@
   /* 速さが変わる前のカットイン（音ゲーの「スピードアップ！」）
      速さが変わる前に1小節分の「間」（◉ が出ない。シャカシャカは続く）を入れて、
      タヌくんのがんばる顔と文字の帯が、右から「シュッ！」と入って左へ抜ける
-     seconds … 帯が出ている秒数、growAfter … まんぷくで、間のはじめから「ぽよ〜ん！」までの秒数 */
-  const CUTIN = { seconds: 1.0, growAfter: 1.05, face: 'images/pon/face_cutin.webp' };
+     seconds … 帯が出ている秒数、growAfter … まんぷくで、間のはじめから「ぽよ〜ん！」までの秒数
+     at      … 帯のまんなかの高さ（絵の％。おへその上と、おなかの上部のあいだ）
+     levels  … 1回目・2回目…のカットイン。速さが上がるほど、色・文字・表情が盛り上がっていく
+               face は tools/make_pon_art.py でつくる（4回目は専用の絵がまだなので、仮に「ぐぬぬ」顔） */
+  const CUTIN = {
+    seconds: 1.0, growAfter: 1.05, at: 43.5,
+    levels: [
+      { text: 'スピードアップ！', colors: ['#8FD35A', '#3A9A4A'], face: 'images/pon/face_cut1.webp' },   // ウインク（まだ余裕）
+      { text: 'もっと はやく！', colors: ['#FFD040', '#F08A1E'], face: 'images/pon/face_cut2.webp' },     // 大笑い（楽しくなってきた）
+      { text: 'まだまだ いける！', colors: ['#FF6B5A', '#C8282E'], face: 'images/pon/face_cut3.webp' },   // ぐぬぬ（きつい！）
+      { text: 'ラストスパート！', colors: ['#B455FF', '#FF4FA0'], face: 'images/pon/face_cut4.webp' }    // 本気（専用の絵を待っている）
+    ]
+  };
   const STAGES = {
     lane:  { name: 'ステージ1（ながれる）', next: 'belly' },
     belly: { name: 'ステージ2（おなか）', next: 'food' },
@@ -432,7 +443,7 @@
         banners.push({ t: t, bpm: sec.bpm, first: true });
       } else {
         // 速さが変わる前の「間」（新しい速さで1小節）：カットイン。まんぷくは、そのあとで「ぽよ〜ん！」
-        banners.push({ t: t, bpm: sec.bpm, cutin: true });
+        banners.push({ t: t, bpm: sec.bpm, cutin: si - 1 });   // 何回目のカットインか（0 から）
         if (food) grows.push(t + CUTIN.growAfter);
         for (let e = 0; e < 8; e++) {
           hats.push({ t: t, accent: e % 2 === 0 });
@@ -617,9 +628,9 @@
     }
     // 速さが変わるお知らせ
     const nb = chart.banners[nextBanner];
-    if (nb && now >= nb.t - (nb.cutin ? 0 : 0.4)) {
+    if (nb && now >= nb.t - (nb.cutin != null ? 0 : 0.4)) {
       nextBanner++;
-      if (nb.cutin) cutin(nb.bpm);
+      if (nb.cutin != null) cutin(nb.bpm, nb.cutin);
       else banner('スタート！ BPM ' + nb.bpm);
     }
     // まんぷく：吹き出しの「たべたい！」を切りかえる
@@ -828,16 +839,24 @@
     if (combo >= 2) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
   }
   // カットイン：がんばる顔と「スピードアップ！」の帯が、右から入って左へ抜ける
-  function cutin(bpm) {
-    const el = $('cutin');
+  function cutin(bpm, i) {
+    const el = $('cutin'), lv = CUTIN.levels[Math.min(i, CUTIN.levels.length - 1)];
     $('cutin-bpm').textContent = 'BPM ' + bpm;
+    $('cutin-text').textContent = lv.text;
+    $('cutin-face').src = cutFaces[CUTIN.levels.indexOf(lv)];
+    const band = el.firstElementChild;
+    band.style.setProperty('--c1', lv.colors[0]);
+    band.style.setProperty('--c2', lv.colors[1]);
+    // 帯の高さ：おへその上と、おなかの上部のあいだ（画面の大きさで変わるので、毎回計算する）
+    const y = stage.getBoundingClientRect().top - app.getBoundingClientRect().top + offY + CUTIN.at / 100 * ART.h * scale;
+    band.style.top = (y - (band.offsetHeight || 136) / 2) + 'px';   // 隠れている間は高さが 0 なので、そのときは 136
     el.hidden = false;
     el.classList.remove('go'); void el.offsetWidth; el.classList.add('go');
     if (ac) soundWhoosh(ac.currentTime);
     clearTimeout(cutin.timer);
     cutin.timer = setTimeout(() => { el.hidden = true; }, CUTIN.seconds * 1000);
   }
-  $('cutin-face').src = IMG(CUTIN.face);
+  const cutFaces = CUTIN.levels.map((lv) => { const src = IMG(lv.face); new Image().src = src; return src; });
   function banner(text) {
     const el = $('bpm');
     el.textContent = text;

@@ -605,7 +605,7 @@ html, body {
   /* 集中線のような斜めのすじ＋オレンジの帯 */
   background:
     repeating-linear-gradient(100deg, rgba(255, 255, 255, .18) 0 3px, transparent 3px 26px),
-    linear-gradient(90deg, #FF8A3D, #E0671F 60%, #C9541A);
+    linear-gradient(90deg, var(--c1, #FF8A3D), var(--c2, #E0671F));   /* 色は回ごとに変わる（CUTIN.levels） */
   border-top: 4px solid #fff;
   border-bottom: 4px solid #fff;
   box-shadow: 0 6px 18px rgba(90, 40, 10, .35);
@@ -621,7 +621,7 @@ html, body {
 .cutin-text { transform: skewY(7deg); color: #fff; line-height: 1.1; }
 .cutin-text b {
   display: block;
-  font-size: 30px;
+  font-size: clamp(20px, 6.6vw, 30px);   /* 長い文字（まだまだ いける！）も画面に収まるように */
   font-weight: 900;
   -webkit-text-stroke: 6px #8A3A10;
   paint-order: stroke;
