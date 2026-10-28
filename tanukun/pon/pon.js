@@ -44,12 +44,46 @@
     purun: { every: 2, at: 6 }
   };
   const SWIPE_PX = 18;
+
+  /* ---------- おなかを映す絵（立ち絵） ----------
+     normal  … 本編の「通常」の絵（720×900）を、おなかが大きく見えるように拡大して映す【いま使っている】
+     closeup … ChatGPT で作った「おなかのアップ」専用の絵（640×960。tools/make_pon_art.py でつくる）。
+               2026-10-28 に試したが、ユーザーの希望で normal に戻した。「まんぷく」などで使うときのために残す
+     中身：src … 絵（本編の images の名前か、ファイルの場所）、w, h … 絵の大きさ
+           belly … おなかの楕円（絵の％。書かなければ本編の config.js の bellyJiggle）
+           armL, armR … 腕の「ビクン」（絵の％。肩 pivot を軸に回る）
+           view … 映す範囲（絵のピクセル。cx, cy を画面の横まんなか・高さ at の所に、横幅 w を画面の横幅に）
+           mole … ◉ が出る範囲（絵のピクセル）と、続けて出る ◉ どうしの離れ具合 gap
+           parts … きせかえ部品の位置（絵の％。書かなければ本編の config.js の位置）
+           fade … 映す範囲の上（口もと）を、背景の色でふんわり隠すか */
+  const ARTS = {
+    normal: {
+      src: 'normal', w: 720, h: 900,
+      armL: { x: 12.2, y: 44.4, rx: 6.3, ry: 16.7, pivotX: 18.1, pivotY: 30, reach: 38.9 },
+      armR: { x: 66.7, y: 44.4, rx: 9.0, ry: 16.7, pivotX: 61.1, pivotY: 30, reach: 38.9 },
+      view: { cx: 270, cy: 410, w: 420, at: 0.48 },   // 横幅は、両腕が入るくらい
+      mole: { area: { x: 255, y: 405, rx: 112, ry: 80 }, gap: 80 },
+      parts: {},
+      fade: true
+    },
+    closeup: {
+      src: 'images/pon/belly0.webp', w: 640, h: 960,
+      belly: { x: 50, y: 36.5, rx: 37.5, ry: 16.7 },   // おなか（中心 320, 350、半径 240, 160）
+      armL: { x: 7.0, y: 34.4, rx: 7.8, ry: 19.8, pivotX: 14.1, pivotY: 13.5, reach: 59.4 },   // 肩 (90, 130)
+      armR: { x: 93.0, y: 34.4, rx: 7.8, ry: 19.8, pivotX: 85.9, pivotY: 13.5, reach: 59.4 },  // 肩 (550, 130)
+      view: { cx: 320, cy: 470, w: 640, at: 0.5 },    // 絵の横幅いっぱい（両腕まで）
+      mole: { area: { x: 320, y: 345, rx: 170, ry: 105 }, gap: 120 },
+      parts: { debeso: { x: 50, y: 42, width: 13.1 } },   // おへそ (320, 403)。おなかが大きく描かれている分、デベソも大きく
+      fade: false
+    }
+  };
+  const ART = ARTS.normal;
   /* おなかモード
      appear … ◉ が出てから、たたく時までの秒数（この間に輪が縮む）
-     area   … ◉ が出る範囲（おなかのアップの絵 640×960 で、おなかの楕円。x, y は中心、rx, ry は半径）
-     gap    … 続けて出る ◉ どうしの、最低限の離れ具合（絵のピクセル）
+     area   … ◉ が出る範囲（絵のピクセルで、おなかの楕円。x, y は中心、rx, ry は半径。ART.mole）
+     gap    … 続けて出る ◉ どうしの、最低限の離れ具合（絵のピクセル。ART.mole）
      hitR   … 指が ◉ の中心からこれだけ（画面のピクセル）以内なら当たり */
-  const MOLE = { appear: 1.0, area: { x: 320, y: 345, rx: 170, ry: 105 }, gap: 120, hitR: 56 };
+  const MOLE = { appear: 1.0, area: ART.mole.area, gap: ART.mole.gap, hitR: 56 };
 
   /* ---------- 判定（秒）。音ゲーに慣れていない人向けに、ゆるめ ---------- */
   const JUDGE = [
@@ -76,11 +110,8 @@
   const app = $('pon'), molesEl = $('moles');
   const notesEl = $('notes'), judgeEl = $('judge'), target = document.querySelector('.target');
   const wipe = $('wipe'), wipeFace = $('wipe-face');
-  /* ---------- おなかのアップの絵 ----------
-     ChatGPT で作った専用の絵（640×960。tools/make_pon_art.py で背景を透明にして、本編の色にそろえたもの）
-     x, y などの位置は、この絵の％（左上 0・右下 100） */
-  const BELLY_ART = { src: 'images/pon/belly0.webp', w: 640, h: 960 };
-  img.src = IMG(BELLY_ART.src);
+  img.src = IMG(ART.src);
+  app.classList.toggle('art-fade', ART.fade);
   // ワイプの表情：全部の絵を最初から重ねて置き、見せる絵だけを切りかえる
   // （切りかえのたびに絵を読み直すと、表示されない時間ができるため）
   const faceImgs = {};
@@ -96,18 +127,16 @@
   /* おなかの揺れ：本編の設定をもとに、このページだけ「ポヨン」を強めにする
      tapDent … たたいたときのへこみ（本編 0.08）、damp … 小さいほど長く揺れる（本編 9）
      pullMax … 「ぷるん」で引っぱられる最大の長さ（本編 8.6） */
-  const JIGGLE = Object.assign({}, C.bellyJiggle, {
-    x: 50, y: 36.5, rx: 37.5, ry: 16.7,   // おなかの楕円（中心 320, 350、半径 240, 160）
+  const JIGGLE = Object.assign({}, C.bellyJiggle, ART.belly || {}, {
     tapDent: 0.15, damp: 6, reboundBoost: 0.9, pullMax: 13,
     poke: Object.assign({}, C.bellyJiggle.poke, { depth: 0.45 })
   });
-  /* たたいたときのリアクション（おなかのアップの絵の％）
+  /* たたいたときのリアクション（位置は ART の絵の％）
      armL / armR … 腕。肩（pivot）を軸に「ビクン」と回る。angle は1回の角度（度）
      ※ ネックレスを上下に揺らすのは、首もとが揺れて不自然だったのでやめた */
   const REACT = {
-    // 腕は、肩（左 90, 130・右 550, 130）から手（ゆるいグー。腰みのの横）まで
-    armL: { type: 'twist', x: 7.0, y: 34.4, rx: 7.8, ry: 19.8, pivotX: 14.1, pivotY: 13.5, reach: 59.4, angle: 4 },
-    armR: { type: 'twist', x: 93.0, y: 34.4, rx: 7.8, ry: 19.8, pivotX: 85.9, pivotY: 13.5, reach: 59.4, angle: -4 },
+    armL: Object.assign({ type: 'twist', angle: 4 }, ART.armL),
+    armR: Object.assign({ type: 'twist', angle: -4 }, ART.armR),
     purun: 2   // 「ぷるん」のときは、この倍だけ大きく反応する
   };
   /* ---------- きせかえ ----------
@@ -129,17 +158,13 @@
     im.src = IMG(it.image);
     partImgs[it.id] = im;
   }));
-  // 部品の、おなかのアップの絵での位置（本編の config.js の位置は 720×900 の全身の絵のもの）
-  const PART_AT = {
-    debeso: { x: 50, y: 42, width: 13.1 }   // おへそ（320, 403）。おなかが大きく描かれている分、デベソも大きく
-  };
-  // いま付けている部品（位置は PART_AT。書いていない部品は、絵全体に重ねる）
+  // いま付けている部品（位置は ART.parts。書いていなければ本編の config.js の位置。どちらもなければ、絵全体に重ねる）
   function wornLayers() {
     const out = [];
     Object.keys(PARTS).forEach((slot) => {
       const it = findPart(slot, wear[slot]);
       if (!it || !unlocked(it)) return;
-      const at = PART_AT[it.id] || {};
+      const at = ART.parts[it.id] || it;
       out.push({ img: partImgs[it.id], x: at.x, y: at.y, width: at.width });
     });
     return out;
@@ -213,16 +238,16 @@
   img.addEventListener('load', () => belly.warm([img.src]), { once: true });
 
   /* ---------- おなかのアップ ----------
-     絵の横幅いっぱい（両腕まで）を画面の横幅に合わせて、まんなかに映す */
-  const VIEW = { cx: 320, cy: 470, w: 640 };
+     ART.view の範囲を画面に映す */
+  const VIEW = ART.view;
   let scale = 1, offX = 0, offY = 0;
   function layout() {
     const sw = stage.clientWidth, sh = stage.clientHeight;
     scale = sw / VIEW.w;
     offX = sw / 2 - VIEW.cx * scale;
-    offY = sh * 0.5 - VIEW.cy * scale;
-    body.style.width = BELLY_ART.w * scale + 'px';
-    body.style.height = BELLY_ART.h * scale + 'px';
+    offY = sh * VIEW.at - VIEW.cy * scale;
+    body.style.width = ART.w * scale + 'px';
+    body.style.height = ART.h * scale + 'px';
     body.style.left = offX + 'px';
     body.style.top = offY + 'px';
   }

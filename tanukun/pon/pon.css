@@ -469,3 +469,13 @@ html, body {
   text-align: center;
 }
 .r-card .r-score { margin-top: 0; }
+
+/* 映す範囲の上（タヌくんの口もと）を、背景の色でふんわり隠す。顔は右上のワイプで見せる（ART.fade） */
+#pon.art-fade #stage::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  height: 16%;
+  background: linear-gradient(#FFF4E0 25%, rgba(255, 244, 224, 0));
+  pointer-events: none;
+}
