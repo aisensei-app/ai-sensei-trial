@@ -17,6 +17,7 @@
    ・opts.extra で、ほかの場所も足せる（ぽんぽこリズムの腕・ネックレス）
        type: 'twist' … twitch で付け根を軸に回る（cutX がなければ、片側を止めない）
        type: 'bob'   … kick で上下に「ぷるん」と揺れる
+       type: 'swell' … setBase で「ふくらんだまま」にできる（ぽんぽこリズムの「まんぷく」）
 
    ※ PC でファイルを直接開いたとき（file://）は、ブラウザの安全のしくみで
      絵の色を読み取れないため、かんたんな方式（重ね絵の拡大）に切り替わります。
@@ -271,10 +272,14 @@ window.TanuBelly = function (opts) {
     }
   }
 
-  const isStill = (r) => !r.hold && !r.holdY && !r.dragging &&
-    Math.abs(r.x) < 0.001 && Math.abs(r.v) < 0.02 &&
+  // base … ふくらんだまま保つ大きさ（setBase。ふだんは 0）
+  const isStill = (r) => r.hold === (r.base || 0) && !r.holdY && !r.dragging &&
+    Math.abs(r.x - (r.base || 0)) < 0.001 && Math.abs(r.v) < 0.02 &&
     Math.abs(r.px) < 0.3 && Math.abs(r.py) < 0.3 && Math.abs(r.pvx) < 3 && Math.abs(r.pvy) < 3;
-  const zero = (r) => { r.x = r.v = r.px = r.py = r.pvx = r.pvy = 0; r.hold = r.holdY = 0; r.dragging = false; };
+  const zero = (r) => {
+    r.v = r.px = r.py = r.pvx = r.pvy = 0; r.holdY = 0; r.dragging = false;
+    r.x = r.hold = r.base || 0;
+  };
 
   function loop(t) {
     let dt = Math.min(0.05, (t - last) / 1000);
@@ -291,7 +296,8 @@ window.TanuBelly = function (opts) {
       regions.forEach(zero);
       zero(poke);
       running = false;
-      show(false);
+      // ふくらんだまま（base）の所があれば、変形した絵を出したままにする
+      show(regions.some((r) => r.base) ? render() : false);
       return;
     }
     show(render());
@@ -411,6 +417,15 @@ window.TanuBelly = function (opts) {
       const r = parts[part];
       if (!r || !ready()) return;
       r.pvy += px / peak;
+      start();
+    },
+
+    // ふくらんだまま保つ：amount（0.1 で1割）までふくらんで、そのまま（0 で元にもどる）。extra の type: 'swell'
+    setBase: function (part, amount) {
+      const r = parts[part];
+      if (!r || !ready()) return;
+      r.base = amount;
+      r.hold = amount;
       start();
     },
 

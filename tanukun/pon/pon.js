@@ -3,9 +3,11 @@
    ・リズムは 8ビート「ぽん・ぽこ・ぽんぽん・ぽこ」のくり返し
    ・BPM（1分間の拍の数）が 80 → 120 とだんだん速くなる（1ステージ約30秒。上のバーで残りが分かる）
    ・プレイ中は ⏸ で中断できる（つづける・さいしょから・ステージをえらぶ・タヌくんのところへ）
-   ・ステージは2つ（はじめる前に選ぶ）
+   ・ステージは3つ（はじめる前に選ぶ）
        ステージ2 おなか … ◉ がおなかの上のランダムな場所にふわっと出る。まわりの輪が縮んで、
                       ◉ にぴったり重なったときにたたく（目線がおなかから離れないので、揺れを楽しめる）
+       ステージ3 まんぷく … おなかモードの ◉ が食べもの（🍙🍉🍡🌽）になる。吹き出しの「たべたい！」と
+                      同じものだけたたく（ちがうものはミス）。正しく食べるほど、おなかがふくらんでいく
        ステージ1 ながれる … ◉ が右から左に流れてきて、左のわくに重なったときにたたく
    ・ピンクの「〜」は、指でおなかをさっとすべらせて「ぷるん」（たたくのとは別のアクション）
    ・タイミングが合うほど点数が高い。続けて合わせると右上のタヌくんが笑顔になる
@@ -54,6 +56,7 @@
            armL, armR … 腕の「ビクン」（絵の％。肩 pivot を軸に回る）
            view … 映す範囲（絵のピクセル。cx, cy を画面の横まんなか・高さ at の所に、横幅 w を画面の横幅に）
            mole … ◉ が出る範囲（絵のピクセル）と、続けて出る ◉ どうしの離れ具合 gap
+           fat … まんぷくで、ふくらむ範囲（絵の％）
            parts … きせかえ部品の位置（絵の％。書かなければ本編の config.js の位置）
            fade … 映す範囲の上（口もと）を、背景の色でふんわり隠すか */
   const ARTS = {
@@ -63,6 +66,7 @@
       armR: { x: 66.7, y: 44.4, rx: 9.0, ry: 16.7, pivotX: 61.1, pivotY: 30, reach: 38.9 },
       view: { cx: 270, cy: 410, w: 420, at: 0.48 },   // 横幅は、両腕が入るくらい
       mole: { area: { x: 255, y: 405, rx: 112, ry: 80 }, gap: 80 },
+      fat: { x: 35.4, y: 46, rx: 27, ry: 18 },   // まんぷくで、ふくらむ範囲（おなかより少し大きく、少し下）
       parts: {},
       fade: true
     },
@@ -84,6 +88,20 @@
      gap    … 続けて出る ◉ どうしの、最低限の離れ具合（絵のピクセル。ART.mole）
      hitR   … 指が ◉ の中心からこれだけ（画面のピクセル）以内なら当たり */
   const MOLE = { appear: 1.0, area: ART.mole.area, gap: ART.mole.gap, hitR: 56 };
+  /* ステージ3 まんぷく
+     foods      … 出てくる食べもの（形と色が似ていないものを選ぶ）
+     appear     … 食べものが出てから、たたく時までの秒数（吹き出しを切りかえる間をとるため、おなかモードより短く）
+     targetRate … 出てくる食べもののうち、「たべたい！」の食べものの割合
+     maxFat     … いちばんふくらんだときの大きさ（0.3 で3割。これより大きいと絵がくずれる）
+     ※ 吹き出しは、速さが変わるごと（2小節ごと）に変わる。変わる前の半小節は休み（食べものが出ない） */
+  const FOOD = { foods: ['🍙', '🍉', '🍡', '🌽'], appear: 0.85, targetRate: 0.6, maxFat: 0.3 };
+  const STAGES = {
+    lane:  { name: 'ステージ1（ながれる）', next: 'belly' },
+    belly: { name: 'ステージ2（おなか）', next: 'food' },
+    food:  { name: 'ステージ3（まんぷく）', next: null }
+  };
+  const onBelly = () => mode !== 'lane';   // ◉ がおなかの上に出るステージ（おなか・まんぷく）
+  const appearT = () => (mode === 'food' ? FOOD.appear : MOLE.appear);
 
   /* ---------- 判定（秒）。音ゲーに慣れていない人向けに、ゆるめ ---------- */
   const JUDGE = [
@@ -99,6 +117,7 @@
     happy: IMG('images/happy.webp'),   // 笑顔（本編の config.js の一覧にはないので、場所を直接）       // 笑顔（いい調子のとき）
     melt: IMG('melt'),         // とろける笑顔（とても長く続いたとき）
     troubled: IMG('troubled'), // ミスしたすぐあと
+    full: IMG('images/pon/face_full.webp'),   // まんぷく（顔だけの絵）
     shy: IMG('shy')            // コンボの節目（10ごと）に、一瞬だけ照れる
   };
   const SHY_EVERY = 10, SHY_SECONDS = 0.7;
@@ -118,6 +137,7 @@
   Object.keys(FACES).forEach((name) => {
     const im = document.createElement('img');
     im.src = FACES[name];
+    if (name === 'full') im.className = 'face-only';   // 顔だけの絵は、ワイプいっぱいに
     im.alt = '';
     im.draggable = false;
     wipeFace.appendChild(im);
@@ -219,7 +239,7 @@
 
   const belly = window.TanuBelly({ config: JIGGLE, img: img, canvas: $('belly-canvas'),
     overlay: partsLayer, layers: () => wornLayers(),
-    extra: { armL: REACT.armL, armR: REACT.armR } });
+    extra: { armL: REACT.armL, armR: REACT.armR, fat: Object.assign({ type: 'swell' }, ART.fat) } });
   renderParts();
   renderWearMenu();
   let armSide = 0;
@@ -309,6 +329,26 @@
     o.start(t); o.stop(t + 0.6);
     lfo.start(t); lfo.stop(t + 0.6);
   }
+  // まちがえた：「ぶぶっ」
+  function soundWrong(t) {
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'square';
+    o.frequency.value = 150;
+    env(g, t, 0.18, 0.22);
+    o.connect(g).connect(ac.destination);
+    o.start(t); o.stop(t + 0.25);
+  }
+  // 「たべたい！」が変わった：「チーン」
+  function soundBell(t) {
+    [1320, 1980].forEach((f, i) => {
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.type = 'sine';
+      o.frequency.value = f;
+      env(g, t, i ? 0.08 : 0.18, 0.6);
+      o.connect(g).connect(ac.destination);
+      o.start(t); o.stop(t + 0.65);
+    });
+  }
   // シャカシャカ（ハイハット）。accent は拍の頭
   function soundHat(t, accent) {
     const s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
@@ -338,7 +378,9 @@
 
   /* ---------- 譜面をつくる（すべて「曲の始まりからの秒」） ---------- */
   function buildChart() {
-    const notes = [], hats = [], clicks = [], banners = [];
+    const notes = [], hats = [], clicks = [], banners = [], wants = [];
+    const food = mode === 'food';
+    let want = null;
     let t = 0;
     const first = SONG.sections[0].bpm;
     for (let i = 0; i < SONG.countIn; i++) clicks.push({ t: t + i * 60 / first, high: i === 0 });
@@ -346,17 +388,32 @@
     SONG.sections.forEach((sec, si) => {
       const eighth = 30 / sec.bpm;
       banners.push({ t: t, bpm: sec.bpm, first: si === 0 });
+      if (food) {
+        // まんぷく：この速さの間の「たべたい！」（前と同じ食べものにはしない）
+        want = pick(FOOD.foods.filter((f) => f !== want));
+        wants.push({ t: t - FOOD.appear - 0.05, food: want });
+      }
+      let firstInSec = true;
       for (let b = 0; b < sec.bars; b++) {
         for (let e = 0; e < 8; e++) {
           hats.push({ t: t, accent: e % 2 === 0 });
-          const purun = b % SONG.purun.every === SONG.purun.every - 1 && e === SONG.purun.at;
-          if (SONG.pattern[e]) notes.push({ t: t, kind: purun ? 'purun' : SONG.pattern[e] });
+          const purun = !food && b % SONG.purun.every === SONG.purun.every - 1 && e === SONG.purun.at;
+          const rest = food && b === sec.bars - 1 && e >= 4;   // 吹き出しが変わる前の半小節は休み
+          if (SONG.pattern[e] && !rest) {
+            const n = { t: t, kind: purun ? 'purun' : SONG.pattern[e] };
+            if (food) {
+              n.target = firstInSec || Math.random() < FOOD.targetRate;
+              n.food = n.target ? want : pick(FOOD.foods.filter((f) => f !== want));
+              firstInSec = false;
+            }
+            notes.push(n);
+          }
           t += eighth;
         }
       }
     });
     // 最後に「ぽん！」で決める
-    notes.push({ t: t, kind: 'pon', last: true });
+    notes.push(food ? { t: t, kind: 'pon', last: true, target: true, food: want } : { t: t, kind: 'pon', last: true });
     // おなかモード：◉ の出る場所をランダムに（前の2つの ◉ から gap 以上はなす）
     const A = MOLE.area;
     notes.forEach((n, i) => {
@@ -368,13 +425,15 @@
         if (!near) break;
       }
     });
-    return { notes: notes, hats: hats, clicks: clicks, banners: banners, end: t + 1.2 };
+    return { notes: notes, hats: hats, clicks: clicks, banners: banners, wants: wants, end: t + 1.2 };
   }
+  const pick = (a) => a[Math.floor(Math.random() * a.length)];
 
   /* ---------- 遊んでいる間の状態 ---------- */
   let chart = null, t0 = 0, playing = false, nextNote = 0, nextBanner = 0;
   let paused = false;
-  let mode = 'belly';   // 'belly'＝おなかモード／'lane'＝ながれるモード
+  let mode = 'belly';   // 'lane'＝ステージ1 ながれる／'belly'＝ステージ2 おなか／'food'＝ステージ3 まんぷく
+  let nextWant = 0, fed = 0, targets = 0, wrongs = 0, wrongUntil = -9;   // まんぷく：食べた数・「たべたい」の数・まちがえた時
   let score = 0, combo = 0, maxCombo = 0, lastMiss = -9, shyUntil = -9;
   let counts = { perfect: 0, good: 0, ok: 0, miss: 0 };
 
@@ -392,7 +451,8 @@
 
   function start(m) {
     if (typeof m === 'string') mode = m;
-    app.classList.toggle('mode-belly', mode === 'belly');
+    app.classList.toggle('mode-belly', onBelly());
+    app.classList.toggle('mode-food', mode === 'food');
     app.classList.toggle('mode-lane', mode === 'lane');
     layout();   // モードで、おなかを映す広さが変わる
     // 揺れの準備（絵の色の読み取り・変形の計算表）を、音が鳴り出す前にすませておく
@@ -412,8 +472,9 @@
     chart.notes.forEach((n) => {
       n.el = document.createElement('div');
       n.done = false;
-      if (mode === 'belly') {
-        n.el.className = 'mole' + (n.kind === 'pon' ? '' : ' ' + n.kind);
+      if (onBelly()) {
+        n.el.className = 'mole' + (n.kind === 'pon' ? '' : ' ' + n.kind) + (n.food ? ' food' : '');
+        if (n.food) n.el.appendChild(Object.assign(document.createElement('span'), { textContent: n.food }));
         n.ring = document.createElement('div');
         n.ring.className = 'ring';
         n.el.appendChild(n.ring);
@@ -425,6 +486,12 @@
       }
     });
     nextNote = 0; nextBanner = 0;
+    // まんぷく
+    nextWant = 0; fed = 0; wrongs = 0; wrongUntil = -9;
+    targets = chart.notes.filter((n) => n.target).length;
+    belly.setBase('fat', 0);
+    $('want').hidden = true;
+    $('full-fill').style.width = '0%';
     score = 0; combo = 0; maxCombo = 0; lastMiss = -9; shyUntil = -9;
     counts = { perfect: 0, good: 0, ok: 0, miss: 0 };
     $('score').textContent = '0';
@@ -456,16 +523,20 @@
     for (let i = nextNote; i < chart.notes.length; i++) {
       const n = chart.notes[i];
       if (n.t > now - MISS_AFTER) break;
-      if (!n.done) { n.done = true; n.el.classList.add('done'); judge(null, now, n); }
+      if (n.done) continue;
+      n.done = true;
+      n.el.classList.add('done');
+      if (n.food && !n.target) continue;   // 「たべたい」でない食べものは、見のがしてよい
+      judge(null, now, n);
     }
-    if (mode === 'belly') {
+    if (onBelly()) {
       // おなかモード：◉ がふわっと出て、まわりの輪が縮み、たたく時に ◉ と重なる
       for (let i = nextNote; i < chart.notes.length; i++) {
         const n = chart.notes[i];
         const dt = n.t - now;
-        if (dt > MOLE.appear) break;
+        if (dt > appearT()) break;
         if (n.done) continue;
-        const q = 1 - Math.max(0, dt) / MOLE.appear;   // 0（出たところ）→ 1（たたく時）
+        const q = 1 - Math.max(0, dt) / appearT();   // 0（出たところ）→ 1（たたく時）
         n.el.style.left = (offX + n.ix * scale) + 'px';
         n.el.style.top = (offY + n.iy * scale) + 'px';
         n.el.style.opacity = Math.min(1, q * 3);
@@ -484,8 +555,13 @@
       const b = chart.banners[nextBanner++];
       banner(b.first ? 'スタート！ BPM ' + b.bpm : 'スピードアップ！ BPM ' + b.bpm);
     }
-    // ワイプ：ミスのあと少しは困り顔、その後はコンボで笑顔に
-    if (now - lastMiss < 0.8) setFace('troubled');
+    // まんぷく：吹き出しの「たべたい！」を切りかえる
+    if (mode === 'food' && nextWant < chart.wants.length && now >= chart.wants[nextWant].t) {
+      showWant(chart.wants[nextWant++].food);
+    }
+    // ワイプ：ミスのあと少しは困り顔、その後はコンボで笑顔に（まんぷくで、おなかいっぱいに近いときは満足顔）
+    if (now - lastMiss < 0.8 || now < wrongUntil) setFace('troubled');
+    else if (mode === 'food' && fed / Math.max(1, targets) >= 0.66) setFace('full');
     else if (now < shyUntil) setFace('shy');
     else if (combo >= MELT_COMBO) setFace('melt');
     else if (combo >= SMILE_COMBO) setFace('happy');
@@ -508,7 +584,7 @@
       const n = chart.notes[i];
       if (n.t - now > 0.3) break;
       if (n.done || kinds.indexOf(n.kind) < 0) continue;
-      if (mode === 'belly' && p &&
+      if (onBelly() && p &&
           Math.hypot(offX + n.ix * scale - p.sx, offY + n.iy * scale - p.sy) > MOLE.hitR) continue;
       const d = Math.abs(n.t - now);
       if (d < bestD) { best = n; bestD = d; }
@@ -517,18 +593,45 @@
   }
   function hit(found, now) {
     const j = found && JUDGE.find((x) => found.d <= x.within);
-    if (!j) return;
+    if (!j) return null;
     found.note.done = true;
-    found.note.el.classList.add(mode === 'belly' ? 'hit' : 'done');
+    found.note.el.classList.add(onBelly() ? 'hit' : 'done');
     judge(j, now, found.note);
+    return j;
   }
   function tap(p) {
     const found = playing ? nearest(p.now, ['pon', 'poko'], p) : null;
+    // まんぷく：「たべたい」でない食べものをたたいた → ミス
+    if (found && found.note.food && !found.note.target && found.d <= MISS_AFTER) {
+      found.note.done = true;
+      found.note.el.classList.add('done');
+      if (ac) soundWrong(ac.currentTime);
+      popWord('それじゃないよ〜', p.sx, p.sy, 'wrong');
+      wrongUntil = p.now + 0.8;
+      wrongs++;
+      judge(null, p.now, found.note);
+      return;
+    }
     const kind = found && found.d < 0.25 ? found.note.kind : 'pon';
     if (ac) (kind === 'poko' ? soundPoko : soundPon)(ac.currentTime, 1);
     react(false);
-    popWord(kind === 'poko' ? 'ぽこ！' : 'ぽん！', p.sx, p.sy, kind);
-    if (playing) hit(found, p.now);
+    const eat = found && found.note.food;
+    popWord(eat ? 'ぱくっ！' : kind === 'poko' ? 'ぽこ！' : 'ぽん！', p.sx, p.sy, kind);
+    if (playing && hit(found, p.now) && eat) feed();
+  }
+  // まんぷく：食べた数に合わせて、おなかをふくらませる
+  function feed() {
+    fed++;
+    const level = Math.min(1, fed / Math.max(1, targets));
+    belly.setBase('fat', FOOD.maxFat * level);
+    $('full-fill').style.width = level * 100 + '%';
+  }
+  function showWant(food) {
+    const el = $('want');
+    el.textContent = food + ' たべたい！';
+    el.hidden = false;
+    el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+    if (ac) soundBell(ac.currentTime);
   }
   function purun(p) {
     p.purun = true;
@@ -602,7 +705,7 @@
 
   function showJudge(text, cls, n) {
     // おなかモード：◉ のあった場所の少し上に出す
-    if (mode === 'belly') {
+    if (onBelly()) {
       if (n) popWord(text, offX + n.ix * scale, offY + n.iy * scale - 44, 'jd ' + cls);
       return;
     }
@@ -652,7 +755,8 @@
     playing = false;
     $('progress-fill').style.width = '100%';
     showBar();
-    const total = chart.notes.length;
+    // まんぷくは「たべたい」の数＋まちがえてたたいた数（なんでもたたくと、ランクが下がる）
+    const total = chart.notes.filter((n) => !n.food || n.target).length + wrongs;
     const rate = (counts.perfect + counts.good * 0.6 + counts.ok * 0.2) / total;
     const rank = RANKS.find((r) => rate >= r.rate);
     setFace(rank.face);
@@ -664,9 +768,13 @@
     $('r-combo').textContent = maxCombo;
     $('r-line').textContent = 'タヌくん「' + rank.line + '」';
     const url = /^https?:/.test(location.href) ? location.href.split(/[?#]/)[0] : 'https://tanukun.pages.dev/pon/';
-    const text = '🥁 ぽんぽこリズム ' + (mode === 'belly' ? 'ステージ2（おなか）' : 'ステージ1（ながれる）') + '\n' + score + 'てん「' + rank.title + '」さいだい' + maxCombo + 'コンボ\n#タヌくん #ぽんぽこリズム\n' + url;
+    const text = '🥁 ぽんぽこリズム ' + STAGES[mode].name + '\n' + score + 'てん「' + rank.title + '」さいだい' + maxCombo + 'コンボ\n#タヌくん #ぽんぽこリズム\n' + url;
     $('btn-post').href = 'https://x.com/intent/post?text=' + encodeURIComponent(text);
-    $('btn-next').hidden = mode !== 'lane';   // ステージ1のあとは「ステージ2へ」
+    // 次のステージへ
+    const next = STAGES[mode].next;
+    $('btn-next').hidden = !next;
+    if (next) $('btn-next').textContent = STAGES[next].name.replace(/（.*/, '') + ' へ ▶';
+    if (mode === 'food') $('r-line').textContent = 'タヌくん「ごちそうさま！' + (fed / Math.max(1, targets) >= 0.66 ? 'おなかいっぱい〜！」' : 'もうちょっと食べたかったな〜」');
     $('result').hidden = false;
   }
 
@@ -720,6 +828,8 @@
     $('result').hidden = true;
     $('progress-fill').style.width = '0%';
     $('start').hidden = false;
+    $('want').hidden = true;
+    belly.setBase('fat', 0);
     setFace('normal');
     showBar();
   }
@@ -744,7 +854,8 @@
   $('btn-belly').addEventListener('click', () => start('belly'));
   $('btn-lane').addEventListener('click', () => start('lane'));
   $('btn-again').addEventListener('click', () => start());
-  $('btn-next').addEventListener('click', () => start('belly'));
+  $('btn-next').addEventListener('click', () => start(STAGES[mode].next));
+  $('btn-food').addEventListener('click', () => start('food'));
   $('btn-mode').addEventListener('click', quit);
   setFace('normal');
   showBar();

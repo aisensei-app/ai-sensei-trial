@@ -21,6 +21,9 @@
   <!-- クリアまでのバー（左から右へのびる。右はしの 🏁 でクリア） -->
   <div class="progress" aria-hidden="true"><div id="progress-fill"></div><span>🏁</span></div>
   <div id="wipe" class="wipe" aria-hidden="true"><div id="wipe-face"></div></div>
+  <!-- ステージ3 まんぷく：ワイプの下の吹き出し（たべたい食べもの）と、まんぷくゲージ -->
+  <div id="want" class="want" hidden></div>
+  <div id="full" class="full" aria-hidden="true"><span>まんぷく</span><i><b id="full-fill"></b></i></div>
 
   <!-- ◉ が右から左に流れてくる道。左のわくに重なったときにたたく -->
   <div id="lane" class="lane" aria-hidden="true">
@@ -51,6 +54,8 @@
     <p class="mode-note">◉ が右から流れてくるよ。左のわくに来たら たたいてね</p>
     <button id="btn-belly" class="btn btn-stage" type="button"><small>ステージ2</small>おなか</button>
     <p class="mode-note">◉ がおなかの上に出てくるよ。まわりの輪が ◉ に重なったら たたいてね</p>
+    <button id="btn-food" class="btn btn-stage" type="button"><small>ステージ3</small>まんぷく</button>
+    <p class="mode-note">吹き出しの「たべたい！」と同じ食べものだけ たたいてね。いっぱい食べると…？</p>
     <!-- きせかえ（本編と同じ記録。ここで変えると本編にも反映） -->
     <div id="wear" class="wear" hidden></div>
   </section>
