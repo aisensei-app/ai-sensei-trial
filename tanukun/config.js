@@ -227,10 +227,11 @@ window.TANU_CONFIG = {
     afterDays: 2,
     hashtag: 'タヌくんクリア',
     memory: {
-      title: 'ずっといっしょ', image: 'images/memories/6.webp', thumb: 'images/memories/6c.webp', stand: 'dere2', bg: ['#2B2F5C', '#FF9A6B'],
+      title: 'ずっといっしょ', image: 'images/memories/6.webp', thumb: 'images/memories/6.webp', stand: 'dere2', bg: ['#2B2F5C', '#FF9A6B'],
       lines: ['{name}、これ…受け取ってくれる？', 'ずっと渡したかったんだ',
               { text: 'ここ、{name}のことでいっぱいなんだ', image: 'images/memories/6b.webp' },
-              { text: '…おいで。ずっと一緒にいようね', image: 'images/memories/6c.webp' }]
+              // 最後は全身（腰みのを外して寝ころび、小さな葉っぱで隠した絵）。アルバムの小さな絵はハイビスカスのほう
+              { text: '…おいで。ずっと一緒にいようね', image: 'images/memories/6d.webp' }]
     }
   },
 
