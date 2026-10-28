@@ -64,6 +64,13 @@
     <button id="btn-quit" class="btn btn-sub" type="button">ステージをえらぶ</button>
     <a id="pause-home" class="btn btn-sub" href="../">タヌくんのところへ もどる</a>
   </section>
+  <!-- 速さが変わる前のカットイン（がんばる顔＋「スピードアップ！」の帯） -->
+  <div id="cutin" class="cutin" aria-hidden="true" hidden>
+    <div class="cutin-band">
+      <img id="cutin-face" alt="" draggable="false">
+      <div class="cutin-text"><b>スピードアップ！</b><span id="cutin-bpm"></span></div>
+    </div>
+  </div>
   <!-- ステージが始まってから、最初の ◉ が出るまでの間に出す、遊び方の説明 -->
   <div id="howto" class="howto" hidden></div>
   <!-- 再開する前の「3・2・1」 -->

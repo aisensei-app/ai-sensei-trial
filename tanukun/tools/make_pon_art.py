@@ -8,6 +8,8 @@
     3枚とも同じ変え方をするので、3枚の間の色はそろったまま
 ・ランク別イラスト（A1〜A4）：720×1080（2:3）
     images/pon/rank1.webp（ぽんぽこ名人）〜 rank4.webp（れんしゅう中）
+・カットインの顔（A4 の「ぐぬぬ」顔を切り抜き）：320×320
+    images/pon/face_cutin.webp
 ・まんぷくの顔（D3b）：マゼンタ背景を透明に → 色味をそろえる → 512×512
     images/pon/face_full.webp
 元の絵（ChatGPT で作ったもの）は pon/art に置いてある。公開用のファイルには入れない。
@@ -73,6 +75,9 @@ def main():
     for i, n in enumerate(['A1_meijin', 'A2_iirhythm', 'A3_nakanaka', 'A4_renshu']):
         im = Image.open(ART / (n + '.webp')).convert('RGB')
         im.resize((720, 1080), Image.LANCZOS).save(OUT / f'rank{i + 1}.webp', quality=86, method=6)
+
+    Image.open(ART / 'A4_renshu.webp').convert('RGB').crop((340, 20, 780, 460)).resize(
+        (320, 320), Image.LANCZOS).save(OUT / 'face_cutin.webp', quality=88, method=6)
 
     face = key(ART / 'D3b_face.webp')
     recolor(face, stats(face), goal).resize((512, 512), Image.LANCZOS).save(OUT / 'face_full.webp', quality=90, method=6)

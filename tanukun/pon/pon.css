@@ -583,3 +583,59 @@ html, body {
 }
 .howto .feast { font-size: 30px; font-weight: 900; color: #E0671F; }
 .howto.top { top: calc(max(8px, env(safe-area-inset-top)) + 150px); padding: 10px 12px; }   /* ごちそうさまタイム：おなかが見えるように上へ */
+
+/* ---- 速さが変わる前のカットイン ---- */
+.cutin {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+  overflow: hidden;
+}
+.cutin-band {
+  position: absolute;
+  left: -12%; right: -12%;
+  top: 30%;
+  height: 128px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-left: calc(15% + 26px);
+  transform: skewY(-7deg);
+  /* 集中線のような斜めのすじ＋オレンジの帯 */
+  background:
+    repeating-linear-gradient(100deg, rgba(255, 255, 255, .18) 0 3px, transparent 3px 26px),
+    linear-gradient(90deg, #FF8A3D, #E0671F 60%, #C9541A);
+  border-top: 4px solid #fff;
+  border-bottom: 4px solid #fff;
+  box-shadow: 0 6px 18px rgba(90, 40, 10, .35);
+}
+.cutin-band img {
+  width: 112px; height: 112px;
+  border-radius: 50%;
+  border: 4px solid #fff;
+  object-fit: cover;
+  transform: skewY(7deg);   /* 顔はまっすぐに */
+  flex: none;
+}
+.cutin-text { transform: skewY(7deg); color: #fff; line-height: 1.1; }
+.cutin-text b {
+  display: block;
+  font-size: 30px;
+  font-weight: 900;
+  -webkit-text-stroke: 6px #8A3A10;
+  paint-order: stroke;
+  white-space: nowrap;
+}
+.cutin-text span { font-size: 18px; font-weight: 900; -webkit-text-stroke: 4px #8A3A10; paint-order: stroke; }
+/* 右から「シュッ」と入って、少し止まって、左へ「シュッ」と抜ける */
+.cutin.go .cutin-band { animation: cutin 1s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes cutin {
+  0%   { transform: skewY(-7deg) translateX(110%); }
+  18%  { transform: skewY(-7deg) translateX(0); }
+  78%  { transform: skewY(-7deg) translateX(-4%); }
+  100% { transform: skewY(-7deg) translateX(-120%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cutin.go .cutin-band { animation: none; }
+}

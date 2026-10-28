@@ -93,10 +93,15 @@
      appear     … 食べものが出てから、たたく時までの秒数（吹き出しを切りかえる間をとるため、おなかモードより短く）
      targetRate … 出てくる食べもののうち、「たべたい！」の食べものの割合
      maxFat     … いちばんふくらんだときの大きさ（0.3 で3割。これより大きいと絵がくずれる）
-     ※ 吹き出しは、速さが変わるごと（2小節ごと）に変わる。変わる前の半小節は休み（食べものが出ない）
-     ※ おなかは、食べるたびではなく、その休みのはじめに、それまでに食べた分だけ「ぽよ〜ん！」と一気にふくらむ
+     ※ 吹き出しは、速さが変わるごと（2小節ごと）に、カットインの「間」の中で変わる
+     ※ おなかは、食べるたびではなく、カットインのあとに、それまでに食べた分だけ「ぽよ〜ん！」と一気にふくらむ
         （たたいている最中は、おなかの変化に気づけないため）。最後は「ごちそうさまタイム」（feastSeconds 秒）のあとで結果 */
   const FOOD = { foods: ['🍙', '🍉', '🍡', '🌽'], appear: 0.85, targetRate: 0.6, maxFat: 0.3, feastSeconds: 2.6 };
+  /* 速さが変わる前のカットイン（音ゲーの「スピードアップ！」）
+     速さが変わる前に1小節分の「間」（◉ が出ない。シャカシャカは続く）を入れて、
+     タヌくんのがんばる顔と文字の帯が、右から「シュッ！」と入って左へ抜ける
+     seconds … 帯が出ている秒数、growAfter … まんぷくで、間のはじめから「ぽよ〜ん！」までの秒数 */
+  const CUTIN = { seconds: 1.0, growAfter: 1.05, face: 'images/pon/face_cutin.webp' };
   const STAGES = {
     lane:  { name: 'ステージ1（ながれる）', next: 'belly' },
     belly: { name: 'ステージ2（おなか）', next: 'food' },
@@ -354,6 +359,17 @@
     o.start(t); o.stop(t + 0.75);
     lfo.start(t); lfo.stop(t + 0.75);
   }
+  // カットインの「シュッ！」：ざらざらした音を、低い所から高い所へ
+  function soundWhoosh(t) {
+    const s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+    s.buffer = noise;
+    f.type = 'bandpass'; f.Q.value = 1.5;
+    f.frequency.setValueAtTime(500, t);
+    f.frequency.exponentialRampToValueAtTime(4000, t + 0.25);
+    env(g, t, 0.5, 0.3);
+    s.connect(f).connect(g).connect(ac.destination);
+    s.start(t); s.stop(t + 0.3);
+  }
   // まちがえた：「ぶぶっ」
   function soundWrong(t) {
     const o = ac.createOscillator(), g = ac.createGain();
@@ -412,7 +428,17 @@
     t += SONG.countIn * 60 / first;
     SONG.sections.forEach((sec, si) => {
       const eighth = 30 / sec.bpm;
-      banners.push({ t: t, bpm: sec.bpm, first: si === 0 });
+      if (si === 0) {
+        banners.push({ t: t, bpm: sec.bpm, first: true });
+      } else {
+        // 速さが変わる前の「間」（新しい速さで1小節）：カットイン。まんぷくは、そのあとで「ぽよ〜ん！」
+        banners.push({ t: t, bpm: sec.bpm, cutin: true });
+        if (food) grows.push(t + CUTIN.growAfter);
+        for (let e = 0; e < 8; e++) {
+          hats.push({ t: t, accent: e % 2 === 0 });
+          t += eighth;
+        }
+      }
       if (food) {
         // まんぷく：この速さの間の「たべたい！」（前と同じ食べものにはしない）
         want = pick(FOOD.foods.filter((f) => f !== want));
@@ -423,9 +449,7 @@
         for (let e = 0; e < 8; e++) {
           hats.push({ t: t, accent: e % 2 === 0 });
           const purun = !food && b % SONG.purun.every === SONG.purun.every - 1 && e === SONG.purun.at;
-          const rest = food && b === sec.bars - 1 && e >= 4;   // 吹き出しが変わる前の半小節は休み
-          if (rest && e === 4) grows.push(t);                   // 休みのはじめに、おなかがふくらむ
-          if (SONG.pattern[e] && !rest) {
+          if (SONG.pattern[e]) {
             const n = { t: t, kind: purun ? 'purun' : SONG.pattern[e] };
             if (food) {
               n.target = firstInSec || Math.random() < FOOD.targetRate;
@@ -592,9 +616,11 @@
       }
     }
     // 速さが変わるお知らせ
-    if (nextBanner < chart.banners.length && now >= chart.banners[nextBanner].t - 0.4) {
-      const b = chart.banners[nextBanner++];
-      banner(b.first ? 'スタート！ BPM ' + b.bpm : 'スピードアップ！ BPM ' + b.bpm);
+    const nb = chart.banners[nextBanner];
+    if (nb && now >= nb.t - (nb.cutin ? 0 : 0.4)) {
+      nextBanner++;
+      if (nb.cutin) cutin(nb.bpm);
+      else banner('スタート！ BPM ' + nb.bpm);
     }
     // まんぷく：吹き出しの「たべたい！」を切りかえる
     if (mode === 'food' && nextWant < chart.wants.length && now >= chart.wants[nextWant].t) {
@@ -801,6 +827,17 @@
     el.textContent = combo >= 2 ? combo + ' コンボ' : '';
     if (combo >= 2) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
   }
+  // カットイン：がんばる顔と「スピードアップ！」の帯が、右から入って左へ抜ける
+  function cutin(bpm) {
+    const el = $('cutin');
+    $('cutin-bpm').textContent = 'BPM ' + bpm;
+    el.hidden = false;
+    el.classList.remove('go'); void el.offsetWidth; el.classList.add('go');
+    if (ac) soundWhoosh(ac.currentTime);
+    clearTimeout(cutin.timer);
+    cutin.timer = setTimeout(() => { el.hidden = true; }, CUTIN.seconds * 1000);
+  }
+  $('cutin-face').src = IMG(CUTIN.face);
   function banner(text) {
     const el = $('bpm');
     el.textContent = text;
@@ -912,6 +949,7 @@
     $('start').hidden = false;
     $('want').hidden = true;
     $('howto').hidden = true;
+    $('cutin').hidden = true;
     belly.setBase('fat', 0);
     setFace('normal');
     showBar();
