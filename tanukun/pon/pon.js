@@ -13,7 +13,7 @@
    ・タイミングが合うほど点数が高い。続けて合わせると右上のタヌくんが笑顔になる
    ・音はすべてプログラムで作る（Web Audio）。音の素材ファイルは使わない
    ・おなかの「ぷるん」は本編と同じ仕組み（belly.js）
-   ・きせかえ（デベソなど）は本編の記録をそのまま使う。はじめる前の画面でも付けはずしできる（本編にも反映）
+   ・きせかえ（デベソなど）は本編の記録をそのまま使う（付けはずしは本編の「きせかえ」で。ここでは設定しない）
    ・たたくたびに、タヌくんの腕が「ビクン」、ネックレスが「ぷるん」と反応する
    ========================================================= */
 (function () {
@@ -201,7 +201,7 @@
   function loadSave() {
     try { return JSON.parse(localStorage.getItem(SAVE_KEY)) || {}; } catch (e) { return {}; }
   }
-  let wear = loadSave().wear || {};
+  const wear = loadSave().wear || {};
   // なかよし度（ハートの数）。部品の解放に使う
   const hearts = () => C.friendship.heartAt.filter((pt) => (loadSave().points || 0) >= pt).length;
   const findPart = (slot, id) => (PARTS[slot] ? PARTS[slot].items : []).filter((it) => it.id === id)[0];
@@ -245,41 +245,10 @@
     } catch (e) { /* 保存できない環境では、その回だけ */ }
   }
   updateSave((d) => { d.ponSeen = true; });   // 本編のメニューの NEW を消す
-  function setWear(slot, id) {
-    if (id) wear[slot] = id; else delete wear[slot];
-    updateSave((d) => { d.wear = Object.assign({}, wear); });
-    belly.refresh();
-    renderParts();
-    renderWearMenu();
-  }
-  // はじめる前の画面の「きせかえ」
-  function renderWearMenu() {
-    const box = $('wear');
-    box.textContent = '';
-    Object.keys(PARTS).forEach((slot) => {
-      const row = document.createElement('div');
-      row.className = 'wear-row';
-      row.appendChild(Object.assign(document.createElement('span'), { textContent: PARTS[slot].label }));
-      [{ id: '', name: 'なし' }].concat(PARTS[slot].items).forEach((it) => {
-        const b = document.createElement('button');
-        b.type = 'button';
-        b.className = 'chip' + ((wear[slot] || '') === it.id ? ' on' : '');
-        const open = !it.id || unlocked(it);
-        b.disabled = !open;
-        b.textContent = open ? it.name : '🔒 💖×' + it.hearts;
-        b.addEventListener('click', () => setWear(slot, it.id));
-        row.appendChild(b);
-      });
-      box.appendChild(row);
-    });
-    box.hidden = !Object.keys(PARTS).length;
-  }
-
   const belly = window.TanuBelly({ config: JIGGLE, img: img, canvas: $('belly-canvas'),
     overlay: partsLayer, layers: () => wornLayers(),
     extra: { armL: REACT.armL, armR: REACT.armR, fat: Object.assign({ type: 'swell' }, ART.fat) } });
   renderParts();
-  renderWearMenu();
   let armSide = 0;
   function react(big) {
     const k = big ? REACT.purun : 1;
