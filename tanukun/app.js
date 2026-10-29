@@ -85,6 +85,11 @@
     const b = bandNow();
     return b && b.image && atHome() && state.phase === 'active' ? b.image : null;
   }
+  // 時間帯の立ち絵の名前（きせかえ部品の位置 faces に使う。time_morning など）
+  function standKey() {
+    const b = bandNow();
+    return timeStand() ? 'time_' + b.id : null;
+  }
   const sleeping = () => { const b = bandNow(); return !!(b && b.sleep && atHome()); };
   // 時間帯を画面に反映（背景の色・立ち絵・寝ている演出）
   function applyTime() {
@@ -94,7 +99,10 @@
     setFace(state.face, true);
   }
   if (TB) {
-    Object.keys(TB.bands).forEach((k) => { if (TB.bands[k].image) new Image().src = TB.bands[k].image; });
+    TB.bands.forEach((b) => {
+      if (!b.image) return;
+      new Image().src = b.image;
+    });
     const n = TB.nose || { x: 50, y: 33 };
     $('sleep-fx').style.left = n.x + '%';
     $('sleep-fx').style.top = n.y + '%';
@@ -109,7 +117,7 @@
     area.classList.add('face-' + name);
     area.classList.toggle('tint-angry', name === 'angry' && !!C.angryTint);
     const stand = timeStand();
-    area.classList.toggle('time-stand', !!stand);   // 時間帯の立ち絵の間は、きせかえ部品を出さない（位置が合わないため）
+    area.classList.toggle('time-stand', !!stand);
     img.src = stand || C.images[name] || C.images.normal;
     bellyImg.src = img.src;
     // 茂みのときは重ね絵を使わない
@@ -133,6 +141,8 @@
   const absUrl = (src) => new URL(src, location.href).href;
   const faceOfSrc = {};
   Object.keys(C.images).forEach((k) => { faceOfSrc[absUrl(C.images[k])] = k; });
+  // 時間帯の立ち絵 → time_＋時間帯の id（揺れの絵にも、その立ち絵の位置で部品を重ねる）
+  if (TB) TB.bands.forEach((b) => { if (b.image) faceOfSrc[absUrl(b.image)] = 'time_' + b.id; });
 
   const findPart = (slot, id) => (PARTS[slot] ? PARTS[slot].items : []).filter((it) => it.id === id)[0];
   const unlocked = (it) => DEMO ? false : SAVE.hearts() >= (it.hearts || 0);
@@ -147,7 +157,7 @@
       if (!it || !unlocked(it)) return;
       if ((it.hideOn || ['bush']).indexOf(face) >= 0) return;
       const at = (it.faces && it.faces[face]) || it;   // 絵によって位置がちがうとき
-      out.push({ img: partImgs[it.id], x: at.x, y: at.y, width: it.width });
+      out.push({ img: partImgs[it.id], x: at.x, y: at.y, width: at.width || it.width });
     });
     return out;
   }
@@ -155,7 +165,7 @@
   // ふだんの表示：<img> を絵の上の同じ位置に重ねる
   function renderParts() {
     partsLayer.textContent = '';
-    wornLayers(state.face).forEach((l) => {
+    wornLayers(standKey() || state.face).forEach((l) => {
       const el = document.createElement('img');
       el.src = l.img.src;
       el.alt = '';

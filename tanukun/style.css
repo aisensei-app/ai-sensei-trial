@@ -636,8 +636,8 @@ body[data-time="night"] .days, body[data-time="late"] .days { color: #FFF6E6; }
 body[data-time="night"] .days-main b, body[data-time="late"] .days-main b { color: #FFD08A; }
 body[data-time="night"] .ground, body[data-time="late"] .ground { background: rgba(0, 0, 0, .3); }
 
-/* 時間帯の立ち絵の間は、きせかえ部品とおなかの重ね絵を出さない（絵ごとに位置がちがうため） */
-.time-stand #parts-layer, .time-stand #belly-layer { visibility: hidden; }
+/* 時間帯の立ち絵の間は、おなかの重ね絵（file:// のときの代わり）を出さない（絵ごとに位置がちがうため） */
+.time-stand #belly-layer { visibility: hidden; }
 
 /* ---- 寝ているとき（メニュー画面・深夜） ---- */
 #sleep-fx { position: absolute; width: 0; height: 0; display: none; pointer-events: none; }

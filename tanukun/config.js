@@ -79,7 +79,8 @@ window.TANU_CONFIG = {
                     （タヌくんの絵と同じ大きさの透明な絵に、部品だけ描いておく方式）
          hearts … 付けられるようになる、なかよし度（ハートの数）。0 なら最初から
          hideOn … この絵のときは表示しない（茂みに隠れているときなど）。省略時 ['bush']
-         faces  … 絵によって位置がちがうときの、その絵での x, y（例：{ dere: { x: 28, y: 51 } }） */
+         faces  … 絵によって位置がちがうときの、その絵での x, y（例：{ dere: { x: 28, y: 51 } }）。width も書ける
+                  時間帯の立ち絵は time_＋時間帯の id（time_morning など） */
   parts: {
     navel: {
       label: 'おへそ',
@@ -87,7 +88,10 @@ window.TANU_CONFIG = {
         // 720×900 の絵で中心 (192, 461)、横幅 56 ピクセル。もとの表情の絵は、どれもおへその位置が同じ。
         // モジモジ・デレ・デレ2の絵は体が右に寄っているので、位置を別に指定（(236, 463)・(202, 462)・(204, 456)）
         { id: 'debeso', name: 'デベソ', image: 'images/parts/debeso.webp', x: 26.67, y: 51.22, width: 7.78, hearts: 0,
-          faces: { mojimoji: { x: 32.78, y: 51.44 }, dere: { x: 28.06, y: 51.33 }, dere2: { x: 28.33, y: 50.67 } } }
+          faces: { mojimoji: { x: 32.78, y: 51.44 }, dere: { x: 28.06, y: 51.33 }, dere2: { x: 28.33, y: 50.67 },
+                   // 時間帯の立ち絵（timeOfDay）。すやすやは絵が小さめなので、デベソも小さく（width）
+                   time_morning: { x: 42.78, y: 54.0 }, time_evening: { x: 38.61, y: 57.33 },
+                   time_night: { x: 41.11, y: 53.0 }, time_late: { x: 48.06, y: 69.78, width: 6.85 } } }
       ]
     }
   },
