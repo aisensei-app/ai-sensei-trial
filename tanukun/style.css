@@ -635,6 +635,9 @@ body[data-time="late"] #sky .fly { opacity: 1; animation: firefly 7s ease-in-out
 body[data-time="night"] .days, body[data-time="late"] .days { color: #FFF6E6; }
 body[data-time="night"] .days-main b, body[data-time="late"] .days-main b { color: #FFD08A; }
 body[data-time="night"] .ground, body[data-time="late"] .ground { background: rgba(0, 0, 0, .3); }
+/* はじめての名前入力の「あとできめる」と説明の文字も */
+body[data-time="night"] .name-form .link, body[data-time="late"] .name-form .link,
+body[data-time="night"] .name-form .note, body[data-time="late"] .name-form .note { color: #F3E6D2; }
 
 /* 時間帯の立ち絵の間は、おなかの重ね絵（file:// のときの代わり）を出さない（絵ごとに位置がちがうため） */
 .time-stand #belly-layer { visibility: hidden; }

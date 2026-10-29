@@ -74,6 +74,8 @@
      ========================================================= */
   const TB = (!DEMO && C.timeOfDay) || null;
   let testBand = null;   // 確認用：時間帯を切りかえて試す（設定の「確認用」）
+  // 確認用：URL の ?time=morning（day・evening・night・late）でも切りかえられる
+  { const m = location.search.match(/[?&]time=(\w+)/); if (TB && m && TB.bands.some((b) => b.id === m[1])) testBand = m[1]; }
   function bandNow() {
     if (!TB) return null;
     if (testBand) return TB.bands.filter((b) => b.id === testBand)[0];
