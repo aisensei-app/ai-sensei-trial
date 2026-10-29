@@ -1,10 +1,20 @@
 # タヌくん スマホ版（Webアプリ）引き継ぎメモ
 
-最終更新：2026-10-26
+最終更新：2026-10-29
 
 ---
 
 ## 0. 新しいチャットのClaudeへ（最初に読んでください）
+
+### ★ いまの状況（2026-10-29 の終わり）
+- 作業ブランチは **`claude/tanukun-ponpoko-rhythm-85uds5`**（本編の公開済みブランチ `claude/tanukun-mobile-prototype-2ak3it` から作った。ぽんぽこリズム以降の変更はすべてこちら）
+- **ぽんぽこリズム**（`tanukun/pon/`）：3ステージ・カットイン・ランク別イラスト・本編との連携まで完成。**まだ公開していない**
+- **本編**：時間帯でメニューの立ち絵と背景が変わる（朝ごはん・夕方・ねむそう・すやすや）、デベソ対応、X アプリ内で下が隠れない対応。**まだ公開していない**
+- 公開用 zip：`python3 tools/build_app.py --base-url https://tanukun.pages.dev/` → `tanukun/app-dist.zip`（本編＋/pon/）
+- **ユーザーの次の作業**：zip を Cloudflare（tanukun）に Preview で上げて、実機で確認（**X アプリ内でボタンが隠れないか**・音と ◉ のズレ・マナーモード）→ 問題なければ Production
+- **進行中**：背景イラスト「ビーチ」（昼は採用済み images/bg/beach_day.webp、まだ表示には組みこんでいない）。朝・夕方・夜・深夜を ChatGPT で作成中（プロンプトは pon/ILLUST_PROMPTS.md の⑦）。5枚そろったら背景の切りかえを組みこむ
+- 詳しい経緯は、下の「6. 次にやること」の「ぽんぽこリズム」「本編トップページ：時間帯」「X アプリの中」の節
+- ユーザーの方針：**UI はシンプル、使いやすさ重視**。ChatGPT の絵は「足の指は片足4本・爪なし」を必ず指定
 
 ### お願いされている話し方
 - **回答はすべて日本語で**（作業途中の説明も含めて日本語。英語が混ざると何度もご指摘をいただいています）
@@ -31,7 +41,7 @@
 | 項目 | 内容 |
 |---|---|
 | リポジトリ | `aisensei-app/ai-sensei-trial` |
-| ブランチ | `claude/tanukun-mobile-prototype-2ak3it` |
+| ブランチ | **`claude/tanukun-ponpoko-rhythm-85uds5`**（最新。元は `claude/tanukun-mobile-prototype-2ak3it`） |
 | フォルダ | `tanukun/`（説明は `tanukun/README.md`） |
 | 本編の確認用リンク | https://claude.ai/artifact/XApM945UdUziQMRXG8AQfH （非公開。本人のみ） |
 | ぽんぽこリズムの確認用リンク | https://claude.ai/artifact/4SXJETQj6uxUz4Ynw84eY8 （非公開。本人のみ。`python3 tools/build_preview.py --pon`） |
