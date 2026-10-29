@@ -1,7 +1,7 @@
 /* オフラインでも開けるようにするための仕組み（Service Worker）
    ネットにつながるときは常に最新のファイルを使い、
    つながらないときだけ保存しておいたファイルを使います。 */
-const CACHE = 'tanukun-v16';
+const CACHE = 'tanukun-v17';
 const FILES = [
   './', './index.html', './style.css', './config.js', './lines.js', './i18n.js', './save.js', './belly.js', './app.js',
   './manifest.webmanifest', './images/icon-192.png', './images/icon-512.png',
@@ -13,6 +13,8 @@ const FILES = [
   './images/memories/1.webp', './images/memories/2.webp', './images/memories/3.webp',
   './images/memories/4.webp', './images/memories/5.webp', './images/memories/5b.webp',
   './images/memories/6.webp', './images/memories/6b.webp', './images/memories/6c.webp',
+  // 時間帯の立ち絵
+  './images/time_morning.webp', './images/time_evening.webp', './images/time_night.webp', './images/time_sleep.webp',
   // ぽんぽこリズム（pon/）
   './pon/', './pon/index.html', './pon/pon.css', './pon/pon.js',
   './images/pon/rank1.webp', './images/pon/rank2.webp', './images/pon/rank3.webp', './images/pon/rank4.webp',

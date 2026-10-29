@@ -585,3 +585,100 @@ body:not(.demo) .hint { display: none; }
 @media (prefers-reduced-motion: reduce) {
   #tanu-breath { animation: none; }
 }
+
+/* =========================================================
+   時間帯（config.js の timeOfDay。body の data-time で切りかえ）
+   背景の空・太陽・月・星・ホタルと、寝ているときの演出
+   ========================================================= */
+body { transition: background .8s; }
+body[data-time="morning"] { background: linear-gradient(#BFE6FF 0%, #FFF3D6 55%, #F6DDB0 100%); }
+body[data-time="day"]     { background: linear-gradient(#FFF4E0 0%, #FDE7C4 60%, #E9D3A6 100%); }
+body[data-time="evening"] { background: linear-gradient(#FFB27A 0%, #FFD3A0 45%, #E9B98C 100%); }
+body[data-time="night"]   { background: linear-gradient(#232A5C 0%, #3D4380 55%, #5A4E7E 100%); }
+body[data-time="late"]    { background: linear-gradient(#0F1433 0%, #1E2350 60%, #2E2A55 100%); }
+
+#sky { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+#app { position: relative; z-index: 1; }
+#sky i { position: absolute; display: block; opacity: 0; transition: opacity .8s; }
+/* 朝：右上に、のぼったばかりの太陽 */
+#sky .sun { right: 12%; top: 9%; width: 70px; height: 70px; border-radius: 50%;
+  background: radial-gradient(circle, #FFF6C8 0 45%, rgba(255, 226, 140, .6) 46%, rgba(255, 226, 140, 0) 70%); }
+body[data-time="morning"] #sky .sun { opacity: 1; }
+/* 夕方：沈みかけの大きな太陽 */
+body[data-time="evening"] #sky .sun { opacity: .85; top: auto; bottom: 28%; right: 8%; width: 120px; height: 120px;
+  background: radial-gradient(circle, #FFE0A8 0 40%, rgba(255, 150, 90, .5) 42%, rgba(255, 150, 90, 0) 70%); }
+/* 夜：月と星 */
+#sky .moon { right: 14%; top: 8%; width: 46px; height: 46px; border-radius: 50%; box-shadow: 10px -6px 0 0 #FFF2B8; }
+#sky .stars { inset: 0; background-image:
+  radial-gradient(2px 2px at 12% 14%, #fff 50%, transparent 51%), radial-gradient(1.5px 1.5px at 28% 30%, #fff 50%, transparent 51%),
+  radial-gradient(2px 2px at 44% 9%, #fff 50%, transparent 51%), radial-gradient(1.5px 1.5px at 62% 22%, #fff 50%, transparent 51%),
+  radial-gradient(2px 2px at 78% 33%, #fff 50%, transparent 51%), radial-gradient(1.5px 1.5px at 90% 16%, #fff 50%, transparent 51%),
+  radial-gradient(1.5px 1.5px at 8% 40%, #fff 50%, transparent 51%), radial-gradient(2px 2px at 35% 46%, #fff 50%, transparent 51%),
+  radial-gradient(1.5px 1.5px at 70% 52%, #fff 50%, transparent 51%), radial-gradient(1.5px 1.5px at 54% 38%, #fff 50%, transparent 51%);
+  animation: twinkle 3.5s ease-in-out infinite; }
+body[data-time="night"] #sky .moon, body[data-time="late"] #sky .moon { opacity: 1; }
+body[data-time="night"] #sky .stars { opacity: .7; }
+body[data-time="late"] #sky .stars { opacity: 1; }
+@keyframes twinkle { 50% { filter: brightness(.6); } }
+/* 深夜：ホタルがふわふわ */
+#sky .fly { width: 6px; height: 6px; border-radius: 50%; background: #F6FFB0; box-shadow: 0 0 8px 3px rgba(230, 255, 140, .6); }
+body[data-time="late"] #sky .fly { opacity: 1; animation: firefly 7s ease-in-out infinite; }
+#sky .f1 { left: 18%; top: 62%; }
+#sky .f2 { left: 76%; top: 70%; animation-delay: -2.5s !important; }
+#sky .f3 { left: 58%; top: 56%; animation-delay: -5s !important; }
+@keyframes firefly {
+  0%, 100% { transform: translate(0, 0); opacity: .2; }
+  30% { transform: translate(14px, -22px); opacity: 1; }
+  60% { transform: translate(-10px, -40px); opacity: .5; }
+}
+/* 夜と深夜は背景が暗いので、上の文字を白く */
+body[data-time="night"] .days, body[data-time="late"] .days { color: #FFF6E6; }
+body[data-time="night"] .days-main b, body[data-time="late"] .days-main b { color: #FFD08A; }
+body[data-time="night"] .ground, body[data-time="late"] .ground { background: rgba(0, 0, 0, .3); }
+
+/* 時間帯の立ち絵の間は、きせかえ部品とおなかの重ね絵を出さない（絵ごとに位置がちがうため） */
+.time-stand #parts-layer, .time-stand #belly-layer { visibility: hidden; }
+
+/* ---- 寝ているとき（メニュー画面・深夜） ---- */
+#sleep-fx { position: absolute; width: 0; height: 0; display: none; pointer-events: none; }
+body.sleeping #sleep-fx { display: block; }
+body.sleeping #tanu-breath { animation: sleep-breath 3.6s ease-in-out infinite; }
+@keyframes sleep-breath {
+  0%, 100% { transform: scale(1, 1); }
+  45%      { transform: scale(1.025, .975); }
+}
+/* 鼻ちょうちん：寝息に合わせてふくらんだり、しぼんだり */
+#sleep-fx .snot {
+  position: absolute; left: 2px; top: -4px;
+  width: 34px; height: 34px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, .95) 0 12%, rgba(200, 235, 255, .55) 30%, rgba(170, 220, 255, .25) 70%);
+  border: 1.5px solid rgba(160, 210, 245, .9);
+  transform-origin: 0 0;
+  animation: snot 3.6s ease-in-out infinite;
+}
+@keyframes snot {
+  0%, 100% { transform: scale(.3); }
+  45%      { transform: scale(1); }
+}
+/* 💤：z が2つ、ゆっくり浮かんで消える */
+#sleep-fx .zz {
+  position: absolute; left: 34px; top: -40px;
+  font-size: 20px; font-weight: 900; color: #CFE3FF;
+  -webkit-text-stroke: 3px #2E3770; paint-order: stroke fill;
+  animation: zz 3.6s ease-out infinite;
+}
+#sleep-fx .z2 { font-size: 28px; animation-delay: 1.8s; }
+@keyframes zz {
+  0%   { opacity: 0; transform: translate(0, 10px); }
+  25%  { opacity: 1; }
+  100% { opacity: 0; transform: translate(24px, -36px); }
+}
+/* 起こしたとき：ぷるっと身ぶるいして、鼻ちょうちんがぱちん */
+body.waking #tanu-breath { animation: wake .7s ease-out; }
+body.waking #sleep-fx .snot { animation: pop-snot .25s ease-out forwards; }
+body.waking #sleep-fx .zz { display: none; }
+@keyframes wake { 20% { transform: scale(1.04, .96); } 40% { transform: translateY(-6px); } 60% { transform: none; } }
+@keyframes pop-snot { to { transform: scale(1.6); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  #sky .stars, #sky .fly, body.sleeping #tanu-breath, #sleep-fx .snot, #sleep-fx .zz { animation: none; }
+}

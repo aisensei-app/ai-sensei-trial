@@ -66,13 +66,51 @@
     showBubble('画像が見つかりません：' + img.getAttribute('src'));
   });
 
-  function setFace(name) {
-    if (state.face === name) return;
+  /* =========================================================
+     時間帯（config.js の timeOfDay）：メニュー画面の立ち絵と、背景が変わる
+     ========================================================= */
+  const TB = (!DEMO && C.timeOfDay) || null;
+  let testBand = null;   // 確認用：時間帯を切りかえて試す（設定の「確認用」）
+  function bandNow() {
+    if (!TB) return null;
+    if (testBand) return TB.bands.filter((b) => b.id === testBand)[0];
+    const h = new Date().getHours();
+    let cur = TB.bands[TB.bands.length - 1];   // いちばん上より前の時間（夜中）は、いちばん下の時間帯
+    TB.bands.forEach((b) => { if (h >= b.from) cur = b; });
+    return cur;
+  }
+  const atHome = () => document.body.classList.contains('mode-home');
+  // メニュー画面で出す、時間帯の立ち絵（なければ null。いつもの表情の絵になる）
+  function timeStand() {
+    const b = bandNow();
+    return b && b.image && atHome() && state.phase === 'active' ? b.image : null;
+  }
+  const sleeping = () => { const b = bandNow(); return !!(b && b.sleep && atHome()); };
+  // 時間帯を画面に反映（背景の色・立ち絵・寝ている演出）
+  function applyTime() {
+    const b = bandNow();
+    document.body.dataset.time = b ? b.id : '';
+    document.body.classList.toggle('sleeping', sleeping());
+    setFace(state.face, true);
+  }
+  if (TB) {
+    Object.keys(TB.bands).forEach((k) => { if (TB.bands[k].image) new Image().src = TB.bands[k].image; });
+    const n = TB.nose || { x: 50, y: 33 };
+    $('sleep-fx').style.left = n.x + '%';
+    $('sleep-fx').style.top = n.y + '%';
+    // 開いたまま時間がたったときのために、1分ごとに確かめる
+    setInterval(() => { if (atHome()) applyTime(); }, 60 * 1000);
+  }
+
+  function setFace(name, force) {
+    if (state.face === name && !force) return;
     area.classList.remove('face-' + state.face);
     state.face = name;
     area.classList.add('face-' + name);
     area.classList.toggle('tint-angry', name === 'angry' && !!C.angryTint);
-    img.src = C.images[name] || C.images.normal;
+    const stand = timeStand();
+    area.classList.toggle('time-stand', !!stand);   // 時間帯の立ち絵の間は、きせかえ部品を出さない（位置が合わないため）
+    img.src = stand || C.images[name] || C.images.normal;
     bellyImg.src = img.src;
     // 茂みのときは重ね絵を使わない
     bellyLayer.style.display = name === 'bush' ? 'none' : '';
@@ -596,10 +634,13 @@
     });
   }
 
+  // セリフの時間帯（config.js の timeOfDay と同じ区切り。夜中 late も night のセリフを使う）
   function timeOfDay(h) {
-    if (h >= 5 && h <= 10)  return 'morning';
-    if (h >= 11 && h <= 16) return 'day';
-    if (h >= 17 && h <= 19) return 'evening';
+    const b = bandNow();
+    if (b) return b.id === 'late' ? 'night' : b.id;
+    if (h >= 5 && h <= 9)   return 'morning';
+    if (h >= 10 && h <= 15) return 'day';
+    if (h >= 16 && h <= 18) return 'evening';
     return 'night';
   }
 
@@ -634,6 +675,8 @@
   }
 
   function say(base) {
+    // 寝ているあいだのメニュー画面は、あいさつの代わりに寝息
+    if (base.scene === 'home' && sleeping()) { showBubble('すぴー… すぴー…'); return null; }
     const line = pickLine(base);
     if (!line) return null;
     state.recentTexts.push(line.text);
@@ -679,6 +722,7 @@
   function setMode(m) {
     mode = m;
     ['home', 'play', 'name'].forEach((x) => document.body.classList.toggle('mode-' + x, m === x));
+    applyTime();
   }
 
   /* ---- はじめての人に呼び名を聞く ---- */
@@ -703,11 +747,26 @@
   });
   $('name-skip').addEventListener('click', () => finishName(''));
 
+  let waking = false;
   function enterPlay() {
-    setMode('play');
-    const C2 = C.images;
-    belly.warm([C2.normal, C2.shy, C2.troubled, C2.ponpoko1, C2.ponpoko2, C2.muni, C2.dere].filter(Boolean));
-    showBubble('なにしてあそぶ？');
+    if (waking) return;
+    const b = mode === 'home' ? bandNow() : null;
+    const go = () => {
+      setMode('play');
+      const C2 = C.images;
+      belly.warm([C2.normal, C2.shy, C2.troubled, C2.ponpoko1, C2.ponpoko2, C2.muni, C2.dere].filter(Boolean));
+      // 時間帯のひとことで、メニューの立ち絵から遊ぶ画面へつなぐ（「起こされちゃった」「よし、遊ぼう！」）
+      showBubble(b && b.wake ? withName(b.wake) : 'なにしてあそぶ？');
+    };
+    if (b && b.sleep) {
+      // 寝ているとき：「ふぁ…？」と目をさましてから（0.7秒。待たせすぎない）
+      waking = true;
+      document.body.classList.add('waking');
+      showBubble('ふぁ…？');
+      setTimeout(() => { waking = false; document.body.classList.remove('waking'); go(); }, 700);
+      return;
+    }
+    go();
   }
 
   function backHome() {
@@ -1245,13 +1304,27 @@
         ['ふつう', 0, 1, 2, 3, 4, 5].map((n) => '<button class="btn" type="button" data-h="' + (n === 'ふつう' ? '' : n) + '">' +
           (n === 'ふつう' ? n : '💖' + n) + '</button>').join('') + '</div>' +
         '<p class="note small">記録は変わりません。アプリを開き直すと「ふつう」に戻ります</p>' +
-        '<button id="btn-test-clear" class="btn btn-wide" type="button">🌺 ひみつの思い出とクリア画面を見る</button>' : ''));
+        '<button id="btn-test-clear" class="btn btn-wide" type="button">🌺 ひみつの思い出とクリア画面を見る</button>' +
+        (TB ? '<h3>確認用：時間帯を切りかえて試す</h3><div class="test-hearts test-time">' +
+          [['', '時計'], ['morning', '🌅朝'], ['day', '☀️昼'], ['evening', '🌇夕'], ['night', '🌙夜'], ['late', '💤深夜']]
+            .map((t) => '<button class="btn" type="button" data-t="' + t[0] + '">' + t[1] + '</button>').join('') + '</div>' : '') : ''));
     if ($('btn-about')) $('btn-about').addEventListener('click', () => showNotice(null));
     if ($('set-lang')) $('set-lang').addEventListener('change', (e) => I18N.set(e.target.value));
     if (C.testHearts && $('btn-test-clear')) {
       $('btn-test-clear').addEventListener('click', () => {
         closeSheet();
         playMemory(CLR.memory, true).then(showClear);   // 確認用：記録は変えない
+      });
+    }
+    if (C.testHearts && TB) {
+      $('sheet-body').querySelectorAll('.test-time .btn').forEach((b) => {
+        b.classList.toggle('on', (b.dataset.t || null) === testBand);
+        b.addEventListener('click', () => {
+          testBand = b.dataset.t || null;
+          closeSheet();
+          applyTime();
+          say({ scene: 'home', visit: 'again' });
+        });
       });
     }
     if (C.testHearts) {

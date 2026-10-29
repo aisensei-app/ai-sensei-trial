@@ -165,6 +165,23 @@ window.TANU_CONFIG = {
      何時に「次の日」に切り替えるか。4 なら午前4時（夜ふかしでも同じ日あつかい） */
   days: { dayStartHour: 4 },
 
+  /* ---- 時間帯（メニュー画面のタヌくんと背景が、スマホの時計で変わる） ----
+     from  … この時から（0〜23 時）。上から順に並べる。いちばん上より前の時間は、いちばん下の時間帯
+     image … メニュー画面の立ち絵（なければ、いつもの「通常」の絵）。tools/make_time_stands.py でつくる
+     sleep … 寝ている（寝息・鼻ちょうちん・💤。「遊ぶ」で起こす）
+     wake  … 「遊ぶ」を押したときのひとこと（{name} は呼び名）
+     背景の色・星・ホタルは style.css の body[data-time=…] */
+  timeOfDay: {
+    bands: [
+      { id: 'morning', from: 5,  image: 'images/time_morning.webp', wake: 'もぐもぐ…ごくん！よし、遊ぼう！' },
+      { id: 'day',     from: 10, image: null,                       wake: '' },
+      { id: 'evening', from: 16, image: 'images/time_evening.webp', wake: 'ん〜っ…よし、遊ぼう！' },
+      { id: 'night',   from: 19, image: 'images/time_night.webp',   wake: 'ふぁ〜…まだまだ遊べるよ！' },
+      { id: 'late',    from: 23, image: 'images/time_sleep.webp', sleep: true, wake: 'ふぁ…？ あ、{name}だ！\n起こされちゃった' }
+    ],
+    nose: { x: 48.9, y: 33.6 }   // 寝ている絵の鼻の位置（鼻ちょうちんを出す所。絵の％）
+  },
+
   /* ---- なかよし度（ハート💖） ----
      ポイントがたまるとハートが増えます。 */
   friendship: {

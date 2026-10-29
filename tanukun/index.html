@@ -15,6 +15,8 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body class="mode-home">
+<!-- 時間帯の背景の飾り（星・ホタル・太陽など。style.css の body[data-time=…]） -->
+<div id="sky" aria-hidden="true"><i class="sun"></i><i class="moon"></i><i class="stars"></i><i class="fly f1"></i><i class="fly f2"></i><i class="fly f3"></i></div>
 <main id="app">
 
   <!-- 上のバー：メニュー画面では「何日目」、遊ぶ画面では「もどる」とハート -->
@@ -50,6 +52,8 @@
               <div id="parts-layer" aria-hidden="true"></div>
               <!-- おなかを変形させた絵を描くところ（揺れている間だけ表示） -->
               <canvas id="belly-canvas" aria-hidden="true"></canvas>
+              <!-- 寝ているとき（時間帯）：鼻ちょうちんと 💤（位置は config.js の timeOfDay.nose） -->
+              <div id="sleep-fx" aria-hidden="true"><i class="snot"></i><b class="zz">z</b><b class="zz z2">Z</b></div>
             </div>
           </div>
         </div>
