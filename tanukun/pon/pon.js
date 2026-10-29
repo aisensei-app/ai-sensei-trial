@@ -19,6 +19,9 @@
 (function () {
   'use strict';
 
+  // X アプリの中で開いたとき：画面の下に X の投稿パネルがかぶさるので、pon.css の body.in-x でよける（?inx でも）
+  if (/Twitter/i.test(navigator.userAgent) || /[?&]inx\b/.test(location.search)) document.body.classList.add('in-x');
+
   const C = window.TANU_CONFIG;
   const $ = (id) => document.getElementById(id);
   // 本編の設定の絵は 'images/…' なので、このページ（pon/）からは '../' を付ける

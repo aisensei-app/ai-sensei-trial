@@ -682,3 +682,19 @@ body.waking #sleep-fx .zz { display: none; }
 @media (prefers-reduced-motion: reduce) {
   #sky .stars, #sky .fly, body.sleeping #tanu-breath, #sleep-fx .snot, #sleep-fx .zz { animation: none; }
 }
+
+/* =========================================================
+   X アプリの中で開いたとき（app.js が body に in-x を付ける）
+   画面の下 約4分の1 に、X の投稿パネルとボタン（✕・URL・再読み込み）がかぶさるので、
+   その分の余白を下に空けて、タヌくんを少し小さくし、ボタンが隠れないようにする
+   ========================================================= */
+body.in-x { --x-cover: 25vh; }
+body.in-x #app { padding-bottom: calc(var(--x-cover) + env(safe-area-inset-bottom)); }
+body.in-x.mode-home #tanu-area { width: min(72vw, 30vh * 0.8, 360px); }
+body.in-x.mode-play #tanu-area { width: min(90vw, 44vh * 0.8, 460px); }
+body.in-x.mode-name #tanu-area { width: min(64vw, 28vh * 0.8, 320px); }
+body.in-x #menu { margin-top: 10px; gap: 8px; }
+body.in-x .bubble { margin-bottom: 6px; }
+body.in-x .toast { bottom: calc(var(--x-cover) + 12px); }
+body.in-x .sheet { padding-bottom: var(--x-cover); }
+body.in-x .ev-box { bottom: calc(var(--x-cover) + 8px); }

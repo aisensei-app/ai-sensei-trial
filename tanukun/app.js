@@ -10,6 +10,9 @@
   const LINES = I18N.lines();   // いまの言語のセリフ集（i18n.js。訳がなければ日本語）
   const SAVE = window.TanuSave;
   const DEMO = window.TANU_DEMO || null;   // お試し版のときだけある（demo.js）
+  // X アプリの中で開いたとき（UA に Twitter）：画面の下に X の投稿パネルとボタンがかぶさるので、
+  // style.css の body.in-x で、下に余白を空けて中身を上に寄せる。確認用に URL の ?inx でも
+  if (/Twitter/i.test(navigator.userAgent) || /[?&]inx\b/.test(location.search)) document.body.classList.add('in-x');
   const $ = (id) => document.getElementById(id);
 
   const area   = $('tanu-area');

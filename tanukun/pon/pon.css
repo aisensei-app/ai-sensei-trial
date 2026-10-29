@@ -614,3 +614,8 @@ html, body {
 /* ---- 本編とのつながり ---- */
 .start-home { display: block; margin-top: 12px; font-size: 14px; font-weight: bold; color: #C8641E; }
 .r-bonus { margin: 4px 0 8px; font-size: 13px; font-weight: bold; color: #E0457C; }
+
+/* ---- X アプリの中で開いたとき（下 約4分の1 に X の投稿パネルがかぶさる） ---- */
+body.in-x .sheet { top: 38%; }
+body.in-x .r-card { padding-bottom: calc(25vh + 20px); }
+body.in-x #stage { bottom: 22vh; }
