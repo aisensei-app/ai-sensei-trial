@@ -67,32 +67,46 @@ html, body {
 .count.bump b { display: inline-block; animation: bump .25s cubic-bezier(.3, 1.6, .5, 1); }
 @keyframes bump { 50% { transform: scale(1.35); } }
 
-/* ---- ひっさつのゲージと、ボタン ---- */
+/* ---- ひっさつのゲージ（⚡ が5つ。ナイスでたまる）と、満タンで出るボタン ---- */
 .gauge {
   position: absolute;
-  right: 14px;
-  top: calc(max(10px, env(safe-area-inset-top)) + 44px);
+  left: 50%;
+  top: calc(max(10px, env(safe-area-inset-top)) + 46px);
   z-index: 5;
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  font-weight: 800;
-  color: #fff;
-  -webkit-text-stroke: 3px rgba(74, 46, 22, .5);
-  paint-order: stroke fill;
+  gap: 8px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .82);
+  box-shadow: 0 2px 8px rgba(74, 46, 22, .15);
+  font-size: 13px;
+  font-weight: 900;
+  color: #E0671F;
+  white-space: nowrap;
 }
-.gauge i {
-  display: block;
-  width: 110px; height: 10px;
-  border-radius: 5px;
-  background: rgba(255, 255, 255, .65);
+.gauge i { display: flex; gap: 4px; }
+/* ⚡ 1つ分。--f（0〜1）の分だけ、下から黄色くなる */
+.gauge i b {
+  position: relative;
+  width: 22px; height: 22px;
+  border-radius: 6px;
+  background: #E9DCCB;
   overflow: hidden;
-  box-shadow: inset 0 0 0 1px rgba(224, 103, 31, .4);
 }
-.gauge b { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #FFB13B, #FF4F8B); transition: width .3s; }
-.gauge.full b { animation: shine .8s ease-in-out infinite alternate; }
-@keyframes shine { to { filter: brightness(1.35); } }
+.gauge i b::before {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: calc(var(--f, 0) * 100%);
+  background: linear-gradient(#FFD23F, #FF8A3D);
+  transition: height .3s;
+}
+.gauge i b::after { content: "⚡"; position: absolute; inset: 0; display: grid; place-items: center; font-size: 13px; }
+.gauge.full { background: linear-gradient(90deg, #FFE27A, #FFB0CF); animation: gpulse 1s ease-in-out infinite; }
+@keyframes gpulse { 50% { transform: translateX(-50%) scale(1.08); } }
+.pop.gauge-up { font-size: 18px; -webkit-text-stroke-color: #FF8A3D; }
 .special-btn {
   position: absolute;
   right: 14px;
@@ -225,7 +239,9 @@ body.in-x .special-btn { bottom: calc(25vh + 10px); }
 .guiding .target span { display: none; }   /* ガイドの説明と重ならないように */
 
 /* ---- 必殺の球（燃えている）と、タヌくんのレシーブの構え（ぐっと低く、おなかを前に） ---- */
-.ball.special i { box-shadow: 0 0 14px 6px rgba(255, 120, 40, .9), 0 0 30px 12px rgba(255, 200, 60, .6); animation: fire .12s linear infinite alternate; }
+.ball.charged i { box-shadow: 0 0 10px 4px rgba(255, 230, 90, .95), 0 0 24px 10px rgba(255, 210, 60, .55); animation: glow .35s ease-in-out infinite alternate; }
+@keyframes glow { to { filter: brightness(1.25); box-shadow: 0 0 16px 7px rgba(255, 240, 120, 1), 0 0 34px 16px rgba(255, 210, 60, .7); } }
+.ball.special i { box-shadow: 0 0 18px 8px rgba(255, 120, 40, .95), 0 0 40px 18px rgba(255, 200, 60, .75), 0 0 70px 30px rgba(255, 240, 160, .45); animation: fire .12s linear infinite alternate; }
 @keyframes fire { to { filter: brightness(1.3) saturate(1.4); } }
 #body.receive { animation: receive .5s ease-in-out infinite alternate; }
 @keyframes receive { from { transform: scale(1.04, .93); } to { transform: scale(1.06, .91); } }

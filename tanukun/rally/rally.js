@@ -7,9 +7,10 @@
    ・3ラリー続くごとに、タヌくんが1歩近づいてきて、ボールも速くなる（落とすと、元の場所にもどる）
    ・近づいてくると、ときどき「じゃま」が入る：カモメやインコが横切る／タヌくんが「せーの…」とためてから返す（フェイント）
      ／風がふいて、ボールが横に流される（落ちてくる場所の輪もずれていく）
-   ・スワイプの速さで、ねらう高さが変わる：ゆっくり → おまた（ひゃっ！ でミス）、ふつう → おなか、とても速く → 頭（ヘディングで返ってくる）
+   ・スワイプの長さで、ねらう高さが変わる：短く → 低い（タヌくんが、おしりで ぽよん！）、ふつう → おなか（長いほど上）、とても長く → 頭（ヘディング）
    ・打ち返すスワイプは、ボールの近くから（風で流されたら、追いかける）
-   ・ナイスでゲージがたまる。満タンで「💥 ひっさつ」ボタン → 次の打ち返しが必殺の球。タヌくんはレシーブの構えで受けて、ボーナス
+   ・ナイスでゲージ（⚡ 5つ）がたまる。満タンで「💥 ひっさつ」ボタン → 構えるとボールが光り、次の打ち返しが燃える必殺の球。
+     タヌくんはレシーブの構えで受けて、ボーナス
    ・はじめて遊ぶ人には、指のガイド（👆 が上へすべる見本）を出す。はじめての打ち返しは、ボールが輪の上で止まって待ってくれる
    ・最初のひと投げがおなかに当たらなかったときは、もう一度投げられる（ボールは減らない）
    ・きせかえ（デベソなど）は本編の記録をそのまま使う
@@ -47,8 +48,9 @@
      ring         … 落ちてくる場所の輪の、最初の大きさ（ボールの何倍）。縮んでいって、ボールが着く瞬間にボールのすぐ外がわ
      balls        … ボールの数（落とせる回数）
      birds, feint, wind … じゃまが入る割合（1歩以上近づいてから）。feint は「せーの…」でためる秒数、wind は流される幅（画面の横幅に対する割合）
-     aim          … スワイプの速さ（ピクセル/ミリ秒）。slow より遅いと おまた、fast より速いと 頭、そのあいだは おなか（速いほど上）
-     head, crotch … 頭・おまたの当たる所（絵の％。r は半径で、絵の横幅に対する％）
+     aim          … スワイプの長さ（ピクセル）。short より短いと 低い球（おしり）、long 以上で 頭（その長さで、指をはなす前でも飛ぶ）、
+                    そのあいだは おなか（長いほど上）
+     head, low    … 頭（髪の上）・低い球（おしり）の当たる所（絵の％。r は半径で、絵の横幅に対する％）
      reach        … 打ち返すスワイプは、ボールから横にこの距離（ピクセル。画面の横幅の reachW 倍のほうが大きければ、そちら）以内で始める
      gauge        … ナイスで nice、セーフで safe たまる。max で満タン（ひっさつ）。bonus は必殺が当たったときに足すラリー数 */
   const T = {
@@ -57,13 +59,13 @@
     near: IN_X ? 0.68 : 0.86,
     ballSize: 0.2, maxBall: 88, far: 0.36,
     flick: 36,
-    returnTime: 1.6, speedUp: 0.02, stepSpeed: 0.12, minTime: 0.72,
+    returnTime: 1.15, speedUp: 0.015, stepSpeed: 0.08, minTime: 0.55,
     window: 0.55, nice: 0.1, late: 0.22,
     ring: 2.8,
     balls: 3,
     birds: 0.35, feint: { rate: 0.25, seconds: [0.45, 0.9] }, wind: { rate: 0.25, drift: 0.22 },
-    aim: { slow: 0.35, fast: 1.6 },
-    head: { x: 45, y: 13, r: 13 }, crotch: { x: 33, y: 68, r: 9 },
+    aim: { short: 90, long: 220 },
+    head: { x: 44, y: 6, r: 11 }, low: { x: 34, y: 66, r: 16 },
     reach: 110, reachW: 0.3,
     gauge: { nice: 1, safe: 0.4, max: 5, bonus: 3 }
   };
@@ -138,7 +140,6 @@
   const FEINT_POSE = C.images.ponpoko1 ? IMG('ponpoko1') : null;   // 「せーの…」でためるときのポーズ
   const POSE = {
     receive: IMG('images/happy.webp'),                           // 必殺の球をレシーブ（うでを下ろして、おなかを前に）
-    moji: C.images.mojimoji ? IMG('mojimoji') : null,           // おまたに当たった（もじもじ）
     ouch: C.images.troubled ? IMG('troubled') : null            // 頭に当たった
   };
   // ポーズを ms ミリ秒だけ変える（0 なら、変えたまま）
@@ -174,7 +175,7 @@
       size: Math.min(T.maxBall, W * T.ballSize),
       far: T.far * (1 + T.step.ball * stepNow),                   // 近づくと、奥のボールも大きく（タヌくんより強めに）
       hx: left + w * T.head.x / 100, hy: top + h * T.head.y / 100, hr: w * T.head.r / 100,             // 頭
-      cx: left + w * T.crotch.x / 100, cy: top + h * T.crotch.y / 100, cr: w * T.crotch.r / 100      // おまた
+      lx: left + w * T.low.x / 100, ly: top + h * T.low.y / 100, lr: w * T.low.r / 100               // 低い球（おしりで返す）
     });
     $('hint').style.top = (G.nearY + G.size * 0.75) + 'px';
     if (state === 'ready') placeReady();
@@ -297,85 +298,96 @@
     audio();
     swipe = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now() };
   });
+  // 指を上へ T.aim.long までのばしたら、はなす前でも飛ぶ（頭）。それより短ければ、はなしたときに飛ぶ
   window.addEventListener('pointermove', (e) => {
     if (!swipe || e.pointerId !== swipe.id) return;
-    const dx = e.clientX - swipe.x, dy = e.clientY - swipe.y;
-    if (dy > -T.flick) return;
-    const dt = Math.max(30, performance.now() - swipe.t);
-    swipe = null;   // 1回のスワイプで1回だけ
-    onSwipe(dx, dy, dt, e.clientX - dx);
+    if (swipe.y - e.clientY >= T.aim.long) finishSwipe(e);
   });
-  const endSwipe = (e) => { if (swipe && e.pointerId === swipe.id) swipe = null; };
-  window.addEventListener('pointerup', endSwipe);
-  window.addEventListener('pointercancel', endSwipe);
+  function finishSwipe(e) {
+    const dx = e.clientX - swipe.x, len = swipe.y - e.clientY, x0 = swipe.x;
+    swipe = null;   // 1回のスワイプで1回だけ
+    if (len < T.flick) return;
+    onSwipe(dx, len, x0);
+  }
+  window.addEventListener('pointerup', (e) => { if (swipe && e.pointerId === swipe.id) finishSwipe(e); });
+  window.addEventListener('pointercancel', (e) => { if (swipe && e.pointerId === swipe.id) swipe = null; });
 
-  function onSwipe(dx, dy, dt, x0) {
-    if (state === 'ready') { throwBall(dx, dy, dt); return; }
+  function onSwipe(dx, len, x0) {
+    if (state === 'ready') { throwBall(dx, len); return; }
     if (state === 'fly' && flight && flight.kind === 'return') {
       // ボールの近くから始めたスワイプだけ（風で流されたら、追いかける）
       if (Math.abs(x0 - ball.x) > Math.max(T.reach, G.W * T.reachW)) return;
-      hitBack(dx, -dy / dt);
+      hitBack(dx, len);
     }
   }
-  // スワイプの速さ（ピクセル/ミリ秒）から、ねらう所：遅い → おまた、ふつう → おなか（速いほど上）、とても速い → 頭
-  function aimAt(speed, dx) {
-    if (speed < T.aim.slow) return { x: G.cx + dx * 0.5, y: G.cy };
-    if (speed > T.aim.fast) return { x: G.hx + dx * 0.5, y: G.hy };
-    const k = (speed - T.aim.slow) / (T.aim.fast - T.aim.slow);
+  // スワイプの長さ（ピクセル）から、ねらう所：短い → 低い（おしり）、ふつう → おなか（長いほど上）、とても長い → 頭
+  function aimAt(len, dx) {
+    if (len < T.aim.short) return { x: G.lx + dx * 0.5, y: G.ly };
+    if (len >= T.aim.long) return { x: G.hx + dx * 0.5, y: G.hy };
+    const k = (len - T.aim.short) / (T.aim.long - T.aim.short);
     return { x: G.bx + clamp(dx * 1.3, -G.brx * 1.4, G.brx * 1.4), y: G.by + G.bry * lerp(0.6, -0.6, k) };
   }
-  // 当たった所：crotch（おまた）/ head（頭）/ belly（おなか）/ null（はずれ）
+  // 当たった所：head（頭）/ belly（おなか）/ low（低い球。おしりで返す）/ null（はずれ）
   function partAt(x, y) {
-    if (Math.hypot(x - G.cx, y - G.cy) <= G.cr) return 'crotch';
     if (Math.hypot(x - G.hx, y - G.hy) <= G.hr) return 'head';
     if (inBelly(x, y) <= 1.05) return 'belly';
+    if (Math.hypot(x - G.lx, y - G.ly) <= G.lr) return 'low';
     return null;
   }
 
-  // 投げる：指の向きでねらう（まっすぐ上なら、おなかのまんなか）。速くはじくほど速く飛ぶ
-  function throwBall(dx, dy, dt) {
-    const v = -dy / dt, speed = clamp(v, 0, 1);   // ピクセル/ミリ秒
+  // 投げる：指の向きでねらう（まっすぐ上なら、おなかの高さ）。高さはスワイプの長さ
+  function throwBall(dx, len) {
     sound.throw();
     $('hint').hidden = true;
     hideGuide();
     if (guideThrow) { guideThrow = false; updateSave((d) => { d.rallyGuideThrow = true; }); }
-    const to = aimAt(v, dx);
-    fly('throw', { x: to.x, y: to.y, z: 1 }, lerp(0.95, 0.6, speed), G.H * 0.12);
+    const to = aimAt(len, dx);
+    fly('throw', { x: to.x, y: to.y, z: 1 }, 0.62, G.H * 0.12);
   }
 
   // おなかの中か（画面の位置）。1 より小さければ中
   const inBelly = (x, y) => Math.hypot((x - G.bx) / G.brx, (y - G.by) / G.bry);
 
   /* ---------- 奥に着いた ----------
-     おなか → 「ぽよん！」でもどってくる／頭 → ヘディングでもどってくる／おまた → 「ひゃっ！」で落ちる／はずれ → 落ちる
+     おなか → 「ぽよん！」でもどってくる／頭 → ヘディング／低い球 → くるっと回って、おしりで「ぽよん！」／はずれ → 落ちる
      落ちたとき：最初のひと投げなら投げなおし（ボールは減らない）、打ち返した球ならボールが1こ減る */
   function arrive(f) {
     if (f.kind === 'fall') { flight = null; return; }
     if (f.special) { specialHit(); return; }
     const part = partAt(ball.x, ball.y);
-    if (part === 'belly' || part === 'head') {
-      if (part === 'belly') poyon(ball.x, ball.y); else header(ball.x, ball.y);
+    if (part) {
+      if (part === 'belly') poyon(ball.x, ball.y);
+      else if (part === 'head') header(ball.x, ball.y);
+      else hip();
       if (f.kind === 'back') countRally();
       // 3ラリーごとに1歩近づく（近づく間は、少し待ってから返す）
       const next = Math.min(T.maxStep, Math.floor(streak / T.stepEvery));
-      if (next > stepNow) { approach(next); setTimeout(sendBack, 750); return; }
-      setTimeout(sendBack, part === 'head' ? 300 : 140);
+      if (next > stepNow) { approach(next); setTimeout(sendBack, 600); return; }
+      setTimeout(sendBack, { head: 220, low: 520 }[part] || 80);
       return;
     }
-    if (part === 'crotch') {
-      sound.miss();
-      pop(ball.x, ball.y - 20, 'ひゃっ！', 'miss');
-      say(['そ、そこは…！', 'も〜、どこねらってるの〜', 'ひゃっ…びっくりした'][Math.floor(Math.random() * 3)]);
-      setPose(POSE.moji, 1300);
-    } else {
-      const d = inBelly(ball.x, ball.y);
-      pop(ball.x, ball.y - 20, d < 2.2 ? 'おしい！' : 'あれれ？', 'miss');
-      if (f.kind === 'throw') say(d < 2.2 ? 'おなかに、なげてね〜' : 'こっちだよ〜');
-    }
+    const d = inBelly(ball.x, ball.y);
+    pop(ball.x, ball.y - 20, d < 2.2 ? 'おしい！' : 'あれれ？', 'miss');
+    if (f.kind === 'throw') say(d < 2.2 ? 'おなかに、なげてね〜' : 'こっちだよ〜');
     fly('fall', { x: ball.x + (ball.x - G.bx) * 0.3, y: G.feetY, z: 1 }, 0.45, -G.H * 0.02);
     state = 'wait';
     if (f.kind === 'back') { setTimeout(() => loseBall(), 500); return; }
     setTimeout(resetBall, 1200);
+  }
+  // 低い球：くるっと後ろを向いて、おしりで「ぽよん！」（ラリーは続く）
+  // ※ 後ろ姿の絵はまだないので、体を横にちぢめて回ったように見せ、はね返す動きだけ
+  function hip() {
+    sound.poyon();
+    pop(G.lx, G.ly - 10, '🍑 おしりで ぽよん！', 'safe');
+    body.animate([
+      { transform: 'none' },
+      { transform: 'scaleX(.15) rotate(-4deg)', offset: 0.25 },
+      { transform: 'scaleX(-1) translateY(-3%) rotate(8deg)', offset: 0.5 },
+      { transform: 'scaleX(-1.04) scaleY(.96) translateY(0)', offset: 0.65 },
+      { transform: 'scaleX(.15)', offset: 0.85 },
+      { transform: 'none' }
+    ], { duration: 650, easing: 'ease-in-out' });
+    if (Math.random() < 0.4) setTimeout(() => say(['おしりアタック〜！', 'ぽよんっ♪', 'しっぽもふかふかだよ'][Math.floor(Math.random() * 3)]), 300);
   }
   // 頭に当たった：ヘディングで返す（ラリーは続く）
   function header(x, y) {
@@ -498,9 +510,9 @@
   const hideTarget = () => { targetEl.hidden = true; };
 
   /* ---------- もどってきたボールを、上へスワイプして打ち返す ----------
-     speed（スワイプの速さ）でねらう所が変わる（aimAt）。ナイスなら、おなかに寄せてくれる
+     len（スワイプの長さ）でねらう所が変わる（aimAt。頭・おなか・おしり、どれでも返ってくる）
      ひっさつを構えているときは、必殺の球（いつもおなかのまんなかへ、速く） */
-  function hitBack(dx, speed) {
+  function hitBack(dx, len) {
     const f = flight, u = progress(f, performance.now());
     if (u < T.window) return;   // まだ遠い（光ってから）
     const nice = f.hold != null || Math.abs(u - 1) <= T.nice;
@@ -511,13 +523,14 @@
       guideReturn = false;
       updateSave((d2) => { d2.rallyGuideReturn = true; });
     }
-    const dur = Math.max(T.minTime, T.returnTime - streak * T.speedUp - stepNow * T.stepSpeed) * 0.8;
+    const dur = Math.max(T.minTime, T.returnTime - streak * T.speedUp - stepNow * T.stepSpeed) * 0.7;
     if (armed) {
       armed = false;
       gauge = 0;
       renderGauge();
       sound.special();
       pop(ball.x, ball.y - d * 0.6, 'ひっさつ！', 'nice');
+      ballEl.classList.remove('charged');
       ballEl.classList.add('special');
       setPose(POSE.receive, 0);
       body.classList.add('receive');
@@ -528,11 +541,11 @@
     }
     if (nice) sound.nice(); else sound.hit();
     pop(ball.x, ball.y - d * 0.6, nice ? 'ナイス！' : 'セーフ', nice ? 'nice' : 'safe');
+    const before = gauge;
     gauge = Math.min(T.gauge.max, gauge + (nice ? T.gauge.nice : T.gauge.safe));
     renderGauge();
-    // ナイスなら、ねらいを「おなかのまんなか」の速さに半分よせる（はずれにくい）
-    const mid = (T.aim.slow + T.aim.fast) / 2;
-    const to = aimAt(nice ? lerp(speed, mid, 0.5) : speed, dx);
+    if (gauge > before) gaugePop(nice ? '+1⚡' : '+⚡');
+    const to = aimAt(len, dx);
     fly('back', { x: to.x, y: to.y, z: 1 }, dur, G.H * 0.1);
   }
   // 必殺の球が当たった：レシーブの構えで受けて「ぽよよ〜ん！！」。画面がゆれて、ボーナス
@@ -557,7 +570,7 @@
       setPose(null, 0);
       say('すごい球だった〜！');
       const next = Math.min(T.maxStep, Math.floor(streak / T.stepEvery));
-      if (next > stepNow) { approach(next); setTimeout(sendBack, 750); return; }
+      if (next > stepNow) { approach(next); setTimeout(sendBack, 600); return; }
       sendBack();
     }, 900);
   }
@@ -597,12 +610,23 @@
   }
   // ひっさつのゲージ。満タンになったら「💥 ひっさつ」ボタン（押すと構える。次の打ち返しが必殺の球）
   function renderGauge() {
-    $('gauge-fill').style.width = gauge / T.gauge.max * 100 + '%';
+    const pips = $('gauge-pips');
+    if (pips.children.length !== T.gauge.max) {
+      pips.textContent = '';
+      for (let i = 0; i < T.gauge.max; i++) pips.appendChild(document.createElement('b'));
+    }
+    [...pips.children].forEach((el, i) => { el.style.setProperty('--f', clamp(gauge - i, 0, 1)); });
     const full = gauge >= T.gauge.max;
+    ballEl.classList.toggle('charged', armed);   // 構えている間は、ボールが光る
     $('gauge').classList.toggle('full', full);
     $('btn-special').hidden = !full && !armed;
     $('btn-special').classList.toggle('armed', armed);
     $('btn-special').textContent = armed ? '🔥 かまえ中…' : '💥 ひっさつ';
+  }
+  // ゲージのところに「+1⚡」
+  function gaugePop(text) {
+    const g = $('gauge').getBoundingClientRect(), r = root.getBoundingClientRect();
+    pop(g.left - r.left + g.width / 2, g.bottom - r.top + 12, text, 'gauge-up');
   }
   $('btn-special').addEventListener('click', () => {
     if (gauge < T.gauge.max || armed) return;
@@ -658,6 +682,7 @@
     ballEl.getAnimations().forEach((a) => a.cancel());
     ballEl.classList.add('ready');
     ballEl.classList.remove('special');
+    ballEl.classList.toggle('charged', armed);
     body.classList.remove('receive');
     setPose(null, 0);
     shadowEl.style.visibility = '';
