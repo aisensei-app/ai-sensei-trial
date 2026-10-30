@@ -1246,10 +1246,8 @@
     const L = REP.labels;
     // 名前の幅をそろえる（日本語は全角で4文字分＋1文字あける。英語は「: 」）
     const pad = (s) => (I18N.lang === 'ja' ? s + '　'.repeat(Math.max(0, 4 - s.length)) : s + ': ');
-    // ポストの文章：？？？は回数を出さない
-    const lines = REP_PLACES.map((p) => p === 'crotch'
-      ? pad(L[p]) + '❓'
-      : pad(L[p]) + '🟧'.repeat(repCount[p]) + ' ' + repCount[p]);
+    // ポストの文章：？？？（ひみつの場所）も回数を出す（棒は紫）
+    const lines = REP_PLACES.map((p) => pad(L[p]) + (p === 'crotch' ? '🟪' : '🟧').repeat(repCount[p]) + ' ' + repCount[p]);
     const postText = tr('タヌくんと遊んだよ！（なかよし{n}日目）', { n: days }) + '\n' + lines.join('\n') +
       '\n「' + comment + '」' + (REP.hashtag ? '\n#' + REP.hashtag : '');
 
@@ -1280,9 +1278,9 @@
       const p = REP_PLACES[i], n = repCount[p];
       tr.querySelector('th').textContent = L[p];
       if (p === 'crotch') {
-        // ひみつ：回数は出さない（見つけたかどうかだけ分かる）
-        tr.querySelector('.bar').textContent = n ? '✨' : '';
-        tr.querySelector('.num').textContent = n ? window.TanuI18n.tr('ひみつ') : '？';
+        // ひみつの場所：名前は「？？？」のまま、回数は出す（棒は紫）
+        tr.querySelector('.bar').textContent = '🟪'.repeat(n);
+        tr.querySelector('.num').textContent = window.TanuI18n.tr('{n} 回', { n: n });
       } else {
         tr.querySelector('.bar').textContent = '🟧'.repeat(n);
         tr.querySelector('.num').textContent = window.TanuI18n.tr('{n} 回', { n: n });
