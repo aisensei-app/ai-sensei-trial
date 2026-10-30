@@ -1,12 +1,25 @@
 # タヌくん スマホ版（Webアプリ）引き継ぎメモ
 
-最終更新：2026-10-30
+最終更新：2026-10-30（夜）
 
 ---
 
 ## 0. 新しいチャットのClaudeへ（最初に読んでください）
 
-### ★ いまの状況（2026-10-30）
+### ★ いまの状況（2026-10-30 夜。新しいチャットはここから）
+- 作業ブランチ：**`claude/tanukun-ponpoko-rhythm-85uds5`**。公開は Cloudflare Pages の `tanukun`（https://tanukun.pages.dev/）に、
+  `python3 tools/build_app.py --base-url https://tanukun.pages.dev/` でできる `tanukun/app-dist.zip` を **ユーザーが Production で手動アップロード**
+- **本番に出ているもの**：本編（日本語＋**英語版**。左上の「🌐 English／🌐 日本語」、設定の「ことば / Language」）、パネルの右上の ×、
+  なでなでレポートの「？？？」も回数（紫）。お試し版 tanukun-demo は本編へ自動で移動（数か月後にプロジェクトごと削除）
+- **公開スイッチ（config.js の features）**：pon=**soon**（🔒 もうすぐ）、timeOfDay・tailFlick・rally=**hidden**、english=open。解放はユーザーの判断で手動
+- **次にやること（ユーザーの希望）**：**ぽよんラリー（`tanukun/rally/`）のブラッシュアップ**。経緯は下の「ぽよんラリー」の節（改良1〜3）。
+  確認用リンク：https://claude.ai/artifact/SfWedDJpFXQSvHn7qrv5Ku（`python3 tools/build_preview.py --rally`）。まだ日本語だけ（解放の前に英語化が必要）
+- **気になっていること**：X のリンクのカードの絵が灰色になる（2026-10-30。og/main.jpg はブラウザで開けたので、サイト側は正常。X 側の読みこみ失敗とみて様子見）。
+  翌日も直らなければ、カードの画像のファイル名を変える（main.jpg → main2.jpg。build_app.py と og/ を直す）
+- **英語の宣伝**：案A（"Tanu-kun is now available in English! … #tanuki #furry #Tanukun"）をユーザーに渡した。英語のカードの絵・宣伝画像は未作成
+- X の反応：好評（固定ポスト いいね52・ブックマーク40、海外からのフォローが増加、英語版の要望あり）
+
+### いまの状況（2026-10-30 昼までの記録）
 - 作業ブランチは **`claude/tanukun-ponpoko-rhythm-85uds5`**（本編の公開済みブランチ `claude/tanukun-mobile-prototype-2ak3it` から作った。ぽんぽこリズム以降の変更はすべてこちら）
 - **公開中**：本編 https://tanukun.pages.dev/ （2026-10-27 公開）、お試し版 https://tanukun-demo.pages.dev/
 - **確認済み・未公開**：ぽんぽこリズム（`tanukun/pon/`）、時間帯の立ち絵と背景、X アプリ内で下が隠れない対応
