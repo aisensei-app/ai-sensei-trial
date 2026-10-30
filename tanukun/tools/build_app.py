@@ -13,6 +13,7 @@
 ・新しい機能の公開スイッチ（config.js の features）は、そのままの状態で入ります（作るときに表示します）
 ・ぽんぽこリズム（pon/ → 公開先の /pon/）も入れます。カードの絵は og/pon.jpg
   （pon/art の元の絵・プロンプト集、使っていない「おなかのアップ」の絵 images/pon/belly*.webp は入れない）
+・ぽよんラリー（rally/ → 公開先の /rally/）も入れます。カードの絵は本編と同じ og/main.jpg
 ・お試し版の設定（demo.js）、メモ、道具、確認用ファイル、元の絵などは入れません
 """
 import argparse
@@ -27,6 +28,9 @@ FILES = ['index.html', 'style.css', 'config.js', 'lines.js', 'i18n.js', 'save.js
 TITLE = 'タヌくん'
 DESCRIPTION = 'さわって遊ぶ、なでなでアプリ。なでて、ぽんぽこして、毎日なかよくなろう。'
 PON_FILES = ['index.html', 'pon.css', 'pon.js']
+RALLY_FILES = ['index.html', 'rally.css', 'rally.js']
+RALLY_TITLE = 'ぽよんラリー｜タヌくん'
+RALLY_DESCRIPTION = 'ビーチボールを投げると、タヌくんがおなかで「ぽよん！」と返してくれる。何回つづくかな？'
 PON_TITLE = 'ぽんぽこリズム｜タヌくん'
 PON_DESCRIPTION = 'タヌくんのおなかをたたく音ゲー。8ビートに合わせて、ぽんっ！ぷるん！だんだん速くなるよ。'
 # 公開してはいけない言葉（身元につながる情報が入っていないかの確認）
@@ -64,6 +68,16 @@ def build(base, out):
     (out / 'pon').mkdir()
     for f in PON_FILES:
         shutil.copy(ROOT / 'pon' / f, out / 'pon' / f)
+    (out / 'rally').mkdir()
+    for f in RALLY_FILES:
+        shutil.copy(ROOT / 'rally' / f, out / 'rally' / f)
+    # rally/index.html：カードは本編と同じ絵（専用の絵はまだない）
+    page = (out / 'rally' / 'index.html').read_text(encoding='utf8')
+    tag = '<title>' + RALLY_TITLE + '</title>'
+    if tag not in page:
+        raise SystemExit('rally/index.html の <title> が見つかりませんでした')
+    page = page.replace(tag, tag + '\n' + og_tags(base + 'rally/', base + 'og/main.jpg', RALLY_TITLE, RALLY_DESCRIPTION), 1)
+    (out / 'rally' / 'index.html').write_text(page, encoding='utf8')
 
     # index.html：カード（OGP）の設定を入れる
     page = (out / 'index.html').read_text(encoding='utf8')

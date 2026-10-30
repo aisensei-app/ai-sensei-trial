@@ -1154,15 +1154,18 @@
   // ぽんぽこリズム：はじめて開くまでメニューに NEW
   $('pon-new').hidden = DEMO || !!SAVE.data.ponSeen || feature('pon') !== 'open';
   // 公開スイッチ：まだのときは、ボタンを出さない（hidden）か、🔒 もうすぐ（soon）にする
-  if (feature('pon') === 'hidden') $('btn-pon').hidden = true;
-  if (feature('pon') === 'soon') {
-    $('btn-pon').classList.add('locked');
-    $('btn-pon').insertAdjacentHTML('beforeend', '<span class="soon-badge">🔒 もうすぐ</span>');
-    $('btn-pon').addEventListener('click', (e) => {
-      e.preventDefault();
-      toast('ぽんぽこリズムは、もうすぐ遊べるよ！\nおたのしみに 🥁');
-    });
+  function gateButton(name, el, soonText) {
+    if (feature(name) === 'hidden') el.hidden = true;
+    else el.hidden = false;
+    if (feature(name) !== 'soon') return;
+    el.classList.add('locked');
+    el.insertAdjacentHTML('beforeend', '<span class="soon-badge">🔒 もうすぐ</span>');
+    el.addEventListener('click', (e) => { e.preventDefault(); toast(soonText); });
   }
+  gateButton('pon', $('btn-pon'), 'ぽんぽこリズムは、もうすぐ遊べるよ！\nおたのしみに 🥁');
+  gateButton('rally', $('btn-rally'), 'ぽよんラリーは、もうすぐ遊べるよ！\nおたのしみに 🏐');
+  // ミニゲームが2つ出るときは、横に並べる
+  $('btn-pon').parentNode.classList.toggle('two', !$('btn-pon').hidden && !$('btn-rally').hidden);
   // ぽんぽこリズムから「戻る」で帰ってきたとき、ブラウザが前の画面をそのまま出すことがある（記録が古いまま）。
   // そのときは読み直して、ぽんぽこリズムで変わった記録（ごほうび・きせかえ）を取りこむ
   window.addEventListener('pageshow', (e) => { if (e.persisted) location.reload(); });

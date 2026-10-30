@@ -1,7 +1,7 @@
 /* オフラインでも開けるようにするための仕組み（Service Worker）
    ネットにつながるときは常に最新のファイルを使い、
    つながらないときだけ保存しておいたファイルを使います。 */
-const CACHE = 'tanukun-v17';
+const CACHE = 'tanukun-v18';
 const FILES = [
   './', './index.html', './style.css', './config.js', './lines.js', './i18n.js', './save.js', './belly.js', './app.js',
   './manifest.webmanifest', './images/icon-192.png', './images/icon-512.png',
@@ -19,7 +19,9 @@ const FILES = [
   './pon/', './pon/index.html', './pon/pon.css', './pon/pon.js',
   './images/pon/rank1.webp', './images/pon/rank2.webp', './images/pon/rank3.webp', './images/pon/rank4.webp',
   './images/pon/face_full.webp', './images/pon/face_cut1.webp', './images/pon/face_cut2.webp',
-  './images/pon/face_cut3.webp', './images/pon/face_cut4.webp'
+  './images/pon/face_cut3.webp', './images/pon/face_cut4.webp',
+  // ぽよんラリー（rally/）
+  './rally/', './rally/index.html', './rally/rally.css', './rally/rally.js', './images/bg/beach_day.webp'
 ];
 
 self.addEventListener('install', (e) => {

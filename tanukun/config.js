@@ -179,7 +179,8 @@ window.TANU_CONFIG = {
   features: {
     pon:       'soon',     // ぽんぽこリズム
     timeOfDay: 'hidden',   // 時間帯で変わる立ち絵と背景
-    tailFlick: 'hidden'    // しっぽをはじく（引っぱって離す・ブワッ）
+    tailFlick: 'hidden',   // しっぽをはじく（引っぱって離す・ブワッ）
+    rally:     'hidden'    // ぽよんラリー（rally/。ボールを投げて、おなかで返す）
   },
 
   /* ---- しっぽをはじく（features.tailFlick） ----

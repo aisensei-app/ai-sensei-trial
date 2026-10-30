@@ -227,6 +227,12 @@ html, body {
   letter-spacing: 1px;
 }
 .demo .btn-pon { display: none; }   /* お試し版には出さない */
+/* ミニゲームのボタンの列（ぽんぽこリズム・ぽよんラリー）。2つ出るときは横に並べて、文字を小さく */
+.game-row { display: flex; gap: 10px; }
+.game-row .btn[hidden] { display: none; }   /* .btn-pon の display: flex より「隠す」を優先 */
+.game-row .btn { flex: 1; min-width: 0; }
+.game-row.two .btn { flex-direction: column; gap: 2px; font-size: 15px; padding: 9px 6px; }
+.demo .game-row { display: none; }
 /* 公開スイッチ（config.js の features）が「もうすぐ」のとき：うすく、🔒 の札 */
 .btn-pon.locked { color: #B08A66; border-color: #E2C7A6; }
 .soon-badge {

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ぽよんラリー｜タヌくん</title>
+<meta name="theme-color" content="#BFE6FF">
+<link rel="icon" href="../images/icon-192.png">
+<link rel="stylesheet" href="rally.css">
+</head>
+<body>
+<main id="rally">
+
+  <!-- 上のバー：本編へ・いまのラリー回数・さいこう記録 -->
+  <header class="bar">
+    <a class="back" href="../">‹ タヌくん</a>
+    <div class="count"><b id="count">0</b><small>ラリー</small></div>
+    <div class="best">さいこう <b id="best">0</b></div>
+  </header>
+
+  <!-- タヌくん（本編と同じ絵と、おなかの「ぷるん」） -->
+  <div id="body">
+    <img id="tanu-img" alt="タヌくん" draggable="false">
+    <div id="parts-layer" aria-hidden="true"></div>
+    <canvas id="belly-canvas" aria-hidden="true"></canvas>
+  </div>
+  <div id="say" class="say" hidden></div>
+
+  <!-- ボールと、地面の影 -->
+  <div id="shadow" class="shadow" aria-hidden="true"></div>
+  <div id="ball" class="ball" aria-hidden="true"><i></i></div>
+  <div id="pops" aria-hidden="true"></div>
+  <p id="hint" class="hint" hidden></p>
+
+  <!-- はじめる前 -->
+  <section id="start" class="sheet">
+    <h1>🏐 ぽよんラリー</h1>
+    <p>ボールを <b>上へ はじいて</b> なげてね。<br>タヌくんが おなかで はね返すよ！</p>
+    <p>もどってきたボールを <b>タップ</b> して<br>打ち返そう。何回つづくかな？</p>
+    <button id="btn-start" class="btn" type="button">はじめる</button>
+    <p class="small">🔊 音を出して遊んでね</p>
+  </section>
+
+  <!-- 結果 -->
+  <section id="result" class="sheet" hidden>
+    <h2 id="r-title"></h2>
+    <p class="r-count"><b id="r-count">0</b> ラリー</p>
+    <p id="r-best" class="r-best"></p>
+    <p id="r-line" class="r-line"></p>
+    <a id="btn-post" class="btn btn-x" target="_blank" rel="noopener">𝕏 でポストする</a>
+    <button id="btn-again" class="btn" type="button">もう一回</button>
+    <a class="btn btn-sub" href="../">タヌくんのところへ もどる</a>
+  </section>
+
+</main>
+<!-- 本編と同じ設定（おなかの揺れ）と揺れの仕組みを使う -->
+<script src="../config.js"></script>
+<script src="../belly.js"></script>
+<script src="rally.js"></script>
+</body>
+</html>

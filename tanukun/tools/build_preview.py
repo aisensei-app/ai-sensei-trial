@@ -4,6 +4,7 @@
     python3 tools/build_preview.py            → preview/tanukun.html（本編）
     python3 tools/build_preview.py --demo     → preview/tanukun-demo.html（お試し版）
     python3 tools/build_preview.py --pon      → preview/pon.html（ぽんぽこリズム）
+    python3 tools/build_preview.py --rally    → preview/rally.html（ぽよんラリー）
 
 絵（images/*.webp）を文字データにしてHTMLの中に埋めこみ、1つのファイルにまとめます。
 """
@@ -49,16 +50,16 @@ def build(demo, out):
     print('できました:', out, f'({out.stat().st_size // 1024} KB)')
 
 
-def build_pon(out):
-    """ぽんぽこリズム（pon/）の1ファイル版"""
-    css = (ROOT / 'pon' / 'pon.css').read_text(encoding='utf8')
+def build_pon(out, folder='pon', title='ぽんぽこリズム'):
+    """ぽんぽこリズム（pon/）やぽよんラリー（rally/）の1ファイル版"""
+    css = (ROOT / folder / (folder + '.css')).read_text(encoding='utf8')
     css = css.replace('height: 100vh;\n  height: 100dvh;', 'height: 100%;')
-    page = (ROOT / 'pon' / 'index.html').read_text(encoding='utf8')
-    body = page[page.index('<main id="pon"'):page.index('<!-- 本編と同じ設定')]
+    page = (ROOT / folder / 'index.html').read_text(encoding='utf8')
+    body = page[page.index('<main id="' + folder + '"'):page.index('<!-- 本編と同じ設定')]
     scripts = ''.join('<script>\n' + text + '\n</script>\n' for text in
-                      [js('config.js'), js('belly.js'), js('pon/pon.js')])
+                      [js('config.js'), js('belly.js'), js(folder + '/' + folder + '.js')])
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text('<title>ぽんぽこリズム</title>\n'
+    out.write_text('<title>' + title + '</title>\n'
                    '<meta name="claude:viewport-fit-sides" content="cover">\n'
                    '<style>\nhtml,body{color-scheme:light}\n' + css + '\n</style>\n'
                    + body + scripts, encoding='utf8')
@@ -69,8 +70,12 @@ if __name__ == '__main__':
     ap = argparse.ArgumentParser(description='確認用の1ファイル版をつくる')
     ap.add_argument('--demo', action='store_true', help='お試し版をつくる')
     ap.add_argument('--pon', action='store_true', help='ぽんぽこリズムをつくる')
+    ap.add_argument('--rally', action='store_true', help='ぽよんラリーをつくる')
     ap.add_argument('--out', default=None, help='出力先')
     a = ap.parse_args()
+    if a.rally:
+        build_pon(Path(a.out) if a.out else ROOT / 'preview' / 'rally.html', 'rally', 'ぽよんラリー')
+        raise SystemExit
     if a.pon:
         build_pon(Path(a.out) if a.out else ROOT / 'preview' / 'pon.html')
         raise SystemExit

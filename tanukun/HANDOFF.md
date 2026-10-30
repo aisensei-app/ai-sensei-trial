@@ -23,13 +23,20 @@
   お試し版（tanukun-demo）にも demo-redirect.zip を上げて、本編へ移動することを確認済み
 - **公開スイッチ（2026-10-30 追加）**：作った機能を次のアップデートまでロックしておく。config.js の `features`
   （'open' 遊べる／'soon' 🔒 もうすぐ：ボタンは見えるが押すとお知らせ／'hidden' 出さない）。**解放は手動**（ユーザーの判断）：'open' にして zip を作り直して上げる
-  - いまは `pon: 'soon'`、`timeOfDay: 'hidden'`、`tailFlick: 'hidden'`。新しい機能（洗い・ラリーなど）も、作ったらここにスイッチを足す
+  - いまは `pon: 'soon'`、`timeOfDay: 'hidden'`、`tailFlick: 'hidden'`、`rally: 'hidden'`。新しい機能（洗いなど）も、作ったらここにスイッチを足す
   - セリフに `feature: '名前'` を付けると、そのスイッチが open のときだけ出る（セリフ図鑑の数にも入らない）
 - **しっぽをはじく（2026-10-30 実装・ロック中 tailFlick）**：しっぽを押さえて指を動かすと、付け根を軸に曲がる（belly.js の bend）。
   はなすと、ばねで「ぶるるん」と揺れて戻る（letGo）。大きく曲げて（0.35 ラジアン≒20度以上）はなすと **ブワッ**（puff でしっぽがふくらむ＋shiver でぶるぶる）。
   設定は config.js の `tailFlick`。セリフは lines.js の scene: 'flick'／'flickBig'（10個）。ふつうのタップは今までどおり（体をよじる）
   - app.js の `feature(name)`。pon.js は 'open' でなければ本編へ移動。build_app.py は作るときにスイッチの状態を表示。build_preview.py（確認用リンク）は全部 'open' にする
   - ねらい：ロックした版をすぐ本番に上げれば、**アクセス数の計測が始まる**＋「もうすぐ」で期待させる
+- **ぽよんラリー（2026-10-30 試作・ロック中 rally）**：`tanukun/rally/`（index.html・rally.css・rally.js）。ぽんぽこと同じく別ページで、config.js と belly.js を使う。
+  手前のビーチボールを上へはじいて投げる → おなかに当たると「ぽよん！」（当たった所がへこむ）→ 手前にもどってきたボールをタップで打ち返す → ラリー回数。
+  続くほど速く、左右に広がる。最初のひと投げが外れても、もう一度投げられる。背景は images/bg/beach_day.webp。さいこう記録は本編の記録の rallyBest。
+  調整の数字は rally.js の T（速さ・判定の幅など）。結果は4ランク、X にポスト。**なかよしポイントのごほうびは、まだなし**（入れるなら ponPoints と同じ仕組みで）
+  - 本編メニュー：ぽんぽこの横に「🏐 ぽよんラリー」（両方出るときは横並び .game-row.two）。app.js の gateButton でスイッチを反映
+  - 確認用リンク：https://claude.ai/artifact/SfWedDJpFXQSvHn7qrv5Ku （`python3 tools/build_preview.py --rally`）。build_app.py は rally/ も入れる（カードは本編の絵）。sw.js は tanukun-v18
+  - 次の案：ボールの種類（ココナッツ・スイカ）、タヌくんが左右に動く、ごほうび、専用のカードの絵
 - **お試し版（tanukun-demo）は終了**（2026-10-30 ユーザーの判断）：いきなり削除せず、本編へ自動で案内する形に。
   `python3 tools/build_demo_redirect.py` → `demo-redirect.zip`（_redirects で全ページを本編へ 301 ＋ 予備の index.html）を tanukun-demo に Production で上げる。
   数か月して古い投稿から来る人がいなくなったら、Cloudflare の tanukun-demo プロジェクトごと削除
