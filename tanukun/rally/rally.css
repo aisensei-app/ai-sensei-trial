@@ -120,6 +120,48 @@ html, body {
   pointer-events: none;
 }
 
+/* ---- タヌくんの足もとの影（本編の .ground と同じ） ---- */
+.ground {
+  position: absolute;
+  z-index: 0;
+  border-radius: 50%;
+  background: rgba(74, 46, 22, .2);
+  pointer-events: none;
+}
+
+/* ---- ボールが落ちてくる場所の輪（位置と大きさは rally.js）----
+   砂の上の目じるし（うすい丸）と、縮んでいく輪。打ち返せる間（.now）は光って「タップ！」 */
+.target {
+  position: absolute;
+  z-index: 2;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .35);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, .7);
+  pointer-events: none;
+}
+.target i {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 5px solid rgba(255, 255, 255, .9);
+  box-shadow: 0 0 0 2px rgba(224, 103, 31, .5);
+}
+.target span {
+  position: absolute;
+  left: 50%; top: 100%;
+  transform: translate(-50%, 6px);
+  font-size: 16px;
+  font-weight: 900;
+  color: #fff;
+  -webkit-text-stroke: 5px #E0671F;
+  paint-order: stroke fill;
+  white-space: nowrap;
+  opacity: 0;
+}
+.target.now i { border-color: #FFB13B; box-shadow: 0 0 12px 4px rgba(255, 177, 59, .8); }
+.target.now span { opacity: 1; }
+
 /* ---- 「ぽよん！」などの文字 ---- */
 #pops { position: absolute; inset: 0; z-index: 4; pointer-events: none; }
 .pop {

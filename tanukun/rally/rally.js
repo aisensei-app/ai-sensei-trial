@@ -32,18 +32,19 @@
      far          … いちばん奥（タヌくんのおなか）でのボールの大きさ（手前を 1 として）
      flick        … これ以上（ピクセル）上へはじいたら投げたことにする
      returnTime   … もどってくるのにかかる秒数（最初 → ラリーごとに speedUp ずつ短く → 最短 minTime）
-     window       … 打ち返せるのは、もどってくる途中のこの割合から（0.6 なら6割来たところから）
+     window       … 打ち返せるのは、もどってくる途中のこの割合から（0.55 なら半分すぎから）
      nice         … 手前に着く瞬間から、この割合以内でタップしたら「ナイス！」
      late         … 手前に着いてから、この割合まで待ってくれる（それを過ぎたら落ちてミス）
-     hitR         … ボールの中心から、このピクセル以内のタップを当たりにする（ボールが大きければ、その大きさ） */
+     hitR         … ボールか、落ちてくる場所の「輪」の中心から、このピクセル以内のタップを当たりにする
+     ring         … 落ちてくる場所の輪の、最初の大きさ（ボールの何倍）。縮んでいって、ボールが着く瞬間にボールと同じ大きさ（＝タップの合図） */
   const T = {
     feet: IN_X ? 0.57 : 0.68, height: IN_X ? 0.38 : 0.46,
     near: IN_X ? 0.68 : 0.86,
     ballSize: 0.2, maxBall: 88, far: 0.36,
     flick: 40,
-    returnTime: 1.35, speedUp: 0.045, minTime: 0.62,
-    window: 0.6, nice: 0.09, late: 0.16,
-    hitR: 60
+    returnTime: 1.6, speedUp: 0.035, minTime: 0.8,
+    window: 0.55, nice: 0.1, late: 0.22,
+    hitR: 90, ring: 2.8
   };
   const BJ = C.bellyJiggle;
   // おなかの揺れ：本編より「ぽよん」を強めに（ぽんぽこリズムと同じくらい）
@@ -110,6 +111,7 @@
 
   /* ---------- 画面の組み立て ---------- */
   const root = $('rally'), body = $('body'), img = $('tanu-img'), ballEl = $('ball'), shadowEl = $('shadow');
+  const targetEl = $('target'), groundEl = $('ground');
   root.style.backgroundImage = 'url("' + IMG('images/bg/beach_day.webp') + '")';
   img.src = IMG('normal');
   const belly = window.TanuBelly({ config: JIGGLE, img: img, canvas: $('belly-canvas'),
@@ -124,6 +126,8 @@
     const h = H * T.height, w = h * 0.8;                 // 絵は 720×900（4:5）
     const left = W / 2 - w / 2, top = H * T.feet - h * 0.96;   // 足もとは絵の下から4%
     Object.assign(body.style, { left: left + 'px', top: top + 'px', width: w + 'px', height: h + 'px' });
+    // タヌくんの足もとの影（本編の .ground と同じ大きさ・位置）
+    Object.assign(groundEl.style, { left: left + w * 0.12 + 'px', top: top + h * 0.92 + 'px', width: w * 0.76 + 'px', height: h * 0.09 + 'px' });
     Object.assign(G, {
       W: W, H: H, left: left, top: top, w: w, h: h,
       bx: left + w * BJ.x / 100, by: top + h * BJ.y / 100,      // おなかの中心
@@ -220,6 +224,7 @@
     const f = flight, u = (now - f.start) / f.dur;
     Object.assign(ball, at(f, u));
     draw();
+    if (f.kind === 'return') drawTarget(u);
     if (f.kind === 'return' && u > 1 + T.late) { missed(); return; }
     if (f.kind !== 'return' && u >= 1) { arrive(f); return; }
     raf = requestAnimationFrame(step);
@@ -291,28 +296,42 @@
       setTimeout(() => belly.release('belly', true), 90);
     }
   }
-  // タヌくんが打ち返す：手前のどこかへ、山なりで
+  // タヌくんが打ち返す：手前のどこかへ、山なりで。落ちてくる場所に「輪」を出す
   function sendBack() {
-    const spread = Math.min(0.32, 0.12 + rally * 0.015);   // 続くほど左右に広がる
+    const spread = Math.min(0.3, 0.1 + rally * 0.015);   // 続くほど左右に広がる
     const tx = G.W * (0.5 + (Math.random() * 2 - 1) * spread);
     const dur = Math.max(T.minTime, T.returnTime - rally * T.speedUp);
+    targetEl.style.left = tx + 'px';
+    targetEl.style.top = G.nearY + 'px';
+    targetEl.style.width = targetEl.style.height = G.size + 'px';
+    targetEl.className = 'target';
+    targetEl.hidden = false;
     fly('return', { x: tx, y: G.nearY, z: 0 }, dur, G.H * (0.22 + Math.random() * 0.08));
   }
+  // 輪：はじめは大きく、ボールが着く瞬間（u = 1）にボールと同じ大きさまで縮む。打ち返せる間は光る
+  function drawTarget(u) {
+    const k = lerp(T.ring, 1.12, Math.min(1, Math.max(0, u)));   // 着く瞬間に、ボールのすぐ外がわ
+    targetEl.firstChild.style.transform = 'scale(' + k + ')';
+    targetEl.classList.toggle('now', u >= T.window);
+  }
+  const hideTarget = () => { targetEl.hidden = true; };
 
   /* ---------- もどってきたボールをタップして打ち返す ---------- */
   function tryReturn(px, py) {
     const f = flight, u = (performance.now() - f.start) / f.dur;
     if (u < T.window) return;
-    const d = G.size * scaleAt(ball.z);
-    if (Math.hypot(px - ball.x, py - ball.y) > Math.max(T.hitR, d * 0.8)) return;
+    const d = G.size * scaleAt(ball.z), R = Math.max(T.hitR, d * 0.9);
+    const to = flight.to;
+    if (Math.hypot(px - ball.x, py - ball.y) > R && Math.hypot(px - to.x, py - to.y) > R) return;
+    hideTarget();
     const nice = Math.abs(u - 1) <= T.nice;
     if (nice) sound.nice(); else sound.hit();
     pop(ball.x, ball.y - d * 0.6, nice ? 'ナイス！' : 'セーフ', nice ? 'nice' : 'safe');
     // おなかのどこかへ（ナイスなら、おなかのまんなか近く）
     const r = nice ? 0.25 : 0.6, a = Math.random() * Math.PI * 2;
-    const to = { x: G.bx + Math.cos(a) * G.brx * r, y: G.by + Math.sin(a) * G.bry * r, z: 1 };
+    const aim = { x: G.bx + Math.cos(a) * G.brx * r, y: G.by + Math.sin(a) * G.bry * r, z: 1 };
     const dur = Math.max(T.minTime, T.returnTime - rally * T.speedUp) * 0.8;
-    fly('back', to, dur, G.H * 0.1);
+    fly('back', aim, dur, G.H * 0.1);
   }
 
   // 打ち返せなかった：ボールが手前に落ちて、結果へ
@@ -321,6 +340,7 @@
     state = 'over';
     sound.miss();
     shadowEl.style.visibility = 'hidden';
+    hideTarget();
     pop(ball.x, ball.y - 30, 'あっ！', 'miss');
     ballEl.animate([
       { transform: ballEl.style.transform },
@@ -359,6 +379,7 @@
     ballEl.getAnimations().forEach((a) => a.cancel());
     ballEl.classList.add('ready');
     shadowEl.style.visibility = '';
+    hideTarget();
     placeReady();
     $('hint').textContent = '👆 ボールを 上へ はじいて なげてね';
     $('hint').hidden = false;

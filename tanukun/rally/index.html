@@ -18,6 +18,8 @@
     <div class="best">さいこう <b id="best">0</b></div>
   </header>
 
+  <!-- タヌくんの足もとの影 -->
+  <div id="ground" class="ground" aria-hidden="true"></div>
   <!-- タヌくん（本編と同じ絵と、おなかの「ぷるん」） -->
   <div id="body">
     <img id="tanu-img" alt="タヌくん" draggable="false">
@@ -28,6 +30,8 @@
 
   <!-- ボールと、地面の影 -->
   <div id="shadow" class="shadow" aria-hidden="true"></div>
+  <!-- ボールが落ちてくる場所の輪（縮んで、ボールに重なったらタップ） -->
+  <div id="target" class="target" aria-hidden="true" hidden><i></i><span>タップ！</span></div>
   <div id="ball" class="ball" aria-hidden="true"><i></i></div>
   <div id="pops" aria-hidden="true"></div>
   <p id="hint" class="hint" hidden></p>
@@ -36,7 +40,7 @@
   <section id="start" class="sheet">
     <h1>🏐 ぽよんラリー</h1>
     <p>ボールを <b>上へ はじいて</b> なげてね。<br>タヌくんが おなかで はね返すよ！</p>
-    <p>もどってきたボールを <b>タップ</b> して<br>打ち返そう。何回つづくかな？</p>
+    <p>もどってくる場所に <b>輪</b> が出るよ。<br>輪が ボールに重なったら <b>タップ</b>！<br>何回つづくかな？</p>
     <button id="btn-start" class="btn" type="button">はじめる</button>
     <p class="small">🔊 音を出して遊んでね</p>
   </section>

@@ -36,6 +36,9 @@
   調整の数字は rally.js の T（速さ・判定の幅など）。結果は4ランク、X にポスト。**なかよしポイントのごほうびは、まだなし**（入れるなら ponPoints と同じ仕組みで）
   - 本編メニュー：ぽんぽこの横に「🏐 ぽよんラリー」（両方出るときは横並び .game-row.two）。app.js の gateButton でスイッチを反映
   - 確認用リンク：https://claude.ai/artifact/SfWedDJpFXQSvHn7qrv5Ku （`python3 tools/build_preview.py --rally`）。build_app.py は rally/ も入れる（カードは本編の絵）。sw.js は tanukun-v18
+  - 2026-10-30 ユーザーの感想「難しい・どのタイミングで打ち返すか直感的にわからない」「タヌくんに影がなく浮いて見える」→
+    落ちてくる場所に**輪**（縮んでいき、ボールが着く瞬間にボールと重なる。打ち返せる間は光って「タップ！」）、
+    もどる速さをゆっくり（1.35→1.6秒、最短 0.8秒）、判定を広く（輪かボールの近く 90px・遅れ 0.22）、タヌくんの足もとに影
   - 次の案：ボールの種類（ココナッツ・スイカ）、タヌくんが左右に動く、ごほうび、専用のカードの絵
 - **お試し版（tanukun-demo）は終了**（2026-10-30 ユーザーの判断）：いきなり削除せず、本編へ自動で案内する形に。
   `python3 tools/build_demo_redirect.py` → `demo-redirect.zip`（_redirects で全ページを本編へ 301 ＋ 予備の index.html）を tanukun-demo に Production で上げる。
