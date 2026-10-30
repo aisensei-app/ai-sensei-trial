@@ -35,7 +35,7 @@
   { text: 'Fwaa~… let\'s just take it easy',    when: { scene: 'home', visit: 'again' } },
   { text: 'What\'s next, {name}?',   when: { scene: 'home', visit: 'again', friendship: { min: 2 } }, weight: 2 },
   { text: 'What should we play?',           when: { scene: 'home', visit: 'again' } },
-  { text: '*yaaawn*…',                  when: { scene: 'home', visit: 'again', timeOfDay: 'night' } },
+  { text: 'Yaaawn…',                  when: { scene: 'home', visit: 'again', timeOfDay: 'night' } },
 
   /* ---------- 頭 ---------- */
   { text: 'Head pats make me happy', when: { scene: 'tap', place: 'head', mood: 'normal' } },
@@ -50,7 +50,7 @@
   /* ---------- むね ---------- */
   { text: 'Pretty thick chest, huh?',   when: { scene: 'tap', place: 'chest', mood: 'normal' } },
   { text: 'I\'ve been working out~',       when: { scene: 'tap', place: 'chest', mood: 'normal' } },
-  { text: 'Did it go *boing*?',       when: { scene: 'tap', place: 'chest', mood: 'normal' } },
+  { text: 'Did it go boing?',       when: { scene: 'tap', place: 'chest', mood: 'normal' } },
   { text: 'You\'ll hear my heart pounding…', when: { scene: 'tap', place: 'chest', mood: 'normal', friendship: { min: 3 } }, face: 'shy', weight: 2 },
   { text: 'Th-that\'s…',           when: { scene: 'tap', place: 'chest', mood: 'shy' } },
   { text: 'My chest is embarrassing…', when: { scene: 'tap', place: 'chest', mood: 'shy' } },
@@ -58,7 +58,7 @@
   { text: 'Always the chest~!',       when: { scene: 'tap', place: 'chest', mood: 'troubled' } },
 
   /* ---------- おなか ---------- */
-  { text: '*boing!*',             when: { scene: 'tap', place: 'belly', mood: 'normal' } },
+  { text: 'Boing!',             when: { scene: 'tap', place: 'belly', mood: 'normal' } },
   { text: 'Ponpoko♪',            when: { scene: 'tap', place: 'belly', mood: 'normal' }, weight: 2 },
   { text: 'Nice sound, right~?',   when: { scene: 'tap', place: 'belly', mood: 'normal' } },
   { text: 'My belly\'s soft, isn\'t it?', when: { scene: 'tap', place: 'belly', mood: 'normal' } },
@@ -181,7 +181,7 @@
   { text: 'Even for {name}, not there yet!',      when: { scene: 'tap', place: 'crotch', stage: 'warn' } },
   // モジモジ（ハート2〜3）
   { text: 'Th-that\'s… not yet…',       when: { scene: 'tap', place: 'crotch', stage: 'moji' } },
-  { text: '*fidget fidget*…',               when: { scene: 'tap', place: 'crotch', stage: 'moji' } },
+  { text: 'Fidget, fidget…',               when: { scene: 'tap', place: 'crotch', stage: 'moji' } },
   { text: 'I-I said it\'s embarrassing…',       when: { scene: 'tap', place: 'crotch', stage: 'moji' } },
   { text: 'Uuu… where are you touching…',     when: { scene: 'tap', place: 'crotch', stage: 'moji', mood: ['shy', 'troubled'] } },
   { text: 'Any more and I\'ll get mad…!',   when: { scene: 'tap', place: 'crotch', stage: 'moji', mood: 'troubled' }, weight: 2 },

@@ -12,9 +12,9 @@
 
   timeOfDay: {
     bands: [
-      { wake: '*munch munch*… *gulp*! Okay, let\'s play!' },
+      { wake: 'Munch munch… gulp! Okay, let\'s play!' },
       {},
-      { wake: 'Nnn~… *stretch*! Okay, let\'s play!' },
+      { wake: 'Nnn~… stretch! Okay, let\'s play!' },
       { wake: 'Fwaa~… I can still play!' },
       { wake: 'Fwa…? Oh, it\'s {name}!\nYou woke me up' }
     ]
