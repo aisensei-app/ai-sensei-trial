@@ -14,6 +14,7 @@
   <!-- 上のバー：本編へ・いまのラリー回数・さいこう記録 -->
   <header class="bar">
     <a class="back" href="../">‹ タヌくん</a>
+    <div id="lives" class="lives" aria-label="のこりのボール"></div>
     <div class="count"><b id="count">0</b><small>ラリー</small></div>
     <div class="best">さいこう <b id="best">0</b></div>
   </header>
@@ -30,17 +31,20 @@
 
   <!-- ボールと、地面の影 -->
   <div id="shadow" class="shadow" aria-hidden="true"></div>
-  <!-- ボールが落ちてくる場所の輪（縮んで、ボールに重なったらタップ） -->
-  <div id="target" class="target" aria-hidden="true" hidden><i></i><span>タップ！</span></div>
+  <!-- ボールが落ちてくる場所の輪（縮んで、ボールに重なったら上へスワイプ） -->
+  <div id="target" class="target" aria-hidden="true" hidden><i></i><span>いまだ！</span></div>
   <div id="ball" class="ball" aria-hidden="true"><i></i></div>
   <div id="pops" aria-hidden="true"></div>
   <p id="hint" class="hint" hidden></p>
+  <!-- はじめての人への指のガイド（👆 が上へすべる見本） -->
+  <div id="guide" class="guide" aria-hidden="true" hidden><i>👆</i><b></b><span></span></div>
 
   <!-- はじめる前 -->
   <section id="start" class="sheet">
     <h1>🏐 ぽよんラリー</h1>
-    <p>ボールを <b>上へ はじいて</b> なげてね。<br>タヌくんが おなかで はね返すよ！</p>
-    <p>もどってくる場所に <b>輪</b> が出るよ。<br>輪が ボールに重なったら <b>タップ</b>！<br>何回つづくかな？</p>
+    <p>ボールを <b>上へ スワイプ</b> して なげてね。<br>タヌくんが おなかで はね返すよ！</p>
+    <p>もどってくる場所に <b>輪</b> が出るよ。<br>輪が ボールに重なったら<br>また <b>上へ スワイプ</b> して 打ち返そう！</p>
+    <p class="small">ボールは 3こ。何回つづくかな？</p>
     <button id="btn-start" class="btn" type="button">はじめる</button>
     <p class="small">🔊 音を出して遊んでね</p>
   </section>
@@ -48,7 +52,8 @@
   <!-- 結果 -->
   <section id="result" class="sheet" hidden>
     <h2 id="r-title"></h2>
-    <p class="r-count"><b id="r-count">0</b> ラリー</p>
+    <p class="r-count">合計 <b id="r-count">0</b> ラリー</p>
+    <p id="r-longest" class="r-longest"></p>
     <p id="r-best" class="r-best"></p>
     <p id="r-line" class="r-line"></p>
     <a id="btn-post" class="btn btn-x" target="_blank" rel="noopener">𝕏 でポストする</a>

@@ -46,6 +46,15 @@ html, body {
   text-decoration: none;
 }
 .count { margin-left: auto; font-weight: 900; }
+/* のこりのボール（小さなビーチボール。落としたら灰色） */
+.lives { display: flex; gap: 3px; }
+.lives i {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: conic-gradient(#FF5E5E 0 60deg, #fff 60deg 120deg, #3FA9F5 120deg 180deg, #fff 180deg 240deg, #FFD23F 240deg 300deg, #fff 300deg 360deg);
+  box-shadow: 0 0 0 2px #fff, 0 1px 3px rgba(0, 0, 0, .2);
+}
+.lives i.lost { filter: grayscale(1) opacity(.35); }
 .count b { font-size: 30px; color: #E0671F; -webkit-text-stroke: 4px #fff; paint-order: stroke fill; }
 .count small { margin-left: 3px; font-size: 13px; }
 .best {
@@ -60,6 +69,11 @@ html, body {
 
 /* ---- タヌくん ---- */
 #body { position: absolute; z-index: 1; transform-origin: 50% 96%; }
+/* タヌくんが1歩近づく（もどる）ときは、なめらかに */
+.moving #body, .moving .ground { transition: left .6s ease-in-out, top .6s ease-in-out, width .6s ease-in-out, height .6s ease-in-out; }
+/* フェイント「せーの…」：ぷるぷる、ためる */
+#body.feint { animation: feint .18s ease-in-out infinite alternate; }
+@keyframes feint { from { transform: scale(1.02, .98) translateX(-1%); } to { transform: scale(.99, 1.01) translateX(1%); } }
 #body.poyon { animation: poyon .32s ease-out; }
 @keyframes poyon { 30% { transform: scale(1.04, .97); } 60% { transform: scale(.98, 1.02); } }
 #tanu-img, #belly-canvas {
@@ -130,7 +144,7 @@ html, body {
 }
 
 /* ---- ボールが落ちてくる場所の輪（位置と大きさは rally.js）----
-   砂の上の目じるし（うすい丸）と、縮んでいく輪。打ち返せる間（.now）は光って「タップ！」 */
+   砂の上の目じるし（うすい丸）と、縮んでいく輪。打ち返せる間（.now）は光って「いまだ！」 */
 .target {
   position: absolute;
   z-index: 2;
@@ -161,6 +175,54 @@ html, body {
 }
 .target.now i { border-color: #FFB13B; box-shadow: 0 0 12px 4px rgba(255, 177, 59, .8); }
 .target.now span { opacity: 1; }
+.guiding .target span { display: none; }   /* ガイドの説明と重ならないように */
+
+/* ---- カモメ（ボールの前を横切る、じゃま） ---- */
+.gull { position: absolute; left: 0; font-size: 44px; z-index: 5; pointer-events: none; }
+
+/* ---- 指のガイド：👆 が上へすべる見本（はじめての人だけ）。位置は rally.js ---- */
+.guide { position: absolute; z-index: 6; width: 0; height: 0; pointer-events: none; }
+.guide i {
+  position: absolute;
+  left: -22px; top: 10px;
+  font-size: 44px;
+  font-style: normal;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .3));
+  animation: guide 1.3s ease-in-out infinite;
+}
+.guide b {   /* すべる道すじ（点線の矢印） */
+  position: absolute;
+  left: -3px; top: -120px;
+  width: 6px; height: 120px;
+  background: repeating-linear-gradient(to top, rgba(255, 255, 255, .95) 0 8px, transparent 8px 14px);
+  border-radius: 3px;
+}
+.guide b::before {
+  content: "";
+  position: absolute;
+  left: -9px; top: -14px;
+  border: 12px solid transparent;
+  border-bottom: 16px solid rgba(255, 255, 255, .95);
+  border-top: 0;
+}
+.guide span {
+  position: absolute;
+  left: 50%; top: 70px;
+  transform: translateX(-50%);
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .92);
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(74, 46, 22, .2);
+}
+@keyframes guide {
+  0% { transform: translateY(0); opacity: 0; }
+  15% { opacity: 1; }
+  70% { transform: translateY(-120px); opacity: 1; }
+  100% { transform: translateY(-140px); opacity: 0; }
+}
 
 /* ---- 「ぽよん！」などの文字 ---- */
 #pops { position: absolute; inset: 0; z-index: 4; pointer-events: none; }
@@ -235,6 +297,7 @@ html, body {
 .btn-sub { background: #F3DDBF; color: #5A3A1E; }
 .r-count { font-size: 18px; font-weight: 700; }
 .r-count b { font-size: 48px; }
+.r-longest { font-size: 14px; font-weight: 700; margin-top: -4px; }
 .r-best { font-size: 14px; font-weight: 700; color: #FF4F8B; }
 .r-line { font-weight: 700; }
 
