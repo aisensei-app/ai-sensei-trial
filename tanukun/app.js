@@ -7,6 +7,10 @@
 
   const C = window.TANU_CONFIG;
   const I18N = window.TanuI18n || { lang: 'ja', LANGS: { ja: '日本語' }, t: (k, ja) => ja, apply: () => {}, set: () => {}, lines: () => window.TANU_LINES || [] };
+  // 画面の文字：tr('日本語の文', { n: 3 }) で、いまの言語に（i18n.js の TEXT。訳がなければ日本語のまま）
+  const tr = I18N.tr || ((ja, v) => (v ? Object.keys(v).reduce((s, k) => s.split('{' + k + '}').join(v[k]), ja) : ja));
+  I18N.apply();
+  if (I18N.lang === 'en') document.title = 'Tanu-kun';
   // いまの言語のセリフ集（i18n.js。訳がなければ日本語）。公開スイッチがまだの機能のセリフ（feature）は入れない
   const LINES = I18N.lines().filter((l) => !l.feature || feature(l.feature) === 'open');
   const SAVE = window.TanuSave;
@@ -219,7 +223,7 @@
     el.className = 'zone';
     el.dataset.place = place;
     el.dataset.label = PLACE_LABEL[place] || place;
-    el.setAttribute('aria-label', (PLACE_LABEL[place] || place) + 'をさわる');
+    el.setAttribute('aria-label', tr('{p}をさわる', { p: tr(PLACE_LABEL[place] || place) }));
     Object.assign(el.style, {
       left: z.left + '%', top: z.top + '%', width: z.width + '%', height: z.height + '%'
     });
@@ -367,7 +371,7 @@
     // しっぽをはじいたとき（scene: 'flick'、大きくはじいて逆立ったら 'flickBig'）
     if (place === 'tail' && pulled) {
       scene = pulled === 'big' ? 'flickBig' : 'flick';
-      popWord(ev, pulled === 'big' ? 'ブワッ！' : 'ぶるるん♪');
+      popWord(ev, tr(pulled === 'big' ? 'ブワッ！' : 'ぶるるん♪'));
     }
 
     say({ scene: scene, place: place, mood: mood });
@@ -732,7 +736,7 @@
 
   function say(base) {
     // 寝ているあいだのメニュー画面は、あいさつの代わりに寝息
-    if (base.scene === 'home' && sleeping()) { showBubble('すぴー… すぴー…'); return null; }
+    if (base.scene === 'home' && sleeping()) { showBubble(tr('すぴー… すぴー…')); return null; }
     const line = pickLine(base);
     if (!line) return null;
     state.recentTexts.push(line.text);
@@ -754,6 +758,13 @@
   function withName(text) {
     const name = SAVE.data.name;
     if (name) return text.split('{name}').join(name);
+    // 英語：呼びかけ（「{name}, 」「, {name}」）は消して、文の途中は you（文のはじめなら You）
+    if (I18N.lang === 'en') {
+      return text
+        .replace(/^\{name\}, /, '').replace(/, \{name\}(?=[!?.~…]|$)/g, '')
+        .replace(/^\{name\}/, 'You').split('{name}').join('you')
+        .replace(/^./, (c) => c.toUpperCase());
+    }
     return text
       .replace(/[、,]\{name\}(?=[！!。〜…？?♪]|$)/g, '')
       .replace(/\{name\}[、,]/g, '')
@@ -786,7 +797,7 @@
   function askName() {
     setMode('name');
     $('name-input').value = '';
-    showBubble('はじめまして！タヌくんだよ\nなんて呼んだらいい？', true);
+    showBubble(tr('はじめまして！タヌくんだよ\nなんて呼んだらいい？'), true);
   }
 
   function finishName(name) {
@@ -812,13 +823,13 @@
       const C2 = C.images;
       belly.warm([C2.normal, C2.shy, C2.troubled, C2.ponpoko1, C2.ponpoko2, C2.muni, C2.dere].filter(Boolean));
       // 時間帯のひとことで、メニューの立ち絵から遊ぶ画面へつなぐ（「起こされちゃった」「よし、遊ぼう！」）
-      showBubble(b && b.wake ? withName(b.wake) : 'なにしてあそぶ？');
+      showBubble(b && b.wake ? withName(b.wake) : tr('なにしてあそぶ？'));
     };
     if (b && b.sleep) {
       // 寝ているとき：「ふぁ…？」と目をさましてから（0.7秒。待たせすぎない）
       waking = true;
       document.body.classList.add('waking');
-      showBubble('ふぁ…？');
+      showBubble(tr('ふぁ…？'));
       setTimeout(() => { waking = false; document.body.classList.remove('waking'); go(); }, 700);
       return;
     }
@@ -880,7 +891,7 @@
     if (next <= now) next.setDate(next.getDate() + 1);
     const min = Math.max(1, Math.ceil((next - now) / 60000));
     const h = Math.floor(min / 60), m = min % 60;
-    return (h ? h + '時間' : '') + (m || !h ? m + '分' : '');
+    return (h ? tr('{h}時間', { h: h }) : '') + (m || !h ? tr('{m}分', { m: m }) : '');
   }
   function notifyCap() {
     if (capNotified === SAVE.today()) return;
@@ -888,14 +899,14 @@
     // 明日の予告（いまのハートの数ごと。クリアしていたら最後の文）
     const T = C.friendship.teasers || [];
     const teaser = SAVE.data.cleared ? T[T.length - 1] : T[Math.min(SAVE.hearts(), T.length - 2)];
-    toast('今日のハートは ここまで！🌙\n' + (teaser || 'また明日なかよくしよう') +
-      '\nあと ' + untilTomorrow() + ' で、またためられるよ', 4200);
+    toast(tr('今日のハートは ここまで！🌙') + '\n' + (teaser || tr('また明日なかよくしよう')) +
+      '\n' + tr('あと {t} で、またためられるよ', { t: untilTomorrow() }), 4200);
   }
   function renderCapNote() {
     const el = $('cap-note');
     const on = !DEMO && SAVE.tapCapped() && !heartsFull();
     el.hidden = !on;
-    if (on) el.textContent = '🌙 あと' + untilTomorrow();
+    if (on) el.textContent = tr('🌙 あと{t}', { t: untilTomorrow() });
   }
   setInterval(renderCapNote, 30000);
 
@@ -946,7 +957,7 @@
   function renderStatus() {
     const d = SAVE.data;
     $('days-total').textContent = Math.max(1, d.totalDays);
-    $('days-streak').textContent = d.streak >= 2 ? 'れんぞく ' + d.streak + ' 日' : '';
+    $('days-streak').textContent = d.streak >= 2 ? tr('れんぞく {n} 日', { n: d.streak }) : '';
     $('menu-hearts').innerHTML = heartsHtml();
     $('play-hearts').innerHTML = heartsHtml();
     renderCapNote();
@@ -955,7 +966,7 @@
   function heartUp() {
     renderStatus();
     const msg = (C.friendship.rewards || [])[SAVE.hearts() - 1];
-    const gotText = '💖 ハートをゲット！' + (msg ? '\n' + msg : '');
+    const gotText = tr('💖 ハートをゲット！') + (msg ? '\n' + msg : '');
     // そのハートの「思い出」があれば、特別イラストと台詞を見せてから、お知らせ
     const m = memoryOf(SAVE.hearts());
     if (m && mode !== 'name') {
@@ -991,7 +1002,7 @@
       // 台詞は文字だけか、{ text, image }（その台詞から絵が切りかわる）
       const lines = m.lines.map((l) => typeof l === 'string' ? { text: l } : l)
         .map((l) => ({ text: withName(l.text), image: l.image }))
-        .concat(fresh ? [{ text: '📖 思い出アルバムに追加されました' }] : []);
+        .concat(fresh ? [{ text: tr('📖 思い出アルバムに追加されました') }] : []);
       lines.forEach((l) => { if (l.image) new Image().src = l.image; });   // 切りかわる絵を先に読んでおく
       let i = 0, typing = null, shown = '', lineAt = 0;
       function show() {
@@ -1048,8 +1059,8 @@
       }
       evEl.querySelector('.ev-text').textContent = '';
       if (introOn) {
-        intro.querySelector('.ev-i1').textContent = m.hearts ? 'ハートが ' + m.hearts + 'こ たまった！' : 'ひみつの思い出が ひらいた…！';
-        intro.querySelector('.ev-i2').textContent = 'タヌくんとの思い出「' + m.title + '」';
+        intro.querySelector('.ev-i1').textContent = m.hearts ? tr('ハートが {n}こ たまった！', { n: m.hearts }) : tr('ひみつの思い出が ひらいた…！');
+        intro.querySelector('.ev-i2').textContent = tr('タヌくんとの思い出「{t}」', { t: m.title });
         intro.hidden = false;
         evEl.classList.add('intro');
         // 「タップしてつづける」が出るまで（約1.8秒）は、タップを受けつけない
@@ -1089,8 +1100,8 @@
     // その日はじめて来てくれたら、ボーナスをお知らせ（ハートが増えたときは、そちらを優先）
     else if (!DEMO && (r.visit !== 'again' || pb.added)) {
       const msg = [];
-      if (r.visit !== 'again') msg.push('来てくれてありがとう！ 💗+' + C.friendship.visitPoints);
-      if (pb.added) msg.push('ぽんぽこリズムの ごほうび 💗+' + pb.added);
+      if (r.visit !== 'again') msg.push(tr('来てくれてありがとう！ 💗+{n}', { n: C.friendship.visitPoints }));
+      if (pb.added) msg.push(tr('ぽんぽこリズムの ごほうび 💗+{n}', { n: pb.added }));
       setTimeout(() => toast(msg.join('\n')), 900);
     }
     if (r.visit === 'again') return false;
@@ -1108,12 +1119,12 @@
   }
   function showClear() {
     const days = Math.max(1, SAVE.data.clearDay || SAVE.data.totalDays);
-    const text = 'タヌくんと、ずっと一緒の約束をしたよ🌺\n（なかよし' + days + '日目でクリア！）' +
-      '\n#タヌくん' + (CLR.hashtag ? ' #' + CLR.hashtag : '');
-    openSheet('🌺 クリアおめでとう！',
+    const text = tr('タヌくんと、ずっと一緒の約束をしたよ🌺\n（なかよし{n}日目でクリア！）', { n: days }) +
+      '\n' + tr('#タヌくん') + (CLR.hashtag ? ' #' + CLR.hashtag : '');
+    openSheet(tr('🌺 クリアおめでとう！'),
       '<img class="res-img clear-img" alt="">' +
-      '<p class="res-comment">ここまで遊んでくれて、ほんとうにありがとう！</p>' +
-      '<p class="note center">これからも、タヌくんに会いにきてね。<br>思い出は「実績」のアルバムで見返せるよ</p>' +
+      '<p class="res-comment">' + tr('ここまで遊んでくれて、ほんとうにありがとう！') + '</p>' +
+      '<p class="note center">' + tr('これからも、タヌくんに会いにきてね。<br>思い出は「実績」のアルバムで見返せるよ') + '</p>' +
       shareButtonsHtml());
     const body = $('sheet-body');
     body.querySelector('.clear-img').src = CLR.memory.image;
@@ -1141,9 +1152,9 @@
   function suggestHomeScreen() {
     if (DEMO || SAVE.data.a2hsShown || SAVE.data.totalDays < 2 || standalone() || !$('sheet').hidden) return;
     SAVE.setFlag('a2hsShown');
-    openSheet('📱 ホーム画面に追加しよう',
-      '<p class="note">タヌくんを<b>ホーム画面に追加</b>すると、すぐ会いにこられて、なかよしの記録も消えにくくなるよ。</p>' +
-      '<p class="note">iPhone：共有ボタン →「ホーム画面に追加」<br>Android：右上のメニュー →「ホーム画面に追加」</p>');
+    openSheet(tr('📱 ホーム画面に追加しよう'),
+      '<p class="note">' + tr('タヌくんを<b>ホーム画面に追加</b>すると、すぐ会いにこられて、なかよしの記録も消えにくくなるよ。') + '</p>' +
+      '<p class="note">' + tr('iPhone：共有ボタン →「ホーム画面に追加」<br>Android：右上のメニュー →「ホーム画面に追加」') + '</p>');
   }
 
   // 開いたまま日付が変わったときのために、画面に戻ってきたら確認
@@ -1159,11 +1170,11 @@
     else el.hidden = false;
     if (feature(name) !== 'soon') return;
     el.classList.add('locked');
-    el.insertAdjacentHTML('beforeend', '<span class="soon-badge">🔒 もうすぐ</span>');
+    el.insertAdjacentHTML('beforeend', '<span class="soon-badge">' + tr('🔒 もうすぐ') + '</span>');
     el.addEventListener('click', (e) => { e.preventDefault(); toast(soonText); });
   }
-  gateButton('pon', $('btn-pon'), 'ぽんぽこリズムは、もうすぐ遊べるよ！\nおたのしみに 🥁');
-  gateButton('rally', $('btn-rally'), 'ぽよんラリーは、もうすぐ遊べるよ！\nおたのしみに 🏐');
+  gateButton('pon', $('btn-pon'), tr('ぽんぽこリズムは、もうすぐ遊べるよ！\nおたのしみに 🥁'));
+  gateButton('rally', $('btn-rally'), tr('ぽよんラリーは、もうすぐ遊べるよ！\nおたのしみに 🏐'));
   // ミニゲームが2つ出るときは、横に並べる
   $('btn-pon').parentNode.classList.toggle('two', !$('btn-pon').hidden && !$('btn-rally').hidden);
   // ぽんぽこリズムから「戻る」で帰ってきたとき、ブラウザが前の画面をそのまま出すことがある（記録が古いまま）。
@@ -1225,16 +1236,17 @@
     const top = tops.length === 1 ? tops[0] : 'even';
     const comment = REP.comments[top] || REP.comments.even;
     const L = REP.labels;
-    const pad = (s) => s + '　'.repeat(Math.max(0, 4 - s.length));   // 名前の幅をそろえる（全角。後ろに1文字あける）
+    // 名前の幅をそろえる（日本語は全角で4文字分＋1文字あける。英語は「: 」）
+    const pad = (s) => (I18N.lang === 'ja' ? s + '　'.repeat(Math.max(0, 4 - s.length)) : s + ': ');
     // ポストの文章：？？？は回数を出さない
     const lines = REP_PLACES.map((p) => p === 'crotch'
       ? pad(L[p]) + '❓'
       : pad(L[p]) + '🟧'.repeat(repCount[p]) + ' ' + repCount[p]);
-    const postText = 'タヌくんと遊んだよ！（なかよし' + days + '日目）\n' + lines.join('\n') +
+    const postText = tr('タヌくんと遊んだよ！（なかよし{n}日目）', { n: days }) + '\n' + lines.join('\n') +
       '\n「' + comment + '」' + (REP.hashtag ? '\n#' + REP.hashtag : '');
 
     reportOpen = true;
-    openSheet('なでなでレポート',
+    openSheet(tr('なでなでレポート'),
       '<p class="rep-day"></p>' +
       '<div class="rep-pic"><img class="res-img" alt=""></div>' +
       '<table class="rep">' + REP_PLACES.map((p) => '<tr' + (p === 'crotch' ? ' class="secret"' : '') + '>' +
@@ -1242,7 +1254,7 @@
       '<p class="res-comment"></p>' +
       shareButtonsHtml());
     const body = $('sheet-body');
-    body.querySelector('.rep-day').textContent = 'なかよし ' + days + ' 日目　' + heartsText();
+    body.querySelector('.rep-day').textContent = tr('なかよし {n} 日目　', { n: days }) + heartsText();
     const face = C.images[REP.faces[top]] ? REP.faces[top] : 'normal';
     body.querySelector('.res-img').src = C.images[face];
     // 付けているきせかえ（デベソなど）も、レポートの絵に重ねる
@@ -1262,10 +1274,10 @@
       if (p === 'crotch') {
         // ひみつ：回数は出さない（見つけたかどうかだけ分かる）
         tr.querySelector('.bar').textContent = n ? '✨' : '';
-        tr.querySelector('.num').textContent = n ? 'ひみつ' : '？';
+        tr.querySelector('.num').textContent = n ? window.TanuI18n.tr('ひみつ') : '？';
       } else {
         tr.querySelector('.bar').textContent = '🟧'.repeat(n);
-        tr.querySelector('.num').textContent = n + ' 回';
+        tr.querySelector('.num').textContent = window.TanuI18n.tr('{n} 回', { n: n });
       }
     });
     bindShare(body, postText, REP.url);
@@ -1278,34 +1290,34 @@
     const d = SAVE.data, s = d.stats;
     const total = new Set(LINES.map((l) => l.text)).size;
     const rows = [
-      ['なかよし', d.totalDays + ' 日'],
-      ['れんぞく（いま／最高）', d.streak + ' 日 ／ ' + d.bestStreak + ' 日'],
-      ['頭をなでた', s.tap.head + ' 回'],
-      ['むねをさわった', (s.tap.chest || 0) + ' 回'],
-      ['おなかをさわった', s.tap.belly + ' 回'],
-      ['しっぽをさわった', s.tap.tail + ' 回'],
+      [I18N.lang === 'ja' ? 'なかよし' : 'Days together', tr('{n} 日', { n: d.totalDays })],
+      [tr('れんぞく（いま／最高）'), tr('{a} 日 ／ {b} 日', { a: d.streak, b: d.bestStreak })],
+      [tr('頭をなでた'), tr('{n} 回', { n: s.tap.head })],
+      [tr('むねをさわった'), tr('{n} 回', { n: s.tap.chest || 0 })],
+      [tr('おなかをさわった'), tr('{n} 回', { n: s.tap.belly })],
+      [tr('しっぽをさわった'), tr('{n} 回', { n: s.tap.tail })],
       // おまたは、さわるまでは「？？？」（ひみつ）
-      [(s.tap.crotch ? 'おまた' : '？？？') + 'をさわった', (s.tap.crotch || 0) + ' 回'],
-      ['とろけさせた', s.melt + ' 回'],
-      ['怒らせちゃった', s.angry + ' 回'],
-      ['セリフ図鑑', d.seenLines.length + ' ／ ' + total]
+      [tr((s.tap.crotch ? 'おまた' : '？？？') + 'をさわった'), tr('{n} 回', { n: s.tap.crotch || 0 })],
+      [tr('とろけさせた'), tr('{n} 回', { n: s.melt })],
+      [tr('怒らせちゃった'), tr('{n} 回', { n: s.angry })],
+      [tr('セリフ図鑑'), d.seenLines.length + ' ／ ' + total]
     ];
     // 思い出アルバム：ハートの数まで見られる。まだのものは「？」
     // 最後に「ひみつの思い出」（クリアするまで、名前も「？？？」）
     const hearts = SAVE.hearts();
     const all = MEM.concat(CLR ? [Object.assign({ secret: true }, CLR.memory)] : []);
     const open = (m) => m.secret ? SAVE.data.cleared : m.hearts <= hearts;
-    const album = all.length ? '<h3>📖 思い出アルバム（' + all.filter(open).length + ' ／ ' + all.length + '）</h3>' +
+    const album = all.length ? '<h3>' + tr('📖 思い出アルバム（{a} ／ {b}）', { a: all.filter(open).length, b: all.length }) + '</h3>' +
       '<div class="album">' + all.map((m, i) => open(m)
         ? '<button class="mem" type="button" data-i="' + i + '"><span class="mem-pic"><img alt=""></span><span class="mem-t"></span></button>'
         : '<div class="mem locked"><span class="mem-pic">？</span><span class="mem-t">' +
-          (m.secret ? '？？？' : '💖' + m.hearts + 'で見られる') + '</span></div>').join('') +
+          (m.secret ? '？？？' : tr('💖{n}で見られる', { n: m.hearts })) + '</span></div>').join('') +
       '</div>' : '';
-    openSheet('実績',
+    openSheet(tr('実績'),
       album +
-      '<h3>きろく</h3>' +
+      '<h3>' + tr('きろく') + '</h3>' +
       '<table class="rec">' + rows.map((r) => '<tr><th>' + r[0] + '</th><td>' + r[1] + '</td></tr>').join('') + '</table>' +
-      '<p class="note">バッジ（実績のごほうび）は準備中だよ</p>');
+      '<p class="note">' + tr('バッジ（実績のごほうび）は準備中だよ') + '</p>');
     $('sheet-body').querySelectorAll('button.mem').forEach((b) => {
       const m = all[+b.dataset.i];
       const pic = b.querySelector('.mem-pic');
@@ -1325,7 +1337,7 @@
       const S = PARTS[slot];
       html += '<h3>' + S.label + '</h3><div class="wear-grid">' +
         '<button class="wear-item' + (wear[slot] ? '' : ' on') + '" type="button" data-slot="' + slot + '" data-id="">' +
-        '<span class="wear-thumb">✖️</span><span>なし</span></button>';
+        '<span class="wear-thumb">✖️</span><span>' + tr('なし') + '</span></button>';
       S.items.forEach((it) => {
         const open = unlocked(it);
         html += '<button class="wear-item' + (wear[slot] === it.id ? ' on' : '') + '" type="button"' +
@@ -1335,8 +1347,8 @@
       });
       html += '</div>';
     });
-    if (!slots.length) html = '<p class="note">まだ部品がないよ</p>';
-    openSheet('きせかえ', html + '<p class="note small">なかよし度（💖）が上がると、付けられる部品が増えるよ</p>');
+    if (!slots.length) html = '<p class="note">' + tr('まだ部品がないよ') + '</p>';
+    openSheet(tr('きせかえ'), html + '<p class="note small">' + tr('なかよし度（💖）が上がると、付けられる部品が増えるよ') + '</p>');
     $('sheet-body').querySelectorAll('.wear-item').forEach((b) => {
       b.addEventListener('click', () => {
         const slot = b.dataset.slot, id = b.dataset.id;
@@ -1352,22 +1364,22 @@
 
   // 設定
   $('btn-settings').addEventListener('click', () => {
-    openSheet('設定',
-      '<h3>呼び名</h3>' +
-      '<div class="set-row"><input id="set-name" class="name-input" type="text" maxlength="' + SAVE.NAME_MAX + '" placeholder="名前なし">' +
-      '<button id="set-name-ok" class="btn" type="button">変更</button></div>' +
-      '<p class="note small">空にすると、名前なしで話しかけます</p>' +
-      (C.notice ? '<h3>このアプリ</h3><button id="btn-about" class="btn btn-wide" type="button">このアプリについて</button>' : '') +
-      '<h3>記録</h3>' +
-      '<p class="note">記録はこのスマホのブラウザの中だけに保存されます。' +
-      '<b>ホーム画面に追加</b>して使うと、記録が消えにくくなります。</p>' +
-      '<p class="note">iPhone：共有ボタン →「ホーム画面に追加」<br>Android：右上のメニュー →「ホーム画面に追加」</p>' +
-      '<button id="btn-reset" class="btn btn-danger" type="button">記録をリセット</button>' +
-
-      // ことば（使える言語が2つ以上になったら出る）
+    openSheet(tr('設定'),
+      // ことば（使える言語が2つ以上になったら、いちばん上に出る）
       (Object.keys(I18N.LANGS).length > 1 ? '<h3>ことば / Language</h3><div class="set-row"><select id="set-lang" class="name-input">' +
         Object.keys(I18N.LANGS).map((l) => '<option value="' + l + '"' + (l === I18N.lang ? ' selected' : '') + '>' + I18N.LANGS[l] + '</option>').join('') +
         '</select></div>' : '') +
+      '<h3>' + tr('呼び名') + '</h3>' +
+      '<div class="set-row"><input id="set-name" class="name-input" type="text" maxlength="' + SAVE.NAME_MAX + '" placeholder="' + tr('名前なし') + '">' +
+      '<button id="set-name-ok" class="btn" type="button">' + tr('変更') + '</button></div>' +
+      '<p class="note small">' + tr('空にすると、名前なしで話しかけます') + '</p>' +
+      (C.notice ? '<h3>' + tr('このアプリ') + '</h3><button id="btn-about" class="btn btn-wide" type="button">' + tr('このアプリについて') + '</button>' : '') +
+      '<h3>' + tr('記録') + '</h3>' +
+      '<p class="note">' + tr('記録はこのスマホのブラウザの中だけに保存されます。') +
+      tr('<b>ホーム画面に追加</b>して使うと、記録が消えにくくなります。') + '</p>' +
+      '<p class="note">' + tr('iPhone：共有ボタン →「ホーム画面に追加」<br>Android：右上のメニュー →「ホーム画面に追加」') + '</p>' +
+      '<button id="btn-reset" class="btn btn-danger" type="button">' + tr('記録をリセット') + '</button>' +
+
       (C.testHearts ? '<h3>確認用：なかよし度を切りかえて試す</h3>' +
         '<div class="test-hearts">' +
         ['ふつう', 0, 1, 2, 3, 4, 5].map((n) => '<button class="btn" type="button" data-h="' + (n === 'ふつう' ? '' : n) + '">' +
@@ -1419,7 +1431,7 @@
     const btn = $('btn-reset');
     btn.addEventListener('click', () => {
       // 2回押しで確定（うっかり消さないように）
-      if (!btn.dataset.sure) { btn.dataset.sure = '1'; btn.textContent = '本当に消す？（もう一度押す）'; return; }
+      if (!btn.dataset.sure) { btn.dataset.sure = '1'; btn.textContent = tr('本当に消す？（もう一度押す）'); return; }
       SAVE.reset();
       belly.refresh();
       renderParts();
@@ -1507,14 +1519,14 @@
 
   /* ---- X でポストする・アプリでシェア・文章をコピー（お試し版の診断と、本編のレポートで共通） ---- */
   function shareButtonsHtml() {
-    return '<a class="btn btn-main btn-x" target="_blank" rel="noopener">𝕏 でポストする</a>' +
+    return '<a class="btn btn-main btn-x" target="_blank" rel="noopener">' + tr('𝕏 でポストする') + '</a>' +
       '<div class="share-row">' +
-      (navigator.share ? '<button class="btn btn-share" type="button">📤 アプリでシェア</button>' : '') +
-      '<button class="btn btn-copy" type="button">📋 文章をコピー</button>' +
+      (navigator.share ? '<button class="btn btn-share" type="button">' + tr('📤 アプリでシェア') + '</button>' : '') +
+      '<button class="btn btn-copy" type="button">' + tr('📋 文章をコピー') + '</button>' +
       '</div>' +
       (navigator.share
-        ? '<p class="note small center">X のログイン画面が出たら、「アプリでシェア」から X アプリを選んでね</p>'
-        : '<p class="note small center">X のログイン画面が出たら、「文章をコピー」して X アプリに貼りつけてね</p>');
+        ? '<p class="note small center">' + tr('X のログイン画面が出たら、「アプリでシェア」から X アプリを選んでね') + '</p>'
+        : '<p class="note small center">' + tr('X のログイン画面が出たら、「文章をコピー」して X アプリに貼りつけてね') + '</p>');
   }
 
   function bindShare(body, text, url) {
@@ -1531,7 +1543,7 @@
     // 文章と URL をコピー（自分で X に貼りつけて投稿）
     body.querySelector('.btn-copy').addEventListener('click', (e) => {
       const btn = e.currentTarget, all = url ? text + '\n' + url : text;
-      const done = () => { btn.textContent = '✅ コピーしました'; };
+      const done = () => { btn.textContent = tr('✅ コピーしました'); };
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(all).then(done, () => copyFallback(all, done));
       } else {

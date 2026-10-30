@@ -716,3 +716,6 @@ body.in-x .bubble { margin-bottom: 6px; }
 body.in-x .toast { bottom: calc(var(--x-cover) + 12px); }
 body.in-x .sheet { padding-bottom: var(--x-cover); }
 body.in-x .ev-box { bottom: calc(var(--x-cover) + 8px); }
+
+/* 英語のとき：アルバムの題名を、単語のとちゅうで折り返さない */
+html[lang="en"] .mem-t { word-break: normal; overflow-wrap: anywhere; }

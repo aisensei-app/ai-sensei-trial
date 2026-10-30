@@ -21,12 +21,12 @@
 
   <!-- 上のバー：メニュー画面では「何日目」、遊ぶ画面では「もどる」とハート -->
   <header id="topbar">
-    <button id="back" class="back" type="button">‹ もどる</button>
+    <button id="back" class="back" type="button" data-i18n>‹ もどる</button>
     <div id="days" class="days">
-      <div class="days-main">なかよし <b id="days-total">1</b> 日目</div>
+      <div class="days-main"><span data-i18n>なかよし</span> <b id="days-total">1</b> <span data-i18n>日目</span></div>
       <div class="days-sub" id="days-streak"></div>
     </div>
-    <div id="play-hearts" class="hearts" aria-label="なかよし度"></div>
+    <div id="play-hearts" class="hearts" aria-label="なかよし度" data-i18n-attr="aria-label"></div>
     <!-- 今日のハートが上限になったら「🌙 あと○時間○分」 -->
     <div id="cap-note" class="cap-note" hidden></div>
     <!-- お試し版だけ表示 -->
@@ -45,7 +45,7 @@
         <div id="tanu-melt">
           <div id="tanu-body">
             <div id="tanu-breath">
-              <img id="tanu-img" alt="タヌくん" draggable="false">
+              <img id="tanu-img" alt="タヌくん" data-i18n-attr="alt" draggable="false">
               <!-- おなかだけ揺らすための重ね絵（同じ絵のおなか部分だけを、ふちをぼかして重ねる） -->
               <div id="belly-layer" aria-hidden="true"><img id="belly-img" alt="" draggable="false"></div>
               <!-- きせかえパーツ（デベソなど）を重ねるところ。揺れている間は canvas の絵に入る -->
@@ -67,29 +67,29 @@
   <!-- メニュー画面のボタン -->
   <nav id="menu">
     <button id="btn-play" class="btn btn-main" type="button">
-      <span>遊ぶ</span>
-      <span id="menu-hearts" class="hearts" aria-label="なかよし度"></span>
+      <span data-i18n>遊ぶ</span>
+      <span id="menu-hearts" class="hearts" aria-label="なかよし度" data-i18n-attr="aria-label"></span>
     </button>
     <!-- ぽんぽこリズム（pon/ の別ページ）。はじめて開くまで NEW -->
     <div class="game-row">
-      <a id="btn-pon" class="btn btn-pon" href="pon/">🥁 ぽんぽこリズム<span id="pon-new" class="new-badge" hidden>NEW</span></a>
+      <a id="btn-pon" class="btn btn-pon" href="pon/"><span data-i18n>🥁 ぽんぽこリズム</span><span id="pon-new" class="new-badge" hidden>NEW</span></a>
       <!-- ぽよんラリー（rally/ の別ページ）。公開スイッチ features.rally -->
-      <a id="btn-rally" class="btn btn-pon" href="rally/" hidden>🏐 ぽよんラリー</a>
+      <a id="btn-rally" class="btn btn-pon" href="rally/" hidden><span data-i18n>🏐 ぽよんラリー</span></a>
     </div>
     <div class="btn-row">
-      <button id="btn-record" class="btn" type="button">実績</button>
-      <button id="btn-wear" class="btn" type="button">きせかえ</button>
-      <button id="btn-settings" class="btn" type="button">設定</button>
+      <button id="btn-record" class="btn" type="button" data-i18n>実績</button>
+      <button id="btn-wear" class="btn" type="button" data-i18n>きせかえ</button>
+      <button id="btn-settings" class="btn" type="button" data-i18n>設定</button>
     </div>
   </nav>
 
   <!-- はじめての人に呼び名を聞く -->
   <form id="name-form" class="name-form" autocomplete="off">
     <input id="name-input" class="name-input" type="text" maxlength="10"
-           placeholder="呼んでほしい名前" aria-label="呼んでほしい名前" enterkeyhint="done">
-    <button class="btn btn-main" type="submit">これでOK</button>
-    <button id="name-skip" class="link" type="button">あとできめる</button>
-    <p class="note small">名前はこのスマホの中だけに保存されます（ニックネームでOK）</p>
+           placeholder="呼んでほしい名前" aria-label="呼んでほしい名前" data-i18n-attr="placeholder aria-label" enterkeyhint="done">
+    <button class="btn btn-main" type="submit" data-i18n>これでOK</button>
+    <button id="name-skip" class="link" type="button" data-i18n>あとできめる</button>
+    <p class="note small" data-i18n>名前はこのスマホの中だけに保存されます（ニックネームでOK）</p>
   </form>
 
   <p class="hint">頭・むね・おなか・しっぽをさわってね</p>
@@ -100,7 +100,7 @@
   <div class="sheet-box" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
     <h2 id="sheet-title"></h2>
     <div id="sheet-body"></div>
-    <button id="sheet-close" class="btn" type="button">とじる</button>
+    <button id="sheet-close" class="btn" type="button" data-i18n>とじる</button>
   </div>
 </div>
 
@@ -108,16 +108,16 @@
 <div id="event" class="event" hidden>
   <div class="ev-pic"><img class="ev-bg" alt=""><img class="ev-img" alt=""></div>
   <div class="ev-title"></div>
-  <button class="ev-skip" type="button" aria-label="とじる">×</button>
+  <button class="ev-skip" type="button" aria-label="とじる" data-i18n-attr="aria-label">×</button>
   <!-- 思い出が始まる前の合図（ハートがたまった → 思い出がひらく） -->
   <div class="ev-intro" hidden>
     <div class="ev-bigheart">💖</div>
     <p class="ev-i1"></p>
     <p class="ev-i2"></p>
-    <p class="ev-i3">タップしてつづける</p>
+    <p class="ev-i3" data-i18n>タップしてつづける</p>
   </div>
   <div class="ev-box">
-    <div class="ev-name">タヌくん</div>
+    <div class="ev-name" data-i18n>タヌくん</div>
     <p class="ev-text"></p>
     <span class="ev-next">▼</span>
   </div>
@@ -128,7 +128,9 @@
 
 <!-- 読み込む順番が大事です：設定 → セリフ → 記録 → おなか → 本体 -->
 <script src="config.js"></script>
+<script src="config.en.js"></script>
 <script src="lines.js"></script>
+<script src="lines.en.js"></script>
 <script src="i18n.js"></script>
 <script src="save.js"></script>
 <script src="belly.js"></script>
