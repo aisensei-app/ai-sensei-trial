@@ -1145,11 +1145,11 @@
     openSheet(N.title, '<p class="note notice">' + N.text.split('\n').join('<br>') + '</p>' +
       (done ? '<button id="notice-ok" class="btn btn-main" type="button"></button>' : ''));
     if (!done) return;
-    $('sheet-close').hidden = true;   // OK を押すまで閉じない
+    $('sheet-close').hidden = $('sheet-x').hidden = true;   // OK を押すまで閉じない
     $('notice-ok').textContent = N.ok;
     $('notice-ok').addEventListener('click', () => {
       SAVE.setFlag('noticeOk');
-      $('sheet-close').hidden = false;
+      $('sheet-close').hidden = $('sheet-x').hidden = false;
       closeSheet();
       done();
     });
@@ -1291,6 +1291,7 @@
     bindShare(body, postText, REP.url);
   }
   $('sheet-close').addEventListener('click', closeSheet);
+  $('sheet-x').addEventListener('click', closeSheet);
   sheet.addEventListener('click', (e) => { if (e.target === sheet && !$('sheet-close').hidden) closeSheet(); });
 
   // 実績（いまは記録の一覧。バッジは次の段階で）
