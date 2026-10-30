@@ -18,6 +18,9 @@
 - **Web Analytics**：`tanukun` は 2026-10-29 に有効にしたが、**次に Production に上げるまで本番は計測されない**（`tanukun-demo` はまだ）。
   新機能を待たずに計測だけ始めたいなら、公開済みブランチから zip を作って Production に上げる（提案済み・ユーザーの返事待ち）。
   遊び方の中身の計測は、アプリの「記録はどこにも送らない」の約束とぶつかるので保留
+- **2026-10-30 本番に公開済み**：公開スイッチ付きの版（pon=soon・timeOfDay=hidden・tailFlick=hidden）を tanukun に Production で上げた。
+  ユーザーが「🔒 もうすぐ」の表示とお知らせを確認。**Web Analytics の計測もここから開始**。
+  お試し版（tanukun-demo）にも demo-redirect.zip を上げて、本編へ移動することを確認済み
 - **公開スイッチ（2026-10-30 追加）**：作った機能を次のアップデートまでロックしておく。config.js の `features`
   （'open' 遊べる／'soon' 🔒 もうすぐ：ボタンは見えるが押すとお知らせ／'hidden' 出さない）。**解放は手動**（ユーザーの判断）：'open' にして zip を作り直して上げる
   - いまは `pon: 'soon'`、`timeOfDay: 'hidden'`、`tailFlick: 'hidden'`。新しい機能（洗い・ラリーなど）も、作ったらここにスイッチを足す
