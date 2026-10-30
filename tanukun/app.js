@@ -69,10 +69,13 @@
     showBubble('画像が見つかりません：' + img.getAttribute('src'));
   });
 
+  // 新しい機能の公開スイッチ（config.js の features）：'open'・'soon'（🔒 もうすぐ）・'hidden'。書いていなければ 'open'
+  function feature(name) { return (C.features && C.features[name]) || 'open'; }
+
   /* =========================================================
      時間帯（config.js の timeOfDay）：メニュー画面の立ち絵と、背景が変わる
      ========================================================= */
-  const TB = (!DEMO && C.timeOfDay) || null;
+  const TB = (!DEMO && C.timeOfDay && feature('timeOfDay') === 'open') ? C.timeOfDay : null;
   let testBand = null;   // 確認用：時間帯を切りかえて試す（設定の「確認用」）
   // 確認用：URL の ?time=morning（day・evening・night・late）でも切りかえられる
   { const m = location.search.match(/[?&]time=(\w+)/); if (TB && m && TB.bands.some((b) => b.id === m[1])) testBand = m[1]; }
@@ -1111,7 +1114,17 @@
   });
 
   // ぽんぽこリズム：はじめて開くまでメニューに NEW
-  $('pon-new').hidden = DEMO || !!SAVE.data.ponSeen;
+  $('pon-new').hidden = DEMO || !!SAVE.data.ponSeen || feature('pon') !== 'open';
+  // 公開スイッチ：まだのときは、ボタンを出さない（hidden）か、🔒 もうすぐ（soon）にする
+  if (feature('pon') === 'hidden') $('btn-pon').hidden = true;
+  if (feature('pon') === 'soon') {
+    $('btn-pon').classList.add('locked');
+    $('btn-pon').insertAdjacentHTML('beforeend', '<span class="soon-badge">🔒 もうすぐ</span>');
+    $('btn-pon').addEventListener('click', (e) => {
+      e.preventDefault();
+      toast('ぽんぽこリズムは、もうすぐ遊べるよ！\nおたのしみに 🥁');
+    });
+  }
   // ぽんぽこリズムから「戻る」で帰ってきたとき、ブラウザが前の画面をそのまま出すことがある（記録が古いまま）。
   // そのときは読み直して、ぽんぽこリズムで変わった記録（ごほうび・きせかえ）を取りこむ
   window.addEventListener('pageshow', (e) => { if (e.persisted) location.reload(); });

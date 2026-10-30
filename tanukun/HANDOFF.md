@@ -18,6 +18,14 @@
 - **Web Analytics**：`tanukun` は 2026-10-29 に有効にしたが、**次に Production に上げるまで本番は計測されない**（`tanukun-demo` はまだ）。
   新機能を待たずに計測だけ始めたいなら、公開済みブランチから zip を作って Production に上げる（提案済み・ユーザーの返事待ち）。
   遊び方の中身の計測は、アプリの「記録はどこにも送らない」の約束とぶつかるので保留
+- **公開スイッチ（2026-10-30 追加）**：作った機能を次のアップデートまでロックしておく。config.js の `features`
+  （'open' 遊べる／'soon' 🔒 もうすぐ：ボタンは見えるが押すとお知らせ／'hidden' 出さない）。**解放は手動**（ユーザーの判断）：'open' にして zip を作り直して上げる
+  - いまは `pon: 'soon'`、`timeOfDay: 'hidden'`。新しい機能（しっぽをはじく・洗い・ラリーなど）も、作ったらここにスイッチを足す
+  - app.js の `feature(name)`。pon.js は 'open' でなければ本編へ移動。build_app.py は作るときにスイッチの状態を表示。build_preview.py（確認用リンク）は全部 'open' にする
+  - ねらい：ロックした版をすぐ本番に上げれば、**アクセス数の計測が始まる**＋「もうすぐ」で期待させる
+- **お試し版（tanukun-demo）は終了**（2026-10-30 ユーザーの判断）：いきなり削除せず、本編へ自動で案内する形に。
+  `python3 tools/build_demo_redirect.py` → `demo-redirect.zip`（_redirects で全ページを本編へ 301 ＋ 予備の index.html）を tanukun-demo に Production で上げる。
+  数か月して古い投稿から来る人がいなくなったら、Cloudflare の tanukun-demo プロジェクトごと削除
 - **進行中**：背景イラスト「ビーチ」（昼は採用済み images/bg/beach_day.webp、まだ表示には組みこんでいない）。朝・夕方・夜・深夜を ChatGPT で作成中（プロンプトは pon/ILLUST_PROMPTS.md の⑦）。5枚そろったら背景の切りかえを組みこむ
 - **新しいアイデアの一覧**は「6. 次にやること」の「アイデア一覧（2026-10-29〜30）」
 - 宣伝用の画像（実績画面のイラストにモザイク）は作業フォルダの `promo/` に置いた（git には入れない。.git/info/exclude）

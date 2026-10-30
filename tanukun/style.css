@@ -227,6 +227,15 @@ html, body {
   letter-spacing: 1px;
 }
 .demo .btn-pon { display: none; }   /* お試し版には出さない */
+/* 公開スイッチ（config.js の features）が「もうすぐ」のとき：うすく、🔒 の札 */
+.btn-pon.locked { color: #B08A66; border-color: #E2C7A6; }
+.soon-badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #E9D8C2;
+  color: #7A5A3A;
+  font-size: 12px;
+}
 .btn-row { display: flex; gap: 10px; }
 .btn-row .btn { flex: 1; white-space: nowrap; padding-left: 6px; padding-right: 6px; }
 .test-hearts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }

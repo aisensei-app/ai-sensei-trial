@@ -10,6 +10,7 @@
 ・X などに URL を貼ったときのカード（OGP）を index.html に入れます（絵は og/main.jpg）
 ・なでなでレポートとクリアのポストに付く URL（config.js の report.url）を、公開先の URL にします
 ・確認用の機能（testHearts）は、config.js のとおり false のまま（公開用では出ない）
+・新しい機能の公開スイッチ（config.js の features）は、そのままの状態で入ります（作るときに表示します）
 ・ぽんぽこリズム（pon/ → 公開先の /pon/）も入れます。カードの絵は og/pon.jpg
   （pon/art の元の絵・プロンプト集、使っていない「おなかのアップ」の絵 images/pon/belly*.webp は入れない）
 ・お試し版の設定（demo.js）、メモ、道具、確認用ファイル、元の絵などは入れません
@@ -84,6 +85,10 @@ def build(base, out):
     if 'testHearts: true' in cfg:
         raise SystemExit('config.js の testHearts が true です。false にしてから公開してください')
     (out / 'config.js').write_text(cfg, encoding='utf8')
+    # 公開スイッチ（features）の状態を表示する（open＝遊べる、soon＝🔒 もうすぐ、hidden＝出さない）
+    m = re.search(r"\n  features: \{(.*?)\n  \}", cfg, re.S)
+    if m:
+        print('公開スイッチ:', ', '.join(f'{k}={v}' for k, v in re.findall(r"(\w+):\s*'(\w+)'", m.group(1))))
 
     # 身元につながる言葉が入っていないか確認
     for p in out.rglob('*'):

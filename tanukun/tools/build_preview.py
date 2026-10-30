@@ -17,6 +17,9 @@ ROOT = Path(__file__).resolve().parent.parent
 
 def js(name):
     text = (ROOT / name).read_text(encoding='utf8')
+    if name == 'config.js':
+        # 確認用リンクでは、公開スイッチ（features）をすべて 'open' にして、作った機能を全部見られるように
+        text = re.sub(r"(\n  features: \{.*?\n  \})", lambda m: re.sub(r"'(soon|hidden)'", "'open'", m.group(1)), text, count=1, flags=re.S)
     return re.sub(r"'(images/[^']+\.webp)'",
                   lambda m: "'data:image/webp;base64," + base64.b64encode((ROOT / m.group(1)).read_bytes()).decode() + "'",
                   text)

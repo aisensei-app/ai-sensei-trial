@@ -23,6 +23,8 @@
   if (/Twitter/i.test(navigator.userAgent) || /[?&]inx\b/.test(location.search)) document.body.classList.add('in-x');
 
   const C = window.TANU_CONFIG;
+  // 公開スイッチ（config.js の features.pon）が 'open' でないときは、まだ遊べないので本編へ
+  if (C.features && C.features.pon && C.features.pon !== 'open') { location.replace('../'); return; }
   const $ = (id) => document.getElementById(id);
   // 本編の設定の絵は 'images/…' なので、このページ（pon/）からは '../' を付ける
   const IMG = (name) => {
