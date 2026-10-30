@@ -5,7 +5,11 @@
    ・もどってくる場所の砂の上に「輪」が出る。輪が縮んでボールに重なったら、上へスワイプして打ち返す
    ・ボールは3こ。落とすと1こ減って、手前から投げなおし。3こ落としたら結果（合計ラリー数と、いちばん続いた数）
    ・3ラリー続くごとに、タヌくんが1歩近づいてきて、ボールも速くなる（落とすと、元の場所にもどる）
-   ・近づいてくると、ときどき「じゃま」が入る：カモメが横切る／タヌくんが「せーの…」とためてから返す（フェイント）
+   ・近づいてくると、ときどき「じゃま」が入る：カモメやインコが横切る／タヌくんが「せーの…」とためてから返す（フェイント）
+     ／風がふいて、ボールが横に流される（落ちてくる場所の輪もずれていく）
+   ・スワイプの速さで、ねらう高さが変わる：ゆっくり → おまた（ひゃっ！ でミス）、ふつう → おなか、とても速く → 頭（ヘディングで返ってくる）
+   ・打ち返すスワイプは、ボールの近くから（風で流されたら、追いかける）
+   ・ナイスでゲージがたまる。満タンで「💥 ひっさつ」ボタン → 次の打ち返しが必殺の球。タヌくんはレシーブの構えで受けて、ボーナス
    ・はじめて遊ぶ人には、指のガイド（👆 が上へすべる見本）を出す。はじめての打ち返しは、ボールが輪の上で止まって待ってくれる
    ・最初のひと投げがおなかに当たらなかったときは、もう一度投げられる（ボールは減らない）
    ・きせかえ（デベソなど）は本編の記録をそのまま使う
@@ -42,7 +46,11 @@
      late         … 手前に着いてから、この割合まで待ってくれる（それを過ぎたら落ちてミス）
      ring         … 落ちてくる場所の輪の、最初の大きさ（ボールの何倍）。縮んでいって、ボールが着く瞬間にボールのすぐ外がわ
      balls        … ボールの数（落とせる回数）
-     gull, feint  … じゃまが入る割合（1歩以上近づいてから）。feint は「せーの…」でためる秒数 [最短, 最長] も */
+     birds, feint, wind … じゃまが入る割合（1歩以上近づいてから）。feint は「せーの…」でためる秒数、wind は流される幅（画面の横幅に対する割合）
+     aim          … スワイプの速さ（ピクセル/ミリ秒）。slow より遅いと おまた、fast より速いと 頭、そのあいだは おなか（速いほど上）
+     head, crotch … 頭・おまたの当たる所（絵の％。r は半径で、絵の横幅に対する％）
+     reach        … 打ち返すスワイプは、ボールから横にこの距離（ピクセル。画面の横幅の reachW 倍のほうが大きければ、そちら）以内で始める
+     gauge        … ナイスで nice、セーフで safe たまる。max で満タン（ひっさつ）。bonus は必殺が当たったときに足すラリー数 */
   const T = {
     feet: IN_X ? 0.57 : 0.68, height: IN_X ? 0.38 : 0.46,
     step: { grow: 0.11, down: IN_X ? 0.025 : 0.035 }, maxStep: 4, stepEvery: 3,
@@ -53,8 +61,13 @@
     window: 0.55, nice: 0.1, late: 0.22,
     ring: 2.8,
     balls: 3,
-    gull: 0.35, feint: { rate: 0.3, seconds: [0.45, 0.9] }
+    birds: 0.35, feint: { rate: 0.25, seconds: [0.45, 0.9] }, wind: { rate: 0.25, drift: 0.22 },
+    aim: { slow: 0.35, fast: 1.6 },
+    head: { x: 45, y: 13, r: 13 }, crotch: { x: 33, y: 68, r: 9 },
+    reach: 110, reachW: 0.3,
+    gauge: { nice: 1, safe: 0.4, max: 5, bonus: 3 }
   };
+  T.step.ball = 0.25;   // 1歩近づくごとに、奥（おなか）でのボールの大きさも、この割合で大きく
   const BJ = C.bellyJiggle;
   // おなかの揺れ：本編より「ぽよん」を強めに（ぽんぽこリズムと同じくらい）
   const JIGGLE = Object.assign({}, BJ, {
@@ -123,10 +136,23 @@
   root.style.backgroundImage = 'url("' + IMG('images/bg/beach_day.webp') + '")';
   img.src = IMG('normal');
   const FEINT_POSE = C.images.ponpoko1 ? IMG('ponpoko1') : null;   // 「せーの…」でためるときのポーズ
+  const POSE = {
+    receive: IMG('images/happy.webp'),                           // 必殺の球をレシーブ（うでを下ろして、おなかを前に）
+    moji: C.images.mojimoji ? IMG('mojimoji') : null,           // おまたに当たった（もじもじ）
+    ouch: C.images.troubled ? IMG('troubled') : null            // 頭に当たった
+  };
+  // ポーズを ms ミリ秒だけ変える（0 なら、変えたまま）
+  let poseTimer = 0;
+  function setPose(src, ms) {
+    clearTimeout(poseTimer);
+    img.src = src || IMG('normal');
+    if (ms) poseTimer = setTimeout(() => { img.src = IMG('normal'); }, ms);
+  }
   const belly = window.TanuBelly({ config: JIGGLE, img: img, canvas: $('belly-canvas'),
     overlay: partsLayer, layers: () => wornLayers() });
   renderParts();
-  img.addEventListener('load', () => belly.warm([img.src]), { once: true });
+  // おなかの揺れに使う絵を、先に読んでおく（いつもの絵と、必殺の球を受けるポーズ）
+  img.addEventListener('load', () => belly.warm([img.src, POSE.receive]), { once: true });
 
   // 画面の大きさと、タヌくんが何歩近づいたか（stepNow）から、タヌくん・おなか・手前のボールの位置を決める
   const G = {};
@@ -146,7 +172,9 @@
       feetY: H * feet,
       nearY: H * T.near,
       size: Math.min(T.maxBall, W * T.ballSize),
-      far: T.far * (1 + T.step.grow * stepNow)                    // 近づくと、奥のボールも大きく
+      far: T.far * (1 + T.step.ball * stepNow),                   // 近づくと、奥のボールも大きく（タヌくんより強めに）
+      hx: left + w * T.head.x / 100, hy: top + h * T.head.y / 100, hr: w * T.head.r / 100,             // 頭
+      cx: left + w * T.crotch.x / 100, cy: top + h * T.crotch.y / 100, cr: w * T.crotch.r / 100      // おまた
     });
     $('hint').style.top = (G.nearY + G.size * 0.75) + 'px';
     if (state === 'ready') placeReady();
@@ -186,7 +214,8 @@
     poyon: () => tone('sine', 150, 90, 0.45, 0.8, 260),     // おなかで「ぼよ〜ん」
     hit: () => tone('triangle', 520, 260, 0.14, 0.5),       // 手で「ぽんっ」
     nice: () => { tone('triangle', 660, 330, 0.14, 0.5); setTimeout(() => tone('sine', 990, 1320, 0.12, 0.25), 60); },
-    miss: () => tone('sine', 400, 120, 0.5, 0.35)
+    miss: () => tone('sine', 400, 120, 0.5, 0.35),
+    special: () => { tone('sawtooth', 200, 900, 0.35, 0.3); setTimeout(() => tone('triangle', 880, 1760, 0.2, 0.3), 120); }
   };
 
   /* ---------- ボールの動き ----------
@@ -196,6 +225,7 @@
   let state = 'title';   // title / ready（投げる前）/ fly（飛んでいる）/ wait（フェイント・落としたあと）/ over
   let flight = null, raf = 0;
   let total = 0, streak = 0, longest = 0, lives = T.balls, said = {};
+  let gauge = 0, armed = false;   // ひっさつのゲージと、構えているか
   let best = loadSave().rallyBest || 0;
   // はじめて遊ぶ人へのガイド（本編の記録に、済んだかを残す）
   let guideThrow = !loadSave().rallyGuideThrow, guideReturn = !loadSave().rallyGuideReturn;
@@ -229,8 +259,9 @@
   }
   // 道すじの u（0〜1。1 より先も少しだけ伸ばせる）での位置
   function at(f, u) {
+    const w = f.wind ? f.wind * (1 - Math.cos(Math.PI * clamp(u, 0, 1))) / 2 : 0;   // 風：だんだん横に流される
     return {
-      x: lerp(f.from.x, f.to.x, u),
+      x: lerp(f.from.x, f.to.x, u) + w,
       y: lerp(f.from.y, f.to.y, u) - f.arc * Math.sin(Math.PI * clamp(u, 0, 1)),
       z: lerp(f.from.z, f.to.z, u)
     };
@@ -261,7 +292,7 @@
      マウスでも同じ（ドラッグ）。指が画面の外に出ても追えるように、動き・はなすは window で受ける */
   let swipe = null;
   root.addEventListener('pointerdown', (e) => {
-    if (e.target.closest('.sheet, .back')) return;
+    if (e.target.closest('.sheet, .back, .special-btn')) return;
     e.preventDefault();
     audio();
     swipe = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now() };
@@ -272,49 +303,87 @@
     if (dy > -T.flick) return;
     const dt = Math.max(30, performance.now() - swipe.t);
     swipe = null;   // 1回のスワイプで1回だけ
-    onSwipe(dx, dy, dt);
+    onSwipe(dx, dy, dt, e.clientX - dx);
   });
   const endSwipe = (e) => { if (swipe && e.pointerId === swipe.id) swipe = null; };
   window.addEventListener('pointerup', endSwipe);
   window.addEventListener('pointercancel', endSwipe);
 
-  function onSwipe(dx, dy, dt) {
+  function onSwipe(dx, dy, dt, x0) {
     if (state === 'ready') { throwBall(dx, dy, dt); return; }
-    if (state === 'fly' && flight && flight.kind === 'return') hitBack(dx);
+    if (state === 'fly' && flight && flight.kind === 'return') {
+      // ボールの近くから始めたスワイプだけ（風で流されたら、追いかける）
+      if (Math.abs(x0 - ball.x) > Math.max(T.reach, G.W * T.reachW)) return;
+      hitBack(dx, -dy / dt);
+    }
+  }
+  // スワイプの速さ（ピクセル/ミリ秒）から、ねらう所：遅い → おまた、ふつう → おなか（速いほど上）、とても速い → 頭
+  function aimAt(speed, dx) {
+    if (speed < T.aim.slow) return { x: G.cx + dx * 0.5, y: G.cy };
+    if (speed > T.aim.fast) return { x: G.hx + dx * 0.5, y: G.hy };
+    const k = (speed - T.aim.slow) / (T.aim.fast - T.aim.slow);
+    return { x: G.bx + clamp(dx * 1.3, -G.brx * 1.4, G.brx * 1.4), y: G.by + G.bry * lerp(0.6, -0.6, k) };
+  }
+  // 当たった所：crotch（おまた）/ head（頭）/ belly（おなか）/ null（はずれ）
+  function partAt(x, y) {
+    if (Math.hypot(x - G.cx, y - G.cy) <= G.cr) return 'crotch';
+    if (Math.hypot(x - G.hx, y - G.hy) <= G.hr) return 'head';
+    if (inBelly(x, y) <= 1.05) return 'belly';
+    return null;
   }
 
   // 投げる：指の向きでねらう（まっすぐ上なら、おなかのまんなか）。速くはじくほど速く飛ぶ
   function throwBall(dx, dy, dt) {
-    const speed = clamp(-dy / dt, 0, 1);   // ピクセル/ミリ秒
+    const v = -dy / dt, speed = clamp(v, 0, 1);   // ピクセル/ミリ秒
     sound.throw();
     $('hint').hidden = true;
     hideGuide();
     if (guideThrow) { guideThrow = false; updateSave((d) => { d.rallyGuideThrow = true; }); }
-    fly('throw', { x: G.bx + dx * 1.3, y: G.by - G.bry * 0.15, z: 1 }, lerp(0.95, 0.6, speed), G.H * 0.12);
+    const to = aimAt(v, dx);
+    fly('throw', { x: to.x, y: to.y, z: 1 }, lerp(0.95, 0.6, speed), G.H * 0.12);
   }
 
   // おなかの中か（画面の位置）。1 より小さければ中
   const inBelly = (x, y) => Math.hypot((x - G.bx) / G.brx, (y - G.by) / G.bry);
 
-  /* ---------- 奥に着いた：おなかに当たれば「ぽよん！」でもどってくる ---------- */
+  /* ---------- 奥に着いた ----------
+     おなか → 「ぽよん！」でもどってくる／頭 → ヘディングでもどってくる／おまた → 「ひゃっ！」で落ちる／はずれ → 落ちる
+     落ちたとき：最初のひと投げなら投げなおし（ボールは減らない）、打ち返した球ならボールが1こ減る */
   function arrive(f) {
     if (f.kind === 'fall') { flight = null; return; }
-    const d = inBelly(ball.x, ball.y);
-    if (d <= 1.05) {
-      poyon(ball.x, ball.y);
+    if (f.special) { specialHit(); return; }
+    const part = partAt(ball.x, ball.y);
+    if (part === 'belly' || part === 'head') {
+      if (part === 'belly') poyon(ball.x, ball.y); else header(ball.x, ball.y);
       if (f.kind === 'back') countRally();
       // 3ラリーごとに1歩近づく（近づく間は、少し待ってから返す）
       const next = Math.min(T.maxStep, Math.floor(streak / T.stepEvery));
       if (next > stepNow) { approach(next); setTimeout(sendBack, 750); return; }
-      setTimeout(sendBack, 140);
+      setTimeout(sendBack, part === 'head' ? 300 : 140);
       return;
     }
-    // おなかに当たらなかった（最初のひと投げだけ）：もう一度投げられる（ボールは減らない）
-    pop(ball.x, ball.y - 20, d < 2.2 ? 'おしい！' : 'あれれ？', 'miss');
-    say(d < 2.2 ? 'おなかに、なげてね〜' : 'こっちだよ〜');
+    if (part === 'crotch') {
+      sound.miss();
+      pop(ball.x, ball.y - 20, 'ひゃっ！', 'miss');
+      say(['そ、そこは…！', 'も〜、どこねらってるの〜', 'ひゃっ…びっくりした'][Math.floor(Math.random() * 3)]);
+      setPose(POSE.moji, 1300);
+    } else {
+      const d = inBelly(ball.x, ball.y);
+      pop(ball.x, ball.y - 20, d < 2.2 ? 'おしい！' : 'あれれ？', 'miss');
+      if (f.kind === 'throw') say(d < 2.2 ? 'おなかに、なげてね〜' : 'こっちだよ〜');
+    }
     fly('fall', { x: ball.x + (ball.x - G.bx) * 0.3, y: G.feetY, z: 1 }, 0.45, -G.H * 0.02);
     state = 'wait';
+    if (f.kind === 'back') { setTimeout(() => loseBall(), 500); return; }
     setTimeout(resetBall, 1200);
+  }
+  // 頭に当たった：ヘディングで返す（ラリーは続く）
+  function header(x, y) {
+    sound.hit();
+    pop(x, y - 10, 'ヘディング！', 'safe');
+    setPose(POSE.ouch, 600);
+    body.animate([{ transform: 'rotate(0)' }, { transform: 'rotate(-3deg)' }, { transform: 'rotate(2deg)' }, { transform: 'rotate(0)' }],
+      { duration: 350, easing: 'ease-out' });
   }
   function countRally() {
     total++; streak++;
@@ -349,7 +418,7 @@
   // 1歩以上近づいたら、ときどき「せーの…」とためてから（フェイント）。カモメが横切ることも
   function sendBack() {
     if (state === 'over') return;
-    if (stepNow >= 1 && Math.random() < T.feint.rate && !flight.feinted) { feint(); return; }
+    if (stepNow >= 1 && !armed && Math.random() < T.feint.rate && !flight.feinted) { feint(); return; }
     const spread = Math.min(0.3, 0.1 + streak * 0.015);   // 続くほど左右に広がる
     const tx = G.W * (0.5 + (Math.random() * 2 - 1) * spread);
     const dur = Math.max(T.minTime, T.returnTime - streak * T.speedUp - stepNow * T.stepSpeed);
@@ -360,8 +429,15 @@
     targetEl.hidden = false;
     fly('return', { x: tx, y: G.nearY, z: 0 }, dur, G.H * (0.22 + Math.random() * 0.08));
     // はじめての打ち返しは、輪の上でボールが止まって待つ（ガイド）
-    if (guideReturn) flight.tutorial = true;
-    if (stepNow >= 1 && Math.random() < T.gull) seagull(dur);
+    if (guideReturn) { flight.tutorial = true; return; }
+    if (stepNow < 1) return;
+    if (Math.random() < T.birds) bird(dur);
+    if (Math.random() < T.wind.rate) {
+      // 風：画面のはしを越えないほうへ流す
+      const room = tx < G.W / 2 ? 1 : -1;
+      flight.wind = room * G.W * T.wind.drift * lerp(0.6, 1, Math.random());
+      wind(room);
+    }
   }
   // フェイント：おなかにボールをのせたまま「せーの…」（ポーズが変わって、ぷるぷる）→ 返す
   function feint() {
@@ -379,11 +455,11 @@
       sendBack();
     }, sec * 1000);
   }
-  // カモメが横切る（ボールの道すじの前を、右から左へ。ただの見た目のじゃま）
-  function seagull(dur) {
+  // 鳥が横切る（カモメかインコ。ボールの道すじの前を。見た目のじゃま）
+  function bird(dur) {
     const el = document.createElement('span');
     el.className = 'gull';
-    el.textContent = '🕊️';
+    el.textContent = Math.random() < 0.5 ? '🕊️' : '🦜';
     el.style.top = G.H * lerp(0.42, 0.62, Math.random()) + 'px';
     $('pops').appendChild(el);
     const from = Math.random() < 0.5;
@@ -394,39 +470,99 @@
     ], { duration: dur * 1000 * 1.4, easing: 'linear' }).finished.then(() => el.remove(), () => el.remove());
   }
 
+  // 風：「💨 かぜ！」と、横に流れるすじ（dir：1 で右へ、-1 で左へ）
+  function wind(dir) {
+    pop(G.W / 2, G.H * 0.36, dir > 0 ? 'かぜ！ 💨→' : '←💨 かぜ！', 'wind');
+    for (let i = 0; i < 6; i++) {
+      const el = document.createElement('i');
+      el.className = 'gust';
+      el.style.top = G.H * lerp(0.35, 0.8, Math.random()) + 'px';
+      el.style.width = lerp(60, 140, Math.random()) + 'px';
+      $('pops').appendChild(el);
+      el.animate([
+        { transform: 'translateX(' + (dir > 0 ? -160 : G.W + 20) + 'px)', opacity: 0 },
+        { opacity: 0.9, offset: 0.3 },
+        { transform: 'translateX(' + (dir > 0 ? G.W + 20 : -160) + 'px)', opacity: 0 }
+      ], { duration: 700 + Math.random() * 500, delay: i * 120, easing: 'ease-in-out' }).finished.then(() => el.remove(), () => el.remove());
+    }
+  }
+
   // 輪：はじめは大きく、ボールが着く瞬間（u = 1）にボールのすぐ外がわまで縮む。打ち返せる間は光る
   function drawTarget(u) {
     const k = lerp(T.ring, 1.12, clamp(u, 0, 1));
     targetEl.firstChild.style.transform = 'scale(' + k + ')';
+    // 風で流されるときは、輪もボールの落ちる所へずれていく
+    if (flight && flight.wind) targetEl.style.left = flight.to.x + flight.wind * (1 - Math.cos(Math.PI * clamp(u, 0, 1))) / 2 + 'px';
     targetEl.classList.toggle('now', u >= T.window);
   }
   const hideTarget = () => { targetEl.hidden = true; };
 
-  /* ---------- もどってきたボールを、上へスワイプして打ち返す ---------- */
-  function hitBack(dx) {
+  /* ---------- もどってきたボールを、上へスワイプして打ち返す ----------
+     speed（スワイプの速さ）でねらう所が変わる（aimAt）。ナイスなら、おなかに寄せてくれる
+     ひっさつを構えているときは、必殺の球（いつもおなかのまんなかへ、速く） */
+  function hitBack(dx, speed) {
     const f = flight, u = progress(f, performance.now());
     if (u < T.window) return;   // まだ遠い（光ってから）
     const nice = f.hold != null || Math.abs(u - 1) <= T.nice;
-    if (nice) sound.nice(); else sound.hit();
     const d = G.size * scaleAt(ball.z);
-    pop(ball.x, ball.y - d * 0.6, nice ? 'ナイス！' : 'セーフ', nice ? 'nice' : 'safe');
     hideTarget();
     if (f.tutorial) {
       hideGuide();
       guideReturn = false;
       updateSave((d2) => { d2.rallyGuideReturn = true; });
     }
-    // おなかのどこかへ（ナイスなら、おなかのまんなか近く。指を斜めにすると、少しその向きへ）
-    const r = nice ? 0.25 : 0.6, a = Math.random() * Math.PI * 2;
-    const aim = {
-      x: G.bx + clamp(Math.cos(a) * G.brx * r + dx * 0.4, -G.brx * 0.8, G.brx * 0.8),
-      y: G.by + Math.sin(a) * G.bry * r, z: 1
-    };
     const dur = Math.max(T.minTime, T.returnTime - streak * T.speedUp - stepNow * T.stepSpeed) * 0.8;
-    fly('back', aim, dur, G.H * 0.1);
+    if (armed) {
+      armed = false;
+      gauge = 0;
+      renderGauge();
+      sound.special();
+      pop(ball.x, ball.y - d * 0.6, 'ひっさつ！', 'nice');
+      ballEl.classList.add('special');
+      setPose(POSE.receive, 0);
+      body.classList.add('receive');
+      say('こい〜っ！');
+      fly('back', { x: G.bx, y: G.by, z: 1 }, dur * 0.7, G.H * 0.03);
+      flight.special = true;
+      return;
+    }
+    if (nice) sound.nice(); else sound.hit();
+    pop(ball.x, ball.y - d * 0.6, nice ? 'ナイス！' : 'セーフ', nice ? 'nice' : 'safe');
+    gauge = Math.min(T.gauge.max, gauge + (nice ? T.gauge.nice : T.gauge.safe));
+    renderGauge();
+    // ナイスなら、ねらいを「おなかのまんなか」の速さに半分よせる（はずれにくい）
+    const mid = (T.aim.slow + T.aim.fast) / 2;
+    const to = aimAt(nice ? lerp(speed, mid, 0.5) : speed, dx);
+    fly('back', { x: to.x, y: to.y, z: 1 }, dur, G.H * 0.1);
+  }
+  // 必殺の球が当たった：レシーブの構えで受けて「ぽよよ〜ん！！」。画面がゆれて、ボーナス
+  function specialHit() {
+    ballEl.classList.remove('special');
+    sound.poyon();
+    setTimeout(sound.poyon, 120);
+    pop(G.bx, G.by - 30, 'ぽよよ〜ん！！');
+    if (belly.ready()) {
+      const k = 720 / G.w;
+      belly.press('belly', (G.bx - G.left) * k, (G.by - G.top) * k);
+      setTimeout(() => belly.release('belly', true), 160);
+    }
+    root.animate([{ transform: 'translate(0,0)' }, { transform: 'translate(-6px,4px)' }, { transform: 'translate(5px,-3px)' },
+      { transform: 'translate(-3px,2px)' }, { transform: 'translate(0,0)' }], { duration: 380 });
+    countRally();
+    total += T.gauge.bonus;
+    $('count').textContent = total;
+    setTimeout(() => pop(G.bx, G.by - 70, 'ボーナス +' + T.gauge.bonus, 'safe'), 300);
+    setTimeout(() => {
+      body.classList.remove('receive');
+      setPose(null, 0);
+      say('すごい球だった〜！');
+      const next = Math.min(T.maxStep, Math.floor(streak / T.stepEvery));
+      if (next > stepNow) { approach(next); setTimeout(sendBack, 750); return; }
+      sendBack();
+    }, 900);
   }
 
-  // 打ち返せなかった：ボールが手前に落ちる。ボールが残っていれば、タヌくんは元の場所にもどって、投げなおし
+  // 打ち返せなかった：ボールが手前に落ちる
   function missed() {
     flight = null;
     state = 'wait';
@@ -438,9 +574,15 @@
       { transform: ballEl.style.transform },
       { transform: 'translate(' + (ball.x - G.size / 2) + 'px,' + (G.H + G.size) + 'px)' }
     ], { duration: 500, easing: 'ease-in', fill: 'forwards' });
+    loseBall();
+  }
+  // ボールが1こ減る。残っていれば、タヌくんは元の場所にもどって投げなおし。なくなったら結果
+  function loseBall() {
+    state = 'wait';
     lives--;
     renderLives();
     streak = 0; said = {};
+    if (armed) { armed = false; renderGauge(); }
     if (lives <= 0) {
       state = 'over';
       say(total >= 15 ? 'あ〜、おしかった！' : 'あ〜、おとしちゃった');
@@ -453,6 +595,21 @@
       resetBall();
     }, 1200);
   }
+  // ひっさつのゲージ。満タンになったら「💥 ひっさつ」ボタン（押すと構える。次の打ち返しが必殺の球）
+  function renderGauge() {
+    $('gauge-fill').style.width = gauge / T.gauge.max * 100 + '%';
+    const full = gauge >= T.gauge.max;
+    $('gauge').classList.toggle('full', full);
+    $('btn-special').hidden = !full && !armed;
+    $('btn-special').classList.toggle('armed', armed);
+    $('btn-special').textContent = armed ? '🔥 かまえ中…' : '💥 ひっさつ';
+  }
+  $('btn-special').addEventListener('click', () => {
+    if (gauge < T.gauge.max || armed) return;
+    armed = true;
+    renderGauge();
+    say('ひっさつ…！ くるか〜？');
+  });
   function renderLives() {
     $('lives').innerHTML = '';
     for (let i = 0; i < T.balls; i++) {
@@ -500,6 +657,9 @@
     state = 'ready';
     ballEl.getAnimations().forEach((a) => a.cancel());
     ballEl.classList.add('ready');
+    ballEl.classList.remove('special');
+    body.classList.remove('receive');
+    setPose(null, 0);
     shadowEl.style.visibility = '';
     hideTarget();
     placeReady();
@@ -514,8 +674,9 @@
   function start() {
     $('start').hidden = true;
     $('result').hidden = true;
-    total = 0; streak = 0; longest = 0; lives = T.balls; said = {};
+    total = 0; streak = 0; longest = 0; lives = T.balls; said = {}; gauge = 0; armed = false;
     state = 'ready';
+    renderGauge();
     if (stepNow) { stepNow = 0; layout(); }
     $('count').textContent = '0';
     renderLives();
@@ -548,6 +709,7 @@
   window.addEventListener('resize', layout);
   layout();
   renderLives();
+  renderGauge();
   placeReady();
   ballEl.classList.add('ready');
 })();
