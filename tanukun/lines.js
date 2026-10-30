@@ -9,6 +9,7 @@
                         / wear（きせかえで部品を付けた・はずした）
                         / heartUp（ハートをゲットしたとき。friendship で何個目かを指定）
                         / pull（おなかを引っぱって、はなしたとき）
+                        / flick・flickBig（しっぽをはじいたとき・大きくはじいて逆立ったとき）
      part      … 付けた部品の id（wear のときだけ）。はずしたときは none
      stage     … おまたの反応（place: 'crotch' のときだけ）
                         warn（なかよしになる前の1回目。注意する）/ moji（モジモジ）
@@ -32,6 +33,7 @@
      文の途中（「{name}の手」など）は「きみ」になります（「きみの手」）。
    ・face を書くと、そのセリフのときだけ絵を変えられます（例：face: 'shy'）
    ・weight を書くと出やすさを変えられます（省略時 1、2 なら2倍出やすい）
+   ・feature を書くと、config.js の公開スイッチ（features）が 'open' のときだけ出ます（セリフ図鑑の数にも入りません）
    ========================================================= */
 window.TANU_LINES = [
 
@@ -104,6 +106,17 @@ window.TANU_LINES = [
   { text: 'おなかは大事なの！',   when: { scene: 'tap', place: 'belly', mood: 'troubled' } },
 
   /* ---------- しっぽ ---------- */
+  /* ---------- しっぽをはじいたとき（公開スイッチ tailFlick が open のときだけ出る） ---------- */
+  { text: 'しっぽ、ぶるるんってなった〜',      when: { scene: 'flick', mood: 'normal' }, feature: 'tailFlick' },
+  { text: 'びよよ〜ん♪',                        when: { scene: 'flick', mood: 'normal' }, feature: 'tailFlick' },
+  { text: '{name}、しっぽで遊んでる？',         when: { scene: 'flick', mood: 'normal' }, feature: 'tailFlick' },
+  { text: 'しっぽ、のびないからね〜',           when: { scene: 'flick', mood: 'normal' }, feature: 'tailFlick', face: 'shy' },
+  { text: 'しっぽ、ひっぱらないで〜',           when: { scene: 'flick', mood: ['shy', 'troubled'] }, feature: 'tailFlick', face: 'troubled' },
+  { text: 'ゆらゆら…目がまわる〜',             when: { scene: 'flick', mood: ['shy', 'troubled'] }, feature: 'tailFlick', face: 'shy' },
+  { text: 'ひゃっ！？ しっぽがブワッてなった！', when: { scene: 'flickBig' }, feature: 'tailFlick', face: 'troubled' },
+  { text: 'び、びっくりした〜…',               when: { scene: 'flickBig' }, feature: 'tailFlick', face: 'shy' },
+  { text: 'もう〜！ 毛がさかだっちゃったよ',    when: { scene: 'flickBig' }, feature: 'tailFlick', face: 'troubled' },
+  { text: '{name}のいたずらっこ〜',             when: { scene: 'flickBig', friendship: { min: 3 } }, feature: 'tailFlick', face: 'shy', weight: 2 },
   { text: 'しっぽ、ふわふわでしょ', when: { scene: 'tap', place: 'tail', mood: 'normal' } },
   { text: 'ふりふり♪',            when: { scene: 'tap', place: 'tail', mood: 'normal' } },
   { text: '{name}だけ、とくべつだよ', when: { scene: 'tap', place: 'tail', mood: 'normal', friendship: { min: 4 } }, weight: 2 },

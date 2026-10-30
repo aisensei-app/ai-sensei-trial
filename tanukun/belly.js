@@ -14,6 +14,8 @@
    ・きせかえパーツ（デベソなど）は、絵に重ねてから変形するので、いっしょに揺れます
    ・おまた（crotch）は、さわっても揺れず、swell で少しの間だけ「むくっ」とふくらむ
    ・しっぽ（tail）は、twitch で付け根を軸に「ビクン」と動く（付け根は動かず、先ほど大きく動く）
+   ・しっぽは、bend で指に合わせて曲げ、letGo ではなすと「ぶるるん」と揺れて戻る（しっぽをはじく）。
+     puff で「ブワッ」とふくらんで（逆立つ）、shiver でぶるぶるっとふるえる
    ・opts.extra で、ほかの場所も足せる（ぽんぽこリズムの腕・ネックレス）
        type: 'twist' … twitch で付け根を軸に回る（cutX がなければ、片側を止めない）
        type: 'bob'   … kick で上下に「ぷるん」と揺れる
@@ -55,6 +57,7 @@ window.TanuBelly = function (opts) {
     const r = parts[key];
     r.key = key;
     r.x = r.v = r.px = r.py = r.pvx = r.pvy = 0;
+    r.pf = r.pfv = r.pfHold = 0;   // しっぽの「ブワッ」（ふくらみ。0.2 で2割）
     r.hold = 0;          // 指で押さえている間の「へこみ」の目標
     r.holdY = 0;         // 指で押さえている間の「沈み」の目標（胸の上下の揺れ用。ピクセル）
     r.dragging = false;
@@ -179,7 +182,7 @@ window.TanuBelly = function (opts) {
     if (!out) out = ctx.createImageData(bw, bh);
     const o = out.data;
     // いま動いている場所だけ計算する（その場所を囲む四角の中だけ）
-    const act = regions.filter((r) => r.x || r.px || r.py);
+    const act = regions.filter((r) => r.x || r.px || r.py || r.pf);
     let ax0 = bw, ay0 = bh, ax1 = 0, ay1 = 0;
     act.forEach((r) => {
       ax0 = Math.min(ax0, r.x0); ay0 = Math.min(ay0, r.y0);
@@ -208,6 +211,12 @@ window.TanuBelly = function (opts) {
             const dx = X - r.pivX, dy = Y - r.pivY;
             sx += r.pivX + c * dx + s * dy - X;
             sy += r.pivY - s * dx + c * dy - Y;
+            // ブワッ：しっぽのまんなかから外へふくらむ（中心に近い色を取る。付け根とふちは動かない）
+            if (r.pf) {
+              const g = clamp(r.pf, -0.1, 0.4) * f;
+              sx -= (X - r.cx) * g;
+              sy -= (Y - r.cy) * g;
+            }
             // しっぽが動いてあいた所に、足や腰みのの色を持ってこない（透明にする）
             if (r.pivX + c * dx + s * dy < r.cut - 15) clear = true;
             continue;
@@ -264,6 +273,10 @@ window.TanuBelly = function (opts) {
   function stepRegion(r, h) {
     r.v += (-SPRING * (r.x - r.hold) - DAMP * r.v) * h;
     r.x += r.v * h;
+    if (r.twist) {
+      r.pfv += (-SPRING * (r.pf - r.pfHold) - DAMP * r.pfv) * h;
+      r.pf += r.pfv * h;
+    }
     if (!r.dragging) {
       r.pvx += (-SPRING * r.px - DAMP * r.pvx) * h;
       r.pvy += (-SPRING * (r.py - r.holdY) - DAMP * r.pvy) * h;
@@ -274,10 +287,12 @@ window.TanuBelly = function (opts) {
 
   // base … ふくらんだまま保つ大きさ（setBase。ふだんは 0）
   const isStill = (r) => r.hold === (r.base || 0) && !r.holdY && !r.dragging &&
+    !r.pfHold && Math.abs(r.pf || 0) < 0.002 && Math.abs(r.pfv || 0) < 0.02 &&
     Math.abs(r.x - (r.base || 0)) < 0.001 && Math.abs(r.v) < 0.02 &&
     Math.abs(r.px) < 0.3 && Math.abs(r.py) < 0.3 && Math.abs(r.pvx) < 3 && Math.abs(r.pvy) < 3;
   const zero = (r) => {
     r.v = r.px = r.py = r.pvx = r.pvy = 0; r.holdY = 0; r.dragging = false;
+    if (r.twist) r.pf = r.pfv = r.pfHold = 0;
     r.x = r.hold = r.base || 0;
   };
 
@@ -412,6 +427,46 @@ window.TanuBelly = function (opts) {
       start();
     },
 
+    // しっぽを指に合わせて曲げる：angle（ラジアン。正で、画面の上で時計回り）まで曲げたまま
+    bend: function (part, angle) {
+      const r = parts[part];
+      if (!r || !r.twist || !ready()) return;
+      r.hold = clamp(angle, -0.6, 0.6);
+      start();
+    },
+
+    // 曲げていたしっぽをはなす：ばねで「ぶるるん」と何回か揺れて戻る
+    letGo: function (part) {
+      const r = parts[part];
+      if (!r || !r.twist) return;
+      r.hold = 0;
+      start();
+    },
+
+    // しっぽが「ブワッ」：amount（0.2 で2割）までふくらんで（逆立つ）、ms ミリ秒後に戻る
+    puff: function (part, amount, ms) {
+      const r = parts[part];
+      if (!r || !r.twist || !ready()) return;
+      r.pfHold = amount;
+      r.pfv += amount * 14;   // 一気にふくらむ勢い
+      clearTimeout(r.puffTimer);
+      r.puffTimer = setTimeout(() => { r.pfHold = 0; start(); }, ms);
+      start();
+    },
+
+    // ぶるぶるっ：angle 度の小さな「ビクン」を、times 回すばやく左右に
+    shiver: function (part, angle, times) {
+      const r = parts[part];
+      if (!r || !r.twist || !ready()) return;
+      let n = 0;
+      clearInterval(r.shiverTimer);
+      r.shiverTimer = setInterval(() => {
+        r.v += (n % 2 ? 1 : -1) * angle * Math.PI / 180 / peak;
+        start();
+        if (++n >= times) clearInterval(r.shiverTimer);
+      }, 70);
+    },
+
     // 上下に「ぷるん」：px ピクセルだけ下に沈んでから、ばねで揺れて戻る（extra の type: 'bob'）
     kick: function (part, px) {
       const r = parts[part];
@@ -441,6 +496,7 @@ window.TanuBelly = function (opts) {
     },
 
     stop: function () {
+      regions.forEach((r) => { clearTimeout(r.puffTimer); clearInterval(r.shiverTimer); });
       regions.forEach(zero);
       zero(poke);
     }
