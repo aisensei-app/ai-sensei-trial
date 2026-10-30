@@ -74,7 +74,7 @@
 
   /* ---------- しっぽ ---------- */
   /* ---------- しっぽをはじいたとき（公開スイッチ tailFlick が open のときだけ出る） ---------- */
-  { text: 'My tail went *wobble wobble*~',      when: { scene: 'flick', mood: 'normal' }, feature: 'tailFlick' },
+  { text: 'My tail went all wobbly~',      when: { scene: 'flick', mood: 'normal' }, feature: 'tailFlick' },
   { text: 'Boiiing♪',                        when: { scene: 'flick', mood: 'normal' }, feature: 'tailFlick' },
   { text: '{name}, are you playing with my tail?',         when: { scene: 'flick', mood: 'normal' }, feature: 'tailFlick' },
   { text: 'My tail doesn\'t stretch, y\'know~',           when: { scene: 'flick', mood: 'normal' }, feature: 'tailFlick', face: 'shy' },
