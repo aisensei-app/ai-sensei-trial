@@ -19,6 +19,14 @@
   // style.css の body.in-x で、下に余白を空けて中身を上に寄せる。確認用に URL の ?inx でも
   if (/Twitter/i.test(navigator.userAgent) || /[?&]inx\b/.test(location.search)) document.body.classList.add('in-x');
   const $ = (id) => document.getElementById(id);
+  // 左上の「🌐 English / 🌐 日本語」：押すと、もう一方の言語へ（言語が2つ以上のときだけ出す。設定からも変えられる）
+  const LANG_KEYS = Object.keys(I18N.LANGS);
+  if (LANG_KEYS.length > 1) {
+    const next = LANG_KEYS[(LANG_KEYS.indexOf(I18N.lang) + 1) % LANG_KEYS.length];
+    $('btn-lang').textContent = '🌐 ' + I18N.LANGS[next];
+    $('btn-lang').hidden = false;
+    $('btn-lang').addEventListener('click', () => I18N.set(next));
+  }
 
   const area   = $('tanu-area');
   const move   = $('tanu-move');    // 隠れる・戻る（スライド）

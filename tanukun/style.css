@@ -148,6 +148,9 @@ html, body {
   cursor: pointer;
 }
 #play-hearts { position: absolute; right: 0; }
+/* ことばの切りかえ（左上）。遊ぶ画面では「‹ もどる」があるので出さない */
+.lang-btn { position: fixed; z-index: 5; top: calc(env(safe-area-inset-top) + 10px); left: 12px; font-size: 13px; padding: 6px 12px; }
+.mode-play .lang-btn, .demo .lang-btn { display: none; }
 .cap-note { position: absolute; right: 0; top: calc(50% + 14px); font-size: 11px; font-weight: 700;
   color: #6B5A9E; background: rgba(255, 255, 255, .75); padding: 1px 8px; border-radius: 999px; white-space: nowrap; }
 .cap-note[hidden], .mode-home .cap-note, .mode-name .cap-note, .demo .cap-note { display: none; }
