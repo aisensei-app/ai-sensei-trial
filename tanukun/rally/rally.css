@@ -237,6 +237,16 @@ body.in-x .special-btn { bottom: calc(25vh + 10px); }
 .target.now i { border-color: #FFB13B; box-shadow: 0 0 12px 4px rgba(255, 177, 59, .8); }
 .target.now span { opacity: 1; }
 .guiding .target span { display: none; }   /* ガイドの説明と重ならないように */
+/* 返ってくる球の種類の予告：⚡ はやい（赤）／🎈 ふんわり（水色）／🌀 カーブ（むらさき） */
+.target.t-fast { background: rgba(255, 94, 94, .3); }
+.target.t-fast i { border-color: #FF5E5E; box-shadow: 0 0 0 2px rgba(255, 255, 255, .8); }
+.target.t-lob { background: rgba(63, 169, 245, .25); }
+.target.t-lob i { border-color: #3FA9F5; box-shadow: 0 0 0 2px rgba(255, 255, 255, .8); }
+.target.t-curve { background: rgba(155, 89, 230, .25); }
+.target.t-curve i { border-color: #9B59E6; border-style: dashed; box-shadow: 0 0 0 2px rgba(255, 255, 255, .8); }
+.pop.kind-fast { -webkit-text-stroke-color: #E03A3A; font-size: 20px; }
+.pop.kind-lob { -webkit-text-stroke-color: #2A8AD6; font-size: 20px; }
+.pop.kind-curve { -webkit-text-stroke-color: #8247C9; font-size: 20px; }
 
 /* ---- 必殺の球（燃えている）と、タヌくんのレシーブの構え（ぐっと低く、おなかを前に） ---- */
 .ball.charged i { box-shadow: 0 0 10px 4px rgba(255, 230, 90, .95), 0 0 24px 10px rgba(255, 210, 60, .55); animation: glow .35s ease-in-out infinite alternate; }
@@ -257,6 +267,9 @@ body.in-x .special-btn { bottom: calc(25vh + 10px); }
   pointer-events: none;
 }
 .pop.wind { -webkit-text-stroke-color: #3FA9F5; font-size: 22px; }
+
+/* ---- おまた：腰みのの葉っぱが舞う ---- */
+.leaf { position: absolute; font-size: 22px; pointer-events: none; }
 
 /* ---- カモメ（ボールの前を横切る、じゃま） ---- */
 .gull { position: absolute; left: 0; font-size: 44px; z-index: 5; pointer-events: none; }

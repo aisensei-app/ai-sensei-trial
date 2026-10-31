@@ -5,9 +5,14 @@
    ・もどってくる場所の砂の上に「輪」が出る。輪が縮んでボールに重なったら、上へスワイプして打ち返す
    ・ボールは3こ。落とすと1こ減って、手前から投げなおし。3こ落としたら結果（合計ラリー数と、いちばん続いた数）
    ・3ラリー続くごとに、タヌくんが1歩近づいてきて、ボールも速くなる（落とすと、元の場所にもどる）
-   ・近づいてくると、ときどき「じゃま」が入る：カモメやインコが横切る／タヌくんが「せーの…」とためてから返す（フェイント）
+   ・近づくときも、ボールは止めずに返しながら1歩前へ出る
+   ・近づいてくると、ときどき「じゃま」が入る（1回に1つまで）：カモメやインコが横切る／タヌくんが「せーの…」とためてから返す（フェイント）
      ／風がふいて、ボールが横に流される（落ちてくる場所の輪もずれていく）
-   ・スワイプの長さで、ねらう高さが変わる：短く → 低い（タヌくんが、おしりで ぽよん！）、ふつう → おなか（長いほど上）、とても長く → 頭（ヘディング）
+   ・スワイプの長さで、ねらう高さが変わる：短く → 低い（おまた）、ふつう → おなか（長いほど上）、とても長く → 頭（ヘディング）
+   ・返ってくる球は、こちらの打ち方で変わる（輪の色と文字で予告）：
+     頭 → 🎈 ふんわり／おなかのはし → 🌀 カーブ／おなかのまんなかにナイス（近づいてから）→ ⚡ はやい
+   ・おまたに当たると、本編のなかよし度（ハートの数）で反応が変わる：
+     なかよしになる前 → 💢 怒ってスマッシュ（⚡ はやい）／モジモジ → 腰みので「ぱさっ」（🎈 ふんわり）／デレ → 照れながら、ふつうに返す
    ・打ち返すスワイプは、ボールの近くから（風で流されたら、追いかける）
    ・ナイスでゲージ（⚡ 5つ）がたまる。満タンで「💥 ひっさつ」ボタン → 構えるとボールが光り、次の打ち返しが燃える必殺の球。
      タヌくんはレシーブの構えで受けて、ボーナス
@@ -47,10 +52,13 @@
      late         … 手前に着いてから、この割合まで待ってくれる（それを過ぎたら落ちてミス）
      ring         … 落ちてくる場所の輪の、最初の大きさ（ボールの何倍）。縮んでいって、ボールが着く瞬間にボールのすぐ外がわ
      balls        … ボールの数（落とせる回数）
-     birds, feint, wind … じゃまが入る割合（1歩以上近づいてから）。feint は「せーの…」でためる秒数、wind は流される幅（画面の横幅に対する割合）
+     birds, feint, wind … じゃまが入る割合（1歩以上近づいてから。ふつうの球のときだけ、1回に1つまで）。
+                    feint は「せーの…」でためる秒数、wind は流される幅（画面の横幅に対する割合）
+     kinds        … 返ってくる球の種類。time はもどる秒数の倍率、arc は山の高さ（画面の高さに対する割合）、
+                    bend はカーブでふくらむ幅（画面の横幅に対する割合）。edge より外（おなかの半径に対する割合）に当たるとカーブ
      aim          … スワイプの長さ（ピクセル）。short より短いと 低い球（おしり）、long 以上で 頭（その長さで、指をはなす前でも飛ぶ）、
                     そのあいだは おなか（長いほど上）
-     head, low    … 頭（髪の上）・低い球（おしり）の当たる所（絵の％。r は半径で、絵の横幅に対する％）
+     head, low    … 頭（髪の上）・低い球（おまた）の当たる所（絵の％。r は半径で、絵の横幅に対する％）
      reach        … 打ち返すスワイプは、ボールから横にこの距離（ピクセル。画面の横幅の reachW 倍のほうが大きければ、そちら）以内で始める
      gauge        … ナイスで nice、セーフで safe たまる。max で満タン（ひっさつ）。bonus は必殺が当たったときに足すラリー数 */
   const T = {
@@ -63,9 +71,10 @@
     window: 0.55, nice: 0.1, late: 0.22,
     ring: 2.8,
     balls: 3,
-    birds: 0.35, feint: { rate: 0.25, seconds: [0.45, 0.9] }, wind: { rate: 0.25, drift: 0.22 },
+    birds: 0.2, feint: { rate: 0.15, seconds: [0.45, 0.9] }, wind: { rate: 0.15, drift: 0.22 },
+    kinds: { fast: { time: 0.72, arc: 0.11 }, lob: { time: 1.3, arc: 0.38 }, curve: { time: 1.0, bend: 0.24 }, edge: 0.55 },
     aim: { short: 90, long: 220 },
-    head: { x: 44, y: 6, r: 11 }, low: { x: 34, y: 66, r: 16 },
+    head: { x: 44, y: 6, r: 11 }, low: { x: 33, y: 67, r: 16 },
     reach: 110, reachW: 0.3,
     gauge: { nice: 1, safe: 0.4, max: 5, bonus: 3 }
   };
@@ -140,7 +149,10 @@
   const FEINT_POSE = C.images.ponpoko1 ? IMG('ponpoko1') : null;   // 「せーの…」でためるときのポーズ
   const POSE = {
     receive: IMG('images/happy.webp'),                           // 必殺の球をレシーブ（うでを下ろして、おなかを前に）
-    ouch: C.images.troubled ? IMG('troubled') : null            // 頭に当たった
+    ouch: C.images.troubled ? IMG('troubled') : null,           // 頭に当たった
+    angry: C.images.angry ? IMG('angry') : null,                // おまた：なかよしになる前（怒る）
+    moji: C.images.mojimoji ? IMG('mojimoji') : null,           // おまた：モジモジ（両手で腰みのの前を押さえる）
+    dere: C.images.dere ? IMG('dere') : null                    // おまた：デレ
   };
   // ポーズを ms ミリ秒だけ変える（0 なら、変えたまま）
   let poseTimer = 0;
@@ -216,6 +228,8 @@
     hit: () => tone('triangle', 520, 260, 0.14, 0.5),       // 手で「ぽんっ」
     nice: () => { tone('triangle', 660, 330, 0.14, 0.5); setTimeout(() => tone('sine', 990, 1320, 0.12, 0.25), 60); },
     miss: () => tone('sine', 400, 120, 0.5, 0.35),
+    angry: () => { tone('square', 220, 140, 0.12, 0.18); setTimeout(() => tone('square', 260, 160, 0.14, 0.18), 110); },
+    leaf: () => tone('triangle', 900, 1800, 0.12, 0.15, 700),          // 葉っぱで「ぱさっ」
     special: () => { tone('sawtooth', 200, 900, 0.35, 0.3); setTimeout(() => tone('triangle', 880, 1760, 0.2, 0.3), 120); }
   };
 
@@ -233,7 +247,15 @@
   const ball = { x: 0, y: 0, z: 0 };
   const lerp = (a, b, u) => a + (b - a) * u;
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-  const scaleAt = (z) => lerp(1, G.far, z);
+  // 奥でのボールの大きさ。近づいている間（0.6秒）は、タヌくんの絵と一緒になめらかに大きくする
+  let farAnim = null;
+  function farNow() {
+    if (!farAnim) return G.far;
+    const e = (performance.now() - farAnim.t) / 600;
+    if (e >= 1) { farAnim = null; return G.far; }
+    return lerp(farAnim.from, G.far, e * e * (3 - 2 * e));
+  }
+  const scaleAt = (z) => lerp(1, farNow(), z);
 
   function draw() {
     const s = scaleAt(ball.z), d = G.size * s;
@@ -261,8 +283,9 @@
   // 道すじの u（0〜1。1 より先も少しだけ伸ばせる）での位置
   function at(f, u) {
     const w = f.wind ? f.wind * (1 - Math.cos(Math.PI * clamp(u, 0, 1))) / 2 : 0;   // 風：だんだん横に流される
+    const b = f.bend ? f.bend * Math.sin(Math.PI * clamp(u, 0, 1)) : 0;             // カーブ：ふくらんで、輪にもどってくる
     return {
-      x: lerp(f.from.x, f.to.x, u) + w,
+      x: lerp(f.from.x, f.to.x, u) + w + b,
       y: lerp(f.from.y, f.to.y, u) - f.arc * Math.sin(Math.PI * clamp(u, 0, 1)),
       z: lerp(f.from.z, f.to.z, u)
     };
@@ -356,14 +379,20 @@
     if (f.special) { specialHit(); return; }
     const part = partAt(ball.x, ball.y);
     if (part) {
-      if (part === 'belly') poyon(ball.x, ball.y);
-      else if (part === 'head') header(ball.x, ball.y);
-      else hip();
+      let kind = 'normal';
+      if (part === 'belly') {
+        poyon(ball.x, ball.y);
+        // おなかのはし → カーブ／まんなかにナイス（近づいてから）→ はやい
+        if (Math.abs(ball.x - G.bx) > G.brx * T.kinds.edge) kind = 'curve';
+        else if (f.nice && stepNow >= 1) kind = 'fast';
+      } else if (part === 'head') { header(ball.x, ball.y); kind = 'lob'; }
+      else kind = crotch();
       if (f.kind === 'back') countRally();
-      // 3ラリーごとに1歩近づく（近づく間は、少し待ってから返す）
+      if (f.kind === 'throw' || guideReturn) kind = 'normal';   // 最初のひと投げと、はじめての打ち返しは、ふつうの球
+      // 3ラリーごとに1歩近づく（ボールは止めずに、返しながら前へ出る。近づいたときは、じゃまなし）
       const next = Math.min(T.maxStep, Math.floor(streak / T.stepEvery));
-      if (next > stepNow) { approach(next); setTimeout(sendBack, 600); return; }
-      setTimeout(sendBack, { head: 220, low: 520 }[part] || 80);
+      if (next > stepNow) { approach(next); f.feinted = true; }
+      setTimeout(() => sendBack(kind), { head: 220, low: 480 }[part] || 80);
       return;
     }
     const d = inBelly(ball.x, ball.y);
@@ -374,20 +403,50 @@
     if (f.kind === 'back') { setTimeout(() => loseBall(), 500); return; }
     setTimeout(resetBall, 1200);
   }
-  // 低い球：くるっと後ろを向いて、おしりで「ぽよん！」（ラリーは続く）
-  // ※ 後ろ姿の絵はまだないので、体を横にちぢめて回ったように見せ、はね返す動きだけ
-  function hip() {
-    sound.poyon();
-    pop(G.lx, G.ly - 10, '🍑 おしりで ぽよん！', 'safe');
-    body.animate([
-      { transform: 'none' },
-      { transform: 'scaleX(.15) rotate(-4deg)', offset: 0.25 },
-      { transform: 'scaleX(-1) translateY(-3%) rotate(8deg)', offset: 0.5 },
-      { transform: 'scaleX(-1.04) scaleY(.96) translateY(0)', offset: 0.65 },
-      { transform: 'scaleX(.15)', offset: 0.85 },
-      { transform: 'none' }
-    ], { duration: 650, easing: 'ease-in-out' });
-    if (Math.random() < 0.4) setTimeout(() => say(['おしりアタック〜！', 'ぽよんっ♪', 'しっぽもふかふかだよ'][Math.floor(Math.random() * 3)]), 300);
+  // おまたに当たった：本編のなかよし度（ハートの数）で反応が変わる（ラリーは続く）。返ってくる球の種類を返す
+  //   なかよしになる前 → 怒ってスマッシュ（はやい）／モジモジ → 両手で腰みのを押さえて「ぱさっ」（ふんわり）／デレ → 照れて、ふつうに
+  function crotch() {
+    const n = hearts(), st = C.crotch ? C.crotch.stages : { moji: 2, dere: 4 };
+    const stage = n >= st.dere ? 'dere' : n >= st.moji ? 'moji' : 'angry';
+    const pick = (a) => a[Math.floor(Math.random() * a.length)];
+    if (stage === 'angry') {
+      sound.angry();
+      pop(G.lx, G.ly - 10, '💢 こらっ！', 'miss');
+      setPose(POSE.angry, 700);
+      body.animate([{ transform: 'none' }, { transform: 'translateX(-2%)' }, { transform: 'translateX(2%)' },
+        { transform: 'translateX(-1%)' }, { transform: 'none' }], { duration: 300 });
+      say(pick(['どこねらってるの！', 'そこはダメ〜！', 'おかえしだっ！']));
+      return 'fast';
+    }
+    sound.leaf();
+    leaves(G.lx, G.ly);
+    if (stage === 'moji') {
+      pop(G.lx, G.ly - 10, '🌿 ぱさっ', 'safe');
+      setPose(POSE.moji, 700);
+      say(pick(['ひゃっ…！', 'そ、そこは…', 'こしみの ガード！']));
+      return 'lob';
+    }
+    pop(G.lx, G.ly - 10, '🌿 ぱさっ♡', 'nice');
+    setPose(POSE.dere, 800);
+    say(pick(['も〜…♡', 'えへへ、ねらったでしょ〜', 'しかたないなぁ♪']));
+    return 'normal';
+  }
+  // 腰みのの葉っぱが、ひらひら舞う
+  function leaves(x, y) {
+    for (let i = 0; i < 5; i++) {
+      const el = document.createElement('span');
+      el.className = 'leaf';
+      el.textContent = '🍃';
+      el.style.left = x + 'px';
+      el.style.top = y + 'px';
+      $('pops').appendChild(el);
+      const dx = (Math.random() * 2 - 1) * 70, up = 30 + Math.random() * 40;
+      el.animate([
+        { transform: 'translate(-50%,-50%) rotate(0)', opacity: 1 },
+        { transform: 'translate(calc(-50% + ' + dx * 0.6 + 'px), calc(-50% - ' + up + 'px)) rotate(' + dx * 2 + 'deg)', opacity: 1, offset: 0.35 },
+        { transform: 'translate(calc(-50% + ' + dx + 'px), calc(-50% + 40px)) rotate(' + dx * 4 + 'deg)', opacity: 0 }
+      ], { duration: 900 + Math.random() * 300, easing: 'ease-out' }).finished.then(() => el.remove(), () => el.remove());
+    }
   }
   // 頭に当たった：ヘディングで返す（ラリーは続く）
   function header(x, y) {
@@ -408,6 +467,7 @@
   }
   // タヌくんが1歩近づく（絵が大きく、足もとが手前に）。#body・#ground の transition で、なめらかに
   function approach(n) {
+    farAnim = { from: farNow(), t: performance.now() };
     stepNow = n;
     root.classList.add('moving');
     layout();
@@ -428,23 +488,32 @@
 
   // タヌくんが打ち返す：手前のどこかへ、山なりで。落ちてくる場所に「輪」を出す
   // 1歩以上近づいたら、ときどき「せーの…」とためてから（フェイント）。カモメが横切ることも
-  function sendBack() {
+  // kind：返ってくる球の種類（normal / fast はやい / lob ふんわり / curve カーブ）。輪の色と文字で予告する
+  const KIND_LABEL = { fast: '⚡ はやい！', lob: '🎈 ふんわり', curve: '🌀 カーブ' };
+  function sendBack(kind) {
     if (state === 'over') return;
-    if (stepNow >= 1 && !armed && Math.random() < T.feint.rate && !flight.feinted) { feint(); return; }
+    kind = kind || 'normal';
+    if (kind === 'normal' && stepNow >= 1 && !armed && Math.random() < T.feint.rate && !flight.feinted) { feint(); return; }
     const spread = Math.min(0.3, 0.1 + streak * 0.015);   // 続くほど左右に広がる
     const tx = G.W * (0.5 + (Math.random() * 2 - 1) * spread);
-    const dur = Math.max(T.minTime, T.returnTime - streak * T.speedUp - stepNow * T.stepSpeed);
+    const K = T.kinds[kind] || {};
+    const dur = Math.max(T.minTime, T.returnTime - streak * T.speedUp - stepNow * T.stepSpeed) * (K.time || 1);
     targetEl.style.left = tx + 'px';
     targetEl.style.top = G.nearY + 'px';
     targetEl.style.width = targetEl.style.height = G.size + 'px';
-    targetEl.className = 'target';
+    targetEl.className = 'target' + (kind === 'normal' ? '' : ' t-' + kind);
     targetEl.hidden = false;
-    fly('return', { x: tx, y: G.nearY, z: 0 }, dur, G.H * (0.22 + Math.random() * 0.08));
+    fly('return', { x: tx, y: G.nearY, z: 0 }, dur, G.H * (K.arc || 0.22 + Math.random() * 0.08));
+    flight.type = kind;
+    if (kind !== 'normal') pop(tx, G.nearY - G.size * 1.6, KIND_LABEL[kind], 'kind-' + kind);
+    // カーブ：輪と反対がわへふくらんでから、輪にもどってくる
+    if (kind === 'curve') flight.bend = (tx < G.W / 2 ? 1 : -1) * G.W * K.bend;
     // はじめての打ち返しは、輪の上でボールが止まって待つ（ガイド）
     if (guideReturn) { flight.tutorial = true; return; }
-    if (stepNow < 1) return;
+    if (stepNow < 1 || kind !== 'normal') return;
+    // じゃまは1回に1つまで（鳥か風）
     if (Math.random() < T.birds) bird(dur);
-    if (Math.random() < T.wind.rate) {
+    else if (Math.random() < T.wind.rate) {
       // 風：画面のはしを越えないほうへ流す
       const room = tx < G.W / 2 ? 1 : -1;
       flight.wind = room * G.W * T.wind.drift * lerp(0.6, 1, Math.random());
@@ -547,6 +616,7 @@
     if (gauge > before) gaugePop(nice ? '+1⚡' : '+⚡');
     const to = aimAt(len, dx);
     fly('back', { x: to.x, y: to.y, z: 1 }, dur, G.H * 0.1);
+    flight.nice = nice;
   }
   // 必殺の球が当たった：レシーブの構えで受けて「ぽよよ〜ん！！」。画面がゆれて、ボーナス
   function specialHit() {
@@ -570,7 +640,7 @@
       setPose(null, 0);
       say('すごい球だった〜！');
       const next = Math.min(T.maxStep, Math.floor(streak / T.stepEvery));
-      if (next > stepNow) { approach(next); setTimeout(sendBack, 600); return; }
+      if (next > stepNow) { approach(next); flight.feinted = true; }
       sendBack();
     }, 900);
   }
