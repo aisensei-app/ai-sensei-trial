@@ -266,7 +266,7 @@ body.in-x .special-btn { bottom: calc(25vh + 10px); }
 .ball.special i { box-shadow: 0 0 18px 8px rgba(255, 120, 40, .95), 0 0 40px 18px rgba(255, 200, 60, .75), 0 0 70px 30px rgba(255, 240, 160, .45); animation: fire .12s linear infinite alternate; }
 @keyframes fire { to { filter: brightness(1.3) saturate(1.4); } }
 #body.receive { animation: receive .5s ease-in-out infinite alternate; }
-@keyframes receive { from { transform: scale(1.04, .93); } to { transform: scale(1.06, .91); } }
+@keyframes receive { from { transform: none; } to { transform: translateY(1.2%) scale(1.01, .985); } }   /* 構えたまま、小さく上下 */
 
 /* ---- 風：横に流れるすじ ---- */
 .gust {
@@ -394,10 +394,10 @@ body.in-x .special-btn { bottom: calc(25vh + 10px); }
   border-radius: 50%;
   border: 4px solid #fff;
   object-fit: cover;
-  transform: skewY(7deg);
+  transform: skewY(7deg);   /* 顔はまっすぐに */
   flex: none;
 }
-.cutin-text { transform: skewY(7deg); color: #fff; line-height: 1.15; }
+.cutin-text { color: #fff; line-height: 1.15; }   /* 文字は帯と同じに斜め */
 .cutin-text span { display: block; font-size: 16px; font-weight: 900; -webkit-text-stroke: 4px #8A3A10; paint-order: stroke; }
 .cutin-text b {
   display: block;

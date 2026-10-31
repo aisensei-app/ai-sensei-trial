@@ -85,6 +85,7 @@
                     bend はカーブでふくらむ幅（画面の横幅に対する割合）。edge より外（おなかの半径に対する割合）に当たるとカーブ
      aim          … スワイプの長さ（ピクセル）。short より短いと 低い球（おしり）、long 以上で 頭（その長さで、指をはなす前でも飛ぶ）、
                     そのあいだは おなか（長いほど上）
+     receive      … レシーブの構え（images/receive.webp）で、必殺の球を受ける所（組んだ両手のすぐ上。絵の％）
      head, low    … 頭（髪の上）・低い球（おまた）の当たる所（絵の％。r は半径で、絵の横幅に対する％）
      reach        … 打ち返すスワイプは、ボールから横にこの距離（ピクセル。画面の横幅の reachW 倍のほうが大きければ、そちら）以内で始める
      bonus        … 1日1回のごほうび（なかよしポイント）。合計 at ラリー以上で points（多い段から）
@@ -102,7 +103,7 @@
     birds: 0.2, feint: { rate: 0.15, seconds: [0.45, 0.9] }, wind: { rate: 0.15, drift: 0.22 },
     kinds: { fast: { time: 0.72, arc: 0.11 }, lob: { time: 1.3, arc: 0.38 }, curve: { time: 1.0, bend: 0.24 }, edge: 0.55 },
     aim: { short: 90, long: 220 },
-    head: { x: 44, y: 6, r: 11 }, low: { x: 33, y: 67, r: 16 },
+    head: { x: 44, y: 6, r: 11 }, low: { x: 33, y: 67, r: 16 }, receive: { x: 35.4, y: 55 },
     reach: 110, reachW: 0.3,
     gauge: { nice: 1, safe: 0.4, max: 5, bonus: 3 }, cutin: 1,
     bonus: [{ at: 15, points: 5 }, { at: 1, points: 3 }]
@@ -185,7 +186,7 @@
   img.src = IMG('normal');
   const FEINT_POSE = C.images.ponpoko1 ? IMG('ponpoko1') : null;   // 「せーの…」でためるときのポーズ
   const POSE = {
-    receive: IMG('images/happy.webp'),                           // 必殺の球をレシーブ（うでを下ろして、おなかを前に）
+    receive: IMG('images/receive.webp'),                         // 必殺の球をレシーブ（腰を落として、両手を組んで前へ。tools/make_receive.py）
     ouch: C.images.troubled ? IMG('troubled') : null,           // 頭に当たった
     angry: C.images.angry ? IMG('angry') : null,                // おまた：なかよしになる前（怒る）
     moji: C.images.mojimoji ? IMG('mojimoji') : null,           // おまた：モジモジ（両手で腰みのの前を押さえる）
@@ -202,7 +203,9 @@
     overlay: partsLayer, layers: () => wornLayers() });
   renderParts();
   // おなかの揺れに使う絵を、先に読んでおく（いつもの絵と、必殺の球を受けるポーズ）
-  img.addEventListener('load', () => belly.warm([img.src, POSE.receive]), { once: true });
+  // （レシーブの構えは、おなかの形がちがうので、揺れには使わない）
+  img.addEventListener('load', () => belly.warm([img.src]), { once: true });
+  new Image().src = POSE.receive;
 
   // 画面の大きさと、タヌくんが何歩近づいたか（stepNow）から、タヌくん・おなか・手前のボールの位置を決める
   const G = {};
@@ -224,7 +227,8 @@
       size: Math.min(T.maxBall, W * T.ballSize),
       far: T.far * (1 + T.step.ball * stepNow),                   // 近づくと、奥のボールも大きく（タヌくんより強めに）
       hx: left + w * T.head.x / 100, hy: top + h * T.head.y / 100, hr: w * T.head.r / 100,             // 頭
-      lx: left + w * T.low.x / 100, ly: top + h * T.low.y / 100, lr: w * T.low.r / 100               // 低い球（おしりで返す）
+      lx: left + w * T.low.x / 100, ly: top + h * T.low.y / 100, lr: w * T.low.r / 100,              // 低い球（おまた）
+      rcx: left + w * T.receive.x / 100, rcy: top + h * T.receive.y / 100                             // レシーブの構えの両手
     });
     $('hint').style.top = (G.nearY + G.size * 0.75) + 'px';
     if (state === 'ready') placeReady();
@@ -694,7 +698,7 @@
       setPose(POSE.receive, 0);
       body.classList.add('receive');
       say(tr('こい〜っ！'));
-      fly('back', { x: G.bx, y: G.by, z: 1 }, dur * 0.7, G.H * 0.03);
+      fly('back', { x: G.rcx, y: G.rcy, z: 1 }, dur * 0.7, G.H * 0.03);
       flight.special = true;
       return;
     }
@@ -713,18 +717,18 @@
     ballEl.classList.remove('special');
     sound.poyon();
     setTimeout(sound.poyon, 120);
-    pop(G.bx, G.by - 30, tr('ぽよよ〜ん！！'));
-    if (belly.ready()) {
-      const k = 720 / G.w;
-      belly.press('belly', (G.bx - G.left) * k, (G.by - G.top) * k);
-      setTimeout(() => belly.release('belly', true), 160);
-    }
+    pop(G.rcx, G.rcy - 40, tr('ぽよよ〜ん！！'), 'boing');
+    ripple(G.rcx, G.rcy);
+    setTimeout(() => ripple(G.rcx, G.rcy), 140);
+    // 組んだ両手で、ぐっと受けて弾き返す（体が沈んで、伸びる）
+    body.animate([{ transform: 'none' }, { transform: 'scale(1.06, .9)' }, { transform: 'scale(.96, 1.06)' }, { transform: 'none' }],
+      { duration: 450, easing: 'ease-out' });
     root.animate([{ transform: 'translate(0,0)' }, { transform: 'translate(-6px,4px)' }, { transform: 'translate(5px,-3px)' },
       { transform: 'translate(-3px,2px)' }, { transform: 'translate(0,0)' }], { duration: 380 });
     countRally();
     total += T.gauge.bonus;
     $('count').textContent = total;
-    setTimeout(() => pop(G.bx, G.by - 70, tr('ボーナス +{n}', { n: T.gauge.bonus }), 'safe'), 300);
+    setTimeout(() => pop(G.rcx, G.rcy - 90, tr('ボーナス +{n}', { n: T.gauge.bonus }), 'safe'), 300);
     setTimeout(() => {
       body.classList.remove('receive');
       setPose(null, 0);
@@ -834,9 +838,11 @@
     const el = document.createElement('span');
     el.className = 'pop' + (cls ? ' ' + cls : '');
     el.textContent = text;
-    el.style.left = x + 'px';
     el.style.top = y + 'px';
     $('pops').appendChild(el);
+    // 画面のはしで切れないように、横の位置をおさえる（弾む文字は横に 1.35倍までのびるので、その分も）
+    const half = el.offsetWidth * 0.68 + 6;
+    el.style.left = (G.W > half * 2 ? clamp(x, half, G.W - half) : G.W / 2) + 'px';
     setTimeout(() => el.remove(), 800);
   }
   let sayTimer = 0;
