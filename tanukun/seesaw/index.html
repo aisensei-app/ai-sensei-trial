@@ -103,8 +103,15 @@ body{margin:0;background:#bfe3f7;color:var(--ink);font-family:var(--font);overfl
 <script>
 (() => {
 'use strict';
-// 表情の絵（いまは「通常」だけ。わくわく顔ができたら happy を img/sit_happy.webp に）
-const SRC = { normal: 'img/sit_normal.webp', happy: 'img/sit_normal.webp', beach: '../images/bg/beach_day.webp' };
+// 絵：座った絵の表情（同じポーズ）と、海へ飛びこむときの「ばんざい」
+const SRC = {
+  normal: 'img/sit_normal.webp',   // 下にいるとき
+  happy:  'img/sit_happy.webp',    // まんなか（わくわく）
+  wow:    'img/sit_wow.webp',      // いちばん上の方（びっくり「たか〜い！」）
+  ehehe:  'img/sit_ehehe.webp',    // 「ぷるん」「たぷん」の直後、海でぷかぷか
+  banzai: 'img/jump_banzai.webp',  // 海へ飛びこむとき
+  beach:  '../images/bg/beach_day.webp'
+};
 
 /* ---------- 画面 ---------- */
 const cv = document.getElementById('stage');
@@ -577,7 +584,7 @@ function render(dt) {
     ctx.strokeStyle = 'rgba(255,255,255,' + Math.max(0, 0.8 - k * 0.25) + ')'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.ellipse(p.x, p.y, 0.6 * k * p.s + 4, 0.12 * k * p.s + 2, 0, 0, Math.PI * 2); ctx.stroke();
     if (d.phase === 'float') {
-      warpTanu(IMG.happyFull);
+      warpTanu(IMG.ehehe);
       const bob = Math.sin(d.t * 4) * 0.04;
       const q = proj(0, 0.05 + bob, d.z), sc = q.s / PXM;
       ctx.drawImage(tc, 0, 0, TW, 600, q.x - AX * sc, q.y - 600 * sc, TW * sc, 600 * sc);
@@ -589,17 +596,23 @@ function render(dt) {
 
   // 表情は、タヌくんの高さで決める（下＝いつもの顔、まんなか〜上＝笑顔）。ぷるんの直後も笑顔
   const r = S.th / THMAX;
-  if (S.faceUp && r < -0.15) S.faceUp = false; else if (!S.faceUp && r > 0.05) S.faceUp = true;
-  const happy = S.faceUp || S.t < S.happyUntil || (d && d.phase !== 'return' ? true : false);
+  // 高さで3段階（下＝通常、まんなか＝わくわく、上＝びっくり）。行ったり来たりでパカパカしないよう、上がる時と下がる時で境目をずらす
+  let lv = S.faceLv || 0;
+  if (lv === 0 && r > 0.05) lv = 1;
+  else if (lv === 1 && r > 0.62) lv = 2;
+  else if (lv === 2 && r < 0.45) lv = 1;
+  else if (lv === 1 && r < -0.15) lv = 0;
+  S.faceLv = lv;
+  const face = S.t < S.happyUntil ? IMG.ehehe : [IMG.normal, IMG.happy, IMG.wow][lv];
   tanuScreen = null;
   if (!d || d.phase === 'return') {
-    warpTanu(happy ? IMG.happySeat : IMG.normalSeat);
+    warpTanu(face);
     tanuScreen = drawTanu(S.body.y, st.z, TH);
   }
   drawLog(T_CAM + 0.13, T_SEAT - 0.02);           // タヌくんより手前（ひざのあいだを通る）
   drawTanuHandle();
   if (d && d.phase === 'fly') {
-    warpTanu(IMG.happyFull);
+    warpTanu(IMG.banzai);
     tanuScreen = drawTanu(d.y, d.z, TH);
   }
   drawPlayerHandle();
@@ -640,11 +653,11 @@ function handleEvents() {
     const ts = tanuScreen;
     if (type === 'tanuDown') {
       sfx.thud(v); sfx.boing(1.5 + v * 2);
+      S.happyUntil = S.t + 1.2;   // 下に着いて「ぷるん」→ えへへ
       if (ts) { pop('ぽすん', ts.x - 110, ts.y + 60 * ts.sc, 'small'); setTimeout(() => pop('ぷるん！', ts.x + 70, ts.y - BELLY_UP * ts.sc), 90); }
     } else if (type === 'top') {
       sfx.creak(); sfx.boing(1.5 + v * 2);
       if (ts) pop('ぷるん！', ts.x + 70, ts.y - (BELLY_UP + 40) * ts.sc);
-      S.happyUntil = S.t + 1.0;
     } else if (type === 'lift') {
       if (v > 0.9 && ts) { pop('ふわっ', ts.x - 80, ts.y - (AY - 120) * ts.sc, 'small'); sfx.whoosh(); }
       if (v > 1.4) say('lift');
@@ -686,8 +699,10 @@ diveBtn.addEventListener('click', () => {
 });
 
 /* ---------- はじめる ---------- */
-Promise.all([load(SRC.normal), load(SRC.happy), load(SRC.beach)]).then(([n, h, b]) => {
-  IMG = { beach: b, normalSeat: toData(n, false), happySeat: toData(h, false), happyFull: toData(h, false) };
+const KEYS = ['normal', 'happy', 'wow', 'ehehe', 'banzai'];
+Promise.all(KEYS.map((k) => load(SRC[k])).concat(load(SRC.beach))).then((imgs) => {
+  IMG = { beach: imgs[KEYS.length] };
+  KEYS.forEach((k, i) => { IMG[k] = toData(imgs[i], false); });
   document.getElementById('loading').remove();
   S.body.y = seat(S.th).y;
   let last = performance.now(), acc = 0;

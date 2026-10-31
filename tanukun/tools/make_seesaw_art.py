@@ -3,8 +3,9 @@
 使い方（tanukun フォルダで）:
     python3 tools/make_seesaw_art.py
 
-seesaw/art/sit_*_src.png（ChatGPT で描いた、背景がマゼンタ #FF00FF の絵）
-  → seesaw/img/sit_*.webp（背景は透明。横 0.72 倍）
+seesaw/art/*_src.png（ChatGPT で描いた、背景がマゼンタ #FF00FF の絵）
+  → seesaw/img/*.webp（背景は透明。横 0.72 倍）
+  sit_normal（通常）・sit_happy（わくわく）・sit_wow（びっくり）・sit_ehehe（えへへ）・jump_banzai（ばんざい。海へ飛びこむとき）
 
 ・背景の抜き方：「マゼンタらしさ」＝ min(赤, 青) − 緑 が大きい所ほど透明にする。
   毛先などのまざった色は、マゼンタの分を差し引いて元の色にもどす（ピンクのふちが残らないように）
@@ -18,6 +19,7 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / 'seesaw' / 'art'
 OUT = ROOT / 'seesaw' / 'img'
+BASE = (1122, 1402)   # 元の絵の大きさ。1ピクセルちがう絵（1121×1403 など）は、まずこの大きさにそろえる
 SCALE = 0.72          # 1122×1402 → 808×1009（立ち絵 720×900 とおなかの大きさがそろう）
 LO, HI = 40, 170      # マゼンタらしさがこの間で、不透明 → 透明 に変わる
 
@@ -43,8 +45,11 @@ def key_out(img):
 
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
-    for src in sorted(SRC.glob('sit_*_src.png')):
-        im = key_out(Image.open(src))
+    for src in sorted(SRC.glob('*_src.png')):
+        im = Image.open(src).convert('RGB')
+        if im.size != BASE:
+            im = im.resize(BASE, Image.LANCZOS)
+        im = key_out(im)
         w, h = im.size
         im = im.resize((round(w * SCALE), round(h * SCALE)), Image.LANCZOS)
         dst = OUT / (src.name.replace('_src.png', '.webp'))
