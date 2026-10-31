@@ -84,6 +84,7 @@ window.TANU_TEXT_I18N.en = Object.assign(window.TANU_TEXT_I18N.en || {}, {
   // ひっさつ
   'ひっさつ…！ くるか〜？': 'A special…! Here it comes~?',
   'ひっさつ！': 'Special!',
+  'おもいっきり おいで！': 'Give it all you\'ve got!',
   'こい〜っ！': 'Bring it~!',
   'ぽよよ〜ん！！': 'BOIIING!!',
   'ボーナス +{n}': 'Bonus +{n}',

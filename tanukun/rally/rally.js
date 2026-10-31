@@ -88,6 +88,7 @@
      head, low    … 頭（髪の上）・低い球（おまた）の当たる所（絵の％。r は半径で、絵の横幅に対する％）
      reach        … 打ち返すスワイプは、ボールから横にこの距離（ピクセル。画面の横幅の reachW 倍のほうが大きければ、そちら）以内で始める
      bonus        … 1日1回のごほうび（なかよしポイント）。合計 at ラリー以上で points（多い段から）
+     cutin        … ひっさつのカットインの秒数（その間、ボールは止まる）
      gauge        … ナイスで nice、セーフで safe たまる。max で満タン（ひっさつ）。bonus は必殺が当たったときに足すラリー数 */
   const T = {
     feet: IN_X ? 0.57 : 0.68, height: IN_X ? 0.38 : 0.46,
@@ -103,15 +104,15 @@
     aim: { short: 90, long: 220 },
     head: { x: 44, y: 6, r: 11 }, low: { x: 33, y: 67, r: 16 },
     reach: 110, reachW: 0.3,
-    gauge: { nice: 1, safe: 0.4, max: 5, bonus: 3 },
+    gauge: { nice: 1, safe: 0.4, max: 5, bonus: 3 }, cutin: 1,
     bonus: [{ at: 15, points: 5 }, { at: 1, points: 3 }]
   };
   T.step.ball = 0.25;   // 1歩近づくごとに、奥（おなか）でのボールの大きさも、この割合で大きく
   const BJ = C.bellyJiggle;
   // おなかの揺れ：本編より「ぽよん」を強めに（ぽんぽこリズムと同じくらい）
   const JIGGLE = Object.assign({}, BJ, {
-    tapDent: 0.16, damp: 6, reboundBoost: 0.9,
-    poke: Object.assign({}, BJ.poke, { depth: 0.5 })
+    tapDent: 0.24, damp: 5, reboundBoost: 1,
+    poke: Object.assign({}, BJ.poke, { depth: 0.75 })
   });
   // 続いたラリーの回数で変わる、タヌくんのひとこと（at 回目に1回だけ。近づくときは別に「ちかづくよ〜！」）
   const SAY = [
@@ -258,15 +259,40 @@
     o.connect(g).connect(a.destination);
     o.start(t); o.stop(t + dur + 0.02);
   }
+  // おなかの「ぽよ〜ん」：音の高さが下がりながら、ぶるぶる揺れる（ゴムのような音）＋ 低い「ぼむっ」
+  function boing() {
+    const a = audio();
+    if (!a) return;
+    if (a.state === 'suspended') a.resume();
+    const t = a.currentTime;
+    const o = a.createOscillator(), g = a.createGain(), lfo = a.createOscillator(), lg = a.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(330, t);
+    o.frequency.exponentialRampToValueAtTime(150, t + 0.45);
+    lfo.frequency.setValueAtTime(15, t);                  // ぶるぶる（1秒に15回）
+    lg.gain.setValueAtTime(60, t);
+    lg.gain.exponentialRampToValueAtTime(2, t + 0.5);     // だんだん おさまる
+    lfo.connect(lg).connect(o.frequency);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.55, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.55);
+    o.connect(g).connect(a.destination);
+    o.start(t); lfo.start(t);
+    o.stop(t + 0.6); lfo.stop(t + 0.6);
+    tone('sine', 120, 50, 0.16, 0.7);                     // ぼむっ
+    setTimeout(() => tone('triangle', 1200, 1800, 0.07, 0.08), 30);   // きらっ（ほんの少し）
+  }
   const sound = {
     throw: () => tone('triangle', 300, 700, 0.18, 0.25),
-    poyon: () => tone('sine', 150, 90, 0.45, 0.8, 260),     // おなかで「ぼよ〜ん」
+    poyon: () => boing(),                                     // おなかで「ぽよ〜ん」
     hit: () => tone('triangle', 520, 260, 0.14, 0.5),       // 手で「ぽんっ」
     nice: () => { tone('triangle', 660, 330, 0.14, 0.5); setTimeout(() => tone('sine', 990, 1320, 0.12, 0.25), 60); },
     miss: () => tone('sine', 400, 120, 0.5, 0.35),
     angry: () => { tone('square', 220, 140, 0.12, 0.18); setTimeout(() => tone('square', 260, 160, 0.14, 0.18), 110); },
     leaf: () => tone('triangle', 900, 1800, 0.12, 0.15, 700),          // 葉っぱで「ぱさっ」
-    special: () => { tone('sawtooth', 200, 900, 0.35, 0.3); setTimeout(() => tone('triangle', 880, 1760, 0.2, 0.3), 120); }
+    special: () => { tone('sawtooth', 200, 900, 0.35, 0.3); setTimeout(() => tone('triangle', 880, 1760, 0.2, 0.3), 120); },
+    cutin: () => { tone('sine', 300, 1400, 0.28, 0.25); setTimeout(() => tone('triangle', 660, 990, 0.18, 0.25), 180);
+      setTimeout(() => tone('triangle', 990, 1320, 0.22, 0.25), 330); }
   };
 
   /* ---------- ボールの動き ----------
@@ -315,6 +341,7 @@
     state = 'fly';
     ballEl.classList.remove('ready');
     cancelAnimationFrame(raf);
+    lastNow = now;
     raf = requestAnimationFrame(step);
   }
   // 道すじの u（0〜1。1 より先も少しだけ伸ばせる）での位置
@@ -351,9 +378,14 @@
     }
     return f.u;
   }
+  let lastNow = 0;
   function step(now) {
     if (!flight) return;
-    const f = flight, u = progress(f, now);
+    const f = flight, dt = now - (lastNow || now);
+    lastNow = now;
+    // カットインの間は止める（道すじの時刻を、止まった分だけ後ろへずらす）
+    if (now < freezeUntil) { f.start += dt; f.last = now; raf = requestAnimationFrame(step); return; }
+    const u = progress(f, now);
     Object.assign(ball, at(f, u));
     draw();
     if (f.kind === 'return') drawTarget(u);
@@ -386,6 +418,7 @@
   window.addEventListener('pointercancel', (e) => { if (swipe && e.pointerId === swipe.id) swipe = null; });
 
   function onSwipe(dx, len, x0) {
+    if (performance.now() < freezeUntil) return;   // カットインの間は、打てない
     if (state === 'ready') { throwBall(dx, len); return; }
     if (state === 'fly' && flight && flight.kind === 'return') {
       // ボールの近くから始めたスワイプだけ（風で流されたら、追いかける）
@@ -527,12 +560,13 @@
   // おなかで「ぽよん！」：当たった場所がへこんで、ぷるんと戻る
   function poyon(x, y) {
     sound.poyon();
-    pop(x, y - 10, tr('ぽよん！'));
+    pop(x, y - 14, tr('ぽよん！'), 'boing');
+    ripple(x, y);
     body.classList.remove('poyon'); void body.offsetWidth; body.classList.add('poyon');
     if (belly.ready()) {
       const k = 720 / G.w;   // 画面 → 絵（720×900）の倍率
       belly.press('belly', (x - G.left) * k, (y - G.top) * k);
-      setTimeout(() => belly.release('belly', true), 90);
+      setTimeout(() => belly.release('belly', true), 130);
     }
   }
 
@@ -758,8 +792,25 @@
     if (gauge < T.gauge.max || armed) return;
     armed = true;
     renderGauge();
-    say(tr('ひっさつ…！ くるか〜？'));
+    cutin();
+    setTimeout(() => say(tr('ひっさつ…！ くるか〜？')), T.cutin * 1000);
   });
+  // カットイン：タヌくんの顔と「おもいっきり おいで！」の帯が、右から入って左へ抜ける。その間（T.cutin 秒）は、ボールも止まる
+  const CUTIN_FACE = IMG('images/pon/face_cut4.webp');
+  new Image().src = CUTIN_FACE;
+  let freezeUntil = 0;
+  function cutin() {
+    const el = $('cutin');
+    $('cutin-face').src = CUTIN_FACE;
+    $('cutin-sub').textContent = tr('ひっさつ！');
+    $('cutin-text').textContent = tr('おもいっきり おいで！');
+    el.hidden = false;
+    el.classList.remove('go'); void el.offsetWidth; el.classList.add('go');
+    sound.cutin();
+    freezeUntil = performance.now() + T.cutin * 1000;
+    clearTimeout(cutin.timer);
+    cutin.timer = setTimeout(() => { el.hidden = true; }, 1100);
+  }
   function renderLives() {
     $('lives').innerHTML = '';
     for (let i = 0; i < T.balls; i++) {
@@ -770,6 +821,15 @@
   }
 
   /* ---------- 文字・ひとこと・ガイド ---------- */
+  // おなかに当たった所から、波の輪が広がる
+  function ripple(x, y) {
+    const el = document.createElement('i');
+    el.className = 'ripple';
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    $('pops').appendChild(el);
+    setTimeout(() => el.remove(), 550);
+  }
   function pop(x, y, text, cls) {
     const el = document.createElement('span');
     el.className = 'pop' + (cls ? ' ' + cls : '');
