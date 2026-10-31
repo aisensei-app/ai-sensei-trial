@@ -1,26 +1,48 @@
 # タヌくん スマホ版（Webアプリ）引き継ぎメモ
 
-最終更新：2026-10-30（夜）
+最終更新：2026-10-31
 
 ---
 
 ## 0. 新しいチャットのClaudeへ（最初に読んでください）
 
-### ★ いまの状況（2026-10-30 夜。新しいチャットはここから）
-- 作業ブランチ：**`claude/tanukun-ponpoko-rhythm-85uds5`**。公開は Cloudflare Pages の `tanukun`（https://tanukun.pages.dev/）に、
-  `python3 tools/build_app.py --base-url https://tanukun.pages.dev/` でできる `tanukun/app-dist.zip` を **ユーザーが Production で手動アップロード**
-- **本番に出ているもの**：本編（日本語＋**英語版**。左上の「🌐 English／🌐 日本語」、設定の「ことば / Language」）、パネルの右上の ×、
-  なでなでレポートの「？？？」も回数（紫）。お試し版 tanukun-demo は本編へ自動で移動（数か月後にプロジェクトごと削除）
-- **公開スイッチ（config.js の features）**：pon=**soon**（🔒 もうすぐ）、timeOfDay・tailFlick・rally=**hidden**、english=open。解放はユーザーの判断で手動
-- **次にやること（ユーザーの希望）**：**ぽよんラリー（`tanukun/rally/`）のブラッシュアップ**。経緯は下の「ぽよんラリー」の節（改良1〜3）。
-  確認用リンク：https://claude.ai/artifact/SfWedDJpFXQSvHn7qrv5Ku（`python3 tools/build_preview.py --rally`）。まだ日本語だけ（解放の前に英語化が必要）
-- **気になっていること**：X のリンクのカードの絵が灰色になる（2026-10-30。og/main.jpg はブラウザで開けたので、サイト側は正常。X 側の読みこみ失敗とみて様子見）。
-  翌日も直らなければ、カードの画像のファイル名を変える（main.jpg → main2.jpg。build_app.py と og/ を直す）
+### ★ いまの状況（2026-10-31。新しいチャットはここから）
+- 作業ブランチ：**`claude/tanukun-ponpoko-rally-brush-lq2ebj`**（`claude/tanukun-ponpoko-rhythm-85uds5` の続き。2026-10-31 の作業はすべてこちら）。
+  公開は Cloudflare Pages の `tanukun`（https://tanukun.pages.dev/）に、`python3 tools/build_app.py --base-url https://tanukun.pages.dev/` でできる
+  `tanukun/app-dist.zip` を **ユーザーが Production で手動アップロード**
+- **本番に出ているもの（2026-10-30 公開のまま）**：本編（日本語＋英語）、パネルの ×、なでなでレポートの「？？？」の回数。
+  公開スイッチ（config.js の features）：pon=**soon**、timeOfDay・tailFlick・rally=**hidden**、english=open
+- **2026-10-31 にやったこと（まだ本番には出していない）**
+  - **ぽよんラリーのブラッシュアップ完了**（ユーザーの確認済み）：下の「ぽよんラリー」の節の 2026-10-31 の項目（改良4〜6、ガイド、ごほうび、英語化、結果の絵4枚、
+    ボールの絵、レインボー・カットイン・レシーブの構え、ぽよんの演出と音、説明をシンプルに）。確認用リンク https://claude.ai/artifact/SfWedDJpFXQSvHn7qrv5Ku
+  - **ふきだしのしっぽ**を、くるっと曲がった小さな形に（本編・ラリー・試作。本編の確認用リンク https://claude.ai/artifact/XApM945UdUziQMRXG8AQfH も最新に作り直した）
+  - **トップ画面の試作 `topmenu/` が完成**（ユーザー「完璧」）：起動の幕 → 笑顔のあいさつ → 1.3秒で自動でおなかにズーム → おなかの上のアイコン（文字なし）でゲームを選ぶ。
+    確認用リンク https://claude.ai/artifact/4kJNhxkue7iqEXJ55eSXoL。詳しくは「次のアイデア」の上の「トップ画面の作り変え」の節
+- **次にやること（ユーザーの希望の順）**
+  1. **トップ画面を本編に組みこむ**（試作 topmenu/ の動きを app.js・index.html・style.css へ）。こちらから伝えた中身：
+     ① 今のメニュー（遊ぶ・ぽんぽこ・ラリー・実績・きせかえ・設定のボタン）を「あいさつ → ズーム → おなかのアイコン」に置きかえる
+     ② あいさつは lines.js の scene: 'home'（visit: first / new / comeback / again。名前・時間帯・なかよし度）をそのまま使う。笑顔の絵で
+     ③ まんなかの「タヌくん なでなで」（images/topmenu/pet.webp）→ 今の「遊ぶ」（なでなで）の画面へ
+     ④ 🏆 実績・👕 きせかえ・⚙️ 設定は、上のバーの小さな丸いボタン（今のパネルを開く）
+     ⑤ 公開スイッチ（open／soon／hidden）でアイコンを「遊べる／🔒 もうすぐ／出さない」に。🔒 のアイコンの数もスイッチから
+     ⑥ ゲーム（pon/・rally/）から戻ったとき・なでなでから戻ったときは、あいさつを飛ばして、ズームした画面から（URL の印か sessionStorage）
+     ⑦ ハートが増えた・思い出・クリアの演出、名前を聞く画面、はじめてのお知らせは、ズームの前に流す
+     ⑧ 時間帯の立ち絵（timeOfDay。いまは hidden）・寝ている時間・X アプリの中（下 25% が隠れる）でもくずれないように。背景はビーチ（images/bg/beach_day.webp）を使うか要相談
+     ⑨ ズームすると立ち絵（720×900）が約2.5倍でスマホでは少しぼやける → **ユーザーが高い解像度のおなかの絵を描いてくれる**ことになっている（プロンプトは渡し済み。まだ届いていない）
+     ⑩ 実績を「ゲームごとのタブ」にするのは、組みこみのあとの別の作業（なでなで／ぽんぽこ／ラリー。ラリーは結果の絵4枚も）
+  2. **多言語対応**：トップ画面の新しい文（あいさつ・ふきだし・アイコンの読み上げ名）を英語に。**ぽんぽこリズムはまだ日本語だけ**なので、公開するなら英語化が必要
+     （ラリーと同じ形：pon/pon.i18n.js ＋ i18n.js）。中国語は保留（下を参照）
+  3. **公開**：どの機能を open にするか（pon・rally・timeOfDay・tailFlick）をユーザーと決めて、zip を作り、まず Preview（https://test.tanukun.pages.dev/）で
+     実機と X アプリの中を確認 → Production。sw.js の版（いま tanukun-v24）を上げるのを忘れずに
+- **気になっていること**：X のリンクのカードの絵が灰色になる件（2026-10-30。X 側の読みこみ失敗とみて様子見。直らなければ og/main.jpg の名前を変える）。
+  ラリー専用のカードの絵はまだない（今は本編の絵）
 - **英語の宣伝**：案A（"Tanu-kun is now available in English! … #tanuki #furry #Tanukun"）をユーザーに渡した。英語のカードの絵・宣伝画像は未作成
 - X の反応：好評（固定ポスト いいね52・ブックマーク40、海外からのフォローが増加、英語版の要望あり）
-- **中国語版の要望が1件（2026-10-31）**：要望したアカウントは簡体字（名前「东瀛龙」）。ただし2026年8月に始めたばかりでフォロワー0人のため、**1件だけでは判断しない**
-  - Cloudflare の Web Analytics で**国別のアクセス**を見てから決める（中国本土が多ければ簡体字、台湾・香港が多ければ繁体字）
-  - 作るときは英語版と同じ仕組み（i18n.js の TEXT、config.〇〇.js、lines.〇〇.js）。言語が3つになるので、**左上の言語ボタンは「押すと一覧が出る」形に変える**
+- **中国語版の要望が1件（2026-10-31）→ 保留（ユーザーの判断）**：要望したアカウントは簡体字（名前「东瀛龙」。「东瀛」は日本のこと。2026年8月に始めたばかりでフォロワー0人）。**1件だけでは判断しない**
+  - Cloudflare の Web Analytics で**国別のアクセス**を1〜2週間見てから決める（中国本土が多ければ簡体字、台湾・香港が多ければ繁体字。両方なら訳は2つ）
+  - 作るときは英語版と同じ仕組み（i18n.js の TEXT、config.〇〇.js、lines.〇〇.js、rally.i18n.js）。言語が3つになるので、**左上の言語ボタンは「押すと一覧が出る」形に変える**
+- ユーザーの好み（2026-10-31 に分かったこと）：しっぽの向きは絵によって変わってもよい／説明文は短く／ChatGPT の絵は「足の指は片足4本・手足の爪なし」。
+  爪が少し残った絵は、こちらで消せる（rally/art/receive_fixed.png の例。暗い指の中の明るい点を、まわりの色でうめる）
 
 ### いまの状況（2026-10-30 昼までの記録）
 - 作業ブランチは **`claude/tanukun-ponpoko-rhythm-85uds5`**（本編の公開済みブランチ `claude/tanukun-mobile-prototype-2ak3it` から作った。ぽんぽこリズム以降の変更はすべてこちら）
@@ -199,7 +221,7 @@
 | 項目 | 内容 |
 |---|---|
 | リポジトリ | `aisensei-app/ai-sensei-trial` |
-| ブランチ | **`claude/tanukun-ponpoko-rhythm-85uds5`**（最新。元は `claude/tanukun-mobile-prototype-2ak3it`） |
+| ブランチ | **`claude/tanukun-ponpoko-rally-brush-lq2ebj`**（最新。その前は `claude/tanukun-ponpoko-rhythm-85uds5`、元は `claude/tanukun-mobile-prototype-2ak3it`） |
 | フォルダ | `tanukun/`（説明は `tanukun/README.md`） |
 | 本編の確認用リンク | https://claude.ai/artifact/XApM945UdUziQMRXG8AQfH （非公開。本人のみ） |
 | ぽんぽこリズムの確認用リンク | https://claude.ai/artifact/4SXJETQj6uxUz4Ynw84eY8 （非公開。本人のみ。`python3 tools/build_preview.py --pon`） |
