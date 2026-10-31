@@ -553,6 +553,12 @@ html, body {
 .ev-pic.stand .ev-bg { display: none; }
 .ev-pic.stand .ev-img { width: auto; height: 66%; max-width: 92%; object-fit: contain; margin-bottom: 22%; }
 @keyframes ev-in { from { transform: scale(1.06); filter: brightness(1.4); } to { transform: none; filter: none; } }
+/* 台詞の途中で絵が切りかわるとき：新しい絵を上に重ねて、ふわっと出す（app.js の swapPic。カクつかないように、透明度と大きさだけを動かす） */
+.ev-pic.swap { opacity: 0; transition: opacity .7s ease; will-change: opacity; }
+.ev-pic.swap .ev-img { transform: scale(1.025); transition: transform 1.4s cubic-bezier(.2, .6, .3, 1); }
+.ev-pic.swap.in { opacity: 1; }
+.ev-pic.swap.in .ev-img { transform: none; }
+@media (prefers-reduced-motion: reduce) { .ev-pic.swap, .ev-pic.swap .ev-img { transition-duration: .01s; } }
 .ev-title { position: absolute; top: calc(env(safe-area-inset-top) + 16px); left: 50%; transform: translateX(-50%);
   background: rgba(255, 255, 255, .85); color: #C8641E; font-weight: 800; font-size: 15px;
   padding: 6px 16px; border-radius: 999px; white-space: nowrap; }
@@ -822,7 +828,9 @@ body.mode-home #app, body.mode-home .lang-btn { visibility: hidden; }
 /* ズーム中は、顔とふきだしのじゃまにならないように隠す（ハートは遊ぶ画面とメニューで見られる） */
 .h-status { transition: opacity .3s; }
 #home.zoomed .h-status { opacity: 0; }
-@media (max-width: 359px) { .h-bar { gap: 5px; padding-left: 8px; padding-right: 8px; } .h-pill, .h-days { padding: 6px 10px; font-size: 13px; } .h-ico { width: 36px; height: 36px; font-size: 18px; } }
+/* 幅がせまいスマホ（〜420px）では、なかよし○日目（2けた・3けた）や「🌐 日本語 ▾」が切れないように、少し小さく */
+@media (max-width: 420px) { .h-bar { gap: 6px; padding-left: 10px; padding-right: 10px; } .h-pill, .h-days { padding: 6px 10px; font-size: 13px; } .h-days b { font-size: 15px; } .h-icons { gap: 5px; } .h-ico { width: 38px; height: 38px; font-size: 19px; } #home-lang { padding: 6px 9px; font-size: 12px; } }
+@media (max-width: 359px) { .h-bar { gap: 4px; padding-left: 6px; padding-right: 6px; } .h-pill, .h-days { padding: 5px 8px; font-size: 12px; } .h-ico { width: 34px; height: 34px; font-size: 17px; } }
 
 /* ---- カメラ（ズームする入れ物）とタヌくん ---- */
 #home-cam {

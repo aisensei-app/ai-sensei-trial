@@ -1051,12 +1051,17 @@
   const evEl = $('event');
   function playMemory(m, fresh) {
     return new Promise((resolve) => {
-      const img = evEl.querySelector('.ev-img');
-      const pic = evEl.querySelector('.ev-pic');
+      // 前の思い出で、絵の切りかえ（重ねた絵）が残っていたら、いちばん上の1枚だけにする
+      const pics = evEl.querySelectorAll('.ev-pic');
+      for (let n = 0; n < pics.length - 1; n++) pics[n].remove();
+      let pic = evEl.querySelector('.ev-pic');
+      pic.classList.remove('swap', 'in');
+      let img = pic.querySelector('.ev-img');
+      let bgImg = pic.querySelector('.ev-bg');
+      img.style.animation = '';   // 出だしの動き（切りかえで止めた絵を、次の思い出で使うときのために戻す）
       const text = evEl.querySelector('.ev-text');
       // 特別イラストがまだないときは、ふだんの絵を、色の背景の上に仮に出す
       const real = !!m.image;
-      const bgImg = evEl.querySelector('.ev-bg');
       img.src = real ? m.image : (C.images[m.stand] || C.images.normal);
       bgImg.src = real ? m.image : '';
       pic.classList.toggle('stand', !real);
@@ -1071,11 +1076,7 @@
       function show() {
         const full = lines[i].text;
         lineAt = performance.now();
-        if (lines[i].image && real) {
-          img.src = lines[i].image;
-          bgImg.src = lines[i].image;
-          img.style.animation = 'none'; void img.offsetWidth; img.style.animation = '';
-        }
+        if (lines[i].image && real) swapPic(lines[i].image);
         evEl.classList.toggle('sys', fresh && i === lines.length - 1);
         let k = 0;
         clearInterval(typing);
@@ -1087,6 +1088,29 @@
           if (k >= full.length) { clearInterval(typing); typing = null; }
         }, 45);
         shown = full;
+      }
+      /* 台詞の途中で絵が切りかわるとき（5つ目の「…だいすき！」など）：
+         新しい絵を、いまの絵の上に重ねて、読みこみ（デコード）が終わってから、ふわっと重ねる（約0.7秒）。
+         以前は絵をその場で差しかえて、出だしの動き（少し大きく・明るく）をやり直していたので、
+         読みこみ待ちとぼかした背景の描き直しが重なって、スマホでカクついて見えた（2026-10-31 ユーザーの指摘） */
+      function swapPic(src) {
+        const old = pic;
+        const neu = old.cloneNode(true);
+        const ni = neu.querySelector('.ev-img'), nb = neu.querySelector('.ev-bg');
+        neu.classList.add('swap');
+        neu.classList.remove('in');
+        ni.style.animation = 'none';
+        ni.src = src;
+        nb.src = src;
+        pic = neu; img = ni; bgImg = nb;
+        const ready = (el) => (el.decode ? el.decode().catch(() => {}) : Promise.resolve());
+        Promise.all([ready(ni), ready(nb)]).then(() => {
+          if (!old.parentNode) return;
+          old.after(neu);
+          void neu.offsetWidth;
+          neu.classList.add('in');
+          setTimeout(() => { if (old.parentNode) old.remove(); }, 800);
+        });
       }
       function next(e) {
         if (e) e.stopPropagation();
@@ -1720,7 +1744,8 @@
       panel: (name) => { const b = $('btn-' + name); if (b) b.click(); },
       blocked: () => mode !== 'home' || !sheet.hidden || !$('event').hidden,
       // ことばのボタン（いまの言語を短く。押すと一覧）
-      langLabel: LANG_KEYS.length > 1 && I18N.label ? I18N.label() : '',
+      // トップ画面の上のバーはせまいので「▾」は省く（なかよし○日目が3けたでも切れないように）
+      langLabel: LANG_KEYS.length > 1 && I18N.label ? I18N.label().replace(' ▾', '') : '',
       onLang: () => langMenu($('home-lang')),
       // 寝ている時間に起こしたとき：時間帯のひとこと（「起こされちゃった」など）
       wakeText: () => { const b = bandNow(); return b && b.wake ? withName(b.wake) : ''; }

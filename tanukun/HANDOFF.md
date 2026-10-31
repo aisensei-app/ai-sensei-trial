@@ -10,6 +10,9 @@
 - **2026-10-31 夕方：公開の準備ができた（ユーザーの手動アップロード待ち）**。今回の公開は「トップ画面の作り変え＋言語対応（日本語・英語・中国語の簡体字）」だけ。
   公開スイッチ：pon=soon、rally・timeOfDay・tailFlick=hidden、english・chinese=open。sw.js は **tanukun-v25**。
   `python3 tools/build_app.py --base-url https://tanukun.pages.dev/` → tanukun/app-dist.zip。まず Preview（https://test.tanukun.pages.dev/）で実機・X アプリの中を確認 → Production。
+  公開前の追加の直し（同じ v25 の zip に入れて作り直した）：①思い出の台詞の途中で絵が切りかわるとき（5つ目の 5 → 5b など）にカクつく
+  （ユーザーの指摘）→ 新しい絵を読みこみ終えてから、上に重ねてふわっと出す（app.js の swapPic、style.css の .ev-pic.swap）。
+  ②トップ画面の上のバーで、なかよし日数が2〜3けたのとき「なかよし 128 日目」が切れる → 幅 420px 以下で少し小さく、言語ボタンの「▾」を省く
   宣伝のポストでは、中国語は詳しくないので「おかしな所があれば気軽に教えてね」と添える（ユーザーの希望。文案はこのチャットで渡した）
 - 作業ブランチ：**`claude/tanukun-ponpoko-rally-brush-lq2ebj`**（`claude/tanukun-ponpoko-rhythm-85uds5` の続き。2026-10-31 の作業はすべてこちら）。
   公開は Cloudflare Pages の `tanukun`（https://tanukun.pages.dev/）に、`python3 tools/build_app.py --base-url https://tanukun.pages.dev/` でできる
