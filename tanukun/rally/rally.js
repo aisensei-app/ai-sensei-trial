@@ -23,6 +23,8 @@
    ・最初のひと投げがおなかに当たらなかったときは、もう一度投げられる（ボールは減らない）
    ・きせかえ（デベソなど）は本編の記録をそのまま使う
    ・音はすべてプログラムで作る（Web Audio）
+   ・本編とのつながり：1日1回、合計ラリー数に応じて、なかよしポイントを本編に預ける（T.bonus。本編を開いたときに受け取る。save.js の claimPonPoints）。
+     あとで多い段に届いたら、その日のうちでも差だけ足す
    ・公開スイッチ（config.js の features.rally）が 'open' でないときは、本編へもどす
    ========================================================= */
 (function () {
@@ -64,6 +66,7 @@
                     そのあいだは おなか（長いほど上）
      head, low    … 頭（髪の上）・低い球（おまた）の当たる所（絵の％。r は半径で、絵の横幅に対する％）
      reach        … 打ち返すスワイプは、ボールから横にこの距離（ピクセル。画面の横幅の reachW 倍のほうが大きければ、そちら）以内で始める
+     bonus        … 1日1回のごほうび（なかよしポイント）。合計 at ラリー以上で points（多い段から）
      gauge        … ナイスで nice、セーフで safe たまる。max で満タン（ひっさつ）。bonus は必殺が当たったときに足すラリー数 */
   const T = {
     feet: IN_X ? 0.57 : 0.68, height: IN_X ? 0.38 : 0.46,
@@ -79,7 +82,8 @@
     aim: { short: 90, long: 220 },
     head: { x: 44, y: 6, r: 11 }, low: { x: 33, y: 67, r: 16 },
     reach: 110, reachW: 0.3,
-    gauge: { nice: 1, safe: 0.4, max: 5, bonus: 3 }
+    gauge: { nice: 1, safe: 0.4, max: 5, bonus: 3 },
+    bonus: [{ at: 15, points: 5 }, { at: 1, points: 3 }]
   };
   T.step.ball = 0.25;   // 1歩近づくごとに、奥（おなか）でのボールの大きさも、この割合で大きく
   const BJ = C.bellyJiggle;
@@ -104,8 +108,14 @@
     { min: 30, title: '伝説のおなか', line: 'こんなに続いたの、はじめて！' }
   ];
 
-  /* ---------- 本編と同じ記録（きせかえ・さいこう記録） ---------- */
+  /* ---------- 本編と同じ記録（きせかえ・さいこう記録・ごほうび） ---------- */
   const SAVE_KEY = 'tanukun-save-v1';
+  // 本編と同じ「きょう」（午前4時に切りかわる）
+  function today() {
+    const d = new Date(Date.now() - ((C.days && C.days.dayStartHour) || 0) * 3600 * 1000);
+    const pad = (n) => (n < 10 ? '0' : '') + n;
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  }
   function loadSave() {
     try { return JSON.parse(localStorage.getItem(SAVE_KEY)) || {}; } catch (e) { return {}; }
   }
@@ -821,6 +831,24 @@
     $('r-longest').textContent = 'いちばん続いたのは ' + longest + ' ラリー';
     $('r-best').textContent = isBest && total > 0 ? '🎉 さいこう記録！' : 'さいこう記録 ' + best + ' ラリー';
     $('r-line').textContent = 'タヌくん「' + rank.line + '」';
+    // 本編とのつながり：1日1回のごほうび。その日にもらった分より多い段に届いたら、差だけ預ける
+    const tier = T.bonus.filter((b) => total >= b.at)[0];
+    let add = 0, got = 0;
+    updateSave((d) => {
+      got = d.rallyBonusDay === today() ? d.rallyBonusGot || 0 : 0;
+      add = tier ? Math.max(0, tier.points - got) : 0;
+      if (!add) return;
+      d.rallyBonusDay = today();
+      d.rallyBonusGot = got + add;
+      d.rallyPoints = (d.rallyPoints || 0) + add;
+    });
+    // まだ上の段があれば、次の目標も出す（例：15ラリーで さらに +2）
+    const next = T.bonus.slice().reverse().filter((x) => x.at > total && x.points > got + add)[0];
+    const lines = [];
+    if (add) lines.push('💗 なかよしポイント +' + add + '（タヌくんのところで受け取れるよ）');
+    if (next) lines.push('💗 ' + (next.at === 1 ? '1回 打ち返せば' : next.at + 'ラリーで') + (add || got ? ' さらに +' : ' なかよしポイント +') + (next.points - got - add) + '（1日1回）');
+    $('r-bonus').innerHTML = lines.join('<br>');
+    $('r-bonus').hidden = !lines.length;
     const url = /^https?:/.test(location.href) ? location.href.split(/[?#]/)[0] : 'https://tanukun.pages.dev/rally/';
     const text = '🏐 ぽよんラリー\n合計' + total + 'ラリー「' + rank.title + '」（いちばん続いたのは' + longest + '）\n#タヌくん #ぽよんラリー\n' + url;
     $('btn-post').href = 'https://x.com/intent/post?text=' + encodeURIComponent(text);

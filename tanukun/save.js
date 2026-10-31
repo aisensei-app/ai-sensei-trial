@@ -45,7 +45,10 @@ window.TanuSave = (function () {
       noticeOk: false,       // はじめてのお知らせ（ちょっぴり大人向け など）を見た
       ponSeen: false,        // ぽんぽこリズムを開いたことがある（メニューの NEW を消す）
       ponPoints: 0,          // ぽんぽこリズムのごほうび（まだ受け取っていないなかよしポイント）
-      ponBonusDay: null      // ぽんぽこリズムのごほうびをもらった日（1日1回）
+      ponBonusDay: null,     // ぽんぽこリズムのごほうびをもらった日（1日1回）
+      rallyPoints: 0,        // ぽよんラリーのごほうび（まだ受け取っていないなかよしポイント）
+      rallyBonusDay: null,   // ぽよんラリーのごほうびをもらった日（1日1回。あとで多い段に届いたら、差だけ足す）
+      rallyBonusGot: 0       // その日にもらったぽよんラリーのごほうび
     };
   }
 
@@ -136,19 +139,20 @@ window.TanuSave = (function () {
     return { added: true, heartUp: hearts() > before };
   }
 
-  /* ---------- ぽんぽこリズムのごほうび ----------
-     ぽんぽこリズム（pon/）は、ポイントを ponPoints に預けるだけ。本編を開いたときに、ここで受け取る
+  /* ---------- ぽんぽこリズム・ぽよんラリーのごほうび ----------
+     ぽんぽこリズム（pon/）とぽよんラリー（rally/）は、ポイントを ponPoints・rallyPoints に預けるだけ。本編を開いたときに、ここで受け取る
      （本編で受け取れば、ハートが増えたときの思い出の演出がいつもどおり流れるため）
-     戻り値 { added: 受け取ったポイント, heartUp: ハートが増えたか } */
+     戻り値 { added: 受け取ったポイントの合計, pon, rally: それぞれの分, heartUp: ハートが増えたか } */
   function claimPonPoints() {
-    const n = data.ponPoints || 0;
-    if (!n) return { added: 0, heartUp: false };
+    const pon = data.ponPoints || 0, rally = data.rallyPoints || 0, n = pon + rally;
+    if (!n) return { added: 0, pon: 0, rally: 0, heartUp: false };
     const before = hearts();
     data.points += n;
     data.ponPoints = 0;
+    data.rallyPoints = 0;
     markMax();
     save();
-    return { added: n, heartUp: hearts() > before };
+    return { added: n, pon: pon, rally: rally, heartUp: hearts() > before };
   }
 
   // ハートが最大になった日を覚えておく（確認用のハート切りかえのときは覚えない）

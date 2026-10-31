@@ -65,6 +65,7 @@ window.TanuI18n = (function () {
       '💖 ハートをゲット！': '💖 You got a heart!',
       '来てくれてありがとう！ 💗+{n}': 'Thanks for coming! 💗+{n}',
       'ぽんぽこリズムの ごほうび 💗+{n}': 'Ponpoko Rhythm reward 💗+{n}',
+      'ぽよんラリーの ごほうび 💗+{n}': 'Poyon Rally reward 💗+{n}',
       // 思い出
       '📖 思い出アルバムに追加されました': '📖 Added to your Memory Album',
       'ハートが {n}こ たまった！': 'Heart #{n} unlocked!',

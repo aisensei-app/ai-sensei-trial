@@ -389,6 +389,7 @@ body.in-x .special-btn { bottom: calc(25vh + 10px); }
 .r-longest { font-size: 14px; font-weight: 700; margin-top: -4px; }
 .r-best { font-size: 14px; font-weight: 700; color: #FF4F8B; }
 .r-line { font-weight: 700; }
+.r-bonus { margin: 4px 0 8px; font-size: 13px; font-weight: 700; color: #E0457C; }
 
 /* X アプリの中で開いたとき：画面の下に X の投稿パネルがかぶさるので、全体を上に寄せる（rally.js） */
 body.in-x .sheet { top: 40%; }

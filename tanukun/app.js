@@ -1109,7 +1109,8 @@
     else if (!DEMO && (r.visit !== 'again' || pb.added)) {
       const msg = [];
       if (r.visit !== 'again') msg.push(tr('来てくれてありがとう！ 💗+{n}', { n: C.friendship.visitPoints }));
-      if (pb.added) msg.push(tr('ぽんぽこリズムの ごほうび 💗+{n}', { n: pb.added }));
+      if (pb.pon) msg.push(tr('ぽんぽこリズムの ごほうび 💗+{n}', { n: pb.pon }));
+      if (pb.rally) msg.push(tr('ぽよんラリーの ごほうび 💗+{n}', { n: pb.rally }));
       setTimeout(() => toast(msg.join('\n')), 900);
     }
     if (r.visit === 'again') return false;
