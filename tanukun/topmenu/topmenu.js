@@ -55,7 +55,9 @@
 
   const root = $('topmenu'), cam = $('cam'), body = $('body'), img = $('tanu-img');
   root.style.backgroundImage = 'url("' + IMG('images/bg/beach_day.webp') + '")';
-  img.src = IMG('normal');
+  // ふだんの絵は、ズーム用の高画質の立ち絵（もとの normal.webp のちょうど1.5倍。並べ方は同じ。tools/make_normal_hd.py）
+  const NORMAL = IMG('images/topmenu/normal_hd.webp');
+  img.src = NORMAL;
   const HAPPY = IMG('images/happy.webp');
   new Image().src = HAPPY;
   const BJ = C.bellyJiggle;
@@ -65,7 +67,7 @@
       poke: Object.assign({}, BJ.poke, { size: 0.4, depth: 0.35 }) }),
     img: img, canvas: $('belly-canvas')
   });
-  img.addEventListener('load', () => belly.warm([IMG('normal')]), { once: true });
+  img.addEventListener('load', () => belly.warm([NORMAL]), { once: true });
 
   /* ---------- 配置とズーム ---------- */
   const G = {};
@@ -111,7 +113,7 @@
   function zoomIn() {
     if (zoomed) return;
     clearTimeout(timer);
-    img.src = IMG('normal');
+    img.src = NORMAL;
     zoomed = true;
     root.classList.add('zoomed');
     $('btn-back').hidden = false;
@@ -166,7 +168,7 @@
   function greet(visit) {
     clearTimeout(timer);
     if (zoomed) { zoomed = false; root.classList.remove('zoomed'); $('btn-back').hidden = true; applyZoom(); }
-    img.src = visit === 'again' ? IMG('normal') : HAPPY;   // 笑顔であいさつ
+    img.src = visit === 'again' ? NORMAL : HAPPY;   // 笑顔であいさつ
     setTimeout(() => sayHead(GREET[visit]), 350);
     timer = setTimeout(zoomIn, ((visit === 'again' ? T.again : T.greet) + 0.35) * 1000);
   }
@@ -175,7 +177,7 @@
     clearTimeout(timer);
     if (zoomed) { zoomed = false; root.classList.remove('zoomed'); $('btn-back').hidden = true; applyZoom(); }
     $('say').hidden = true;
-    img.src = visit === 'again' ? IMG('normal') : HAPPY;
+    img.src = visit === 'again' ? NORMAL : HAPPY;
     root.classList.remove('booting'); void root.offsetWidth; root.classList.add('booting');
     setTimeout(() => root.classList.remove('booting'), 1000);
     timer = setTimeout(() => greet(visit), T.boot * 1000);
