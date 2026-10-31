@@ -40,6 +40,12 @@ window.TanuI18n = (function () {
       '🥁 ぽんぽこリズム': '🥁 Ponpoko Rhythm',
       '🏐 ぽよんラリー': '🏐 Poyon Rally',
       '🔒 もうすぐ': '🔒 Soon',
+      // セリフ図鑑（2026-10-28 に別のブランチで作ったものを取りこみ）
+      '💬 セリフ図鑑': '💬 Line Collection',
+      '💬 セリフ図鑑（{a} ／ {b}）': '💬 Line Collection ({a} / {b})',
+      '‹ 実績にもどる': '‹ Back to Records',
+      '見たことのあるセリフ {a} ／ {b}': 'Lines seen: {a} / {b}',
+      'まだ見ていないセリフが あと {n} こ': '{n} more line to discover|{n} more lines to discover',
       // トップ画面（home.js。2026-10-31）：アイコンの読み上げ名・ふきだし
       'トップ画面': 'Home',
       'タヌくん なでなで': 'Pet Tanu-kun',

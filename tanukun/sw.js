@@ -1,7 +1,7 @@
 /* オフラインでも開けるようにするための仕組み（Service Worker）
    ネットにつながるときは常に最新のファイルを使い、
    つながらないときだけ保存しておいたファイルを使います。 */
-const CACHE = 'tanukun-v25';
+const CACHE = 'tanukun-v26';
 const FILES = [
   './', './index.html', './style.css', './config.js', './config.en.js', './config.zh.js', './lines.js', './lines.en.js', './lines.zh.js', './i18n.zh.js', './i18n.js', './save.js', './belly.js', './home.js', './app.js',
   './manifest.webmanifest', './images/icon-192.png', './images/icon-512.png',
@@ -14,7 +14,7 @@ const FILES = [
   './images/topmenu/normal_hd.webp', './images/topmenu/pet.webp', './images/bg/beach_day.webp',
   './images/memories/1.webp', './images/memories/2.webp', './images/memories/3.webp',
   './images/memories/4.webp', './images/memories/5.webp', './images/memories/5b.webp',
-  './images/memories/6.webp', './images/memories/6b.webp', './images/memories/6c.webp',
+  './images/memories/6.webp', './images/memories/6b.webp', './images/memories/6d.webp',
   // 時間帯の立ち絵
   './images/time_morning.webp', './images/time_evening.webp', './images/time_night.webp', './images/time_sleep.webp',
   // ぽんぽこリズム（pon/）

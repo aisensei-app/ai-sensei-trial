@@ -15,6 +15,21 @@
   // いまの言語のセリフ集（i18n.js。訳がなければ日本語）。公開スイッチがまだの機能のセリフ（feature）は入れない
   const LINES = I18N.lines().filter((l) => !l.feature || feature(l.feature) === 'open');
   const SAVE = window.TanuSave;
+  /* 見たセリフの記録（セリフ図鑑）は、言語に関係なく日本語の文で残す（言語を切りかえても数が合うように）。
+     英語・中国語のセリフ集は lines.js と同じ順番なので、同じ番号の日本語の文に置きかえる */
+  const JA_OF = new Map();
+  {
+    const ja = window.TANU_LINES || [];
+    I18N.lines().forEach((l, i) => JA_OF.set(l, ja[i] ? ja[i].text : l.text));
+    // 前に英語・中国語で見たセリフ（その言語の文で記録されている）を、日本語の文に直しておく
+    const back = {};
+    const ex = window.TANU_LINES_I18N || {};
+    Object.keys(ex).forEach((k) => (ex[k] || []).forEach((l, i) => { if (ja[i]) back[l.text] = ja[i].text; }));
+    const seen = (SAVE.data.seenLines || []);
+    const fixed = seen.map((t) => back[t] || t).filter((t, i, a) => a.indexOf(t) === i);
+    if (fixed.length !== seen.length || fixed.some((t, i) => t !== seen[i])) SAVE.setSeenLines(fixed);
+  }
+  const jaOf = (l) => JA_OF.get(l) || l.text;
   const DEMO = window.TANU_DEMO || null;   // お試し版のときだけある（demo.js）
   // X アプリの中で開いたとき（UA に Twitter）：画面の下に X の投稿パネルとボタンがかぶさるので、
   // style.css の body.in-x で、下に余白を空けて中身を上に寄せる。確認用に URL の ?inx でも
@@ -747,7 +762,7 @@
     if (!line) return null;
     state.recentTexts.push(line.text);
     if (state.recentTexts.length > 3) state.recentTexts.shift();
-    SAVE.seeLine(line.text);
+    SAVE.seeLine(jaOf(line));
     if (line.face && C.images[line.face]) {
       state.faceOverride = line.face;
       state.faceOverrideUntil = now() + C.bubbleSeconds * 1000;
@@ -1373,9 +1388,72 @@
   sheet.addEventListener('click', (e) => { if (e.target === sheet && !$('sheet-close').hidden) closeSheet(); });
 
   // 実績（いまは記録の一覧。バッジは次の段階で）
-  $('btn-record').addEventListener('click', () => {
+  /* =========================================================
+     セリフ図鑑：見たことのあるセリフを、場所ごとに一覧。まだのものは数だけ
+     ========================================================= */
+  // 見出しは言語ごとに（「なかよし」などは、ほかの所の訳とぶつかるので、ここで書く）
+  const ZUKAN_GROUPS = [
+    ['greet', { ja: 'あいさつ', en: 'Greetings', zh: '打招呼' }], ['head', { ja: '頭', en: 'Head', zh: '头' }],
+    ['chest', { ja: 'むね', en: 'Chest', zh: '胸口' }], ['belly', { ja: 'おなか', en: 'Belly', zh: '肚子' }],
+    ['tail', { ja: 'しっぽ', en: 'Tail', zh: '尾巴' }], ['crotch', { ja: 'おまた', en: 'Secret spot', zh: '秘密部位' }],
+    ['melt', { ja: 'とろける', en: 'Melting', zh: '融化' }], ['angry', { ja: 'おこる・かくれる', en: 'Angry & hiding', zh: '生气・躲起来' }],
+    ['heart', { ja: 'なかよし', en: 'Friendship', zh: '亲密' }], ['wear', { ja: 'きせかえ', en: 'Dress-up', zh: '换装' }]
+  ];
+  function zukanGroup(l) {
+    const w = l.when || {};
+    const sc = Array.isArray(w.scene) ? w.scene[0] : w.scene;
+    if (sc === 'home' || sc === 'named') return 'greet';
+    if (sc === 'pull') return 'belly';
+    if (sc === 'tap' || (sc === 'angry' && w.place === 'crotch')) return w.place || 'greet';
+    if (sc === 'melt') return 'melt';
+    if (sc === 'angry' || sc === 'hiddenTap' || sc === 'return') return 'angry';
+    if (sc === 'heartUp') return 'heart';
+    if (sc === 'wear') return 'wear';
+    return 'greet';
+  }
+  // セリフを重ならないように集める（同じ文は、最初に出てくる場所だけに入れる）。
+  // key は記録に使う日本語の文、text は いまの言語の文
+  function zukanLines() {
+    const seen = {}, out = [];
+    LINES.forEach((l) => { const k = jaOf(l); if (!seen[k]) { seen[k] = true; out.push({ key: k, text: l.text, group: zukanGroup(l) }); } });
+    return out;
+  }
+  // 数えるのは、いまあるセリフだけ（セリフを書きかえて、なくなったものは数えない）
+  function zukanCount() {
+    const all = zukanLines(), got = SAVE.data.seenLines;
+    return { total: all.length, seen: all.filter((l) => got.indexOf(l.key) >= 0).length };
+  }
+  function openZukan() {
+    const all = zukanLines(), got = SAVE.data.seenLines;
+    const secret = !SAVE.data.stats.tap.crotch;   // おまたは、さわるまで「？？？」
+    const zk = zukanCount();
+    let html = '<button id="zukan-back" class="link" type="button">' + tr('‹ 実績にもどる') + '</button>' +
+      '<p class="note center">' + tr('見たことのあるセリフ {a} ／ {b}', { a: zk.seen, b: zk.total }) + '</p>';
+    ZUKAN_GROUPS.forEach(([key, label]) => {
+      const list = all.filter((l) => l.group === key);
+      if (!list.length) return;
+      const seenList = list.filter((l) => got.indexOf(l.key) >= 0);
+      const name = key === 'crotch' && secret ? '？？？' : (label[I18N.lang] || label.en || label.ja);
+      html += '<h3>' + name + '（' + seenList.length + ' ／ ' + list.length + '）</h3><div class="zukan">' +
+        seenList.map((l, i) => '<p class="zukan-line" data-g="' + key + '" data-i="' + i + '"></p>').join('') +
+        (list.length > seenList.length ? '<p class="zukan-rest">' + tr('まだ見ていないセリフが あと {n} こ', { n: list.length - seenList.length }) + '</p>' : '') +
+        '</div>';
+    });
+    openSheet(tr('💬 セリフ図鑑'), html);
+    // 文字は、あとから入れる（呼び名を入れて。記号が入っても安全なように）
+    const body = $('sheet-body');
+    ZUKAN_GROUPS.forEach(([key]) => {
+      const seenList = all.filter((l) => l.group === key && got.indexOf(l.key) >= 0);
+      body.querySelectorAll('.zukan-line[data-g="' + key + '"]').forEach((el) => {
+        el.textContent = withName(seenList[+el.dataset.i].text);
+      });
+    });
+    $('zukan-back').addEventListener('click', openRecord);
+  }
+
+  function openRecord() {
     const d = SAVE.data, s = d.stats;
-    const total = new Set(LINES.map((l) => l.text)).size;
+    const zk = zukanCount();
     const rows = [
       [{ ja: 'なかよし', zh: '亲密天数' }[I18N.lang] || 'Days together', tr('{n} 日', { n: d.totalDays })],
       [tr('れんぞく（いま／最高）'), tr('{a} 日 ／ {b} 日', { a: d.streak, b: d.bestStreak })],
@@ -1387,7 +1465,7 @@
       [tr((s.tap.crotch ? 'おまた' : '？？？') + 'をさわった'), tr('{n} 回', { n: s.tap.crotch || 0 })],
       [tr('とろけさせた'), tr('{n} 回', { n: s.melt })],
       [tr('怒らせちゃった'), tr('{n} 回', { n: s.angry })],
-      [tr('セリフ図鑑'), d.seenLines.length + ' ／ ' + total]
+      [tr('セリフ図鑑'), zk.seen + ' ／ ' + zk.total]
     ];
     // 思い出アルバム：ハートの数まで見られる。まだのものは「？」
     // 最後に「ひみつの思い出」（クリアするまで、名前も「？？？」）
@@ -1402,6 +1480,7 @@
       '</div>' : '';
     openSheet(tr('実績'),
       album +
+      '<button id="btn-zukan" class="btn btn-wide" type="button">' + tr('💬 セリフ図鑑（{a} ／ {b}）', { a: zk.seen, b: zk.total }) + '</button>' +
       '<h3>' + tr('きろく') + '</h3>' +
       '<table class="rec">' + rows.map((r) => '<tr><th>' + r[0] + '</th><td>' + r[1] + '</td></tr>').join('') + '</table>' +
       '<p class="note">' + tr('バッジ（実績のごほうび）は準備中だよ') + '</p>');
@@ -1411,9 +1490,12 @@
       b.querySelector('img').src = m.thumb || m.image || C.images[m.stand] || C.images.normal;
       if (!m.image) { pic.classList.add('stand'); pic.style.background = 'linear-gradient(' + m.bg[0] + ', ' + m.bg[1] + ')'; }
       b.querySelector('.mem-t').textContent = (m.secret ? '🌺 ' : '💖' + m.hearts + ' ') + m.title;
-      b.addEventListener('click', () => { closeSheet(); playMemory(m, false); });
+      // 実績の画面は閉じずに、その上に思い出を重ねて流す（トップ画面が一瞬見えないように。見終わると実績の画面に戻る）
+      b.addEventListener('click', () => playMemory(m, false));
     });
-  });
+    $('btn-zukan').addEventListener('click', openZukan);
+  }
+  $('btn-record').addEventListener('click', openRecord);
 
   // きせかえ：場所ごとに「なし」と部品を並べる。選ぶとパネルを閉じて、付けた姿を見せる
   $('btn-wear').addEventListener('click', () => {

@@ -206,6 +206,11 @@ window.TanuSave = (function () {
     data.seenLines.push(text);
     save();
   }
+  // 見たセリフの記録を、まとめて書きかえる（英語・中国語で見たセリフを、日本語の文に直すとき。app.js）
+  function setSeenLines(list) {
+    data.seenLines = list;
+    save();
+  }
 
   /* ---------- 呼び名 ---------- */
   const NAME_MAX = 10;
@@ -245,6 +250,7 @@ window.TanuSave = (function () {
     hearts: hearts,
     count: count,
     seeLine: seeLine,
+    setSeenLines: setSeenLines,
     setName: setName,
     NAME_MAX: NAME_MAX,
     setWear: setWear,
