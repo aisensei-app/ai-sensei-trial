@@ -7,6 +7,10 @@
 ## 0. 新しいチャットのClaudeへ（最初に読んでください）
 
 ### ★ いまの状況（2026-10-31。新しいチャットはここから）
+- **2026-10-31 夕方：公開の準備ができた（ユーザーの手動アップロード待ち）**。今回の公開は「トップ画面の作り変え＋言語対応（日本語・英語・中国語の簡体字）」だけ。
+  公開スイッチ：pon=soon、rally・timeOfDay・tailFlick=hidden、english・chinese=open。sw.js は **tanukun-v25**。
+  `python3 tools/build_app.py --base-url https://tanukun.pages.dev/` → tanukun/app-dist.zip。まず Preview（https://test.tanukun.pages.dev/）で実機・X アプリの中を確認 → Production。
+  宣伝のポストでは、中国語は詳しくないので「おかしな所があれば気軽に教えてね」と添える（ユーザーの希望。文案はこのチャットで渡した）
 - 作業ブランチ：**`claude/tanukun-ponpoko-rally-brush-lq2ebj`**（`claude/tanukun-ponpoko-rhythm-85uds5` の続き。2026-10-31 の作業はすべてこちら）。
   公開は Cloudflare Pages の `tanukun`（https://tanukun.pages.dev/）に、`python3 tools/build_app.py --base-url https://tanukun.pages.dev/` でできる
   `tanukun/app-dist.zip` を **ユーザーが Production で手動アップロード**
