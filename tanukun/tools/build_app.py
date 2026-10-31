@@ -29,9 +29,9 @@ TITLE = 'タヌくん｜Tanu-kun'
 # リンクのカードの説明（英語版を出したので、日本語と英語の両方）
 DESCRIPTION = 'さわって遊ぶ、なでなでアプリ。なでて、ぽんぽこして、毎日なかよくなろう。／ A touch-and-pet app: pat, drum his belly, and grow closer every day!'
 PON_FILES = ['index.html', 'pon.css', 'pon.js']
-RALLY_FILES = ['index.html', 'rally.css', 'rally.js']
+RALLY_FILES = ['index.html', 'rally.css', 'rally.js', 'rally.i18n.js']
 RALLY_TITLE = 'ぽよんラリー｜タヌくん'
-RALLY_DESCRIPTION = 'ビーチボールを投げると、タヌくんがおなかで「ぽよん！」と返してくれる。何回つづくかな？'
+RALLY_DESCRIPTION = 'ビーチボールを投げると、タヌくんがおなかで「ぽよん！」と返してくれる。何回つづくかな？／ Toss a beach ball and Tanu-kun bounces it back with his belly. How long can you keep it going?'
 PON_TITLE = 'ぽんぽこリズム｜タヌくん'
 PON_DESCRIPTION = 'タヌくんのおなかをたたく音ゲー。8ビートに合わせて、ぽんっ！ぷるん！だんだん速くなるよ。'
 # 公開してはいけない言葉（身元につながる情報が入っていないかの確認）

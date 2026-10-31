@@ -37,6 +37,27 @@
   const C = window.TANU_CONFIG;
   if (C.features && C.features.rally && C.features.rally !== 'open') { location.replace('../'); return; }
   const $ = (id) => document.getElementById(id);
+  /* ことば：本編と同じ i18n.js（ラリーの訳は rally.i18n.js）。tr('日本語の文', { n: 3 }) でいまの言語の文 */
+  const I18N = window.TanuI18n || { lang: 'ja', LANGS: { ja: '日本語' }, tr: (s) => s, apply: () => {}, set: () => {} };
+  const tr = (ja, vars) => {
+    let out = I18N.tr(ja, vars);
+    if (vars && out === ja) Object.keys(vars).forEach((k) => { out = out.split('{' + k + '}').join(vars[k]); });
+    return out;
+  };
+  I18N.apply();
+  if (I18N.lang !== 'ja') {
+    // <b> や <br> を含む文（data-i18n-html）は、中の HTML ごと入れかえる
+    document.querySelectorAll('[data-i18n-html]').forEach((el) => { el.innerHTML = tr(el.innerHTML.trim()); });
+    document.title = tr('ぽよんラリー｜タヌくん');
+  }
+  // はじめる前の画面の右上「🌐 English / 🌐 日本語」：押すと、もう一方の言語へ（本編と同じ）
+  const LANG_KEYS = Object.keys(I18N.LANGS);
+  if (LANG_KEYS.length > 1) {
+    const next = LANG_KEYS[(LANG_KEYS.indexOf(I18N.lang) + 1) % LANG_KEYS.length];
+    $('btn-lang').textContent = '🌐 ' + I18N.LANGS[next];
+    $('btn-lang').hidden = false;
+    $('btn-lang').addEventListener('click', () => I18N.set(next));
+  }
   // 本編の設定の絵は 'images/…' なので、このページ（rally/）からは '../' を付ける
   const IMG = (name) => {
     const src = C.images[name] || name;
@@ -323,7 +344,7 @@
     f.last = now;
     if (f.tutorial && f.u >= 1) {
       f.hold = 1;
-      showGuide('上へ スワイプして 打ち返そう！');
+      showGuide(tr('上へ スワイプして 打ち返そう！'));
       return f.hold;
     }
     return f.u;
@@ -423,8 +444,8 @@
       return;
     }
     const d = inBelly(ball.x, ball.y);
-    pop(ball.x, ball.y - 20, d < 2.2 ? 'おしい！' : 'あれれ？', 'miss');
-    if (f.kind === 'throw') say(d < 2.2 ? 'おなかに、なげてね〜' : 'こっちだよ〜');
+    pop(ball.x, ball.y - 20, tr(d < 2.2 ? 'おしい！' : 'あれれ？'), 'miss');
+    if (f.kind === 'throw') say(tr(d < 2.2 ? 'おなかに、なげてね〜' : 'こっちだよ〜'));
     fly('fall', { x: ball.x + (ball.x - G.bx) * 0.3, y: G.feetY, z: 1 }, 0.45, -G.H * 0.02);
     state = 'wait';
     if (f.kind === 'back') { setTimeout(() => loseBall(), 500); return; }
@@ -435,10 +456,10 @@
   function crotch() {
     const n = hearts(), st = C.crotch ? C.crotch.stages : { moji: 2, dere: 4 };
     const stage = n >= st.dere ? 'dere' : n >= st.moji ? 'moji' : 'angry';
-    const pick = (a) => a[Math.floor(Math.random() * a.length)];
+    const pick = (a) => tr(a[Math.floor(Math.random() * a.length)]);
     if (stage === 'angry') {
       sound.angry();
-      pop(G.lx, G.ly - 10, '💢 こらっ！', 'miss');
+      pop(G.lx, G.ly - 10, tr('💢 こらっ！'), 'miss');
       setPose(POSE.angry, 700);
       body.animate([{ transform: 'none' }, { transform: 'translateX(-2%)' }, { transform: 'translateX(2%)' },
         { transform: 'translateX(-1%)' }, { transform: 'none' }], { duration: 300 });
@@ -448,12 +469,12 @@
     sound.leaf();
     leaves(G.lx, G.ly);
     if (stage === 'moji') {
-      pop(G.lx, G.ly - 10, '🌿 ぱさっ', 'safe');
+      pop(G.lx, G.ly - 10, tr('🌿 ぱさっ'), 'safe');
       setPose(POSE.moji, 700);
       say(pick(['ひゃっ…！', 'そ、そこは…', 'こしみの ガード！']));
       return 'lob';
     }
-    pop(G.lx, G.ly - 10, '🌿 ぱさっ♡', 'nice');
+    pop(G.lx, G.ly - 10, tr('🌿 ぱさっ♡'), 'nice');
     setPose(POSE.dere, 800);
     say(pick(['も〜…♡', 'えへへ、ねらったでしょ〜', 'しかたないなぁ♪']));
     return 'normal';
@@ -478,7 +499,7 @@
   // 頭に当たった：ヘディングで返す（ラリーは続く）
   function header(x, y) {
     sound.hit();
-    pop(x, y - 10, 'ヘディング！', 'safe');
+    pop(x, y - 10, tr('ヘディング！'), 'safe');
     setPose(POSE.ouch, 600);
     body.animate([{ transform: 'rotate(0)' }, { transform: 'rotate(-3deg)' }, { transform: 'rotate(2deg)' }, { transform: 'rotate(0)' }],
       { duration: 350, easing: 'ease-out' });
@@ -490,7 +511,7 @@
     const cnt = $('count').parentNode;
     cnt.classList.remove('bump'); void cnt.offsetWidth; cnt.classList.add('bump');
     const s = SAY.filter((x) => x.at === streak)[0];
-    if (s && !said[s.at]) { said[s.at] = true; say(s.text); }
+    if (s && !said[s.at]) { said[s.at] = true; say(tr(s.text)); }
   }
   // タヌくんが1歩近づく（絵が大きく、足もとが手前に）。#body・#ground の transition で、なめらかに
   function approach(n) {
@@ -499,12 +520,12 @@
     root.classList.add('moving');
     layout();
     setTimeout(() => root.classList.remove('moving'), 700);
-    say(n >= T.maxStep ? 'ここからが本番だよ！' : 'ちかづくよ〜！');
+    say(tr(n >= T.maxStep ? 'ここからが本番だよ！' : 'ちかづくよ〜！'));
   }
   // おなかで「ぽよん！」：当たった場所がへこんで、ぷるんと戻る
   function poyon(x, y) {
     sound.poyon();
-    pop(x, y - 10, 'ぽよん！');
+    pop(x, y - 10, tr('ぽよん！'));
     body.classList.remove('poyon'); void body.offsetWidth; body.classList.add('poyon');
     if (belly.ready()) {
       const k = 720 / G.w;   // 画面 → 絵（720×900）の倍率
@@ -530,7 +551,7 @@
     fly('return', { x: tx, y: G.nearY, z: 0 }, dur, G.H * (K.arc || 0.22 + Math.random() * 0.08));
     flight.type = kind;
     targetEl.className = 'target' + (kind === 'normal' ? '' : ' t-' + kind);
-    if (kind !== 'normal') pop(tx, G.nearY - G.size * 2.2, KIND_LABEL[kind], 'kind-' + kind);
+    if (kind !== 'normal') pop(tx, G.nearY - G.size * 2.2, tr(KIND_LABEL[kind]), 'kind-' + kind);
     // カーブ：輪と反対がわへふくらんでから、輪にもどってくる
     if (kind === 'curve') flight.bend = (tx < G.W / 2 ? 1 : -1) * G.W * K.bend;
     // はじめての打ち返しは、輪の上でボールが止まって待つ（ガイド）
@@ -551,7 +572,7 @@
     flight.feinted = true;
     const keep = flight;
     const sec = lerp(T.feint.seconds[0], T.feint.seconds[1], Math.random());
-    pop(G.bx, G.top + G.h * 0.08, 'せーの…', 'safe');
+    pop(G.bx, G.top + G.h * 0.08, tr('せーの…'), 'safe');
     if (FEINT_POSE) img.src = FEINT_POSE;
     body.classList.add('feint');
     setTimeout(() => {
@@ -578,7 +599,7 @@
 
   // 風：「💨 かぜ！」と、横に流れるすじ（dir：1 で右へ、-1 で左へ）
   function wind(dir) {
-    pop(G.W / 2, G.H * 0.36, dir > 0 ? 'かぜ！ 💨→' : '←💨 かぜ！', 'wind');
+    pop(G.W / 2, G.H * 0.36, tr(dir > 0 ? 'かぜ！ 💨→' : '←💨 かぜ！'), 'wind');
     for (let i = 0; i < 6; i++) {
       const el = document.createElement('i');
       el.className = 'gust';
@@ -606,7 +627,7 @@
     ballEl.classList.toggle('now', now);
     if (total < T.guideRallies && !flight.tutorial) {
       placeGuide(d);
-      if (guideEl.hidden) { guideEl.lastChild.textContent = '上へ シュッ！'; guideEl.hidden = false; }
+      if (guideEl.hidden) { guideEl.lastChild.textContent = tr('上へ シュッ！'); guideEl.hidden = false; }
     }
   }
   const hideTarget = () => { targetEl.hidden = true; ballEl.classList.remove('now'); hideGuide(); };
@@ -631,18 +652,18 @@
       gauge = 0;
       renderGauge();
       sound.special();
-      pop(ball.x, ball.y - d * 0.6, 'ひっさつ！', 'nice');
+      pop(ball.x, ball.y - d * 0.6, tr('ひっさつ！'), 'nice');
       ballEl.classList.remove('charged');
       ballEl.classList.add('special');
       setPose(POSE.receive, 0);
       body.classList.add('receive');
-      say('こい〜っ！');
+      say(tr('こい〜っ！'));
       fly('back', { x: G.bx, y: G.by, z: 1 }, dur * 0.7, G.H * 0.03);
       flight.special = true;
       return;
     }
     if (nice) sound.nice(); else sound.hit();
-    pop(ball.x, ball.y - d * 0.6, nice ? 'ナイス！' : 'セーフ', nice ? 'nice' : 'safe');
+    pop(ball.x, ball.y - d * 0.6, tr(nice ? 'ナイス！' : 'セーフ'), nice ? 'nice' : 'safe');
     const before = gauge;
     gauge = Math.min(T.gauge.max, gauge + (nice ? T.gauge.nice : T.gauge.safe));
     renderGauge();
@@ -656,7 +677,7 @@
     ballEl.classList.remove('special');
     sound.poyon();
     setTimeout(sound.poyon, 120);
-    pop(G.bx, G.by - 30, 'ぽよよ〜ん！！');
+    pop(G.bx, G.by - 30, tr('ぽよよ〜ん！！'));
     if (belly.ready()) {
       const k = 720 / G.w;
       belly.press('belly', (G.bx - G.left) * k, (G.by - G.top) * k);
@@ -667,11 +688,11 @@
     countRally();
     total += T.gauge.bonus;
     $('count').textContent = total;
-    setTimeout(() => pop(G.bx, G.by - 70, 'ボーナス +' + T.gauge.bonus, 'safe'), 300);
+    setTimeout(() => pop(G.bx, G.by - 70, tr('ボーナス +{n}', { n: T.gauge.bonus }), 'safe'), 300);
     setTimeout(() => {
       body.classList.remove('receive');
       setPose(null, 0);
-      say('すごい球だった〜！');
+      say(tr('すごい球だった〜！'));
       const next = Math.min(T.maxStep, Math.floor(streak / T.stepEvery));
       if (next > stepNow) { approach(next); flight.feinted = true; }
       sendBack();
@@ -685,7 +706,7 @@
     sound.miss();
     shadowEl.style.visibility = 'hidden';
     hideTarget();
-    pop(ball.x, ball.y - 30, 'あっ！', 'miss');
+    pop(ball.x, ball.y - 30, tr('あっ！'), 'miss');
     ballEl.animate([
       { transform: ballEl.style.transform },
       { transform: 'translate(' + (ball.x - G.size / 2) + 'px,' + (G.H + G.size) + 'px)' }
@@ -701,11 +722,11 @@
     if (armed) { armed = false; renderGauge(); }
     if (lives <= 0) {
       state = 'over';
-      say(total >= 15 ? 'あ〜、おしかった！' : 'あ〜、おとしちゃった');
+      say(tr(total >= 15 ? 'あ〜、おしかった！' : 'あ〜、おとしちゃった'));
       setTimeout(showResult, 1200);
       return;
     }
-    say('ボール、あと ' + lives + 'こ！');
+    say(tr('ボール、あと {n}こ！', { n: lives }));
     setTimeout(() => {
       if (stepNow) { stepNow = 0; root.classList.add('moving'); layout(); setTimeout(() => root.classList.remove('moving'), 700); }
       resetBall();
@@ -724,7 +745,7 @@
     $('gauge').classList.toggle('full', full);
     $('btn-special').hidden = !full && !armed;
     $('btn-special').classList.toggle('armed', armed);
-    $('btn-special').textContent = armed ? '🔥 かまえ中…' : '💥 ひっさつ';
+    $('btn-special').textContent = tr(armed ? '🔥 かまえ中…' : '💥 ひっさつ');
   }
   // ゲージのところに「+1⚡」
   function gaugePop(text) {
@@ -735,7 +756,7 @@
     if (gauge < T.gauge.max || armed) return;
     armed = true;
     renderGauge();
-    say('ひっさつ…！ くるか〜？');
+    say(tr('ひっさつ…！ くるか〜？'));
   });
   function renderLives() {
     $('lives').innerHTML = '';
@@ -799,9 +820,9 @@
     placeReady();
     if (guideThrow) {
       $('hint').hidden = true;
-      showGuide('ボールを 上へ スワイプして なげてね');
+      showGuide(tr('ボールを 上へ スワイプして なげてね'));
     } else {
-      $('hint').textContent = '👆 上へ スワイプして なげてね';
+      $('hint').textContent = tr('👆 上へ スワイプして なげてね');
       $('hint').hidden = false;
     }
   }
@@ -826,11 +847,11 @@
       $('best').textContent = best;
     }
     const rank = RANKS.filter((r) => total >= r.min).pop();
-    $('r-title').textContent = rank.title;
+    $('r-title').textContent = tr(rank.title);
     $('r-count').textContent = total;
-    $('r-longest').textContent = 'いちばん続いたのは ' + longest + ' ラリー';
-    $('r-best').textContent = isBest && total > 0 ? '🎉 さいこう記録！' : 'さいこう記録 ' + best + ' ラリー';
-    $('r-line').textContent = 'タヌくん「' + rank.line + '」';
+    $('r-longest').textContent = tr('いちばん続いたのは {n} ラリー', { n: longest });
+    $('r-best').textContent = isBest && total > 0 ? tr('🎉 さいこう記録！') : tr('さいこう記録 {n} ラリー', { n: best });
+    $('r-line').textContent = tr('タヌくん「{s}」', { s: tr(rank.line) });
     // 本編とのつながり：1日1回のごほうび。その日にもらった分より多い段に届いたら、差だけ預ける
     const tier = T.bonus.filter((b) => total >= b.at)[0];
     let add = 0, got = 0;
@@ -845,12 +866,17 @@
     // まだ上の段があれば、次の目標も出す（例：15ラリーで さらに +2）
     const next = T.bonus.slice().reverse().filter((x) => x.at > total && x.points > got + add)[0];
     const lines = [];
-    if (add) lines.push('💗 なかよしポイント +' + add + '（タヌくんのところで受け取れるよ）');
-    if (next) lines.push('💗 ' + (next.at === 1 ? '1回 打ち返せば' : next.at + 'ラリーで') + (add || got ? ' さらに +' : ' なかよしポイント +') + (next.points - got - add) + '（1日1回）');
+    if (add) lines.push(tr('💗 なかよしポイント +{n}（タヌくんのところで受け取れるよ）', { n: add }));
+    if (next) {
+      const v = { at: next.at, n: next.points - got - add };
+      lines.push(tr(next.at === 1 ? '💗 1回 打ち返せば なかよしポイント +{n}（1日1回）'
+        : add || got ? '💗 {at}ラリーで さらに +{n}（1日1回）' : '💗 {at}ラリーで なかよしポイント +{n}（1日1回）', v));
+    }
     $('r-bonus').innerHTML = lines.join('<br>');
     $('r-bonus').hidden = !lines.length;
     const url = /^https?:/.test(location.href) ? location.href.split(/[?#]/)[0] : 'https://tanukun.pages.dev/rally/';
-    const text = '🏐 ぽよんラリー\n合計' + total + 'ラリー「' + rank.title + '」（いちばん続いたのは' + longest + '）\n#タヌくん #ぽよんラリー\n' + url;
+    const text = tr('🏐 ぽよんラリー\n合計{n}ラリー「{rank}」（いちばん続いたのは{m}）\n#タヌくん #ぽよんラリー\n',
+      { n: total, rank: tr(rank.title), m: longest }) + url;
     $('btn-post').href = 'https://x.com/intent/post?text=' + encodeURIComponent(text);
     $('result').hidden = false;
   }

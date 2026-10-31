@@ -108,6 +108,10 @@
     その日にもらった分より上の段に届いたら、差だけ足す（save の rallyBonusDay・rallyBonusGot）。ポイントは rallyPoints に預け、
     本編を開いたときに受け取る（save.js の claimPonPoints がぽんぽこ分と一緒に受け取る。お知らせは「ぽよんラリーの ごほうび 💗+n」。英語は i18n.js に追加済み）。
     結果画面に「💗 なかよしポイント +3（タヌくんのところで受け取れるよ）」と、次の目標「15ラリーで さらに +2」
+  - **2026-10-31 英語化（ぽよんラリー）**：本編と同じ i18n.js を読む。ラリーの訳は **rally/rally.i18n.js**（window.TANU_TEXT_I18N.en。i18n.js より先に読み、i18n.js が TEXT に足す）。
+    rally.js の文はすべて tr('日本語の文', { n }) で、HTML は data-i18n（文字だけ）・data-i18n-html（<b> や <br> を含む文。rally.js が innerHTML ごと入れかえる）。
+    はじめる前の画面の右上に「🌐 English／🌐 日本語」。X のポスト文も英語（#Tanukun #PoyonRally）。リンクのカードの説明は日本語と英語の両方（build_app.py）。
+    build_app.py・build_preview.py・sw.js に rally.i18n.js を追加。※ rally/index.html の <title> は build_app.py が探すので、印（data-i18n）を付けない（題は rally.js で切りかえる）
   - クリア後のイラストのプロンプト：pon/ILLUST_PROMPTS.md の「⑧」（R1 汗をぬぐう・R2 砂だらけ・R3 大の字）。絵ができたら結果画面に組みこむ
 - **🎉 2026-10-30 英語版を本番に公開**（左上の言語ボタン・パネルの × も一緒に。ぽんぽこ=soon、ラリー・しっぽ・時間帯=hidden のまま）。次は英語の宣伝ポスト
 - **英語版（2026-10-30 実装。公開スイッチ english: 'open'）**：X で好評・海外からのフォローが増え、英語版の要望 → ユーザーの判断で「音ゲーより先に英語版」。

@@ -13,20 +13,20 @@
 
   <!-- 上のバー：本編へ・いまのラリー回数・さいこう記録 -->
   <header class="bar">
-    <a class="back" href="../">‹ タヌくん</a>
-    <div id="lives" class="lives" aria-label="のこりのボール"></div>
-    <div class="count"><b id="count">0</b><small>ラリー</small></div>
-    <div class="best">さいこう <b id="best">0</b></div>
+    <a class="back" href="../" data-i18n>‹ タヌくん</a>
+    <div id="lives" class="lives" aria-label="のこりのボール" data-i18n-attr="aria-label"></div>
+    <div class="count"><b id="count">0</b><small data-i18n>ラリー</small></div>
+    <div class="best"><span data-i18n>さいこう</span> <b id="best">0</b></div>
   </header>
   <!-- ひっさつのゲージ（ナイスでたまる）と、満タンで出るボタン -->
-  <div id="gauge" class="gauge" aria-hidden="true"><span>ひっさつ</span><i id="gauge-pips"></i></div>
+  <div id="gauge" class="gauge" aria-hidden="true"><span data-i18n>ひっさつ</span><i id="gauge-pips"></i></div>
   <button id="btn-special" class="special-btn" type="button" hidden>💥 ひっさつ</button>
 
   <!-- タヌくんの足もとの影 -->
   <div id="ground" class="ground" aria-hidden="true"></div>
   <!-- タヌくん（本編と同じ絵と、おなかの「ぷるん」） -->
   <div id="body">
-    <img id="tanu-img" alt="タヌくん" draggable="false">
+    <img id="tanu-img" alt="タヌくん" data-i18n-attr="alt" draggable="false">
     <div id="parts-layer" aria-hidden="true"></div>
     <canvas id="belly-canvas" aria-hidden="true"></canvas>
   </div>
@@ -35,7 +35,7 @@
   <!-- ボールと、地面の影 -->
   <div id="shadow" class="shadow" aria-hidden="true"></div>
   <!-- もどってくるボールのまわりの輪（縮んで、ボールに重なったらナイス）。打てる間は光る -->
-  <div id="target" class="target" aria-hidden="true" hidden><span>いまだ！</span></div>
+  <div id="target" class="target" aria-hidden="true" hidden><span data-i18n>いまだ！</span></div>
   <div id="ball" class="ball" aria-hidden="true"><i></i></div>
   <div id="pops" aria-hidden="true"></div>
   <p id="hint" class="hint" hidden></p>
@@ -44,30 +44,33 @@
 
   <!-- はじめる前 -->
   <section id="start" class="sheet">
-    <h1>🏐 ぽよんラリー</h1>
-    <p>ボールを <b>上へ スワイプ</b> して なげてね。<br>タヌくんが おなかで はね返すよ！</p>
-    <p>もどってくるボールに <b>輪</b> が出るよ。<br>輪が ちぢんで ボールに 重なったら<br>また <b>上へ スワイプ</b> して 打ち返そう！</p>
-    <p class="small">スワイプの <b>長さ</b>で ねらう高さが かわるよ。<br>ナイスで ⚡ をためると… 💥<br>ボールは 3こ。何回つづくかな？</p>
-    <button id="btn-start" class="btn" type="button">はじめる</button>
-    <p class="small">🔊 音を出して遊んでね</p>
+    <button id="btn-lang" class="lang-btn" type="button" hidden></button>
+    <h1 data-i18n>🏐 ぽよんラリー</h1>
+    <p data-i18n-html>ボールを <b>上へ スワイプ</b> して なげてね。<br>タヌくんが おなかで はね返すよ！</p>
+    <p data-i18n-html>もどってくるボールに <b>輪</b> が出るよ。<br>輪が ちぢんで ボールに 重なったら<br>また <b>上へ スワイプ</b> して 打ち返そう！</p>
+    <p class="small" data-i18n-html>スワイプの <b>長さ</b>で ねらう高さが かわるよ。<br>ナイスで ⚡ をためると… 💥<br>ボールは 3こ。何回つづくかな？</p>
+    <button id="btn-start" class="btn" type="button" data-i18n>はじめる</button>
+    <p class="small" data-i18n>🔊 音を出して遊んでね</p>
   </section>
 
   <!-- 結果 -->
   <section id="result" class="sheet" hidden>
     <h2 id="r-title"></h2>
-    <p class="r-count">合計 <b id="r-count">0</b> ラリー</p>
+    <p class="r-count" data-i18n-html>合計 <b id="r-count">0</b> ラリー</p>
     <p id="r-longest" class="r-longest"></p>
     <p id="r-best" class="r-best"></p>
     <p id="r-bonus" class="r-bonus" hidden></p>
     <p id="r-line" class="r-line"></p>
-    <a id="btn-post" class="btn btn-x" target="_blank" rel="noopener">𝕏 でポストする</a>
-    <button id="btn-again" class="btn" type="button">もう一回</button>
-    <a class="btn btn-sub" href="../">タヌくんのところへ もどる</a>
+    <a id="btn-post" class="btn btn-x" target="_blank" rel="noopener" data-i18n>𝕏 でポストする</a>
+    <button id="btn-again" class="btn" type="button" data-i18n>もう一回</button>
+    <a class="btn btn-sub" href="../" data-i18n>タヌくんのところへ もどる</a>
   </section>
 
 </main>
-<!-- 本編と同じ設定（おなかの揺れ）と揺れの仕組みを使う -->
+<!-- 本編と同じ設定（おなかの揺れ）・ことば（i18n.js。ラリーの訳は rally.i18n.js）と揺れの仕組みを使う -->
 <script src="../config.js"></script>
+<script src="rally.i18n.js"></script>
+<script src="../i18n.js"></script>
 <script src="../belly.js"></script>
 <script src="rally.js"></script>
 </body>

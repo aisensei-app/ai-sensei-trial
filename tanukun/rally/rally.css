@@ -364,6 +364,20 @@ body.in-x .special-btn { bottom: calc(25vh + 10px); }
   text-align: center;
 }
 .sheet h1, .sheet h2 { margin: 0 0 10px; font-size: 24px; }
+/* 言語の切りかえ（はじめる前の画面の右上。本編と同じく、押すともう一方の言語へ） */
+.lang-btn {
+  position: absolute;
+  right: 10px; top: 10px;
+  padding: 4px 10px;
+  border: 0;
+  border-radius: 999px;
+  background: #F3DDBF;
+  color: #5A3A1E;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
 .sheet p { margin: 8px 0; line-height: 1.6; }
 .sheet b { color: #E0671F; }
 .sheet .small { font-size: 13px; color: #8A6A4A; }

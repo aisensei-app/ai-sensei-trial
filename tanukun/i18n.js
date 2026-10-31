@@ -140,6 +140,10 @@ window.TanuI18n = (function () {
     return LANGS.en ? 'en' : 'ja';
   }
 
+  // ほかのページの訳（ぽよんラリーの rally.i18n.js など。i18n.js より先に読みこむ）を足す
+  const more = window.TANU_TEXT_I18N || {};
+  Object.keys(more).forEach((l) => { TEXT[l] = Object.assign(TEXT[l] || {}, more[l]); });
+
   let lang = detect();
   document.documentElement.lang = lang;
 
