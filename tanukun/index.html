@@ -13,6 +13,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="タヌくん">
 <link rel="stylesheet" href="style.css">
+<!-- ゲームから戻ってきたときは、最初から幕をかけておく（一瞬トップ画面が見えてしまわないように。app.js の veilArrive で明ける） -->
+<script>try { if (sessionStorage.getItem('tanukun.homeZoom')) document.documentElement.classList.add('arriving'); } catch (e) {}</script>
 </head>
 <body class="mode-home">
 <!-- 時間帯の背景の飾り（星・ホタル・太陽など。style.css の body[data-time=…]） -->
@@ -165,6 +167,9 @@
 
 <!-- お知らせ（なかよし度アップ など） -->
 <div id="toast" class="toast" aria-live="polite"></div>
+
+<!-- 画面を切りかえるときの幕（トップ画面 ⇄ なでなで・ゲーム）。色は時間帯の背景に合わせる（style.css の .veil） -->
+<div id="veil" class="veil" aria-hidden="true"></div>
 
 <!-- 読み込む順番が大事です：設定 → セリフ → 記録 → おなか → 本体 -->
 <script src="config.js"></script>

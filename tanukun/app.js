@@ -812,6 +812,22 @@
      ========================================================= */
   let mode = 'home';   // home（メニュー）/ play（遊ぶ）/ name（呼び名を聞く）
 
+  /* ---- 画面を切りかえるときの幕（style.css の .veil。色は時間帯の背景に合わせる） ----
+     veilIn：幕がかかりきったら次へ（Promise）／veilOut：幕が明ける／veilArrive：開いたときに、幕がかかった所から明ける */
+  const veil = $('veil');
+  const reduced = () => window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function veilIn() {
+    veil.classList.remove('arrive');
+    veil.classList.add('on');
+    return new Promise((r) => setTimeout(r, reduced() ? 30 : 450));
+  }
+  function veilOut() { setTimeout(() => veil.classList.remove('on'), 60); }
+  function veilArrive() {
+    veil.classList.add('arrive');
+    document.documentElement.classList.remove('arriving');
+    setTimeout(() => veil.classList.remove('arrive'), 800);
+  }
+
   function setMode(m) {
     mode = m;
     ['home', 'play', 'name'].forEach((x) => document.body.classList.toggle('mode-' + x, m === x));
@@ -864,8 +880,14 @@
     go();
   }
 
+  let leaving = false;
   function backHome() {
-    if (state.phase !== 'active') return;   // 怒って隠れている間はもどれない
+    if (state.phase !== 'active' || leaving) return;   // 怒って隠れている間はもどれない
+    // 幕がふわっとかかってから、トップ画面へ（明けるときは、ズームしたおなかの画面）
+    leaving = true;
+    veilIn().then(() => { leaving = false; showHome(); veilOut(); });
+  }
+  function showHome() {
     endMelt(true);
     setMode('home');
     renderStatus();
@@ -1633,7 +1655,9 @@
   const store = (fn) => { try { return fn(window.sessionStorage); } catch (err) { return null; } };
   // おなかの上に並べるもの（まんなか＝なでなで、まわり＝ゲーム。公開スイッチで 遊べる／🔒 もうすぐ／出さない）
   function homeGames() {
-    const list = [{ id: 'pet', name: tr('タヌくん なでなで'), img: HC.pet, badge: '🤚', state: 'open', go: () => enterPlay(true) }];
+    // なでなで：幕がかかってから遊ぶ画面へ（時間帯の背景の色の幕）→ 明ける
+    const toPlay = () => veilIn().then(() => { enterPlay(true); veilOut(); });
+    const list = [{ id: 'pet', name: tr('タヌくん なでなで'), img: HC.pet, badge: '🤚', state: 'open', go: toPlay }];
     [
       { id: 'pon', name: tr('ぽんぽこリズム'), icon: '🥁', href: 'pon/', isNew: !SAVE.data.ponSeen,
         soon: tr('ぽんぽこリズムは、もうすぐ遊べるよ！\nおたのしみに 🥁') },
@@ -1646,7 +1670,11 @@
         state: f === 'soon' ? 'soon' : 'open',
         name: f === 'soon' ? g.name + ' ' + tr('🔒 もうすぐ') : g.name,
         isNew: f === 'open' && !!g.isNew,
-        go: f === 'soon' ? () => toast(g.soon) : () => { store((ss) => ss.setItem(BACK_KEY, '1')); location.href = g.href; }
+        // ゲームへ：幕がかかってから、ゲームのページへ（ゲームのページは、同じ幕が明けるところから始まる）
+        go: f === 'soon' ? () => toast(g.soon) : () => {
+          store((ss) => ss.setItem(BACK_KEY, '1'));
+          veilIn().then(() => { location.href = g.href; });
+        }
       }));
     });
     // 空いている所に「🔒 もうすぐ」（まだ見ぬ新しい遊び）
@@ -1698,11 +1726,14 @@
 
   /* ---------- 開始 ---------- */
   if (DEMO) {
+    document.documentElement.classList.remove('arriving');
     startDemo();
   } else {
     // ゲーム（ぽんぽこ・ラリー）から戻ってきたとき：あいさつを飛ばして、ズームした画面から
     const fromGame = !!store((ss) => { const v = ss.getItem(BACK_KEY); ss.removeItem(BACK_KEY); return v; });
     setMode('home');
+    // ゲームの幕が明けるように（index.html の head で、最初から幕をかけてある）
+    if (fromGame) veilArrive(); else document.documentElement.classList.remove('arriving');
     refreshFace();
     renderStatus();
     // はじめての人には、先にお知らせ（ちょっぴり大人向け・AI イラスト・記録のこと）

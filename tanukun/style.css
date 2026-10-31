@@ -980,3 +980,37 @@ body.mode-home #app, body.mode-home .lang-btn { visibility: hidden; }
   #home.booting .h-boot, #home.booting #home-cam { animation-duration: .01s; }
   #home-cam { transition-duration: .01s; }
 }
+
+/* =========================================================
+   画面を切りかえるときの幕（トップ画面 ⇄ なでなで・ぽんぽこ・ラリー。app.js の veilIn・veilOut・veilArrive）
+   起動の幕と同じ、落ち着いたクリーム色がふわっとかかって、切りかえて、ふわっと明ける。
+   なでなでの画面は時間帯で背景が変わるので、幕の色もその時間帯の背景に寄せる（夜にまぶしいクリーム色が出ないように）
+   ========================================================= */
+.veil {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  background: radial-gradient(circle at 50% 45%, #F6E4C4, #E9CFA4);
+  transition: opacity .6s cubic-bezier(.25, .55, .45, 1), visibility 0s .6s;
+}
+.veil.on {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity .42s cubic-bezier(.45, 0, .7, .6), visibility 0s;
+}
+/* ページを開いたときに、幕がかかった所から明ける（ゲームから戻ってきたとき） */
+.arriving .veil { opacity: 1; visibility: visible; transition: none; }
+.veil.arrive { visibility: visible; animation: veil-arrive .7s cubic-bezier(.5, 0, .75, .45) both; }
+@keyframes veil-arrive { 0%, 10% { opacity: 1; } 100% { opacity: 0; } }
+body[data-time="morning"] .veil { background: radial-gradient(circle at 50% 45%, #EAF2F2, #F2DDB4); }
+body[data-time="evening"] .veil { background: radial-gradient(circle at 50% 45%, #F7C894, #E3A87C); }
+body[data-time="night"] .veil   { background: radial-gradient(circle at 50% 45%, #3D4380, #2A2F63); }
+body[data-time="late"] .veil    { background: radial-gradient(circle at 50% 45%, #1E2350, #12173A); }
+@media (prefers-reduced-motion: reduce) {
+  .veil, .veil.on { transition-duration: .01s; }
+  .veil.arrive { animation-duration: .01s; }
+}

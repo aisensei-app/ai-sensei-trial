@@ -36,6 +36,16 @@
 
   const C = window.TANU_CONFIG;
   if (C.features && C.features.rally && C.features.rally !== 'open') { location.replace('../'); return; }
+
+  /* ---- タヌくんのところへ戻るとき：幕がふわっとかかってから（本編のトップ画面は、同じ幕が明けるところから始まる） ---- */
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest && e.target.closest('a[href="../"]');
+    if (!a || e.defaultPrevented || document.body.classList.contains('leaving')) return;
+    e.preventDefault();
+    try { sessionStorage.setItem('tanukun.homeZoom', '1'); } catch (err) {}
+    document.body.classList.add('leaving');
+    setTimeout(() => { location.href = a.href; }, 430);
+  });
   const $ = (id) => document.getElementById(id);
   /* ことば：本編と同じ i18n.js（ラリーの訳は rally.i18n.js）。tr('日本語の文', { n: 3 }) でいまの言語の文 */
   const I18N = window.TanuI18n || { lang: 'ja', LANGS: { ja: '日本語' }, tr: (s) => s, apply: () => {}, set: () => {} };

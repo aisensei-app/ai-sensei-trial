@@ -25,6 +25,16 @@
   const C = window.TANU_CONFIG;
   // 公開スイッチ（config.js の features.pon）が 'open' でないときは、まだ遊べないので本編へ
   if (C.features && C.features.pon && C.features.pon !== 'open') { location.replace('../'); return; }
+
+  /* ---- タヌくんのところへ戻るとき：幕がふわっとかかってから（本編のトップ画面は、同じ幕が明けるところから始まる） ---- */
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest && e.target.closest('a[href="../"]');
+    if (!a || e.defaultPrevented || document.body.classList.contains('leaving')) return;
+    e.preventDefault();
+    try { sessionStorage.setItem('tanukun.homeZoom', '1'); } catch (err) {}
+    document.body.classList.add('leaving');
+    setTimeout(() => { location.href = a.href; }, 430);
+  });
   const $ = (id) => document.getElementById(id);
   // 本編の設定の絵は 'images/…' なので、このページ（pon/）からは '../' を付ける
   const IMG = (name) => {
