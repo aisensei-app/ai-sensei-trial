@@ -2,23 +2,23 @@
    ぽよんラリー（試作。2026-10-30）
    ・手前のビーチボールを、指で上へはじいて（スワイプして）投げる（ポケモンGO のように）
    ・タヌくんがおなかで「ぽよん！」とはね返す（おなかの揺れは本編と同じ belly.js）
-   ・もどってくる所に、たての「わく」（縦長の楕円）が出る。ボールがわくに入ったら、上へスワイプして打ち返す
-     （指をはなした瞬間に、ボールがわくの中ならOK。わくのまんなかの線あたりならナイス）。
-     ボールはわくに入ると、ふわっとゆっくりになる（ビーチボールらしく。打ちやすく）
+   ・もどってくるボールのまわりに「輪」が出て、ボールに向かって縮んでいく。輪が近づくと（打てる間）光って、ボールの下に 👆↑。
+     指をはなした瞬間に打てる間ならOK、輪がボールにぴたっと重なる瞬間ならナイス。
+     輪はボールと一緒に動くので、風やカーブでもずれない。打てる間は、ボールがふわっとゆっくりになる（ビーチボールらしく。打ちやすく）
    ・ボールは3こ。落とすと1こ減って、手前から投げなおし。3こ落としたら結果（合計ラリー数と、いちばん続いた数）
    ・3ラリー続くごとに、タヌくんが1歩近づいてきて、ボールも速くなる（落とすと、元の場所にもどる）
    ・近づくときも、ボールは止めずに返しながら1歩前へ出る
    ・近づいてくると、ときどき「じゃま」が入る（1回に1つまで）：カモメやインコが横切る／タヌくんが「せーの…」とためてから返す（フェイント）
-     ／風がふいて、ボールが横に流される（わくもずれていく）
+     ／風がふいて、ボールが横に流される（輪はボールと一緒に動く）
    ・スワイプの長さで、ねらう高さが変わる：短く → 低い（おまた）、ふつう → おなか（長いほど上）、とても長く → 頭（ヘディング）
-   ・返ってくる球は、こちらの打ち方で変わる（わくの色と文字で予告）：
+   ・返ってくる球は、こちらの打ち方で変わる（輪の色と文字で予告）：
      頭 → 🎈 ふんわり／おなかのはし → 🌀 カーブ／おなかのまんなかにナイス（近づいてから）→ ⚡ はやい
    ・おまたに当たると、本編のなかよし度（ハートの数）で反応が変わる：
      なかよしになる前 → 💢 怒ってスマッシュ（⚡ はやい）／モジモジ → 腰みので「ぱさっ」（🎈 ふんわり）／デレ → 照れながら、ふつうに返す
    ・打ち返すスワイプは、ボールの近くから（風で流されたら、追いかける）
    ・ナイスでゲージ（⚡ 5つ）がたまる。満タンで「💥 ひっさつ」ボタン → 構えるとボールが光り、次の打ち返しが燃える必殺の球。
      タヌくんはレシーブの構えで受けて、ボーナス
-   ・はじめて遊ぶ人には、指のガイド（👆 が上へすべる見本）を出す。はじめての打ち返しは、ボールがわくのまんなかで止まって待ってくれる
+   ・はじめて遊ぶ人には、指のガイド（👆 が上へすべる見本）を出す。はじめての打ち返しは、輪がボールに重なった所で止まって待ってくれる
    ・最初のひと投げがおなかに当たらなかったときは、もう一度投げられる（ボールは減らない）
    ・きせかえ（デベソなど）は本編の記録をそのまま使う
    ・音はすべてプログラムで作る（Web Audio）
@@ -49,10 +49,10 @@
      far          … いちばん奥（タヌくんのおなか）でのボールの大きさ（手前を 1 として。近づくと大きくなる）
      flick        … 指をこれだけ（ピクセル）上へすべらせたら、投げた／打ち返したことにする
      returnTime   … もどってくるのにかかる秒数（最初 → ラリーごとに speedUp、1歩ごとに stepSpeed 短く → 最短 minTime）
-     zone         … 打てるわく（縦長の楕円）。in は、もどってくる道すじのどこからわくに入るか（割合。1 がわくのまんなかの線）、
-                    width はわくの横幅（ボールの何倍）。slow は、わくの中でボールがゆっくりになる割合（0.5 で半分の速さ）
-     nice         … わくのまんなか（1）から、この割合以内で打ち返したら「ナイス！」
-     late         … まんなかを過ぎて、この割合まで待ってくれる（わくの下のはし。それを過ぎたら落ちてミス）
+     zone         … 打てる間。in は、もどってくる道すじのどこから打てるか（割合。1 で輪がボールにぴたっと重なる）、
+                    show は輪が出はじめる所、ring はそのときの輪の大きさ（ボールの何倍）。slow は、打てる間にボールがゆっくりになる割合（0.5 で半分の速さ）
+     nice         … 輪が重なる瞬間（1）から、この割合以内で打ち返したら「ナイス！」
+     late         … 重なってから、この割合まで待ってくれる（それを過ぎたら落ちてミス）
      balls        … ボールの数（落とせる回数）
      birds, feint, wind … じゃまが入る割合（1歩以上近づいてから。ふつうの球のときだけ、1回に1つまで）。
                     feint は「せーの…」でためる秒数、wind は流される幅（画面の横幅に対する割合）
@@ -70,7 +70,7 @@
     ballSize: 0.2, maxBall: 88, far: 0.36,
     flick: 36,
     returnTime: 1.15, speedUp: 0.015, stepSpeed: 0.08, minTime: 0.55,
-    zone: { in: 0.85, width: 1.5, slow: 0.5 }, nice: 0.08, late: 0.12,
+    zone: { in: 0.85, show: 0.55, ring: 2.6, slow: 0.5 }, nice: 0.08, late: 0.12,
     balls: 3,
     birds: 0.2, feint: { rate: 0.15, seconds: [0.45, 0.9] }, wind: { rate: 0.15, drift: 0.22 },
     kinds: { fast: { time: 0.72, arc: 0.11 }, lob: { time: 1.3, arc: 0.38 }, curve: { time: 1.0, bend: 0.24 }, edge: 0.55 },
@@ -285,9 +285,9 @@
   // 道すじの u（0〜1。1 より先も少しだけ伸ばせる）での位置
   function at(f, u) {
     const w = f.wind ? f.wind * (1 - Math.cos(Math.PI * clamp(u, 0, 1))) / 2 : 0;   // 風：だんだん横に流される
-    // カーブ：ふくらんで、わくに入る前（in）に、わくの真上へもどってくる
+    // カーブ：ふくらんで、打てる間（in）の前に、もとの道すじへもどってくる
     const b = f.bend ? f.bend * Math.sin(Math.PI * clamp(u / T.zone.in, 0, 1)) : 0;
-    // まんなか（u = 1）を過ぎても、同じ速さのまま下へ（わくの下のはしまで）
+    // 輪が重なる所（u = 1）を過ぎても、同じ速さのまま下へ
     const y = u <= 1 ? lerp(f.from.y, f.to.y, u) - f.arc * Math.sin(Math.PI * Math.max(0, u))
       : f.to.y + (f.to.y - f.from.y + f.arc * Math.PI) * (u - 1);
     return {
@@ -296,14 +296,14 @@
       z: Math.max(0, lerp(f.from.z, f.to.z, u))
     };
   }
-  // いまの u。もどってくる球は、わくに入るとゆっくりになる（ふわっ）。それでも、まんなかに着くのは dur 秒後
-  //   rate … u での進む速さ（1 → わくの手前で slow へなめらかに）。SLOW_K で全体を速めて、着く時刻を合わせる
+  // いまの u。もどってくる球は、打てる間はゆっくりになる（ふわっ）。それでも、輪が重なる所に着くのは dur 秒後
+  //   rate … u での進む速さ（1 → 打てる間の手前で slow へなめらかに）。SLOW_K で全体を速めて、着く時刻を合わせる
   const rate = (u) => {
     const a = T.zone.in - 0.15;
     return u < a ? 1 : u < T.zone.in ? lerp(1, T.zone.slow, (u - a) / 0.15) : T.zone.slow;
   };
   const SLOW_K = (() => { let t = 0; for (let i = 0; i < 1000; i++) t += 0.001 / rate((i + 0.5) / 1000); return t; })();
-  // はじめての打ち返しのガイド中は、わくのまんなか（hold）で止めて待つ
+  // はじめての打ち返しのガイド中は、輪が重なった所（hold）で止めて待つ
   function progress(f, now) {
     if (f.hold != null) return f.hold;
     if (f.kind !== 'return') return (now - f.start) / f.dur;
@@ -311,8 +311,7 @@
     f.last = now;
     if (f.tutorial && f.u >= 1) {
       f.hold = 1;
-      const y = G.nearY + G.size * 0.5;
-      showGuide(f.to.x, y, '上へ スワイプして 打ち返そう！');
+      showGuide(ball.x, ball.y + G.size * 0.5, '上へ スワイプして 打ち返そう！');
       return f.hold;
     }
     return f.u;
@@ -516,8 +515,8 @@
     const dur = Math.max(T.minTime, T.returnTime - streak * T.speedUp - stepNow * T.stepSpeed) * (K.time || 1);
     fly('return', { x: tx, y: G.nearY, z: 0 }, dur, G.H * (K.arc || 0.22 + Math.random() * 0.08));
     flight.type = kind;
-    const zone = placeZone(flight, kind);
-    if (kind !== 'normal') pop(tx, zone.top - 22, KIND_LABEL[kind], 'kind-' + kind);
+    targetEl.className = 'target' + (kind === 'normal' ? '' : ' t-' + kind);
+    if (kind !== 'normal') pop(tx, G.nearY - G.size * 2.2, KIND_LABEL[kind], 'kind-' + kind);
     // カーブ：輪と反対がわへふくらんでから、輪にもどってくる
     if (kind === 'curve') flight.bend = (tx < G.W / 2 ? 1 : -1) * G.W * K.bend;
     // はじめての打ち返しは、輪の上でボールが止まって待つ（ガイド）
@@ -580,33 +579,26 @@
     }
   }
 
-  // わく（縦長の楕円）：ボールが道すじの in からわくに入り、まんなかの線（u = 1）を通って、下のはし（1 + late）で出る。
-  //   その道すじに合わせて、わくの上・下・まんなかの線を決める
-  function placeZone(f, kind) {
-    const top = at(f, T.zone.in).y - G.size * 0.2, bottom = at(f, 1 + T.late).y + G.size * 0.2, mid = at(f, 1).y;
-    const w = G.size * T.zone.width;
-    Object.assign(targetEl.style, { left: f.to.x - w / 2 + 'px', top: top + 'px', width: w + 'px', height: bottom - top + 'px' });
-    targetEl.style.setProperty('--mid', (mid - top) / (bottom - top) * 100 + '%');
-    targetEl.className = 'target' + (kind === 'normal' ? '' : ' t-' + kind);
-    targetEl.hidden = false;
-    return { top: top, bottom: bottom };
-  }
-  // ボールがわくの中にいる間は光って「いまだ！」。風で流されるときは、わくもずれていく
+  // 輪：ボールのまわりに出て（show から）、ボールに向かって縮み、u = 1 でボールにぴたっと重なる。ボールと一緒に動く。
+  //   打てる間（in から）は光って、ボールもぽっと光り、下に 👆↑
   function drawTarget(u) {
-    if (flight && flight.wind) {
-      const w = G.size * T.zone.width;
-      targetEl.style.left = flight.to.x + flight.wind * (1 - Math.cos(Math.PI * clamp(u, 0, 1))) / 2 - w / 2 + 'px';
-    }
-    targetEl.classList.toggle('now', u >= T.zone.in);
+    if (u < T.zone.show) return;
+    const d = G.size * scaleAt(ball.z), k = lerp(T.zone.ring, 1, clamp((u - T.zone.show) / (1 - T.zone.show), 0, 1)), r = d * k;
+    Object.assign(targetEl.style, { left: ball.x - r / 2 + 'px', top: ball.y - r / 2 + 'px', width: r + 'px', height: r + 'px' });
+    targetEl.style.setProperty('--d', d + 'px');
+    targetEl.hidden = false;
+    const now = u >= T.zone.in;
+    targetEl.classList.toggle('now', now);
+    ballEl.classList.toggle('now', now);
   }
-  const hideTarget = () => { targetEl.hidden = true; };
+  const hideTarget = () => { targetEl.hidden = true; ballEl.classList.remove('now'); };
 
   /* ---------- もどってきたボールを、上へスワイプして打ち返す ----------
      len（スワイプの長さ）でねらう所が変わる（aimAt。頭・おなか・おしり、どれでも返ってくる）
      ひっさつを構えているときは、必殺の球（いつもおなかのまんなかへ、速く） */
   function hitBack(dx, len) {
     const f = flight, u = progress(f, performance.now());
-    if (u < T.zone.in) return;   // まだ、わくに入っていない
+    if (u < T.zone.in) return;   // まだ打てない（輪が光ってから）
     const nice = f.hold != null || Math.abs(u - 1) <= T.nice;
     const d = G.size * scaleAt(ball.z);
     hideTarget();
