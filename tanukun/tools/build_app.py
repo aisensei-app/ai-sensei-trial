@@ -23,7 +23,7 @@ import shutil
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent      # tanukun フォルダ
-FILES = ['index.html', 'style.css', 'config.js', 'config.en.js', 'config.zh.js', 'lines.js', 'lines.en.js', 'lines.zh.js', 'i18n.zh.js', 'i18n.js', 'save.js', 'belly.js', 'home.js', 'app.js',
+FILES = ['index.html', 'style.css', 'config.js', 'config.en.js', 'config.zh.js', 'lines.js', 'lines.en.js', 'lines.zh.js', 'i18n.zh.js', 'i18n.js', 'stats.js', 'save.js', 'belly.js', 'home.js', 'app.js',
          'sw.js', 'manifest.webmanifest']
 TITLE = 'タヌくん｜Tanu-kun'
 # リンクのカードの説明（英語版を出したので、日本語と英語の両方）
@@ -63,6 +63,14 @@ def build(base, out):
     # images/pon/belly*.webp は、使っていない「おなかのアップ」の絵（ARTS.closeup）なので入れない
     shutil.copytree(ROOT / 'images', out / 'images', ignore=lambda d, names: [
         n for n in names if Path(d).name == 'pon' and n.startswith('belly')])
+    # 遊び方の数え方の「目印のページ」（stats.js。中身は空。Web Analytics がページとして数える。検索には出さない）
+    import re as _re
+    names = _re.findall(r"'([a-z0-9-]+)'", _re.search(r"const NAMES = \[(.*?)\];", (ROOT / 'stats.js').read_text(encoding='utf8'), _re.S).group(1))
+    (out / 's').mkdir()
+    for n in names:
+        (out / 's' / (n + '.html')).write_text(
+            '<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="robots" content="noindex">'
+            '<title>' + n + '</title></head><body></body></html>\n', encoding='utf8')
     (out / 'og').mkdir()
     shutil.copy(ROOT / 'og' / 'main.jpg', out / 'og' / 'main.jpg')
     shutil.copy(ROOT / 'og' / 'pon.jpg', out / 'og' / 'pon.jpg')

@@ -15,6 +15,8 @@
   // いまの言語のセリフ集（i18n.js。訳がなければ日本語）。公開スイッチがまだの機能のセリフ（feature）は入れない
   const LINES = I18N.lines().filter((l) => !l.feature || feature(l.feature) === 'open');
   const SAVE = window.TanuSave;
+  // 遊び方の数え方（stats.js。だれのものかわからない形で、数だけ。本番だけ）。お試し版では数えない
+  const STATS = (!window.TANU_DEMO && window.TanuStats) || { ping: () => {}, checkIn: () => {} };
   /* 見たセリフの記録（セリフ図鑑）は、言語に関係なく日本語の文で残す（言語を切りかえても数が合うように）。
      英語・中国語のセリフ集は lines.js と同じ順番なので、同じ番号の日本語の文に置きかえる */
   const JA_OF = new Map();
@@ -880,6 +882,7 @@
   // awake … トップ画面で、もう起こしてある（寝ている時間でも「ふぁ…？」をくり返さない）
   function enterPlay(awake) {
     if (waking) return;
+    STATS.ping('p-pet');
     const b = mode === 'home' ? bandNow() : null;
     const go = () => {
       setMode('play');
@@ -1039,6 +1042,7 @@
   }
 
   function heartUp() {
+    STATS.ping('h' + SAVE.hearts());
     // トップ画面：ハートの演出（思い出・お知らせ）が終わるまで、ズームを待つ
     const release = mode === 'home' ? holdHome() : null;
     renderStatus();
@@ -1188,6 +1192,7 @@
   // その日はじめてなら記録して、あいさつ
   function checkIn() {
     const r = SAVE.checkIn();
+    STATS.checkIn({ lang: I18N.lang, total: SAVE.data.totalDays, firstDay: SAVE.data.firstDay, day: SAVE.today() });
     // ぽんぽこリズムのごほうび（預けてあるなかよしポイント）を受け取る
     const pb = DEMO ? { added: 0, heartUp: false } : SAVE.claimPonPoints();
     if (pb.heartUp) r.heartUp = true;
@@ -1218,7 +1223,7 @@
   const CLR = C.clear || null;
   function playClear() {
     if (!CLR || !$('event').hidden) return;
-    playMemory(CLR.memory, true).then(() => { SAVE.setCleared(); showClear(); });
+    playMemory(CLR.memory, true).then(() => { SAVE.setCleared(); STATS.ping('clear'); showClear(); });
   }
   function showClear() {
     const days = Math.max(1, SAVE.data.clearDay || SAVE.data.totalDays);

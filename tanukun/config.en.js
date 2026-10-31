@@ -75,7 +75,8 @@
     text: 'This app contains <b>slightly mature content</b> (flustered, teasing reactions).\n' +
           'Recommended for ages <b>15 and up</b>.\n\n' +
           'Illustrations are made with AI.\n' +
-          'Your progress is saved only on this device and is never sent anywhere.',
+          'Your progress is saved only on this device.\n' +
+          'To make the app better, we count things like how many days people play, anonymously (your name and progress are never sent).',
     ok: 'Got it! Let\'s play'
   }
 };
