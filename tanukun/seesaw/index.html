@@ -726,9 +726,9 @@ let lastSign = 1;
 /* ---------- 特別イラスト（海に入ったら、フェードで切りかえ） ----------
    src が null の間は、仮の絵（準備中）を出す。絵ができたら 'img/sp_wet.webp' のように書く */
 const SPECIALS = [
-  { id: 'wet',   weight: 6, src: null, face: 'ehehe', title: 'たのしかったね〜！', line: 'びしょびしょになっちゃった♪' },
+  { id: 'wet',   weight: 6, src: 'img/sp_wet.webp', face: 'ehehe', title: 'たのしかったね〜！', line: 'びしょびしょになっちゃった♪' },
   { id: 'crab',  weight: 3, src: null, face: 'wow',   title: 'いたたた〜！',       line: 'カニさんに、しっぽをはさまれた〜！' },
-  { id: 'skirt', weight: 1, src: null, face: 'wow',   title: 'たいへん！',         line: 'こしみのが、ながされちゃった〜！' }
+  { id: 'skirt', weight: 1, src: 'img/sp_skirt.webp', face: 'wow',   title: 'たいへん！',         line: 'こしみのが、ながされちゃった〜！' }
 ];
 let seen = {};
 try { seen = JSON.parse(localStorage.getItem('tanu-seesaw-special') || '{}') || {}; } catch (e) {}
