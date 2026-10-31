@@ -5,6 +5,7 @@
     python3 tools/build_preview.py --demo     → preview/tanukun-demo.html（お試し版）
     python3 tools/build_preview.py --pon      → preview/pon.html（ぽんぽこリズム）
     python3 tools/build_preview.py --rally    → preview/rally.html（ぽよんラリー）
+    python3 tools/build_preview.py --topmenu  → preview/topmenu.html（トップ画面の試作）
 
 絵（images/*.webp）を文字データにしてHTMLの中に埋めこみ、1つのファイルにまとめます。
 """
@@ -73,8 +74,12 @@ if __name__ == '__main__':
     ap.add_argument('--demo', action='store_true', help='お試し版をつくる')
     ap.add_argument('--pon', action='store_true', help='ぽんぽこリズムをつくる')
     ap.add_argument('--rally', action='store_true', help='ぽよんラリーをつくる')
+    ap.add_argument('--topmenu', action='store_true', help='トップ画面の試作をつくる')
     ap.add_argument('--out', default=None, help='出力先')
     a = ap.parse_args()
+    if a.topmenu:
+        build_pon(Path(a.out) if a.out else ROOT / 'preview' / 'topmenu.html', 'topmenu', 'トップ画面の試作')
+        raise SystemExit
     if a.rally:
         build_pon(Path(a.out) if a.out else ROOT / 'preview' / 'rally.html', 'rally', 'ぽよんラリー')
         raise SystemExit

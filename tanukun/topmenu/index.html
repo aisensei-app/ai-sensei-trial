@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>トップ画面の試作｜タヌくん</title>
+<link rel="stylesheet" href="topmenu.css">
+</head>
+<body>
+<main id="topmenu">
+
+  <!-- 上のバー：もどる（ズーム中）・実績・きせかえ・設定 -->
+  <header class="bar">
+    <button id="btn-back" class="pill" type="button" hidden>‹ もどる</button>
+    <div class="days">なかよし <b>12</b> 日目</div>
+    <div class="icons">
+      <button class="ico" type="button" aria-label="実績" data-toast="実績（ゲームごとのタブ）を開く">🏆</button>
+      <button class="ico" type="button" aria-label="きせかえ" data-toast="きせかえを開く">👕</button>
+      <button class="ico" type="button" aria-label="設定" data-toast="設定を開く">⚙️</button>
+    </div>
+  </header>
+
+  <!-- タヌくん（ズームするのは #cam。アイコンも #cam の中で、おなかの上に並ぶ） -->
+  <div id="cam">
+    <div id="ground" class="ground"></div>
+    <div id="body">
+      <img id="tanu-img" alt="タヌくん" draggable="false">
+      <canvas id="belly-canvas" aria-hidden="true"></canvas>
+      <div id="icons"></div>
+    </div>
+  </div>
+  <div id="say" class="say" hidden></div>
+  <div id="pops" aria-hidden="true"></div>
+  <div id="toast" class="toast" hidden></div>
+
+  <!-- 試作だけ：来かたを切りかえて、あいさつを見比べる -->
+  <div class="proto">
+    <span>試作：来かた</span>
+    <button type="button" data-visit="first">はじめて</button>
+    <button type="button" data-visit="new">2日目〜</button>
+    <button type="button" data-visit="comeback">ひさしぶり</button>
+    <button type="button" data-visit="again">同じ日2回目</button>
+  </div>
+
+</main>
+<!-- 本編と同じ設定（おなかの揺れ）と揺れの仕組みを使う -->
+<script src="../config.js"></script>
+<script src="../belly.js"></script>
+<script src="topmenu.js"></script>
+</body>
+</html>
