@@ -229,8 +229,9 @@
   /* ---------- ひとこと・文字・お知らせ ---------- */
   let sayTimer = 0;
   // at の所にふきだし。up なら、ふきだしは at の下に出て、しっぽは上向き。
-  // ふきだしが画面のはしで切れないときは横にずらし、しっぽは at.x を指したままにする
-  function say(text, at, up) {
+  // ふきだしが画面のはしで切れないときは横にずらす。しっぽは tx（ふつうは口の横の位置）の所に付けて、
+  // 口がふきだしのまんなかより右なら右下へ、左なら左下へ曲げる
+  function say(text, at, up, tx) {
     const el = $('say');
     el.textContent = text;
     el.classList.toggle('up', !!up);
@@ -238,12 +239,15 @@
     const half = el.offsetWidth / 2, x = Math.max(half + 8, Math.min(G.W - half - 8, at.x));
     el.style.left = x + 'px';
     el.style.top = at.y + 'px';
-    el.style.setProperty('--tail', Math.max(18, Math.min(half * 2 - 18, at.x - x + half)) + 'px');
+    const t = tx == null ? at.x : tx;
+    el.style.setProperty('--tail', Math.max(22, Math.min(half * 2 - 22, t - x + half)) + 'px');
+    el.classList.toggle('tail-l', t < x);
+    el.classList.toggle('tail-r', t >= x);
     el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
     clearTimeout(sayTimer);
     sayTimer = setTimeout(() => { el.hidden = true; }, 2600);
   }
-  const sayHead = (text) => say(text, { x: G.left + G.w * 0.46, y: G.top + G.h * 0.02 });
+  const sayHead = (text) => say(text, { x: G.left + G.w * 0.46, y: G.top + G.h * 0.02 }, false, toScreen(T.mouth.x, T.mouth.y).x);
   function pop(x, y, text) {
     const el = document.createElement('span');
     el.className = 'pop';

@@ -780,10 +780,19 @@
   }
 
   let bubbleTimer = null;
+  const MOUTH_X = 282 / 720;   // タヌくんの口の横の位置（絵の幅に対する割合）。ふきだしのしっぽを、ここに付ける
   function showBubble(text, keep) {
     bubble.textContent = text;
     bubble.classList.remove('on');
     void bubble.offsetWidth;          // アニメーションを最初からやり直すためのおまじない
+    // しっぽ：口がふきだしのまんなかより右なら右下へ、左なら左下へ曲げる
+    const ir = $('tanu-img').getBoundingClientRect(), br = bubble.getBoundingClientRect();
+    if (ir.width && br.width) {
+      const mouth = ir.left + ir.width * MOUTH_X, mid = br.left + br.width / 2, w = bubble.offsetWidth;
+      bubble.style.setProperty('--tail', Math.max(22, Math.min(w - 22, mouth - mid + w / 2)) + 'px');
+      bubble.classList.toggle('tail-l', mouth < mid);
+      bubble.classList.toggle('tail-r', mouth >= mid);
+    }
     bubble.classList.add('on');
     clearTimeout(bubbleTimer);
     if (!keep) bubbleTimer = setTimeout(() => bubble.classList.remove('on'), C.bubbleSeconds * 1000);

@@ -848,12 +848,18 @@
     setTimeout(() => el.remove(), 800);
   }
   let sayTimer = 0;
+  // ふきだし：タヌくんの頭の上。しっぽは口（絵の 282, 140）の横の位置に付けて、口のある側へ曲げる
   function say(text) {
     const el = $('say');
     el.textContent = text;
-    el.style.left = (G.left + G.w * 0.42) + 'px';
+    const x = G.left + G.w * 0.42, mouth = G.left + G.w * 282 / 720;
+    el.style.left = x + 'px';
     el.style.top = (G.top + G.h * 0.02) + 'px';
     el.hidden = false;
+    const half = el.offsetWidth / 2;
+    el.style.setProperty('--tail', Math.max(22, Math.min(half * 2 - 22, mouth - x + half)) + 'px');
+    el.classList.toggle('tail-l', mouth < x);
+    el.classList.toggle('tail-r', mouth >= x);
     el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
     clearTimeout(sayTimer);
     sayTimer = setTimeout(() => { el.hidden = true; }, 1800);
