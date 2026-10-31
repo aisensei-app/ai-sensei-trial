@@ -169,6 +169,19 @@ window.TANU_CONFIG = {
      何時に「次の日」に切り替えるか。4 なら午前4時（夜ふかしでも同じ日あつかい） */
   days: { dayStartHour: 4 },
 
+  /* ---- トップ画面（home.js。あいさつ → おなかにズーム → おなかの上のアイコンで選ぶ） ----
+     normal     … ズームするときの絵（立ち絵 normal.webp をちょうど1.5倍にした高画質の絵。並べ方は同じ）
+     pet        … まんなかの「タヌくん なでなで」のアイコンの絵（タヌくんの顔）
+     background … 背景
+     soonSlots  … まわりの4つの場所のうち、ゲームが入らない所に出す「🔒 もうすぐ」の数（多くても、空いている所まで）
+     ゲーム（ぽんぽこ・ラリー）のアイコンは、下の公開スイッチで 'open'＝遊べる／'soon'＝🔒 付き／'hidden'＝出さない */
+  home: {
+    normal: 'images/topmenu/normal_hd.webp',
+    pet: 'images/topmenu/pet.webp',
+    background: 'images/bg/beach_day.webp',
+    soonSlots: 4
+  },
+
   /* ---- 新しい機能の公開スイッチ ----
      作り終わった機能を、次のアップデートまで「ロック」しておくためのスイッチです。
        'open'   … 遊べる

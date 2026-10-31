@@ -97,6 +97,42 @@
   <p class="hint">頭・むね・おなか・しっぽをさわってね</p>
 </main>
 
+<!-- トップ画面（2026-10-31〜。試作 topmenu/ を組みこんだもの。home.js）
+     起動の幕 → 笑顔のあいさつ → 自動でおなかにズーム → おなかの上のアイコンで遊ぶものを選ぶ -->
+<section id="home" aria-label="トップ画面" data-i18n-attr="aria-label">
+  <!-- 上のバー：ことば（ズーム前）か もどる（ズーム中）・なかよし○日目・実績・きせかえ・設定 -->
+  <header class="h-bar">
+    <button id="home-lang" class="h-pill" type="button" hidden></button>
+    <button id="home-back" class="h-pill" type="button" hidden data-i18n>‹ もどる</button>
+    <div class="h-days"><span data-i18n>なかよし</span> <b id="home-days">1</b> <span data-i18n>日目</span></div>
+    <div class="h-icons">
+      <button class="h-ico" type="button" data-panel="record" aria-label="実績" data-i18n-attr="aria-label">🏆</button>
+      <button class="h-ico" type="button" data-panel="wear" aria-label="きせかえ" data-i18n-attr="aria-label">👕</button>
+      <button class="h-ico" type="button" data-panel="settings" aria-label="設定" data-i18n-attr="aria-label">⚙️</button>
+    </div>
+  </header>
+  <!-- なかよし度のハート（と、今日の上限の「🌙 あと○時間○分」） -->
+  <div class="h-status"><span id="home-hearts" class="hearts" aria-label="なかよし度" data-i18n-attr="aria-label"></span><span id="home-cap" class="h-cap" hidden></span></div>
+
+  <!-- タヌくん（ズームするのは #home-cam。アイコンも #home-cam の中で、おなかの上に並ぶ） -->
+  <div id="home-cam">
+    <div id="home-ground" class="h-ground"></div>
+    <div id="home-body">
+      <img id="home-img" alt="タヌくん" data-i18n-attr="alt" draggable="false">
+      <!-- きせかえパーツ（デベソなど） -->
+      <div id="home-parts" class="h-parts" aria-hidden="true"></div>
+      <canvas id="home-canvas" aria-hidden="true"></canvas>
+      <!-- 寝ているとき（時間帯）：鼻ちょうちんと 💤 -->
+      <div id="home-sleep" class="h-sleep" aria-hidden="true"><i class="snot"></i><b class="zz">z</b><b class="zz z2">Z</b></div>
+      <div id="home-icons"></div>
+    </div>
+  </div>
+  <div id="home-say" class="h-say" hidden></div>
+  <div id="home-pops" aria-hidden="true"></div>
+  <!-- 起動したときの幕（クリーム色。ふわっと薄くなって、トップ画面になる） -->
+  <div class="h-boot" aria-hidden="true"></div>
+</section>
+
 <!-- 実績・設定のパネル -->
 <div id="sheet" class="sheet" hidden>
   <div class="sheet-box" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
@@ -138,6 +174,7 @@
 <script src="i18n.js"></script>
 <script src="save.js"></script>
 <script src="belly.js"></script>
+<script src="home.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

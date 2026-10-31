@@ -44,6 +44,7 @@
     layers: (src) => wornLayers(faceOfSrc[absUrl(src)])
   });
   const bubble = $('bubble');
+  let HOME = null;   // トップ画面（home.js。下の「トップ画面」で作る。お試し版では使わない）
   const zonesEl = $('zones');
 
   const PLACE_LABEL = { head: '頭', chestL: 'むね', chestR: 'むね', belly: 'おなか', tail: 'しっぽ', crotch: 'おまた' };
@@ -742,9 +743,8 @@
     return cands[cands.length - 1];
   }
 
-  function say(base) {
-    // 寝ているあいだのメニュー画面は、あいさつの代わりに寝息
-    if (base.scene === 'home' && sleeping()) { showBubble(tr('すぴー… すぴー…')); return null; }
+  // セリフを選んで、見たことを記録（表示はしない）。表情の指定があれば、しばらくその絵に
+  function takeLine(base) {
     const line = pickLine(base);
     if (!line) return null;
     state.recentTexts.push(line.text);
@@ -756,7 +756,14 @@
     } else {
       state.faceOverride = null;
     }
-    showBubble(withName(line.text));
+    return line;
+  }
+
+  function say(base) {
+    // 寝ているあいだのメニュー画面は、あいさつの代わりに寝息
+    if (base.scene === 'home' && sleeping()) { showBubble(tr('すぴー… すぴー…')); return null; }
+    const line = takeLine(base);
+    if (line) showBubble(withName(line.text));
     return line;
   }
 
@@ -782,6 +789,8 @@
   let bubbleTimer = null;
   const MOUTH_X = 282 / 720;   // タヌくんの口の横の位置（絵の幅に対する割合）。ふきだしのしっぽを、ここに付ける
   function showBubble(text, keep) {
+    // トップ画面では、トップ画面のふきだし（ズーム中は口から、ズーム前は頭の上）
+    if (mode === 'home' && HOME) { HOME.say(text, keep); return; }
     bubble.textContent = text;
     bubble.classList.remove('on');
     void bubble.offsetWidth;          // アニメーションを最初からやり直すためのおまじない
@@ -807,6 +816,7 @@
     mode = m;
     ['home', 'play', 'name'].forEach((x) => document.body.classList.toggle('mode-' + x, m === x));
     applyTime();
+    if (m === 'home' && HOME) HOME.layout();   // 見えるようになったので、大きさを測りなおす
   }
 
   /* ---- はじめての人に呼び名を聞く ---- */
@@ -821,8 +831,8 @@
     SAVE.setName(name);
     $('name-input').blur();
     setMode('home');
-    say({ scene: 'named' });
-    if (pendingHeartUp) { pendingHeartUp = false; setTimeout(heartUp, 900); }
+    homeGreet({ scene: 'named' });
+    if (pendingHeartUp) { pendingHeartUp = false; holdHome(1200); setTimeout(heartUp, 900); }
   }
 
   $('name-form').addEventListener('submit', (e) => {
@@ -832,7 +842,8 @@
   $('name-skip').addEventListener('click', () => finishName(''));
 
   let waking = false;
-  function enterPlay() {
+  // awake … トップ画面で、もう起こしてある（寝ている時間でも「ふぁ…？」をくり返さない）
+  function enterPlay(awake) {
     if (waking) return;
     const b = mode === 'home' ? bandNow() : null;
     const go = () => {
@@ -842,7 +853,7 @@
       // 時間帯のひとことで、メニューの立ち絵から遊ぶ画面へつなぐ（「起こされちゃった」「よし、遊ぼう！」）
       showBubble(b && b.wake ? withName(b.wake) : tr('なにしてあそぶ？'));
     };
-    if (b && b.sleep) {
+    if (b && b.sleep && !awake) {
       // 寝ているとき：「ふぁ…？」と目をさましてから（0.7秒。待たせすぎない）
       waking = true;
       document.body.classList.add('waking');
@@ -858,11 +869,13 @@
     endMelt(true);
     setMode('home');
     renderStatus();
-    say({ scene: 'home', visit: 'again' });
+    // トップ画面は、あいさつを飛ばして、ズームした画面から（ひとことは「なにしてあそぶ？」など）
+    const line = takeLine({ scene: 'home', visit: 'again' });
+    if (HOME) HOME.zoomNow(line ? withName(line.text) : '');
     setTimeout(suggestHomeScreen, 1200);
   }
 
-  $('btn-play').addEventListener('click', enterPlay);
+  $('btn-play').addEventListener('click', () => enterPlay());
   $('back').addEventListener('click', backHome);
 
   /* ---- なかよし度のハート ----
@@ -924,6 +937,8 @@
     const on = !DEMO && SAVE.tapCapped() && !heartsFull();
     el.hidden = !on;
     if (on) el.textContent = tr('🌙 あと{t}', { t: untilTomorrow() });
+    $('home-cap').hidden = !on;
+    $('home-cap').textContent = el.textContent;
   }
   setInterval(renderCapNote, 30000);
 
@@ -977,21 +992,26 @@
     $('days-streak').textContent = d.streak >= 2 ? tr('れんぞく {n} 日', { n: d.streak }) : '';
     $('menu-hearts').innerHTML = heartsHtml();
     $('play-hearts').innerHTML = heartsHtml();
+    $('home-days').textContent = Math.max(1, d.totalDays);
+    $('home-hearts').innerHTML = heartsHtml();
     renderCapNote();
   }
 
   function heartUp() {
+    // トップ画面：ハートの演出（思い出・お知らせ）が終わるまで、ズームを待つ
+    const release = mode === 'home' ? holdHome() : null;
     renderStatus();
     const msg = (C.friendship.rewards || [])[SAVE.hearts() - 1];
     const gotText = tr('💖 ハートをゲット！') + (msg ? '\n' + msg : '');
     // そのハートの「思い出」があれば、特別イラストと台詞を見せてから、お知らせ
     const m = memoryOf(SAVE.hearts());
     if (m && mode !== 'name') {
-      setTimeout(() => playMemory(m, true).then(() => toast(gotText, 3600)), 600);
+      setTimeout(() => playMemory(m, true).then(() => { toast(gotText, 3600); if (release) setTimeout(release, 1800); }), 600);
     } else {
       // タヌくんも、ひとこと（ハートの数ごとのセリフ）
       if (mode !== 'name') say({ scene: 'heartUp' });
       toast(gotText, 3600);
+      if (release) setTimeout(release, 2400);
     }
     const h = $('play-hearts');
     h.classList.remove('pop'); void h.offsetWidth; h.classList.add('pop');
@@ -1113,7 +1133,7 @@
       if (mode !== 'name') askName();
       return true;
     }
-    if (r.heartUp) setTimeout(heartUp, 900);
+    if (r.heartUp) { holdHome(1200); setTimeout(heartUp, 900); }
     // その日はじめて来てくれたら、ボーナスをお知らせ（ハートが増えたときは、そちらを優先）
     else if (!DEMO && (r.visit !== 'again' || pb.added)) {
       const msg = [];
@@ -1123,9 +1143,9 @@
       setTimeout(() => toast(msg.join('\n')), 900);
     }
     if (r.visit === 'again') return false;
-    if (mode === 'home') say({ scene: 'home', visit: r.visit });
-    // ひみつの思い出（クリア）の日なら、あいさつのあとに流す
-    if (!DEMO && SAVE.clearReady() && !r.heartUp) setTimeout(playClear, 2200);
+    if (mode === 'home') homeGreet({ scene: 'home', visit: r.visit });
+    // ひみつの思い出（クリア）の日なら、あいさつのあとに流す（トップ画面は、それまでズームを待つ）
+    if (!DEMO && SAVE.clearReady() && !r.heartUp) { holdHome(2600); setTimeout(playClear, 2200); }
     return true;
   }
 
@@ -1373,6 +1393,7 @@
         SAVE.setWear(slot, id);
         belly.refresh();
         renderParts();
+        if (HOME) HOME.refreshParts();
         closeSheet();
         if (changed) say({ scene: 'wear', part: id || 'none' });
       });
@@ -1603,15 +1624,99 @@
     setTimeout(() => showBubble('はじめまして！タヌくんだよ\nさわってみてね'), 400);
   }
 
+  /* =========================================================
+     トップ画面（home.js）：あいさつ → おなかにズーム → おなかの上のアイコンで選ぶ
+     ========================================================= */
+  const HC = C.home || {};
+  // ゲームへ行くときに印を付けておき、戻ってきたら、あいさつを飛ばしてズームした画面から
+  const BACK_KEY = 'tanukun.homeZoom';
+  const store = (fn) => { try { return fn(window.sessionStorage); } catch (err) { return null; } };
+  // おなかの上に並べるもの（まんなか＝なでなで、まわり＝ゲーム。公開スイッチで 遊べる／🔒 もうすぐ／出さない）
+  function homeGames() {
+    const list = [{ id: 'pet', name: tr('タヌくん なでなで'), img: HC.pet, badge: '🤚', state: 'open', go: () => enterPlay(true) }];
+    [
+      { id: 'pon', name: tr('ぽんぽこリズム'), icon: '🥁', href: 'pon/', isNew: !SAVE.data.ponSeen,
+        soon: tr('ぽんぽこリズムは、もうすぐ遊べるよ！\nおたのしみに 🥁') },
+      { id: 'rally', name: tr('ぽよんラリー'), icon: '🏐', href: 'rally/',
+        soon: tr('ぽよんラリーは、もうすぐ遊べるよ！\nおたのしみに 🏐') }
+    ].forEach((g) => {
+      const f = feature(g.id);
+      if (f === 'hidden') return;
+      list.push(Object.assign(g, {
+        state: f === 'soon' ? 'soon' : 'open',
+        name: f === 'soon' ? g.name + ' ' + tr('🔒 もうすぐ') : g.name,
+        isNew: f === 'open' && !!g.isNew,
+        go: f === 'soon' ? () => toast(g.soon) : () => { store((ss) => ss.setItem(BACK_KEY, '1')); location.href = g.href; }
+      }));
+    });
+    // 空いている所に「🔒 もうすぐ」（まだ見ぬ新しい遊び）
+    const more = Math.min(HC.soonSlots == null ? 4 : HC.soonSlots, 5 - list.length);
+    for (let i = 0; i < more; i++) {
+      list.push({ id: 'soon' + i, name: tr('🔒 もうすぐ'), icon: '🔒', badge: '', state: 'soon', go: () => toast(tr('🔒 もうすぐ 遊べるよ！\nおたのしみに')) });
+    }
+    return list;
+  }
+  // ズームを待ってもらう（ms たったら、待つのをやめる。ms がなければ、返ってきた関数を呼ぶまで）
+  function holdHome(ms) {
+    if (!HOME) return () => {};
+    const release = HOME.hold();
+    if (ms) setTimeout(release, ms);
+    return release;
+  }
+  // トップ画面のあいさつ：笑顔の絵で、lines.js の scene: 'home'（または 'named'）のセリフ → 少したつとズーム。
+  // 起動したときは、先に幕（bootNext）。寝ている時間（時間帯）は、寝ている立ち絵のまま「すぴー…」
+  let bootNext = false;
+  function homeGreet(base) {
+    if (!HOME) { say(base); return; }
+    const go = () => {
+      const b = bandNow();
+      if (sleeping() && b.image) { HOME.sleep(b.image, tr('すぴー… すぴー…')); return; }
+      const line = takeLine(base);
+      const stand = timeStand();
+      HOME.greet(line ? withName(line.text) : '', stand || C.images.happy || C.images.normal, stand ? standKey() : 'happy', base.visit === 'again');
+    };
+    if (bootNext) { bootNext = false; HOME.boot(go); } else go();
+  }
+  if (!DEMO && HC.normal) {
+    const langNext = LANG_KEYS.length > 1 ? LANG_KEYS[(LANG_KEYS.indexOf(I18N.lang) + 1) % LANG_KEYS.length] : null;
+    HOME = window.TanuHome({
+      config: C, tr: tr,
+      normal: HC.normal, background: HC.background || '',
+      games: homeGames,
+      layers: (face) => wornLayers(face),
+      standKey: standKey,
+      nose: TB && TB.nose,
+      panel: (name) => { const b = $('btn-' + name); if (b) b.click(); },
+      blocked: () => mode !== 'home' || !sheet.hidden || !$('event').hidden,
+      // ことばのボタン（上のバーは場所がせまいので、英語は「EN」と短く）
+      langLabel: langNext ? '🌐 ' + (langNext === 'en' ? 'EN' : I18N.LANGS[langNext]) : '',
+      onLang: () => I18N.set(langNext),
+      // 寝ている時間に起こしたとき：時間帯のひとこと（「起こされちゃった」など）
+      wakeText: () => { const b = bandNow(); return b && b.wake ? withName(b.wake) : ''; }
+    });
+  }
+
   /* ---------- 開始 ---------- */
   if (DEMO) {
     startDemo();
   } else {
+    // ゲーム（ぽんぽこ・ラリー）から戻ってきたとき：あいさつを飛ばして、ズームした画面から
+    const fromGame = !!store((ss) => { const v = ss.getItem(BACK_KEY); ss.removeItem(BACK_KEY); return v; });
     setMode('home');
     refreshFace();
     renderStatus();
     // はじめての人には、先にお知らせ（ちょっぴり大人向け・AI イラスト・記録のこと）
-    const start = () => setTimeout(() => { if (!checkIn()) say({ scene: 'home', visit: 'again' }); }, 400);
+    const start = () => {
+      if (fromGame && HOME) {
+        const line = takeLine({ scene: 'home', visit: 'again' });
+        HOME.zoomNow(line ? withName(line.text) : '');
+        checkIn();
+        return;
+      }
+      bootNext = true;   // 起動の幕から
+      if (!checkIn()) homeGreet({ scene: 'home', visit: 'again' });
+      bootNext = false;
+    };
     if (C.notice && !SAVE.data.noticeOk) showNotice(start); else start();
 
     /* ---------- ホーム画面に追加して使うための準備（PWA） ----------

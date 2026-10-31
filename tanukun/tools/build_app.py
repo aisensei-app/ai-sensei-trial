@@ -23,7 +23,7 @@ import shutil
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent      # tanukun フォルダ
-FILES = ['index.html', 'style.css', 'config.js', 'config.en.js', 'lines.js', 'lines.en.js', 'i18n.js', 'save.js', 'belly.js', 'app.js',
+FILES = ['index.html', 'style.css', 'config.js', 'config.en.js', 'lines.js', 'lines.en.js', 'i18n.js', 'save.js', 'belly.js', 'home.js', 'app.js',
          'sw.js', 'manifest.webmanifest']
 TITLE = 'タヌくん｜Tanu-kun'
 # リンクのカードの説明（英語版を出したので、日本語と英語の両方）
