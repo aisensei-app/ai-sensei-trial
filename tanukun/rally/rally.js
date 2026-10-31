@@ -122,12 +122,14 @@
     { at: 30, text: 'でんせつのラリーだ…！' }
   ];
   // 結果のランク（合計ラリー数。いちばん下から順に、min 回以上）
+  //   image … 結果の絵（720×1080。tools/make_rally_art.py でつくる）。pos は映す高さ（上 0% 〜 下 100%。顔が切れないように）。れんしゅう中は「砂だらけ」の絵ができるまで、汗をぬぐう絵
   const RANKS = [
-    { min: 0, title: 'れんしゅう中', line: 'もう一回やろ〜！' },
-    { min: 5, title: 'なかなか！', line: 'おなかで返すの、たのしいね♪' },
-    { min: 15, title: 'ぽよんマスター', line: 'ぼくたち、いいコンビだね！' },
-    { min: 30, title: '伝説のおなか', line: 'こんなに続いたの、はじめて！' }
+    { min: 0, title: 'れんしゅう中', line: 'もう一回やろ〜！', image: 'images/rally/clear_sweat.webp', pos: '10%' },
+    { min: 5, title: 'なかなか！', line: 'おなかで返すの、たのしいね♪', image: 'images/rally/clear_sweat.webp', pos: '10%' },
+    { min: 15, title: 'ぽよんマスター', line: 'ぼくたち、いいコンビだね！', image: 'images/rally/clear_sweat.webp', pos: '10%' },
+    { min: 30, title: '伝説のおなか', line: 'こんなに続いたの、はじめて！', image: 'images/rally/clear_rest.webp', pos: '18%' }
   ];
+  RANKS.forEach((r) => { new Image().src = IMG(r.image); });   // 先に読みこんでおく
 
   /* ---------- 本編と同じ記録（きせかえ・さいこう記録・ごほうび） ---------- */
   const SAVE_KEY = 'tanukun-save-v1';
@@ -364,7 +366,7 @@
      マウスでも同じ（ドラッグ）。指が画面の外に出ても追えるように、動き・はなすは window で受ける */
   let swipe = null;
   root.addEventListener('pointerdown', (e) => {
-    if (e.target.closest('.sheet, .back, .special-btn')) return;
+    if (e.target.closest('.sheet, .result, .back, .special-btn')) return;
     e.preventDefault();
     audio();
     swipe = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now() };
@@ -848,6 +850,9 @@
     }
     const rank = RANKS.filter((r) => total >= r.min).pop();
     $('r-title').textContent = tr(rank.title);
+    $('r-img').src = IMG(rank.image);
+    $('r-img').style.objectPosition = '50% ' + rank.pos;
+    $('result').scrollTop = 0;
     $('r-count').textContent = total;
     $('r-longest').textContent = tr('いちばん続いたのは {n} ラリー', { n: longest });
     $('r-best').textContent = isBest && total > 0 ? tr('🎉 さいこう記録！') : tr('さいこう記録 {n} ラリー', { n: best });

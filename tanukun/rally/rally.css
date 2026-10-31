@@ -399,11 +399,62 @@ body.in-x .special-btn { bottom: calc(25vh + 10px); }
 .btn-x { background: #111; }
 .btn-sub { background: #F3DDBF; color: #5A3A1E; }
 .r-count { font-size: 18px; font-weight: 700; }
-.r-count b { font-size: 48px; }
+.r-count b { font-size: 44px; }
 .r-longest { font-size: 14px; font-weight: 700; margin-top: -4px; }
 .r-best { font-size: 14px; font-weight: 700; color: #FF4F8B; }
 .r-line { font-weight: 700; }
 .r-bonus { margin: 4px 0 8px; font-size: 13px; font-weight: 700; color: #E0457C; }
+
+/* ---- 結果：上にランク別イラスト、下に回数とボタン（ぽんぽこリズムと同じ形） ---- */
+.result {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  overflow-y: auto;
+  background: #FFF4E0;
+}
+.r-art {
+  position: relative;
+  height: 50%;
+  min-height: 280px;
+  overflow: hidden;
+}
+.r-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 28%;   /* 顔とおなかが入るように */
+  display: block;
+  animation: rIn .5s ease-out;
+}
+@keyframes rIn { from { transform: scale(1.08); opacity: 0; } }
+.r-art h2 {
+  position: absolute;
+  left: 0; right: 0; bottom: 26px;
+  margin: 0;
+  text-align: center;
+  font-size: 30px;
+  font-weight: 900;
+  color: #fff;
+  -webkit-text-stroke: 7px #E0671F;
+  paint-order: stroke;
+  text-shadow: 0 3px 8px rgba(90, 40, 10, .35);
+  animation: rTitle .6s .2s cubic-bezier(.3, 1.6, .5, 1) both;
+}
+@keyframes rTitle { from { transform: scale(.4); opacity: 0; } }
+.r-card {
+  position: relative;
+  margin-top: -18px;
+  padding: 16px 16px max(20px, env(safe-area-inset-bottom));
+  border-radius: 20px 20px 0 0;
+  background: #fff;
+  box-shadow: 0 -4px 16px rgba(90, 58, 30, .15);
+  text-align: center;
+}
+.r-card p { margin: 6px 0; line-height: 1.5; }
+.r-card b { color: #E0671F; }
+.r-card .r-count { margin-top: 0; }
+body.in-x .r-card { padding-bottom: calc(25vh + 20px); }
 
 /* X アプリの中で開いたとき：画面の下に X の投稿パネルがかぶさるので、全体を上に寄せる（rally.js） */
 body.in-x .sheet { top: 40%; }

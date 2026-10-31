@@ -53,9 +53,13 @@
     <p class="small" data-i18n>🔊 音を出して遊んでね</p>
   </section>
 
-  <!-- 結果 -->
-  <section id="result" class="sheet" hidden>
-    <h2 id="r-title"></h2>
+  <!-- 結果：上にランク別イラスト、下に回数とボタン（ぽんぽこリズムと同じ形） -->
+  <section id="result" class="result" hidden>
+    <div class="r-art">
+      <img id="r-img" alt="" draggable="false">
+      <h2 id="r-title"></h2>
+    </div>
+    <div class="r-card">
     <p class="r-count" data-i18n-html>合計 <b id="r-count">0</b> ラリー</p>
     <p id="r-longest" class="r-longest"></p>
     <p id="r-best" class="r-best"></p>
@@ -64,6 +68,7 @@
     <a id="btn-post" class="btn btn-x" target="_blank" rel="noopener" data-i18n>𝕏 でポストする</a>
     <button id="btn-again" class="btn" type="button" data-i18n>もう一回</button>
     <a class="btn btn-sub" href="../" data-i18n>タヌくんのところへ もどる</a>
+    </div>
   </section>
 
 </main>
