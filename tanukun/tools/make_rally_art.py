@@ -7,6 +7,7 @@
     R1_sweat.webp     … 汗をぬぐう（採用）。R1_sweat_alt.webp はしっぽが左がわ・汗が多すぎるので不採用
     R2_sand.webp      … 砂だらけ（足の指が5本・爪があり不採用）→ R2_sand_v2.webp（直したもの。採用）
     R3_daiji.webp     … 大の字で ひと休み（採用）
+    R4_spin.webp      … 指の上でボールをくるくる回して、ウインク（ぽよんマスター。採用）
 """
 from pathlib import Path
 
@@ -16,7 +17,8 @@ ROOT = Path(__file__).resolve().parent.parent
 ART = ROOT / 'rally' / 'art'
 OUT = ROOT / 'images' / 'rally'
 # 元の絵 → 公開用の名前
-PICK = {'R1_sweat.webp': 'clear_sweat.webp', 'R2_sand_v2.webp': 'clear_sand.webp', 'R3_daiji.webp': 'clear_rest.webp'}
+PICK = {'R1_sweat.webp': 'clear_sweat.webp', 'R2_sand_v2.webp': 'clear_sand.webp', 'R3_daiji.webp': 'clear_rest.webp',
+        'R4_spin.webp': 'clear_spin.webp'}
 
 if __name__ == '__main__':
     OUT.mkdir(parents=True, exist_ok=True)

@@ -128,7 +128,7 @@
   const RANKS = [
     { min: 0, title: 'れんしゅう中', line: 'もう一回やろ〜！', image: 'images/rally/clear_sand.webp', pos: '12%' },
     { min: 5, title: 'なかなか！', line: 'おなかで返すの、たのしいね♪', image: 'images/rally/clear_sweat.webp', pos: '10%' },
-    { min: 15, title: 'ぽよんマスター', line: 'ぼくたち、いいコンビだね！', image: 'images/rally/clear_sweat.webp', pos: '10%' },
+    { min: 15, title: 'ぽよんマスター', line: 'ぼくたち、いいコンビだね！', image: 'images/rally/clear_spin.webp', pos: '4%' },
     { min: 30, title: '伝説のおなか', line: 'こんなに続いたの、はじめて！', image: 'images/rally/clear_rest.webp', pos: '18%' }
   ];
   RANKS.forEach((r) => { new Image().src = IMG(r.image); });   // 先に読みこんでおく
