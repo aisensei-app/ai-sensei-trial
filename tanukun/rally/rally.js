@@ -52,7 +52,7 @@
      returnTime   … もどってくるのにかかる秒数（最初 → ラリーごとに speedUp、1歩ごとに stepSpeed 短く → 最短 minTime）
      zone         … 打てる間。in は、もどってくる道すじのどこから打てるか（割合。1 で輪がボールにぴたっと重なる）、
                     show は輪が出はじめる所、ring はそのときの輪の大きさ（ボールの何倍）。slow は、打てる間にボールがゆっくりになる割合（0.5 で半分の速さ）
-     guideRallies … 毎回、このラリー数まではスワイプのガイド線を出す
+     guideRallies … 毎回、このラリー数まではスワイプのガイド（ボールの横の矢印）を出し、もどってくる球を guideSlow 倍ゆっくりにする
      nice         … 輪が重なる瞬間（1）から、この割合以内で打ち返したら「ナイス！」
      late         … 重なってから、この割合まで待ってくれる（それを過ぎたら落ちてミス）
      balls        … ボールの数（落とせる回数）
@@ -72,7 +72,7 @@
     ballSize: 0.2, maxBall: 88, far: 0.36,
     flick: 36,
     returnTime: 1.15, speedUp: 0.015, stepSpeed: 0.08, minTime: 0.55,
-    zone: { in: 0.85, show: 0.55, ring: 2.6, slow: 0.5 }, guideRallies: 3, nice: 0.08, late: 0.12,
+    zone: { in: 0.85, show: 0.55, ring: 2.6, slow: 0.5 }, guideRallies: 3, guideSlow: 1.4, nice: 0.08, late: 0.12,
     balls: 3,
     birds: 0.2, feint: { rate: 0.15, seconds: [0.45, 0.9] }, wind: { rate: 0.15, drift: 0.22 },
     kinds: { fast: { time: 0.72, arc: 0.11 }, lob: { time: 1.3, arc: 0.38 }, curve: { time: 1.0, bend: 0.24 }, edge: 0.55 },
@@ -313,7 +313,7 @@
     f.last = now;
     if (f.tutorial && f.u >= 1) {
       f.hold = 1;
-      showGuide(ball.x, ball.y + G.size * 0.5, '上へ スワイプして 打ち返そう！');
+      showGuide('上へ スワイプして 打ち返そう！');
       return f.hold;
     }
     return f.u;
@@ -514,7 +514,9 @@
     const spread = Math.min(0.3, 0.1 + streak * 0.015);   // 続くほど左右に広がる
     const tx = G.W * (0.5 + (Math.random() * 2 - 1) * spread);
     const K = T.kinds[kind] || {};
-    const dur = Math.max(T.minTime, T.returnTime - streak * T.speedUp - stepNow * T.stepSpeed) * (K.time || 1);
+    // ガイドを出している最初のラリーは、ゆっくり（guideSlow 倍の時間）
+    const dur = Math.max(T.minTime, T.returnTime - streak * T.speedUp - stepNow * T.stepSpeed) * (K.time || 1)
+      * (total < T.guideRallies ? T.guideSlow : 1);
     fly('return', { x: tx, y: G.nearY, z: 0 }, dur, G.H * (K.arc || 0.22 + Math.random() * 0.08));
     flight.type = kind;
     targetEl.className = 'target' + (kind === 'normal' ? '' : ' t-' + kind);
@@ -593,8 +595,7 @@
     targetEl.classList.toggle('now', now);
     ballEl.classList.toggle('now', now);
     if (total < T.guideRallies && !flight.tutorial) {
-      guideEl.style.left = ball.x + 'px';
-      guideEl.style.top = ball.y + d * 0.3 + 'px';
+      placeGuide(d);
       if (guideEl.hidden) { guideEl.lastChild.textContent = '上へ シュッ！'; guideEl.hidden = false; }
     }
   }
@@ -756,10 +757,16 @@
     clearTimeout(sayTimer);
     sayTimer = setTimeout(() => { el.hidden = true; }, 1800);
   }
-  // 指のガイド：👆 が (x, y) から上へすべる見本を、くり返し見せる
-  function showGuide(x, y, text) {
-    guideEl.style.left = x + 'px';
-    guideEl.style.top = y + 'px';
+  // 指のガイド：ボールの横（右。画面の右がわでは左）に、太い矢印と、上へすべる 👆 の見本をくり返し見せる（d はボールの大きさ）
+  //   右か左かは、出しはじめに決める（ボールが動いても、とちゅうで入れかわらないように）
+  let guideSide = 1;
+  function placeGuide(d) {
+    if (guideEl.hidden) guideSide = ball.x > G.W * 0.6 ? -1 : 1;
+    guideEl.style.left = ball.x + guideSide * (d * 0.5 + 36) + 'px';
+    guideEl.style.top = ball.y + d * 0.3 + 'px';
+  }
+  function showGuide(text) {
+    placeGuide(G.size * scaleAt(ball.z));
     guideEl.lastChild.textContent = text;
     guideEl.hidden = false;
     root.classList.add('guiding');
@@ -782,7 +789,7 @@
     placeReady();
     if (guideThrow) {
       $('hint').hidden = true;
-      showGuide(ball.x, ball.y, 'ボールを 上へ スワイプして なげてね');
+      showGuide('ボールを 上へ スワイプして なげてね');
     } else {
       $('hint').textContent = '👆 上へ スワイプして なげてね';
       $('hint').hidden = false;
