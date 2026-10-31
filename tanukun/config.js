@@ -199,6 +199,7 @@ window.TANU_CONFIG = {
     timeOfDay: 'hidden',   // 時間帯で変わる立ち絵と背景
     tailFlick: 'hidden',   // しっぽをはじく（引っぱって離す・ブワッ）
     rally:     'hidden',   // ぽよんラリー（rally/。ボールを投げて、おなかで返す）
+    seesaw:    'hidden',   // 丸太シーソー（seesaw/。指で上下になぞって、タヌくんとシーソー）
     english:   'open',     // 英語版（スマホが英語なら英語。設定の「ことば / Language」で切りかえ。i18n.js）
     chinese:   'open'      // 中国語版（簡体字。スマホが中国語なら中国語。i18n.zh.js・config.zh.js・lines.zh.js）
   },

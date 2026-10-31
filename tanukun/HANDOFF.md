@@ -11,8 +11,9 @@
   3. **11/29「いい肉の日」を11月の山場に**（投稿・小さな企画）／4. 二次創作のルールと設定画／5. 投稿したくなる絵のカード（レポート・今日のタヌくん）。
   X に来る人の仮説：①ケモノ・ぽっちゃりの推し活（中心。関係が続くことを求める）②いやされたい人③海外の日本文化好き④AI・個人開発好き
   ⑤作って発信する人（VTuber・絵描き。いいねがほしい → タヌくんを「いいねが取れるネタ」に）。確かめ方：いいねした20人のプロフィールを見る
-- **試作：丸太シーソー（`seesaw/`。本番にはまだ出さない・build_app.py にも入らない）**：南国の丸太シーソーにタヌくんと向かい合って乗る。画面を指で上下になぞると動き、はなすとタヌくん側（重い方）へゆっくり戻る。おなかは「動く向きに伸び縮み」＋端に着くと大きく「ぷるん」、胸は少し遅れて左右べつべつに揺れる。最初の3往復は ↕ の白い矢印＋指アイコンのチュートリアル。高さで表情（下＝通常、上＝笑顔）。3往復で「海へ ざぶーん！」。
-  絵：seesaw/art/sit_normal_src.png（ChatGPT、背景マゼンタ）→ `python3 tools/make_seesaw_art.py` → seesaw/img/sit_normal.webp。確認用リンクは `python3 tools/build_seesaw_preview.py` → preview/seesaw.html（https://claude.ai/artifact/8AqhncfTVjCjYipFd8S4M3）。次：表情ちがい（わくわく・びっくり・えへへ。ユーザーが作成中）を sit_happy_src.png などで足す。スコアは「こすった回数でたまる」形は避け、リズムの上手さ・集める楽しさで
+- **丸太シーソー（`seesaw/`）：本番の準備まで完了（2026-11-01）。公開スイッチ `features.seesaw` は `hidden`（まだ出さない）**。南国の波打ち際の丸太シーソーにタヌくんと向かい合って乗る。画面を指で上下になぞると動き、はなすとタヌくん側（重い方）へゆっくり戻る。はやさ3段階（右上。▶ がはじめ）。おなかは動く向きに伸び縮み＋端で大きく「ぷるん」、胸は少し遅れて左右べつべつ（変形には「やわらかい上限」）。表情は高さで3段階＋えへへ。最初の3往復は ↕ の矢印と 👆 のチュートリアル。3往復で「海へ ざぶーん！」→ ばんざいで飛びこむ → フェードで特別イラスト（びしょぬれ6割・タコ3割・腰みの1割。あつめた数と NEW!。タコは吸盤のあとを消した版に差しかえ予定）。
+  ファイル：seesaw/index.html・seesaw.css・seesaw.js・seesaw.i18n.js（日本語・英語・中国語）、絵は seesaw/img（元の絵 seesaw/art → `python3 tools/make_seesaw_art.py`）。トップ画面のおなかのアイコン 🌴（app.js の homeGames。はじめて開くまで NEW。localStorage の tanukun.seesawSeen）とメニューの「🌴 丸太シーソー」（index.html の btn-seesaw）。数え方は p-seesaw（stats.js）。sw.js は tanukun-v28（シーソーのファイルを追加）。build_app.py は seesaw/ の使う絵だけを入れる。確認用リンクは `python3 tools/build_preview.py --seesaw` → preview/seesaw.html（https://claude.ai/artifact/8AqhncfTVjCjYipFd8S4M3）。
+  **公開するとき**：config.js の `seesaw: 'open'` → `python3 tools/build_app.py --base-url https://tanukun.pages.dev/` → Preview で確認 → Production。スコアは「こすった回数でたまる」形は避け、リズムの上手さ・集める楽しさで（ユーザーと合意）
 - **アイデア：タヌくんと写真（ぬい撮り）**（ユーザー発案）：カメラか写真の上にタヌくんを重ね、指で動かして保存・投稿。写真はスマホの中だけで作る（送らない）。
   「今日のタヌくん」のポーズと合体させると、毎日来る理由＋投稿したくなる写真になる。iPhone・Android とも Web で作れる（お金はかからない）
 - センシティブなアイデアは、ユーザーの希望で別のチャットで相談する（**このリポジトリは公開なので、中身はここに書かない**）

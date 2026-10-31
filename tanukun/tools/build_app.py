@@ -14,6 +14,7 @@
 ・ぽんぽこリズム（pon/ → 公開先の /pon/）も入れます。カードの絵は og/pon.jpg
   （pon/art の元の絵・プロンプト集、使っていない「おなかのアップ」の絵 images/pon/belly*.webp は入れない）
 ・ぽよんラリー（rally/ → 公開先の /rally/）も入れます。カードの絵は本編と同じ og/main.jpg
+・丸太シーソー（seesaw/ → 公開先の /seesaw/）も入れます。絵は seesaw/img の使うものだけ（seesaw/art の元の絵は入れない）。カードの絵は og/main.jpg
 ・お試し版の設定（demo.js）、メモ、道具、確認用ファイル、元の絵などは入れません
 """
 import argparse
@@ -30,6 +31,10 @@ TITLE = 'タヌくん｜Tanu-kun'
 DESCRIPTION = 'さわって遊ぶ、なでなでアプリ。なでて、ぽんぽこして、毎日なかよくなろう。／ A touch-and-pet app: pat, drum his belly, and grow closer every day!'
 PON_FILES = ['index.html', 'pon.css', 'pon.js', 'pon.i18n.js']
 RALLY_FILES = ['index.html', 'rally.css', 'rally.js', 'rally.i18n.js']
+SEESAW_FILES = ['index.html', 'seesaw.css', 'seesaw.js', 'seesaw.i18n.js']
+SEESAW_IMAGES = ['sit_normal', 'sit_happy', 'sit_wow', 'sit_ehehe', 'jump_banzai', 'sp_wet', 'sp_octo', 'sp_skirt']
+SEESAW_TITLE = '丸太シーソー｜タヌくん'
+SEESAW_DESCRIPTION = '南国の波打ち際で、タヌくんと丸太のシーソー。指でゆらすと、おなかがたぷん♪ 海へざぶーんで特別イラストも。／ Ride a log seesaw with Tanu-kun by the sea and watch his belly jiggle.'
 RALLY_TITLE = 'ぽよんラリー｜タヌくん'
 RALLY_DESCRIPTION = 'ビーチボールを投げると、タヌくんがおなかで「ぽよん！」と返してくれる。何回つづくかな？／ Toss a beach ball and Tanu-kun bounces it back with his belly. How long can you keep it going?'
 PON_TITLE = 'ぽんぽこリズム｜タヌくん'
@@ -87,6 +92,18 @@ def build(base, out):
         raise SystemExit('rally/index.html の <title> が見つかりませんでした')
     page = page.replace(tag, tag + '\n' + og_tags(base + 'rally/', base + 'og/main.jpg', RALLY_TITLE, RALLY_DESCRIPTION), 1)
     (out / 'rally' / 'index.html').write_text(page, encoding='utf8')
+    # 丸太シーソー（seesaw/）：ページと、使う絵だけ。カードは本編と同じ絵（専用の絵はまだない）
+    (out / 'seesaw' / 'img').mkdir(parents=True)
+    for f in SEESAW_FILES:
+        shutil.copy(ROOT / 'seesaw' / f, out / 'seesaw' / f)
+    for n in SEESAW_IMAGES:
+        shutil.copy(ROOT / 'seesaw' / 'img' / (n + '.webp'), out / 'seesaw' / 'img' / (n + '.webp'))
+    page = (out / 'seesaw' / 'index.html').read_text(encoding='utf8')
+    tag = '<title>' + SEESAW_TITLE + '</title>'
+    if tag not in page:
+        raise SystemExit('seesaw/index.html の <title> が見つかりませんでした')
+    page = page.replace(tag, tag + '\n' + og_tags(base + 'seesaw/', base + 'og/main.jpg', SEESAW_TITLE, SEESAW_DESCRIPTION), 1)
+    (out / 'seesaw' / 'index.html').write_text(page, encoding='utf8')
 
     # index.html：カード（OGP）の設定を入れる
     page = (out / 'index.html').read_text(encoding='utf8')

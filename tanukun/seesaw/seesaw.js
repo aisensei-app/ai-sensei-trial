@@ -1,0 +1,728 @@
+/* =========================================================
+   丸太シーソー（seesaw/。2026-11）
+   ・南国の波打ち際で、丸太のシーソーにタヌくんと向かい合って乗る（一人称の視点。景色・丸太・タヌくんはキャンバスに描く）
+   ・画面を指で上下になぞると、そのぶんシーソーが動く。はなすと、タヌくん側（重い方）へゆっくり戻る
+   ・はやさは3段階（右上のボタン。▶ ゆっくり がはじめ。スマホに覚えておく）
+   ・おなか：動く向きに伸び縮み（上の付け根は止める）＋ 端に着くと大きく「ぷるん」。胸：少し遅れて、左右べつべつに揺れる
+     速いときに皮ふが不自然に伸びないよう、見た目の変形には「やわらかい上限」（tanh）
+   ・表情は高さで3段階（下＝通常、まんなか＝わくわく、上＝びっくり）。下に着いて「ぷるん」のあとは、えへへ
+   ・最初の3往復は、↕ の白い矢印と 👆 のチュートリアル
+   ・3往復すると「海へ ざぶーん！」→ ばんざいで飛びこむ → フェードで特別イラスト（3種類。出やすさに差。あつめた数と NEW!）
+   ・絵：img/（tools/make_seesaw_art.py で、seesaw/art のマゼンタ背景の絵から作る）。音はすべてプログラムで作る（Web Audio）
+   ・公開スイッチ（config.js の features.seesaw）が 'open' でないときは、本編へもどす
+   ========================================================= */
+(() => {
+'use strict';
+
+const C = window.TANU_CONFIG || {};
+if (C.features && C.features.seesaw && C.features.seesaw !== 'open') { location.replace('../'); return; }
+// 本編のトップ画面の NEW を消す（一度でも開いたら）
+try { localStorage.setItem('tanukun.seesawSeen', '1'); } catch (e) {}
+
+/* ---- タヌくんのところへ戻るとき：幕がふわっとかかってから（本編のトップ画面は、同じ幕が明けるところから始まる） ---- */
+document.addEventListener('click', (e) => {
+  const a = e.target.closest && e.target.closest('a[href="../"]');
+  if (!a || e.defaultPrevented || document.body.classList.contains('leaving')) return;
+  e.preventDefault();
+  try { sessionStorage.setItem('tanukun.homeZoom', '1'); } catch (err) {}
+  document.body.classList.add('leaving');
+  setTimeout(() => { location.href = a.href; }, 430);
+});
+
+/* ---- ことば：本編と同じ i18n.js（シーソーの訳は seesaw.i18n.js）。tr('日本語の文', { n: 3 }) でいまの言語の文 ---- */
+const I18N = window.TanuI18n || { lang: 'ja', tr: (s) => s, apply: () => {} };
+const tr = (ja, vars) => {
+  let out = I18N.tr(ja, vars);
+  if (vars && out === ja) Object.keys(vars).forEach((k) => { out = out.split('{' + k + '}').join(vars[k]); });
+  return out;
+};
+I18N.apply();
+if (I18N.lang !== 'ja') {
+  document.querySelectorAll('[data-i18n-html]').forEach((el) => { el.innerHTML = tr(el.innerHTML.trim()); });
+  document.title = tr('丸太シーソー｜タヌくん');
+}
+
+// 絵：座った絵の表情（同じポーズ）と、海へ飛びこむときの「ばんざい」
+const SRC = {
+  normal: 'img/sit_normal.webp',   // 下にいるとき
+  happy:  'img/sit_happy.webp',    // まんなか（わくわく）
+  wow:    'img/sit_wow.webp',      // いちばん上の方（びっくり「たか〜い！」）
+  ehehe:  'img/sit_ehehe.webp',    // 「ぷるん」「たぷん」の直後、海でぷかぷか
+  banzai: 'img/jump_banzai.webp',  // 海へ飛びこむとき
+  beach:  '../images/bg/beach_day.webp'
+};
+
+/* ---------- 画面 ---------- */
+const cv = document.getElementById('stage');
+const ctx = cv.getContext('2d');
+let W = 0, H = 0, DPR = 1, F = 1;
+function resize() {
+  DPR = Math.min(2, window.devicePixelRatio || 1);
+  W = innerWidth; H = innerHeight;
+  cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  F = Math.min(H * 1.55, W * 3.0);   // 焦点距離（画面の縦の大きさに合わせる）
+}
+addEventListener('resize', resize); resize();
+
+/* ---------- 世界（メートル） ----------
+   シーソーのまんなか（支点）が原点の真上。手前（z<0）にプレイヤー、奥（z>0）にタヌくん */
+const HP = 0.75, LH = 2.0, LOGR = 0.17;               // 支点の高さ、半分の長さ、丸太の半径
+const THMAX = Math.asin((HP - LOGR) / LH);           // 端が地面につく角度
+const T_SEAT = 0.8, T_BAR = 0.725, T_CAM = -0.92, EYE = 0.55;
+const OMEGA = 2 * Math.PI / 1.7, G = 9.8;
+/* シーソーのはやさ（3段階）。k, c は指についていく時、rk, rc は指をはなして戻る時の、ばねの強さと止まりやすさ */
+const SPEEDS = [
+  { icon: '▶',   name: 'ゆっくり', k: 9,  c: 4.6, rk: 2.2, rc: 2.2 },
+  { icon: '▶▶',  name: 'ふつう',   k: 20, c: 6.5, rk: 4.5, rc: 3.2 },
+  { icon: '▶▶▶', name: 'はやい',   k: 38, c: 8.5, rk: 8,   rc: 4.3 }
+];
+const PULL = 1;   // 1：動く向きに引っぱられる／-1：遅れてついてくる
+// 端に着いたときの「ぷるん」（dir=1 は床で下へ、-1 はいちばん上で上へ）。ゆっくりでも大きく揺れるように、最低の強さを持たせる
+function endKick(dir, v) {
+  const k = 0.5 + 0.5 * Math.min(1, v * 3);
+  S.jb.v += dir * 430 * k;
+  S.st.v += dir * 3.0 * k;
+  setTimeout(() => { S.jcL.v += dir * 640 * k; S.jcR.v += dir * 590 * k; }, 60);
+}
+// 立ち絵（720×900）：1m = 562px、座る所（腰）を画像の (262, 585) に
+// 座った絵（808×1009。tools/make_seesaw_art.py）：1m = 620px、丸太に座る所（またの上）を画像の (395, 740) に
+const TW = 808, TH = 1009, PXM = 620, AX = 395, AY = 740;
+const HEAD_Y = 15, BELLY_UP = 270;                       // 頭のてっぺん、おなかの中心（座る所からの高さ。px）
+const BELLY = { cx: 395, cy: 470, rx: 145, ry: 125 };
+const CHEST = [{ cx: 300, cy: 320, rx: 92, ry: 64 }, { cx: 490, cy: 320, rx: 92, ry: 64 }];
+const BX0 = 205, BX1 = 585, BY0 = 254, BY1 = 596;
+const SHORE = 4.4;   // カメラから波打ち際まで（m）。タヌくんのすぐうしろが波打ち際
+const BAR_UP = 0.235;                                    // 持ち手の横棒の高さ（丸太の上から m。こぶしの位置）
+
+const S = {
+  th: -THMAX, w: 0, drag: false, dragTh: -THMAX, t: 0, swings: 0, cycles: 0, side: -1, guideA: 1, st: { y: 0, v: 0 },
+  body: { y: 0, v: 0, prevV: 0, on: true },
+  jb: { y: 0, v: 0 }, jcL: { y: 0, v: 0 }, jcR: { y: 0, v: 0 }, sq: { y: 0, v: 0 }, chestQ: new Array(16).fill(0), qi: 0,
+  phi: 0, shake: 0, happyUntil: 0, lastInput: 0, nice: 0, topCount: 0,
+  best: 0, tierSeen: [0, 0, 0], dive: null, splash: [], speed: 0
+};
+try { S.best = parseFloat(localStorage.getItem('tanu-seesaw-best')) || 0; } catch (e) {}
+const events = [];
+
+function seat(th) { return { y: HP + LH * T_SEAT * Math.sin(th) + LOGR, z: LH * T_SEAT * Math.cos(th), vy: LH * T_SEAT * Math.cos(th) }; }
+function camOf(th) { return { y: HP + LH * T_CAM * Math.sin(th) + LOGR + EYE, z: LH * T_CAM * Math.cos(th) - 0.05 }; }
+
+/* ---------- 物理（1/240 秒ずつ） ---------- */
+function step(h) {
+  S.t += h;
+  // 指でつかんでいる間は指の位置へ、はなすとタヌくん側（重い方）へゆっくり戻る
+  const target = S.drag ? S.dragTh : -THMAX;
+  const sp = SPEEDS[S.speed];
+  const k = S.drag ? sp.k : sp.rk, c = S.drag ? sp.c : sp.rc;
+  S.w += (k * (target - S.th) - c * S.w) * h;
+  S.th += S.w * h;
+  // 床・いちばん上に着いたとき：体が止まっても、おなかと胸は進み続けて大きく「ぷるん」
+  if (S.th < -THMAX) { S.th = -THMAX; if (S.w < 0) { const v = -S.w; S.w = v * 0.3; if (v > 0.04) { endKick(1, v); events.push(['tanuDown', v]); } } }
+  if (S.th > THMAX)  { S.th = THMAX;  if (S.w > 0) { const v = S.w;  S.w = -v * 0.3; if (v > 0.04) { endKick(-1, v); events.push(['top', v]); } } }
+
+  const st = seat(S.th), svy = st.vy * S.w, b = S.body;
+  const present = !S.dive || S.dive.phase === 'return';
+  if (present) {
+    if (b.on) {
+      const sa = (svy - b.v) / h;
+      if (sa < -G && b.v > 0.4) { b.on = false; b.v -= G * h; b.y += b.v * h; events.push(['lift', b.v]); }
+      else { b.y = st.y; b.v = svy; }
+    } else {
+      b.v -= G * h; b.y += b.v * h;
+      if (b.y <= st.y) { const dv = svy - b.v; b.y = st.y; b.v = svy; b.on = true; events.push(['land', dv]); }
+    }
+    // ① 動いている向きに、おなか・胸が引っぱられる（PULL を -1 にすると、逆向き＝遅れてついてくる感じ）
+    // ② 速さが変わったときは、ばねで揺れる
+    const dv = b.v - b.prevV; b.prevV = b.v;
+    const vy = b.on ? svy : b.v;
+    // 速さが上がっても引っぱりすぎないよう、速さの効き目に上限（tanh）をつける
+    const vyS = 1.1 * Math.tanh(vy / 1.1);
+    spring(S.jb, 420 * dv, 110, 2.4, 56, h, -PULL * 15 * vyS);
+    // 胸はおなかより少し遅れて（約0.06秒）、少し速いばねで。左右でもわずかにずらす
+    const q = S.chestQ, dvc = q[S.qi]; q[S.qi] = dv; S.qi = (S.qi + 1) % q.length;
+    spring(S.jcL, 380 * dvc, 230, 3.0, 42, h, -PULL * 13 * vyS);
+    spring(S.jcR, 380 * dvc, 255, 3.3, 42, h, -PULL * 13 * vyS);
+    // おなかの伸び縮み（上の付け根は止めて、下側が伸びる・つぶれる）。下へ動く＝下へ伸びる、上へ動く＝上へつぶれる
+    spring(S.st, 3.2 * dv, 110, 2.6, 0.24, h, -PULL * 0.16 * vyS);
+    // 体ぜんたいも、動く向きに少し伸びる
+    spring(S.sq, 0.05 * dv, 500, 14, 0.07, h, PULL * 0.03 * vy);
+  } else {
+    spring(S.st, 0, 110, 2.6, 0.24, h);
+    spring(S.jb, 0, 110, 2.4, 56, h); spring(S.jcL, 0, 230, 3.0, 42, h); spring(S.jcR, 0, 255, 3.3, 42, h); spring(S.sq, 0, 500, 14, 0.07, h);
+  }
+  // 海へ飛びこむ
+  const d = S.dive;
+  if (d) {
+    d.t += h;
+    if (d.phase === 'fly') {
+      d.vy -= G * h; d.y += d.vy * h; d.z += d.vz * h;
+      if (d.y <= 0 && d.vy < 0) { d.phase = 'splash'; d.t = 0; events.push(['splash', d.z]); }
+    } else if (d.phase === 'splash' && d.t > 0.9) { d.phase = 'card'; d.t = 0; showSpecial(); }
+    else if (d.phase === 'back') {
+      d.phase = 'return'; d.t = 0;
+      b.on = false; b.y = seat(S.th).y + 4.2; b.v = 0; b.prevV = 0;
+      events.push(['comeback']);
+    } else if (d.phase === 'return' && b.on) { S.dive = null; events.push(['home']); }
+  }
+  for (const p of S.splash) { p.vy -= G * h; p.x += p.vx * h; p.y += p.vy * h; p.z += p.vz * h; p.life -= h; }
+}
+function spring(s, kick, k, c, max, h, rest) {
+  s.v += kick; s.v += (-k * (s.y - (rest || 0)) - c * s.v) * h; s.y += s.v * h;
+  if (s.y > max) { s.y = max; if (s.v > 0) s.v *= -0.3; }
+  if (s.y < -max) { s.y = -max; if (s.v < 0) s.v *= -0.3; }
+}
+
+/* ---------- 指の操作（上下になぞった分だけ、シーソーが動く） ---------- */
+let ptr = null;
+const hintEl = document.getElementById('hint');
+function hideHint() { hintEl.classList.add('small'); }
+cv.addEventListener('pointerdown', (e) => {
+  audioInit();
+  if (S.dive && S.dive.phase !== 'return') return;
+  ptr = { y: e.clientY, th: S.th, cy: e.clientY, upT: S.t, downT: S.t, segY: e.clientY };
+  touchDir = S.th > 0 ? 1 : -1; touchT = 0;
+  try { cv.setPointerCapture(e.pointerId); } catch (err) {}
+  S.drag = true; S.dragTh = S.th; S.lastInput = S.t;
+});
+cv.addEventListener('pointermove', (e) => {
+  if (!ptr) return;
+  // 画面の高さの半分をなぞると、端から端まで（指を上へ＝タヌくんが上へ）
+  const d = (ptr.y - e.clientY) / (H * 0.5) * 2 * THMAX;
+  S.dragTh = Math.max(-THMAX, Math.min(THMAX, ptr.th + d));
+  if (e.clientY < ptr.cy - 1) ptr.upT = S.t; else if (e.clientY > ptr.cy + 1) ptr.downT = S.t;
+  ptr.cy = e.clientY;
+  S.lastInput = S.t;
+  if (Math.abs(ptr.y - e.clientY) > 30) hideHint();
+});
+function endPtr() { ptr = null; S.drag = false; S.lastInput = S.t; }
+cv.addEventListener('pointerup', endPtr);
+cv.addEventListener('pointercancel', endPtr);
+
+/* ---------- ことば・吹き出し ---------- */
+const LINES = {
+  start: ['シーソー、いっしょにやろ〜！'],
+  idle: ['指で上下に動かしてね〜', 'シーソー、うごかして〜♪'],
+  top: ['たか〜い！', 'いい景色〜♪', 'わぁ〜、海が見える！'],
+  down: ['よいしょ〜', 'ぽすん'],
+  lift: ['からだが、ういた〜！', 'ふわってした〜！'],
+  land: ['おなか、たぷんってなった〜', 'えへへ、ゆれた〜'],
+  dive: ['いってきま〜す！'],
+  float: ['つめたくて、きもちいい〜！'],
+  home: ['ただいま〜！']
+};
+const bubble = document.getElementById('bubble');
+let bubbleUntil = 0, bubbleCool = 0;
+function say(key, force) {
+  if (!force && S.t < bubbleCool) return;
+  const list = LINES[key] || [key];
+  bubble.textContent = tr(list[Math.floor(Math.random() * list.length)]);
+  bubble.classList.add('on');
+  bubbleUntil = S.t + 2.0; bubbleCool = S.t + 2.4;
+}
+const pops = document.getElementById('pops');
+function pop(text, x, y, cls) {
+  const el = document.createElement('div');
+  el.className = 'pop ' + (cls || '');
+  el.textContent = tr(text);
+  el.style.left = Math.max(60, Math.min(W - 60, x)) + 'px';
+  el.style.top = Math.max(90, y) + 'px';
+  pops.appendChild(el);
+  setTimeout(() => el.remove(), 1500);
+}
+
+/* ---------- 音（Web Audio でその場で作る） ---------- */
+let AC = null, soundOn = true;
+const sndBtn = document.getElementById('snd');
+sndBtn.textContent = tr('音 ON');
+sndBtn.addEventListener('click', () => {
+  audioInit(); soundOn = !soundOn;
+  sndBtn.textContent = tr(soundOn ? '音 ON' : '音 OFF'); sndBtn.setAttribute('aria-pressed', String(soundOn));
+});
+function audioInit() {
+  if (AC) { if (AC.state === 'suspended') AC.resume(); return; }
+  try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { AC = null; }
+}
+function env(g, t, a, peak, dur) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + dur); }
+function tone(type, f0, f1, dur, vol, delay) {
+  if (!AC || !soundOn) return;
+  const t = AC.currentTime + (delay || 0), o = AC.createOscillator(), g = AC.createGain();
+  o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  env(g, t, 0.01, vol, dur); o.connect(g).connect(AC.destination); o.start(t); o.stop(t + dur + 0.05);
+}
+function noise(dur, vol, f0, f1, q) {
+  if (!AC || !soundOn) return;
+  const t = AC.currentTime, n = Math.floor(AC.sampleRate * dur), buf = AC.createBuffer(1, n, AC.sampleRate), d = buf.getChannelData(0);
+  for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+  const s = AC.createBufferSource(), f = AC.createBiquadFilter(), g = AC.createGain();
+  s.buffer = buf; f.type = 'bandpass'; f.Q.value = q || 1;
+  f.frequency.setValueAtTime(f0, t); f.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  env(g, t, 0.01, vol, dur); s.connect(f).connect(g).connect(AC.destination); s.start(t);
+}
+const sfx = {
+  thud(v) { const k = Math.min(1, v / 1.5); tone('sine', 120, 40, 0.22, 0.25 + 0.35 * k); noise(0.12, 0.12 + 0.2 * k, 400, 120, 0.8); },
+  creak() { tone('sawtooth', 210, 170, 0.14, 0.035); tone('sawtooth', 160, 190, 0.12, 0.03, 0.12); },
+  boing(v) { const k = Math.min(1, v / 3); tone('sine', 220, 520 + 200 * k, 0.12, 0.3); tone('sine', 520 + 200 * k, 300, 0.28, 0.25, 0.1); },
+  whoosh() { noise(0.45, 0.18, 300, 1800, 1.2); },
+  splash() { noise(0.9, 0.35, 2500, 400, 0.7); tone('sine', 300, 90, 0.4, 0.15); }
+};
+
+/* ---------- 絵の読みこみ ---------- */
+function load(src) { return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; }); }
+function toData(img, fade) {
+  const c = document.createElement('canvas'); c.width = TW; c.height = TH;
+  const x = c.getContext('2d'); x.drawImage(img, 0, 0, TW, TH);
+  if (fade) {   // 腰から下をふわっと消す（持ち手と丸太でかくす。仮の絵なので）
+    x.globalCompositeOperation = 'destination-out';
+    const g = x.createLinearGradient(0, 572, 0, 622);
+    g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,1)');
+    x.fillStyle = g; x.fillRect(0, 572, TW, TH - 572);
+  }
+  return x.getImageData(0, 0, TW, TH);
+}
+let IMG = null;
+const tc = document.createElement('canvas'); tc.width = TW; tc.height = TH;
+const tctx = tc.getContext('2d');
+let out = null, lastSrc = null, wasMoving = true;
+
+/* おなか・胸を網目のように動かす（指定の楕円の中だけ、中心ほど大きく） */
+function warpTanu(src) {
+  if (!out) out = tctx.createImageData(TW, TH);
+  const full = src !== lastSrc;
+  if (full) { out.data.set(src.data); lastSrc = src; }
+  // 見た目の変形には「やわらかい上限」：ふだんの揺れはほぼそのまま、大きすぎる時だけ頭打ちにして、皮ふが不自然に伸びないように
+  const soft = (v, m) => m * Math.tanh(v / m);
+  const jy = soft(S.jb.y, 34), jcs = [soft(S.jcL.y, 28), soft(S.jcR.y, 28)], moving = Math.abs(jy) > 0.12 || Math.abs(jcs[0]) > 0.12 || Math.abs(jcs[1]) > 0.12 || Math.abs(S.st.y) > 0.003;
+  if (!full && !moving && !wasMoving) return;
+  wasMoving = moving;
+  const d = src.data, o = out.data, spread = 0.6 / BELLY.ry;
+  const sv = 1 + soft(S.st.y, 0.2), stretch = 1 - 1 / sv, narrow = Math.sqrt(sv) - 1, anchor = BELLY.cy - BELLY.ry * 0.85;
+  for (let y = BY0; y < BY1; y++) {
+    for (let x = BX0; x < BX1; x++) {
+      let dx = 0, dy = 0;
+      let u = (x - BELLY.cx) / BELLY.rx, v = (y - BELLY.cy) / BELLY.ry, r2 = u * u + v * v;
+      if (r2 < 1) {
+        const w = (1 - r2) * (1 - r2), w2 = 1 - r2;
+        dy += jy * w + (y - anchor) * stretch * w2;                 // 付け根から下が伸びる（つぶれる）
+        dx += (x - BELLY.cx) * (jy * spread * w - narrow * w2);     // 伸びると細く、つぶれると横に広がる
+      }
+      for (let n = 0; n < 2; n++) {
+        const C = CHEST[n]; u = (x - C.cx) / C.rx; v = (y - C.cy) / C.ry; r2 = u * u + v * v;
+        if (r2 < 1) { const w = (1 - r2) * (1 - r2); dy += jcs[n] * w; }
+      }
+      const i = (y * TW + x) * 4;
+      if (dx === 0 && dy === 0) { o[i] = d[i]; o[i + 1] = d[i + 1]; o[i + 2] = d[i + 2]; o[i + 3] = d[i + 3]; continue; }
+      let sx = x - dx, sy = y - dy;
+      if (sx < 0) sx = 0; else if (sx > TW - 2) sx = TW - 2;
+      if (sy < 0) sy = 0; else if (sy > TH - 2) sy = TH - 2;
+      const x0 = sx | 0, y0 = sy | 0, fx = sx - x0, fy = sy - y0;
+      const a = (y0 * TW + x0) * 4, b = a + 4, c = a + TW * 4, e = c + 4;
+      const w00 = (1 - fx) * (1 - fy), w10 = fx * (1 - fy), w01 = (1 - fx) * fy, w11 = fx * fy;
+      for (let ch = 0; ch < 4; ch++) o[i + ch] = d[a + ch] * w00 + d[b + ch] * w10 + d[c + ch] * w01 + d[e + ch] * w11;
+    }
+  }
+  if (full) tctx.putImageData(out, 0, 0);
+  else tctx.putImageData(out, 0, 0, BX0, BY0, BX1 - BX0, BY1 - BY0);
+}
+
+/* ---------- 描く ---------- */
+let cam = camOf(S.th), cp = 1, sp = 0;
+function proj(x, y, z) {
+  const dy = y - cam.y, dz = z - cam.z;
+  const yp = dy * cp - dz * sp, zp = dy * sp + dz * cp;
+  return { x: W / 2 + F * x / zp, y: H / 2 - F * yp / zp, s: F / zp, z: zp };
+}
+
+function drawBackground() {
+  const hz = H / 2 + F * Math.tan(S.phi);              // 水平線
+  // 絵の水平線（425）から波打ち際（600）までの 175px が、カメラから SHORE m 先に見えるように拡大する
+  const HZ0 = 425, SH = 600, bg = IMG.beach;
+  const camH = 1.47 + (cam.y - 1.47) * 0.6;            // 高さの変化は控えめに（画面酔いしないように）
+  const s = Math.max(W / 720, (hz + 4) / HZ0, F * camH / ((SH - HZ0) * SHORE));
+  const m = 1, x0 = (W - 720 * s) / 2, HZ = HZ0;
+  const sky = ctx.createLinearGradient(0, 0, 0, hz);
+  sky.addColorStop(0, '#2a78d6'); sky.addColorStop(1, '#8cc8f2');
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, W, hz);
+  ctx.fillStyle = '#efdcb3'; ctx.fillRect(0, hz, W, H - hz);
+  ctx.drawImage(bg, 0, 0, 720, HZ, x0, hz - HZ * s, 720 * s, HZ * s + 1);
+  ctx.drawImage(bg, 0, HZ, 720, 1281 - HZ, x0, hz, 720 * s, (1281 - HZ) * s * m);
+}
+function shadow(z, rx, rz, a) {
+  const p = proj(0, 0, z), q = proj(0, 0, z + rz);
+  if (p.z < 0.2) return;
+  ctx.fillStyle = 'rgba(80,50,20,' + a + ')';
+  ctx.beginPath(); ctx.ellipse(p.x, (p.y + q.y) / 2, rx * p.s, Math.max(2, Math.abs(p.y - q.y)), 0, 0, Math.PI * 2); ctx.fill();
+}
+function drawFulcrum() {
+  const RF = 0.3, yc = HP - LOGR - RF;
+  // 支えの杭
+  ctx.strokeStyle = '#5a3416'; ctx.lineCap = 'round';
+  for (const sx of [-0.62, 0.62]) {
+    const a = proj(sx, 0, 0.1), b = proj(sx, yc, 0);
+    if (a.z < 0.2) continue;
+    ctx.lineWidth = 0.09 * b.s; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+  }
+  const p1 = proj(-0.85, yc, 0), p2 = proj(0.85, yc, 0);
+  if (p1.z < 0.2) return;
+  const r = RF * p1.s;
+  const g = ctx.createLinearGradient(0, p1.y - r, 0, p1.y + r);
+  g.addColorStop(0, '#c48a52'); g.addColorStop(0.45, '#8a5a2f'); g.addColorStop(1, '#4a2a12');
+  ctx.fillStyle = g; ctx.fillRect(p1.x, p1.y - r, p2.x - p1.x, 2 * r);
+  for (const p of [p1, p2]) {   // 切り口（年輪）
+    ctx.fillStyle = '#e8c48e'; ctx.beginPath(); ctx.ellipse(p.x, p.y, r * 0.42, r, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#b98a55'; ctx.lineWidth = 1.5;
+    for (const k of [0.7, 0.4]) { ctx.beginPath(); ctx.ellipse(p.x, p.y, r * 0.42 * k, r * k, 0, 0, Math.PI * 2); ctx.stroke(); }
+  }
+}
+function axis(t) { return { y: HP + LH * t * Math.sin(S.th), z: LH * t * Math.cos(S.th) }; }
+function drawLog(tFrom, tTo) {
+  const t0 = tFrom, t1 = tTo, N = Math.max(4, Math.round(26 * (t1 - t0) / (1.0 - T_CAM - 0.13)));
+  for (let i = N - 1; i >= 0; i--) {
+    const ta = t0 + (t1 - t0) * i / N, tb = t0 + (t1 - t0) * (i + 1) / N;
+    const A = axis(ta), B = axis(tb), ya = A.y + LOGR * 0.9, yb2 = B.y + LOGR * 0.9;
+    const a1 = proj(-LOGR, ya, A.z), a2 = proj(LOGR, ya, A.z), b1 = proj(-LOGR, yb2, B.z), b2 = proj(LOGR, yb2, B.z);
+    if (a1.z < 0.08) continue;
+    const band = Math.floor((ta - t0) * LH / 0.32) % 2;
+    const g = ctx.createLinearGradient(a1.x, 0, a2.x, 0);
+    g.addColorStop(0, '#46270f'); g.addColorStop(0.3, band ? '#86552b' : '#7c4d26');
+    g.addColorStop(0.55, band ? '#b5814b' : '#a87443'); g.addColorStop(0.8, '#7c4d26'); g.addColorStop(1, '#46270f');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.moveTo(a1.x, a1.y); ctx.lineTo(b1.x, b1.y); ctx.lineTo(b2.x, b2.y); ctx.lineTo(a2.x, a2.y); ctx.closePath(); ctx.fill();
+  }
+  // 木目の線
+  ctx.strokeStyle = 'rgba(60,32,12,.35)'; ctx.lineWidth = 1.2;
+  for (const fx of [-0.55, -0.2, 0.25, 0.6]) {
+    ctx.beginPath();
+    for (let i = 0; i <= 12; i++) {
+      const t = t0 + (t1 - t0) * i / 12, A = axis(t), p = proj(fx * LOGR, A.y + LOGR * 0.9, A.z);
+      if (p.z < 0.08) continue;
+      i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y);
+    }
+    ctx.stroke();
+  }
+}
+function drawTanuHandle() {
+  const A = axis(T_BAR), yb = A.y + LOGR * 0.85, top = yb + BAR_UP;
+  ctx.lineCap = 'round';
+  const a = proj(0, yb, A.z), b = proj(0, top, A.z);
+  ctx.strokeStyle = '#5a3416'; ctx.lineWidth = 0.07 * a.s; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+  const l = proj(-0.4, top, A.z), r = proj(0.4, top, A.z);
+  ctx.strokeStyle = '#6b3f1c'; ctx.lineWidth = 0.075 * l.s; ctx.beginPath(); ctx.moveTo(l.x, l.y); ctx.lineTo(r.x, r.y); ctx.stroke();
+  ctx.strokeStyle = 'rgba(230,180,120,.7)'; ctx.lineWidth = 0.022 * l.s;
+  ctx.beginPath(); ctx.moveTo(l.x, l.y - 0.018 * l.s); ctx.lineTo(r.x, r.y - 0.018 * r.s); ctx.stroke();
+}
+function drawPlayerHandle() {
+  // プレイヤーがにぎっている持ち手（画面の下）
+  const y = H * 0.9, l = W * 0.1, r = W * 0.9, th = Math.max(16, W * 0.05);
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = '#4e2c12'; ctx.lineWidth = th * 0.9;
+  ctx.beginPath(); ctx.moveTo(l + th, y); ctx.lineTo(l - th * 0.6, H + 20); ctx.moveTo(r - th, y); ctx.lineTo(r + th * 0.6, H + 20); ctx.stroke();
+  const g = ctx.createLinearGradient(0, y - th / 2, 0, y + th / 2);
+  g.addColorStop(0, '#d39a5e'); g.addColorStop(0.5, '#8a5a2f'); g.addColorStop(1, '#4a2a12');
+  ctx.strokeStyle = g; ctx.lineWidth = th; ctx.beginPath(); ctx.moveTo(l, y); ctx.lineTo(r, y); ctx.stroke();
+}
+/* チュートリアル：うすい白の矢印の上を、指のアイコンがなぞって見せる（最初の3往復だけ。指でさわっている間は消える）
+   1回のなぞり：指が出る（押す）→ 矢印にそってすべる → はなして消える。上へ → 下へ をくり返す */
+const TUT = { appear: 0.35, slide: 1.5, leave: 0.35, rest: 0.5 };
+let tutT = 0, touchDir = -1, touchT = 0;
+function drawGuide(dt) {
+  // さわっていないとき：上へ → 下へ をくり返して見せる
+  // さわっているとき：うすく出して「次になぞる向き」を教える（上まで行ったら下へ、下まで来たら上へ）
+  const want = S.cycles < 3 && !S.dive ? (ptr ? 0.55 : 1) : 0;
+  S.guideA += (want - S.guideA) * Math.min(1, dt * 3);
+  if (S.guideA < 0.02) return;
+  tutT += dt;
+  const one = TUT.appear + TUT.slide + TUT.leave + TUT.rest;
+  let dir, t;
+  if (ptr) {
+    // 上へなぞっている途中：指がいちばん上まで行くか、上の方で止まったら「下へ」に切りかえる（下へも同じ）
+    let nd = touchDir;
+    // （「上の方」＝ なぞり始めから 50px 以上 上へ動いた所。短いなぞりでも切りかわるように）
+    if (touchDir < 0 && (S.dragTh > 0.8 * THMAX || (ptr.segY - ptr.cy > 50 && S.t - ptr.upT > 0.35))) nd = 1;
+    else if (touchDir > 0 && (S.dragTh < -0.8 * THMAX || (ptr.cy - ptr.segY > 50 && S.t - ptr.downT > 0.35))) nd = -1;
+    if (nd !== touchDir) { touchDir = nd; touchT = 0; ptr.segY = ptr.cy; }
+    touchT += dt; t = touchT % one; dir = touchDir;
+  } else {
+    // さわっていないときは、タヌくんは下にいるので、いつも「上へ」
+    t = tutT % one; dir = -1;
+  }
+  const x = W * 0.66, len = Math.min(H * 0.36, 300), yMid = H * 0.5;
+  const y0 = yMid - dir * len / 2, y1 = yMid + dir * len / 2;      // なぞり始め → 終わり
+  const ease = (v) => 0.5 - 0.5 * Math.cos(Math.PI * v);
+  let p = 0, a = 1, press = 0;
+  if (t < TUT.appear) { p = 0; a = t / TUT.appear; press = t / TUT.appear; }
+  else if (t < TUT.appear + TUT.slide) { p = ease((t - TUT.appear) / TUT.slide); press = 1; }
+  else if (t < TUT.appear + TUT.slide + TUT.leave) { p = 1; a = 1 - (t - TUT.appear - TUT.slide) / TUT.leave; press = a; }
+  else { p = 1; a = 0; }
+
+  ctx.save();
+  ctx.globalAlpha = S.guideA;
+  // うすい白の太い矢印（はじめから上下両向き ↕。どちらへ動かしてもよいことが伝わるように）
+  const sw = 46, hw = 104, hl = 66;               // 軸の太さ、頭の幅、頭の長さ
+  const topY = yMid - len / 2 - 26, botY = yMid + len / 2 + 26;
+  ctx.fillStyle = 'rgba(255,255,255,.6)';
+  ctx.shadowColor = 'rgba(40,30,20,.35)'; ctx.shadowBlur = 14;
+  ctx.beginPath();
+  ctx.moveTo(x, topY);
+  ctx.lineTo(x + hw / 2, topY + hl); ctx.lineTo(x + sw / 2, topY + hl);
+  ctx.lineTo(x + sw / 2, botY - hl); ctx.lineTo(x + hw / 2, botY - hl);
+  ctx.lineTo(x, botY);
+  ctx.lineTo(x - hw / 2, botY - hl); ctx.lineTo(x - sw / 2, botY - hl);
+  ctx.lineTo(x - sw / 2, topY + hl); ctx.lineTo(x - hw / 2, topY + hl);
+  ctx.closePath(); ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 2.5; ctx.lineJoin = 'round'; ctx.stroke();
+  // なぞったあと（矢印の中が少し白くなる）
+  const fy = y0 + (y1 - y0) * p;
+  if (p > 0.01 && a > 0) {
+    ctx.fillStyle = 'rgba(255,255,255,' + (0.35 * a) + ')';
+    const top = Math.min(y0, fy), h = Math.abs(fy - y0);
+    ctx.fillRect(x - sw / 2 + 5, top, sw - 10, h);
+  }
+  // 指のアイコン（押すときに、指先に白い輪）
+  if (a > 0) {
+    ctx.globalAlpha = S.guideA * a;
+    ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(x, fy, 12 + 10 * press, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,.55)';
+    ctx.beginPath(); ctx.arc(x, fy, 10, 0, Math.PI * 2); ctx.fill();
+    const s = 1.12 - 0.12 * press;               // 押すと少し小さくなる
+    ctx.font = Math.round(46 * s) + 'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    ctx.shadowColor = 'rgba(0,0,0,.25)'; ctx.shadowBlur = 6;
+    ctx.fillText('👆', x - 16 * s, fy - 4 * s);
+  }
+  ctx.restore();
+}
+let tanuScreen = null;
+function drawTanu(wy, wz, clipH) {
+  const p = proj(0, wy, wz);
+  if (p.z < 0.2) return null;
+  const sc = p.s / PXM, sq = S.sq.y, sy = 1 - sq, sx = 1 + sq * 0.6;
+  ctx.drawImage(tc, 0, 0, TW, clipH, p.x - AX * sc * sx, p.y - AY * sc * sy, TW * sc * sx, clipH * sc * sy);
+  return { x: p.x, y: p.y, sc: sc * sy };
+}
+
+function render(dt) {
+  cam = camOf(S.th);
+  const st = seat(S.th);
+  // 視点：タヌくんの胸のあたりを見る（少しだけ遅れてついていく）
+  // タヌくんのおなかが、いつも画面のまんなかあたりに来るように（ゆっくり追いかける）
+  const target = 0.85 * Math.atan2(st.y + 0.35 - cam.y, st.z - cam.z);
+  S.phi += (target - S.phi) * Math.min(1, dt * [3, 6, 10][S.speed]);   // はやい時は、視点も速く追いかける（頭が切れないように）
+  cp = Math.cos(S.phi); sp = Math.sin(S.phi);
+  S.shake *= Math.pow(0.02, dt);
+
+  ctx.save();
+  if (S.shake > 0.3) ctx.translate((Math.random() - 0.5) * S.shake, (Math.random() - 0.5) * S.shake);
+  drawBackground();
+
+  const d = S.dive;
+  // しぶきと、ぷかぷか
+  for (const q of S.splash) {
+    if (q.life <= 0) continue;
+    const p = proj(q.x, q.y, q.z); if (p.z < 0.3) continue;
+    ctx.fillStyle = 'rgba(255,255,255,' + Math.min(1, q.life * 1.5) + ')';
+    ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(1.5, q.r * p.s), 0, Math.PI * 2); ctx.fill();
+  }
+  S.splash = S.splash.filter((q) => q.life > 0 && q.y > -0.3);
+  if (d && (d.phase === 'splash' || d.phase === 'float')) {
+    const p = proj(0, 0, d.z);
+    const k = d.phase === 'splash' ? d.t : 1 + d.t;
+    ctx.strokeStyle = 'rgba(255,255,255,' + Math.max(0, 0.8 - k * 0.25) + ')'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.ellipse(p.x, p.y, 0.6 * k * p.s + 4, 0.12 * k * p.s + 2, 0, 0, Math.PI * 2); ctx.stroke();
+    if (d.phase === 'float') {
+      warpTanu(IMG.ehehe);
+      const bob = Math.sin(d.t * 4) * 0.04;
+      const q = proj(0, 0.05 + bob, d.z), sc = q.s / PXM;
+      ctx.drawImage(tc, 0, 0, TW, 600, q.x - AX * sc, q.y - 600 * sc, TW * sc, 600 * sc);
+    }
+  }
+
+  drawFulcrum();
+  drawLog(T_SEAT - 0.02, 1.0);                     // タヌくんより奥（体にかくれる）
+
+  // 表情は、タヌくんの高さで決める（下＝いつもの顔、まんなか〜上＝笑顔）。ぷるんの直後も笑顔
+  const r = S.th / THMAX;
+  // 高さで3段階（下＝通常、まんなか＝わくわく、上＝びっくり）。行ったり来たりでパカパカしないよう、上がる時と下がる時で境目をずらす
+  let lv = S.faceLv || 0;
+  if (lv === 0 && r > 0.05) lv = 1;
+  else if (lv === 1 && r > 0.62) lv = 2;
+  else if (lv === 2 && r < 0.45) lv = 1;
+  else if (lv === 1 && r < -0.15) lv = 0;
+  S.faceLv = lv;
+  const face = S.t < S.happyUntil ? IMG.ehehe : [IMG.normal, IMG.happy, IMG.wow][lv];
+  tanuScreen = null;
+  if (!d || d.phase === 'return') {
+    warpTanu(face);
+    tanuScreen = drawTanu(S.body.y, st.z, TH);
+  }
+  drawLog(T_CAM + 0.13, T_SEAT - 0.02);           // タヌくんより手前（ひざのあいだを通る）
+  drawTanuHandle();
+  if (d && d.phase === 'fly') {
+    warpTanu(IMG.banzai);
+    tanuScreen = drawTanu(d.y, d.z, TH);
+  }
+  drawPlayerHandle();
+  drawGuide(dt);
+  ctx.restore();
+
+  // 吹き出し
+  if (bubble.classList.contains('on')) {
+    if (S.t > bubbleUntil) bubble.classList.remove('on');
+    let bx = W / 2, by = H * 0.3;
+    if (tanuScreen) { bx = tanuScreen.x + 20; by = tanuScreen.y - (AY - HEAD_Y) * tanuScreen.sc - 6; }
+    else if (d) { const p = proj(0, 1.2, d.z); bx = p.x; by = p.y - 30; }
+    const half = bubble.offsetWidth / 2 + 8;
+    bubble.style.left = Math.max(half, Math.min(W - half, bx)) + 'px';
+    const minTop = hintEl.classList.contains('small') ? 70 : 150;
+    bubble.style.top = Math.max(bubble.offsetHeight + minTop, by) + 'px';
+  }
+  updateMeter();
+}
+
+/* ---------- 往復を数える（3往復で「海へ ざぶーん！」） ---------- */
+let topSaid = 0;
+function updateMeter() {
+  const r = S.th / THMAX;
+  if (S.side < 0 && r > 0.6) {
+    S.side = 1;
+    if (S.t - topSaid > 6) { topSaid = S.t; say('top'); }
+  } else if (S.side > 0 && r < -0.6) {
+    S.side = -1; S.swings++; S.cycles++;
+    if (S.swings >= 3 && !S.dive) diveBtn.hidden = false;
+  }
+}
+
+/* ---------- 出来事 ---------- */
+function handleEvents() {
+  while (events.length) {
+    const [type, v] = events.shift();
+    const ts = tanuScreen;
+    if (type === 'tanuDown') {
+      sfx.thud(v); sfx.boing(1.5 + v * 2);
+      S.happyUntil = S.t + 1.2;   // 下に着いて「ぷるん」→ えへへ
+      if (ts) { pop('ぽすん', ts.x - 110, ts.y + 60 * ts.sc, 'small'); setTimeout(() => pop('ぷるん！', ts.x + 70, ts.y - BELLY_UP * ts.sc), 90); }
+    } else if (type === 'top') {
+      sfx.creak(); sfx.boing(1.5 + v * 2);
+      if (ts) pop('ぷるん！', ts.x + 70, ts.y - (BELLY_UP + 40) * ts.sc);
+    } else if (type === 'lift') {
+      if (v > 0.9 && ts) { pop('ふわっ', ts.x - 80, ts.y - (AY - 120) * ts.sc, 'small'); sfx.whoosh(); }
+      if (v > 1.4) say('lift');
+    } else if (type === 'land') {
+      if (v > 1.0 && ts) {
+        pop('たぷん！', ts.x + 70, ts.y - BELLY_UP * ts.sc); sfx.boing(v); S.happyUntil = S.t + 1.0;
+        if (v > 2.2 && !S.dive) say('land');
+      }
+    } else if (type === 'splash') {
+      sfx.splash();
+      const p = proj(0, 0, v);
+      pop('ざぶーーん！', W / 2, Math.min(H * 0.45, p.y - 40), 'big blue');
+      for (let i = 0; i < 70; i++) {
+        const a = Math.random() * Math.PI * 2, sp2 = 1 + Math.random() * 3;
+        S.splash.push({ x: Math.cos(a) * 0.3, y: 0, z: v + Math.sin(a) * 0.3, vx: Math.cos(a) * sp2, vy: 4 + Math.random() * 6, vz: Math.sin(a) * sp2, r: 0.07 + Math.random() * 0.1, life: 1.3 });
+      }
+    } else if (type === 'float') { say('float', true); }
+    else if (type === 'comeback') { sfx.whoosh(); }
+    else if (type === 'home') { say('home', true); }
+  }
+  // しばらくさわらないと、さそう
+  if (!S.dive && !S.drag && S.t - S.lastInput > 9 && Math.abs(S.w) < 0.05) { S.lastInput = S.t; say('idle'); }
+  // 速く通り過ぎるときの、ぎしっ
+  const sign = Math.sign(S.th);
+  if (sign !== lastSign && Math.abs(S.w) > 1.0) sfx.creak();
+  lastSign = sign;
+}
+let lastSign = 1;
+
+/* ---------- 特別イラスト（海に入ったら、フェードで切りかえ） ----------
+   src が null の間は、仮の絵（準備中）を出す。絵ができたら 'img/sp_wet.webp' のように書く */
+const SPECIALS = [
+  { id: 'wet',   weight: 6, src: 'img/sp_wet.webp', face: 'ehehe', title: 'たのしかったね〜！', line: 'びしょびしょになっちゃった♪' },
+  { id: 'octo',  weight: 3, src: 'img/sp_octo.webp', face: 'wow', title: 'たすけて〜！', line: 'タコさんに、からまれちゃった〜！' },
+  { id: 'skirt', weight: 1, src: 'img/sp_skirt.webp', face: 'wow',   title: 'たいへん！',         line: 'こしみのが、ながされちゃった〜！' }
+];
+let seen = {};
+try { seen = JSON.parse(localStorage.getItem('tanu-seesaw-special') || '{}') || {}; } catch (e) {}
+const spEl = document.getElementById('special');
+function placeholder(sp) {
+  // 仮の絵：海の色の上に、表情の絵と「準備中」
+  const c = document.createElement('canvas'); c.width = 640; c.height = 800;
+  const x = c.getContext('2d');
+  const g = x.createLinearGradient(0, 0, 0, 800); g.addColorStop(0, '#7fd0ff'); g.addColorStop(0.55, '#1f86cf'); g.addColorStop(1, '#0d5f99');
+  x.fillStyle = g; x.fillRect(0, 0, 640, 800);
+  x.drawImage(IMGRAW[sp.face], 40, 80, 560, 700);
+  x.fillStyle = 'rgba(255,255,255,.85)'; x.fillRect(0, 700, 640, 100);
+  x.fillStyle = '#3a2210'; x.font = '700 30px sans-serif'; x.textAlign = 'center';
+  x.fillText('特別イラスト「' + sp.id + '」（準備中）', 320, 762);
+  return c.toDataURL('image/png');
+}
+function showSpecial() {
+  let r = Math.random() * SPECIALS.reduce((a, s) => a + s.weight, 0), sp = SPECIALS[0];
+  for (const s of SPECIALS) { if ((r -= s.weight) < 0) { sp = s; break; } }
+  const isNew = !seen[sp.id];
+  seen[sp.id] = (seen[sp.id] || 0) + 1;
+  try { localStorage.setItem('tanu-seesaw-special', JSON.stringify(seen)); } catch (e) {}
+  document.getElementById('spImg').src = sp.src || placeholder(sp);
+  document.getElementById('spImg').alt = tr(sp.title) + ' ' + tr(sp.line);
+  document.getElementById('spTitle').textContent = tr(sp.title);
+  document.getElementById('spLine').textContent = tr(sp.line);
+  document.getElementById('spNew').style.visibility = isNew ? 'visible' : 'hidden';
+  document.getElementById('spCount').textContent = tr('あつめた {a} / {b}', { a: SPECIALS.filter((s) => seen[s.id]).length, b: SPECIALS.length });
+  bubble.classList.remove('on');
+  spEl.hidden = false;
+  requestAnimationFrame(() => requestAnimationFrame(() => spEl.classList.add('on')));
+  sfx.boing(2);
+}
+document.getElementById('spBack').addEventListener('click', () => {
+  spEl.classList.remove('on');
+  setTimeout(() => { spEl.hidden = true; if (S.dive && S.dive.phase === 'card') S.dive.phase = 'back'; }, 700);
+});
+
+/* ---------- はやさの切りかえ ---------- */
+const spdBtn = document.getElementById('spd');
+function showSpeed() {
+  document.getElementById('spdIcon').textContent = SPEEDS[S.speed].icon;
+  spdBtn.setAttribute('aria-label', tr('シーソーのはやさ：{s}', { s: tr(SPEEDS[S.speed].name) }));
+}
+try { S.speed = Math.min(2, Math.max(0, parseInt(localStorage.getItem('tanu-seesaw-speed'), 10) || 0)); } catch (e) {}
+showSpeed();
+spdBtn.addEventListener('click', () => {
+  audioInit();
+  S.speed = (S.speed + 1) % SPEEDS.length; showSpeed();
+  pop(SPEEDS[S.speed].name, W - 90, 110, 'small');
+  try { localStorage.setItem('tanu-seesaw-speed', String(S.speed)); } catch (e) {}
+});
+
+const diveBtn = document.getElementById('dive');
+diveBtn.addEventListener('click', () => {
+  if (S.dive) return;
+  audioInit();
+  const st = seat(S.th);
+  S.dive = { phase: 'fly', t: 0, y: S.body.y, z: st.z, vy: 7.2, vz: 2.6 };
+  S.body.on = false; diveBtn.hidden = true; S.swings = 0; S.drag = false; ptr = null;
+  S.jb.v += 300; S.jcL.v += 200; S.jcR.v += 180;
+  sfx.whoosh(); say('dive', true);
+});
+
+/* ---------- はじめる ---------- */
+const KEYS = ['normal', 'happy', 'wow', 'ehehe', 'banzai'];
+const IMGRAW = {};
+Promise.all(KEYS.map((k) => load(SRC[k])).concat(load(SRC.beach))).then((imgs) => {
+  IMG = { beach: imgs[KEYS.length] };
+  KEYS.forEach((k, i) => { IMG[k] = toData(imgs[i], false); IMGRAW[k] = imgs[i]; });
+  document.getElementById('loading').remove();
+  S.body.y = seat(S.th).y;
+  let last = performance.now(), acc = 0;
+  const H_STEP = 1 / 240;
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now; acc += dt;
+    while (acc >= H_STEP) { step(H_STEP); acc -= H_STEP; }
+    handleEvents();
+    render(dt);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+  setTimeout(() => say('start', true), 700);
+}).catch(() => { document.getElementById('loading').textContent = tr('絵を読みこめませんでした。ページを開き直してください'); });
+})();

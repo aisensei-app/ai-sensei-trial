@@ -39,6 +39,7 @@ window.TanuI18n = (function () {
       '設定': 'Settings',
       '🥁 ぽんぽこリズム': '🥁 Ponpoko Rhythm',
       '🏐 ぽよんラリー': '🏐 Poyon Rally',
+      '🌴 丸太シーソー': '🌴 Log Seesaw',
       '🔒 もうすぐ': '🔒 Soon',
       // セリフ図鑑（2026-10-28 に別のブランチで作ったものを取りこみ）
       '💬 セリフ図鑑': '💬 Line Collection',
@@ -54,8 +55,10 @@ window.TanuI18n = (function () {
       '🔒 もうすぐ 遊べるよ！\nおたのしみに': 'Coming soon!\nStay tuned',
       'ぽんぽこリズム': 'Ponpoko Rhythm',
       'ぽよんラリー': 'Poyon Rally',
+      '丸太シーソー': 'Log Seesaw',
       'ぽんぽこリズムは、もうすぐ遊べるよ！\nおたのしみに 🥁': 'Ponpoko Rhythm is coming soon!\nStay tuned 🥁',
       'ぽよんラリーは、もうすぐ遊べるよ！\nおたのしみに 🏐': 'Poyon Rally is coming soon!\nStay tuned 🏐',
+      '丸太シーソーは、もうすぐ遊べるよ！\nおたのしみに 🌴': 'Log Seesaw is coming soon!\nStay tuned 🌴',
       '呼んでほしい名前': 'What should I call you?',
       'これでOK': 'OK!',
       'あとできめる': 'Decide later',

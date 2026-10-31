@@ -6,6 +6,7 @@
     python3 tools/build_preview.py --pon      → preview/pon.html（ぽんぽこリズム）
     python3 tools/build_preview.py --rally    → preview/rally.html（ぽよんラリー）
     python3 tools/build_preview.py --topmenu  → preview/topmenu.html（トップ画面の試作）
+    python3 tools/build_preview.py --seesaw   → preview/seesaw.html（丸太シーソー）
 
 絵（images/*.webp）を文字データにしてHTMLの中に埋めこみ、1つのファイルにまとめます。
 """
@@ -58,9 +59,14 @@ def build_pon(out, folder='pon', title='ぽんぽこリズム'):
     page = (ROOT / folder / 'index.html').read_text(encoding='utf8')
     body = page[page.index('<main id="' + folder + '"'):page.index('<!-- 本編と同じ設定')]
     # ぽよんラリー・ぽんぽこリズムは、ことば（それぞれの訳 〇〇.i18n.js、中国語の共通の文 i18n.zh.js、i18n.js）も入れる
-    words = [js(folder + '/' + folder + '.i18n.js'), js('i18n.zh.js'), js('i18n.js')] if folder in ('rally', 'pon') else []
+    words = [js(folder + '/' + folder + '.i18n.js'), js('i18n.zh.js'), js('i18n.js')] if folder in ('rally', 'pon', 'seesaw') else []
+    game = js(folder + '/' + folder + '.js')
+    if folder == 'seesaw':
+        # シーソーの絵は seesaw/ からの場所（'img/…' と '../images/…'）で書いてあるので、ここで文字データにする
+        game = re.sub(r"'((?:\.\./)?(?:img|images)/[^']+\.webp)'",
+                      lambda m: "'data:image/webp;base64," + base64.b64encode((ROOT / folder / m.group(1)).resolve().read_bytes()).decode() + "'", game)
     scripts = ''.join('<script>\n' + text + '\n</script>\n' for text in
-                      [js('config.js')] + words + [js('belly.js'), js(folder + '/' + folder + '.js')])
+                      [js('config.js')] + words + ([] if folder == 'seesaw' else [js('belly.js')]) + [game])
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text('<title>' + title + '</title>\n'
                    '<meta name="claude:viewport-fit-sides" content="cover">\n'
@@ -75,10 +81,14 @@ if __name__ == '__main__':
     ap.add_argument('--pon', action='store_true', help='ぽんぽこリズムをつくる')
     ap.add_argument('--rally', action='store_true', help='ぽよんラリーをつくる')
     ap.add_argument('--topmenu', action='store_true', help='トップ画面の試作をつくる')
+    ap.add_argument('--seesaw', action='store_true', help='丸太シーソーをつくる')
     ap.add_argument('--out', default=None, help='出力先')
     a = ap.parse_args()
     if a.topmenu:
         build_pon(Path(a.out) if a.out else ROOT / 'preview' / 'topmenu.html', 'topmenu', 'トップ画面の試作')
+        raise SystemExit
+    if a.seesaw:
+        build_pon(Path(a.out) if a.out else ROOT / 'preview' / 'seesaw.html', 'seesaw', '丸太シーソー')
         raise SystemExit
     if a.rally:
         build_pon(Path(a.out) if a.out else ROOT / 'preview' / 'rally.html', 'rally', 'ぽよんラリー')
