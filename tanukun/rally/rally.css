@@ -266,7 +266,7 @@ body.in-x .special-btn { bottom: calc(25vh + 10px); }
 .gull { position: absolute; left: 0; font-size: 44px; z-index: 5; pointer-events: none; }
 
 /* ---- 指のガイド：👆 が上へすべる見本（はじめての人だけ）。位置は rally.js ---- */
-.guide { position: absolute; z-index: 6; width: 0; height: 0; pointer-events: none; }
+.guide { position: absolute; z-index: 6; width: 0; height: 0; pointer-events: none; filter: drop-shadow(0 0 2px rgba(74, 46, 22, .45)); }
 .guide i {
   position: absolute;
   left: -22px; top: 10px;
@@ -275,20 +275,24 @@ body.in-x .special-btn { bottom: calc(25vh + 10px); }
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .3));
   animation: guide 1.3s ease-in-out infinite;
 }
-.guide b {   /* すべる道すじ（点線の矢印） */
+.guide b {   /* すべる道すじ（太い矢印）。下から上へ、色が濃くなっていく（::before） */
   position: absolute;
-  left: -3px; top: -120px;
-  width: 6px; height: 120px;
-  background: repeating-linear-gradient(to top, rgba(255, 255, 255, .95) 0 8px, transparent 8px 14px);
-  border-radius: 3px;
+  left: -24px; top: -150px;
+  width: 48px; height: 150px;
+  background: rgba(255, 255, 255, .6);
+  clip-path: polygon(50% 0, 100% 30%, 70% 30%, 70% 100%, 30% 100%, 30% 30%, 0 30%);
 }
 .guide b::before {
   content: "";
   position: absolute;
-  left: -9px; top: -14px;
-  border: 12px solid transparent;
-  border-bottom: 16px solid rgba(255, 255, 255, .95);
-  border-top: 0;
+  left: 0; right: 0; bottom: 0;
+  background: linear-gradient(to top, #FFC94D, #FF7A2B 60%, #E0451F);
+  animation: fill 1.3s ease-in-out infinite;
+}
+@keyframes fill {
+  0% { height: 0; opacity: 1; }
+  70% { height: 100%; opacity: 1; }
+  100% { height: 100%; opacity: .2; }
 }
 .guide span {
   position: absolute;
@@ -391,4 +395,5 @@ body.in-x .sheet { top: 40%; }
 
 @media (prefers-reduced-motion: reduce) {
   .ball.ready i, .hint { animation: none; }
+  .guide b::before { animation: none; height: 100%; }
 }
