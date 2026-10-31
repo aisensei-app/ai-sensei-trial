@@ -379,8 +379,8 @@ body.in-x .special-btn { bottom: calc(25vh + 10px); }
   height: 128px;
   display: flex;
   align-items: center;
+  justify-content: center;   /* 顔と文字を、画面のまんなかに */
   gap: 10px;
-  padding-left: calc(12% + 12px);
   transform: skewY(-7deg);
   background:
     repeating-linear-gradient(100deg, rgba(255, 255, 255, .22) 0 3px, transparent 3px 26px),
@@ -490,6 +490,7 @@ body.in-x .special-btn { bottom: calc(25vh + 10px); }
 .r-longest { font-size: 14px; font-weight: 700; margin-top: -4px; }
 .r-best { font-size: 14px; font-weight: 700; color: #FF4F8B; }
 .r-line { font-weight: 700; }
+.r-next { font-size: 13px; font-weight: 700; color: #3A7FC4; }
 .r-bonus { margin: 4px 0 8px; font-size: 13px; font-weight: 700; color: #E0457C; }
 
 /* ---- 結果：上にランク別イラスト、下に回数とボタン（ぽんぽこリズムと同じ形） ---- */

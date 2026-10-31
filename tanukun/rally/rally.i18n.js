@@ -16,12 +16,11 @@ window.TANU_TEXT_I18N.en = Object.assign(window.TANU_TEXT_I18N.en || {}, {
   '💥 ひっさつ': '💥 Special',
   '🔥 かまえ中…': '🔥 Ready…',
   'いまだ！': 'Now!',
-  'ボールを <b>上へ スワイプ</b> して なげてね。<br>タヌくんが おなかで はね返すよ！':
-    'Swipe the ball <b>upward</b> to throw it.<br>Tanu-kun will bounce it back with his belly!',
-  'もどってくるボールに <b>輪</b> が出るよ。<br>輪が ちぢんで ボールに 重なったら<br>また <b>上へ スワイプ</b> して 打ち返そう！':
-    'A <b>ring</b> appears around the returning ball.<br>When it shrinks onto the ball,<br><b>swipe up</b> again to hit it back!',
-  'スワイプの <b>長さ</b>で ねらう高さが かわるよ。<br>ナイスで ⚡ をためると… 💥<br>ボールは 3こ。何回つづくかな？':
-    'The <b>length</b> of your swipe changes how high you aim.<br>Fill up ⚡ with Nice hits… 💥<br>You have 3 balls. How long can you keep it going?',
+  '<b>上へ スワイプ</b>で ボールを 打とう！<br>輪が ボールに 重なったら 打ちかえしてね':
+    '<b>Swipe up</b> to hit the ball!<br>Hit it back when the ring meets the ball',
+  '🎨 {list}ラリーで 結果の絵が かわるよ': '🎨 New pictures at {list} rallies',
+  '・': ' & ',
+  '🎨 あと {n}ラリーで 新しい絵！': '🎨 {n} more rally for a new picture!|🎨 {n} more rallies for a new picture!',
   'はじめる': 'Start',
   '🔊 音を出して遊んでね': '🔊 Play with the sound on',
   '合計 <b id="r-count">0</b> ラリー': 'Total <b id="r-count">0</b> rallies',

@@ -132,6 +132,8 @@
     { min: 30, title: '伝説のおなか', line: 'こんなに続いたの、はじめて！', image: 'images/rally/clear_rest.webp', pos: '18%' }
   ];
   RANKS.forEach((r) => { new Image().src = IMG(r.image); });   // 先に読みこんでおく
+  // 結果の絵が変わるラリー数（例：[5, 30]）。はじめる前の画面と、結果の「あと何ラリーで新しい絵」に使う
+  const ART_AT = RANKS.filter((r, i) => i > 0 && r.image !== RANKS[i - 1].image).map((r) => r.min);
 
   /* ---------- 本編と同じ記録（きせかえ・さいこう記録・ごほうび） ---------- */
   const SAVE_KEY = 'tanukun-save-v1';
@@ -916,6 +918,9 @@
     }
     const rank = RANKS.filter((r) => total >= r.min).pop();
     $('r-title').textContent = tr(rank.title);
+    const nextArt = ART_AT.filter((n) => n > total)[0];
+    $('r-next').textContent = nextArt ? tr('🎨 あと {n}ラリーで 新しい絵！', { n: nextArt - total }) : '';
+    $('r-next').hidden = !nextArt;
     $('r-img').src = IMG(rank.image);
     $('r-img').style.objectPosition = '50% ' + rank.pos;
     $('result').scrollTop = 0;
@@ -952,6 +957,7 @@
     $('result').hidden = false;
   }
   $('btn-start').addEventListener('click', () => { audio(); start(); });
+  $('start-art').textContent = tr('🎨 {list}ラリーで 結果の絵が かわるよ', { list: ART_AT.join(tr('・')) });
   $('btn-again').addEventListener('click', start);
   $('best').textContent = best;
 
