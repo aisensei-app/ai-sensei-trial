@@ -170,20 +170,25 @@ html, body {
   white-space: nowrap;
 }
 
-/* ---- 起動：クリーム色の幕が、ふわっと薄くなって、トップ画面になる（文字は入れない） ---- */
+/* ---- 起動：クリーム色の幕が、ふわっと薄くなって、トップ画面になる（文字は入れない）
+   まぶしくならないように：幕は白に近くない、落ち着いたクリーム色。
+   薄くなり方は「はじめはゆっくり、最後にすっと」（白っぽいもやが長く残らないように） ---- */
 .boot {
   position: absolute;
   inset: 0;
   z-index: 9;
-  background: radial-gradient(circle at 50% 45%, #FFFDF6, #FFE9C7);
+  background: radial-gradient(circle at 50% 45%, #F6E4C4, #E9CFA4);
   pointer-events: none;
   opacity: 0;
   visibility: hidden;
 }
-.booting .boot { visibility: visible; animation: bootOut .8s ease-out both; }
-@keyframes bootOut { 0%, 15% { opacity: 1; } 100% { opacity: 0; } }
+.booting .boot { visibility: visible; animation: bootOut .8s cubic-bezier(.5, 0, .75, .45) both; }
+@keyframes bootOut { 0%, 10% { opacity: 1; } 100% { opacity: 0; } }
+/* 画面のほうも、少しだけ暗い所から明るくなる（急に明るくならないように） */
+.booting #cam { animation: bootScene .8s ease-out both; }
+@keyframes bootScene { from { filter: brightness(.85); } }
 @media (prefers-reduced-motion: reduce) {
-  .booting .boot { animation-duration: .01s; }
+  .booting .boot, .booting #cam { animation-duration: .01s; }
 }
 
 /* ---- 試作だけ：来かたの切りかえ ---- */
