@@ -25,12 +25,14 @@
      focus        … ズームしたときに画面のまんなかに来る所（絵の 720×900 の位置。おなかのまんなか）
      bellyW       … ズームしたとき、おなかの幅（絵で 250px 分）が画面の横幅のこの割合になる。maxZoom まで
      at           … ズームしたとき、focus が来る画面の高さ（割合）
-     iconPx       … ズームしたときのアイコンの大きさ（画面のピクセル） */
+     iconPx       … ズームしたときのアイコンの大きさ（画面のピクセル）
+     mouth        … タヌくんの口（絵の 720×900 の位置）。ズーム中のふきだしのしっぽが、ここを指す */
   const T = {
     feet: 0.86, height: 0.62,
     boot: 0.6, greet: 1.3, again: 0.6,
     focus: { x: 208, y: 410 }, bellyW: 0.86, maxZoom: 3, at: 0.56,
-    iconPx: 66
+    iconPx: 66,
+    mouth: { x: 282, y: 140 }
   };
   // おなかの上のアイコン（x, y は絵の 720×900 の位置。文字は出さず、name は読み上げ・お知らせ用）
   //   main … タヌくん なでなで（タヌくんの顔の絵 images/topmenu/pet.webp。少し大きい）
@@ -114,7 +116,7 @@
     $('say').hidden = true;
     applyZoom();
     sound.zoom();
-    setTimeout(() => { if (zoomed) say('なにしてあそぶ？', { x: G.W / 2, y: G.H * 0.2 }); }, 700);
+    setTimeout(() => { if (zoomed) { const m = toScreen(T.mouth.x, T.mouth.y); say('なにしてあそぶ？', { x: m.x, y: m.y + 26 }, true); } }, 700);
   }
   function zoomOut() {
     if (!zoomed) return;
@@ -226,12 +228,17 @@
 
   /* ---------- ひとこと・文字・お知らせ ---------- */
   let sayTimer = 0;
-  function say(text, at) {
+  // at の所にふきだし。up なら、ふきだしは at の下に出て、しっぽは上向き。
+  // ふきだしが画面のはしで切れないときは横にずらし、しっぽは at.x を指したままにする
+  function say(text, at, up) {
     const el = $('say');
     el.textContent = text;
-    el.style.left = at.x + 'px';
-    el.style.top = at.y + 'px';
+    el.classList.toggle('up', !!up);
     el.hidden = false;
+    const half = el.offsetWidth / 2, x = Math.max(half + 8, Math.min(G.W - half - 8, at.x));
+    el.style.left = x + 'px';
+    el.style.top = at.y + 'px';
+    el.style.setProperty('--tail', Math.max(18, Math.min(half * 2 - 18, at.x - x + half)) + 'px');
     el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
     clearTimeout(sayTimer);
     sayTimer = setTimeout(() => { el.hidden = true; }, 2600);

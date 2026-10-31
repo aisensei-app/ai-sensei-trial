@@ -139,6 +139,20 @@ html, body {
   animation: sayIn .25s ease-out;
 }
 @keyframes sayIn { from { opacity: 0; transform: translate(-50%, -85%) scale(.9); } }
+/* ふきだしのしっぽ：ふつうは下向き（タヌくんの頭の上）。ズーム中は上向き（ふきだしが顔の下に来るので、口のほうへ） */
+.say::after {
+  content: "";
+  position: absolute;
+  left: var(--tail, 50%); top: 100%;
+  margin-left: -9px;
+  border: 9px solid transparent;
+  border-top: 11px solid #fff;
+  border-bottom: 0;
+  filter: drop-shadow(0 2px 1px rgba(74, 46, 22, .12));
+}
+.say.up { transform: translate(-50%, 0); animation-name: sayInUp; }
+.say.up::after { top: auto; bottom: 100%; border-top: 0; border-bottom: 11px solid #fff; filter: none; }
+@keyframes sayInUp { from { opacity: 0; transform: translate(-50%, -15%) scale(.9); } }
 #pops { position: absolute; inset: 0; z-index: 4; pointer-events: none; }
 .pop {
   position: absolute;
