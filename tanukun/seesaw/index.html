@@ -229,13 +229,15 @@ function step(h) {
     // ② 速さが変わったときは、ばねで揺れる
     const dv = b.v - b.prevV; b.prevV = b.v;
     const vy = b.on ? svy : b.v;
-    spring(S.jb, 420 * dv, 110, 2.4, 56, h, -PULL * 16 * vy);
+    // 速さが上がっても引っぱりすぎないよう、速さの効き目に上限（tanh）をつける
+    const vyS = 1.1 * Math.tanh(vy / 1.1);
+    spring(S.jb, 420 * dv, 110, 2.4, 56, h, -PULL * 15 * vyS);
     // 胸はおなかより少し遅れて（約0.06秒）、少し速いばねで。左右でもわずかにずらす
     const q = S.chestQ, dvc = q[S.qi]; q[S.qi] = dv; S.qi = (S.qi + 1) % q.length;
-    spring(S.jcL, 380 * dvc, 230, 3.0, 42, h, -PULL * 14 * vy);
-    spring(S.jcR, 380 * dvc, 255, 3.3, 42, h, -PULL * 14 * vy);
+    spring(S.jcL, 380 * dvc, 230, 3.0, 42, h, -PULL * 13 * vyS);
+    spring(S.jcR, 380 * dvc, 255, 3.3, 42, h, -PULL * 13 * vyS);
     // おなかの伸び縮み（上の付け根は止めて、下側が伸びる・つぶれる）。下へ動く＝下へ伸びる、上へ動く＝上へつぶれる
-    spring(S.st, 3.2 * dv, 110, 2.6, 0.24, h, -PULL * 0.17 * vy);
+    spring(S.st, 3.2 * dv, 110, 2.6, 0.24, h, -PULL * 0.16 * vyS);
     // 体ぜんたいも、動く向きに少し伸びる
     spring(S.sq, 0.05 * dv, 500, 14, 0.07, h, PULL * 0.03 * vy);
   } else {
@@ -380,11 +382,13 @@ function warpTanu(src) {
   if (!out) out = tctx.createImageData(TW, TH);
   const full = src !== lastSrc;
   if (full) { out.data.set(src.data); lastSrc = src; }
-  const jy = S.jb.y, jcs = [S.jcL.y, S.jcR.y], moving = Math.abs(jy) > 0.12 || Math.abs(jcs[0]) > 0.12 || Math.abs(jcs[1]) > 0.12 || Math.abs(S.st.y) > 0.003;
+  // 見た目の変形には「やわらかい上限」：ふだんの揺れはほぼそのまま、大きすぎる時だけ頭打ちにして、皮ふが不自然に伸びないように
+  const soft = (v, m) => m * Math.tanh(v / m);
+  const jy = soft(S.jb.y, 34), jcs = [soft(S.jcL.y, 28), soft(S.jcR.y, 28)], moving = Math.abs(jy) > 0.12 || Math.abs(jcs[0]) > 0.12 || Math.abs(jcs[1]) > 0.12 || Math.abs(S.st.y) > 0.003;
   if (!full && !moving && !wasMoving) return;
   wasMoving = moving;
   const d = src.data, o = out.data, spread = 0.6 / BELLY.ry;
-  const sv = 1 + S.st.y, stretch = 1 - 1 / sv, narrow = Math.sqrt(sv) - 1, anchor = BELLY.cy - BELLY.ry * 0.85;
+  const sv = 1 + soft(S.st.y, 0.2), stretch = 1 - 1 / sv, narrow = Math.sqrt(sv) - 1, anchor = BELLY.cy - BELLY.ry * 0.85;
   for (let y = BY0; y < BY1; y++) {
     for (let x = BX0; x < BX1; x++) {
       let dx = 0, dy = 0;
