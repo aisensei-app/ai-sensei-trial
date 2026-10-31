@@ -18,6 +18,8 @@ def main():
 
     def inline(m):
         path = (ROOT / 'seesaw' / m.group(1)).resolve()
+        if not path.exists():      # まだ無い絵（説明の中の例など）は、そのまま
+            return m.group(0)
         return "'data:image/webp;base64," + base64.b64encode(path.read_bytes()).decode() + "'"
 
     body = re.sub(r"'((?:\.\./)?(?:img|images)/[^']+\.webp)'", inline, body)

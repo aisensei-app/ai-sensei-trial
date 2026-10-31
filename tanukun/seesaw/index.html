@@ -24,6 +24,7 @@
   color-scheme:light;
 }
 html,body{height:100%}
+[hidden]{display:none!important}
 body{margin:0;background:#bfe3f7;color:var(--ink);font-family:var(--font);overflow:hidden;overscroll-behavior:none;
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
 #stage{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
@@ -40,6 +41,19 @@ body{margin:0;background:#bfe3f7;color:var(--ink);font-family:var(--font);overfl
 .btn{pointer-events:auto;font-family:inherit;font-weight:900;color:var(--ink);cursor:pointer}
 .btn:focus-visible{outline:3px solid var(--sea);outline-offset:2px}
 #snd{font-size:13px;min-width:62px}
+.btns{display:flex;gap:8px}
+#spd{font-size:13px;min-width:86px}
+.speed{color:#b0461b;letter-spacing:-2px}
+.special{position:fixed;inset:0;z-index:9;display:grid;place-items:center;background:#e9f6ff;opacity:0;transition:opacity .7s ease;
+  padding:calc(env(safe-area-inset-top,0px) + 16px) max(16px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 16px) max(16px,env(safe-area-inset-left,0px))}
+.special.on{opacity:1}
+.card{display:flex;flex-direction:column;align-items:center;gap:8px;max-width:420px;width:100%}
+.cardtop{display:flex;justify-content:space-between;width:100%;font-size:12px;font-weight:700}
+.count{font-variant-numeric:tabular-nums}
+#spImg{width:100%;max-height:62vh;object-fit:contain;border-radius:16px;border:3px solid var(--wood);box-shadow:0 4px 0 var(--wood);background:#fff}
+.sptitle{margin:4px 0 0;font-size:22px;font-weight:900}
+.spline{margin:0;font-size:15px;font-weight:700}
+#spBack{font-size:16px;padding:8px 26px;margin-top:6px}
 .hint{align-self:center;max-width:min(92%,360px);font-size:13px;font-weight:700;line-height:1.45;text-align:center;transition:opacity .6s,transform .6s}
 .hint b{color:#b0461b}
 .swipe{display:block;position:relative;width:16px;height:38px;margin:4px auto 0;border-radius:8px;background:rgba(122,74,36,.15)}
@@ -89,7 +103,10 @@ body{margin:0;background:#bfe3f7;color:var(--ink);font-family:var(--font);overfl
     <div class="sign">
       <div class="name">丸太シーソー <span class="chip">試作</span></div>
     </div>
-    <button class="sign btn" id="snd" type="button" aria-pressed="true">音 ON</button>
+    <div class="btns">
+      <button class="sign btn" id="spd" type="button" aria-label="シーソーのはやさ">はやさ <span class="speed" id="spdIcon">▶</span></button>
+      <button class="sign btn" id="snd" type="button" aria-pressed="true">音 ON</button>
+    </div>
   </div>
   <div class="sign hint" id="hint"><b>矢印のように、画面を指で上下になぞってね</b><br><span style="font-weight:500">指をはなすと、ゆっくり元にもどるよ</span></div>
 </div>
@@ -98,6 +115,15 @@ body{margin:0;background:#bfe3f7;color:var(--ink);font-family:var(--font);overfl
   <button class="btn" id="dive" type="button" hidden>海へ ざぶーん！</button>
 </div>
 <div class="bubble" id="bubble"></div>
+<div class="special" id="special" hidden>
+  <div class="card">
+    <div class="cardtop"><span class="chip" id="spNew">NEW!</span><span class="count" id="spCount"></span></div>
+    <img id="spImg" alt="">
+    <p class="sptitle" id="spTitle"></p>
+    <p class="spline" id="spLine"></p>
+    <button class="sign btn" id="spBack" type="button">もどる</button>
+  </div>
+</div>
 <div id="pops"></div>
 
 <script>
@@ -132,6 +158,12 @@ const HP = 0.75, LH = 2.0, LOGR = 0.17;               // 支点の高さ、半�
 const THMAX = Math.asin((HP - LOGR) / LH);           // 端が地面につく角度
 const T_SEAT = 0.8, T_BAR = 0.725, T_CAM = -0.92, EYE = 0.55;
 const OMEGA = 2 * Math.PI / 1.7, G = 9.8;
+/* シーソーのはやさ（3段階）。k, c は指についていく時、rk, rc は指をはなして戻る時の、ばねの強さと止まりやすさ */
+const SPEEDS = [
+  { icon: '▶',   name: 'ゆっくり', k: 9,  c: 4.6, rk: 2.2, rc: 2.2 },
+  { icon: '▶▶',  name: 'ふつう',   k: 20, c: 6.5, rk: 4.5, rc: 3.2 },
+  { icon: '▶▶▶', name: 'はやい',   k: 38, c: 8.5, rk: 8,   rc: 4.3 }
+];
 const PULL = 1;   // 1：動く向きに引っぱられる／-1：遅れてついてくる
 // 端に着いたときの「ぷるん」（dir=1 は床で下へ、-1 はいちばん上で上へ）。ゆっくりでも大きく揺れるように、最低の強さを持たせる
 function endKick(dir, v) {
@@ -147,6 +179,7 @@ const HEAD_Y = 15, BELLY_UP = 270;                       // 頭のてっぺん�
 const BELLY = { cx: 395, cy: 470, rx: 145, ry: 125 };
 const CHEST = [{ cx: 300, cy: 318, rx: 85, ry: 55 }, { cx: 490, cy: 318, rx: 85, ry: 55 }];
 const BX0 = 210, BX1 = 580, BY0 = 262, BY1 = 596;
+const SHORE = 4.4;   // カメラから波打ち際まで（m）。タヌくんのすぐうしろが波打ち際
 const BAR_UP = 0.235;                                    // 持ち手の横棒の高さ（丸太の上から m。こぶしの位置）
 const TIERS = [
   { h: 2.05, label: '海',       line: 'わぁ〜、海がひろ〜い！' },
@@ -160,7 +193,7 @@ const S = {
   body: { y: 0, v: 0, prevV: 0, on: true },
   jb: { y: 0, v: 0 }, jcL: { y: 0, v: 0 }, jcR: { y: 0, v: 0 }, sq: { y: 0, v: 0 }, chestQ: new Array(16).fill(0), qi: 0,
   phi: 0, shake: 0, happyUntil: 0, lastInput: 0, nice: 0, topCount: 0,
-  best: 0, tierSeen: [0, 0, 0], dive: null, splash: []
+  best: 0, tierSeen: [0, 0, 0], dive: null, splash: [], speed: 0
 };
 try { S.best = parseFloat(localStorage.getItem('tanu-seesaw-best')) || 0; } catch (e) {}
 const events = [];
@@ -173,7 +206,8 @@ function step(h) {
   S.t += h;
   // 指でつかんでいる間は指の位置へ、はなすとタヌくん側（重い方）へゆっくり戻る
   const target = S.drag ? S.dragTh : -THMAX;
-  const k = S.drag ? 9 : 2.2, c = S.drag ? 4.6 : 2.2;
+  const sp = SPEEDS[S.speed];
+  const k = S.drag ? sp.k : sp.rk, c = S.drag ? sp.c : sp.rc;
   S.w += (k * (target - S.th) - c * S.w) * h;
   S.th += S.w * h;
   // 床・いちばん上に着いたとき：体が止まっても、おなかと胸は進み続けて大きく「ぷるん」
@@ -215,8 +249,8 @@ function step(h) {
     if (d.phase === 'fly') {
       d.vy -= G * h; d.y += d.vy * h; d.z += d.vz * h;
       if (d.y <= 0 && d.vy < 0) { d.phase = 'splash'; d.t = 0; events.push(['splash', d.z]); }
-    } else if (d.phase === 'splash' && d.t > 1.0) { d.phase = 'float'; d.t = 0; events.push(['float']); }
-    else if (d.phase === 'float' && d.t > 2.2) {
+    } else if (d.phase === 'splash' && d.t > 0.9) { d.phase = 'card'; d.t = 0; showSpecial(); }
+    else if (d.phase === 'back') {
       d.phase = 'return'; d.t = 0;
       b.on = false; b.y = seat(S.th).y + 4.2; b.v = 0; b.prevV = 0;
       events.push(['comeback']);
@@ -389,9 +423,11 @@ function proj(x, y, z) {
 
 function drawBackground() {
   const hz = H / 2 + F * Math.tan(S.phi);              // 水平線
-  const HZ0 = 425, bg = IMG.beach, s = Math.max(W / 720, H / 1281, (hz + 4) / HZ0) * 1.08;
-  const m = 1 + (cam.y / 1.47 - 1) * 0.6;              // 高くなるほど、海と砂浜が広く見える（控えめに）
-  const x0 = (W - 720 * s) / 2, HZ = HZ0;
+  // 絵の水平線（425）から波打ち際（600）までの 175px が、カメラから SHORE m 先に見えるように拡大する
+  const HZ0 = 425, SH = 600, bg = IMG.beach;
+  const camH = 1.47 + (cam.y - 1.47) * 0.6;            // 高さの変化は控えめに（画面酔いしないように）
+  const s = Math.max(W / 720, (hz + 4) / HZ0, F * camH / ((SH - HZ0) * SHORE));
+  const m = 1, x0 = (W - 720 * s) / 2, HZ = HZ0;
   const sky = ctx.createLinearGradient(0, 0, 0, hz);
   sky.addColorStop(0, '#2a78d6'); sky.addColorStop(1, '#8cc8f2');
   ctx.fillStyle = sky; ctx.fillRect(0, 0, W, hz);
@@ -561,7 +597,7 @@ function render(dt) {
   // 視点：タヌくんの胸のあたりを見る（少しだけ遅れてついていく）
   // タヌくんのおなかが、いつも画面のまんなかあたりに来るように（ゆっくり追いかける）
   const target = 0.85 * Math.atan2(st.y + 0.35 - cam.y, st.z - cam.z);
-  S.phi += (target - S.phi) * Math.min(1, dt * 3);
+  S.phi += (target - S.phi) * Math.min(1, dt * [3, 6, 10][S.speed]);   // はやい時は、視点も速く追いかける（頭が切れないように）
   cp = Math.cos(S.phi); sp = Math.sin(S.phi);
   S.shake *= Math.pow(0.02, dt);
 
@@ -687,12 +723,71 @@ function handleEvents() {
 }
 let lastSign = 1;
 
+/* ---------- 特別イラスト（海に入ったら、フェードで切りかえ） ----------
+   src が null の間は、仮の絵（準備中）を出す。絵ができたら 'img/sp_wet.webp' のように書く */
+const SPECIALS = [
+  { id: 'wet',   weight: 6, src: null, face: 'ehehe', title: 'たのしかったね〜！', line: 'びしょびしょになっちゃった♪' },
+  { id: 'crab',  weight: 3, src: null, face: 'wow',   title: 'いたたた〜！',       line: 'カニさんに、しっぽをはさまれた〜！' },
+  { id: 'skirt', weight: 1, src: null, face: 'wow',   title: 'たいへん！',         line: 'こしみのが、ながされちゃった〜！' }
+];
+let seen = {};
+try { seen = JSON.parse(localStorage.getItem('tanu-seesaw-special') || '{}') || {}; } catch (e) {}
+const spEl = document.getElementById('special');
+function placeholder(sp) {
+  // 仮の絵：海の色の上に、表情の絵と「準備中」
+  const c = document.createElement('canvas'); c.width = 640; c.height = 800;
+  const x = c.getContext('2d');
+  const g = x.createLinearGradient(0, 0, 0, 800); g.addColorStop(0, '#7fd0ff'); g.addColorStop(0.55, '#1f86cf'); g.addColorStop(1, '#0d5f99');
+  x.fillStyle = g; x.fillRect(0, 0, 640, 800);
+  x.drawImage(IMGRAW[sp.face], 40, 80, 560, 700);
+  x.fillStyle = 'rgba(255,255,255,.85)'; x.fillRect(0, 700, 640, 100);
+  x.fillStyle = '#3a2210'; x.font = '700 30px sans-serif'; x.textAlign = 'center';
+  x.fillText('特別イラスト「' + sp.id + '」（準備中）', 320, 762);
+  return c.toDataURL('image/png');
+}
+function showSpecial() {
+  let r = Math.random() * SPECIALS.reduce((a, s) => a + s.weight, 0), sp = SPECIALS[0];
+  for (const s of SPECIALS) { if ((r -= s.weight) < 0) { sp = s; break; } }
+  const isNew = !seen[sp.id];
+  seen[sp.id] = (seen[sp.id] || 0) + 1;
+  try { localStorage.setItem('tanu-seesaw-special', JSON.stringify(seen)); } catch (e) {}
+  document.getElementById('spImg').src = sp.src || placeholder(sp);
+  document.getElementById('spImg').alt = sp.title + ' ' + sp.line;
+  document.getElementById('spTitle').textContent = sp.title;
+  document.getElementById('spLine').textContent = sp.line;
+  document.getElementById('spNew').style.visibility = isNew ? 'visible' : 'hidden';
+  document.getElementById('spCount').textContent = 'あつめた ' + SPECIALS.filter((s) => seen[s.id]).length + ' / ' + SPECIALS.length;
+  bubble.classList.remove('on');
+  spEl.hidden = false;
+  requestAnimationFrame(() => requestAnimationFrame(() => spEl.classList.add('on')));
+  sfx.boing(2);
+}
+document.getElementById('spBack').addEventListener('click', () => {
+  spEl.classList.remove('on');
+  setTimeout(() => { spEl.hidden = true; if (S.dive && S.dive.phase === 'card') S.dive.phase = 'back'; }, 700);
+});
+
+/* ---------- はやさの切りかえ ---------- */
+const spdBtn = document.getElementById('spd');
+function showSpeed() {
+  document.getElementById('spdIcon').textContent = SPEEDS[S.speed].icon;
+  spdBtn.setAttribute('aria-label', 'シーソーのはやさ：' + SPEEDS[S.speed].name);
+}
+try { S.speed = Math.min(2, Math.max(0, parseInt(localStorage.getItem('tanu-seesaw-speed'), 10) || 0)); } catch (e) {}
+showSpeed();
+spdBtn.addEventListener('click', () => {
+  audioInit();
+  S.speed = (S.speed + 1) % SPEEDS.length; showSpeed();
+  pop(SPEEDS[S.speed].name, W - 90, 110, 'small');
+  try { localStorage.setItem('tanu-seesaw-speed', String(S.speed)); } catch (e) {}
+});
+
 const diveBtn = document.getElementById('dive');
 diveBtn.addEventListener('click', () => {
   if (S.dive) return;
   audioInit();
   const st = seat(S.th);
-  S.dive = { phase: 'fly', t: 0, y: S.body.y, z: st.z, vy: 7.8, vz: 14 };
+  S.dive = { phase: 'fly', t: 0, y: S.body.y, z: st.z, vy: 7.2, vz: 2.6 };
   S.body.on = false; diveBtn.hidden = true; S.swings = 0; S.drag = false; ptr = null;
   S.jb.v += 300; S.jcL.v += 200; S.jcR.v += 180;
   sfx.whoosh(); say('dive', true);
@@ -700,9 +795,10 @@ diveBtn.addEventListener('click', () => {
 
 /* ---------- はじめる ---------- */
 const KEYS = ['normal', 'happy', 'wow', 'ehehe', 'banzai'];
+const IMGRAW = {};
 Promise.all(KEYS.map((k) => load(SRC[k])).concat(load(SRC.beach))).then((imgs) => {
   IMG = { beach: imgs[KEYS.length] };
-  KEYS.forEach((k, i) => { IMG[k] = toData(imgs[i], false); });
+  KEYS.forEach((k, i) => { IMG[k] = toData(imgs[i], false); IMGRAW[k] = imgs[i]; });
   document.getElementById('loading').remove();
   S.body.y = seat(S.th).y;
   let last = performance.now(), acc = 0;
