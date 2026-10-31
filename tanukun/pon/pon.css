@@ -237,6 +237,21 @@ html, body {
 .sheet h1, .sheet h2 { margin: 0 0 12px; font-size: 24px; }
 .sheet p { margin: 8px 0; line-height: 1.6; }
 .sheet .small { font-size: 13px; color: #8A6A4A; }
+/* 言語の切りかえ（はじめる前の画面の右上。ぽよんラリーと同じく、押すと次の言語へ） */
+.lang-btn {
+  position: absolute;
+  right: 10px; top: 10px;
+  padding: 4px 10px;
+  border: 0;
+  border-radius: 999px;
+  background: #F3DDBF;
+  color: #5A3A1E;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.lang-btn[hidden] { display: none; }
 .btn {
   display: block;
   width: 100%;

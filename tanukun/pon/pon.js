@@ -36,6 +36,27 @@
     setTimeout(() => { location.href = a.href; }, 430);
   });
   const $ = (id) => document.getElementById(id);
+  /* ことば：本編と同じ i18n.js（ぽんぽこリズムの訳は pon.i18n.js）。tr('日本語の文', { n: 3 }) でいまの言語の文 */
+  const I18N = window.TanuI18n || { lang: 'ja', LANGS: { ja: '日本語' }, tr: (s) => s, apply: () => {}, set: () => {} };
+  const tr = (ja, vars) => {
+    let out = I18N.tr(ja, vars);
+    if (vars && out === ja) Object.keys(vars).forEach((k) => { out = out.split('{' + k + '}').join(vars[k]); });
+    return out;
+  };
+  I18N.apply();
+  if (I18N.lang !== 'ja') {
+    // <b> や <small> を含む文（data-i18n-html）は、中の HTML ごと入れかえる
+    document.querySelectorAll('[data-i18n-html]').forEach((el) => { el.innerHTML = tr(el.innerHTML.trim()); });
+    document.title = tr('ぽんぽこリズム｜タヌくん');
+  }
+  // はじめる前の画面の右上「🌐 English / 🌐 日本語」：押すと、次の言語へ（ぽよんラリーと同じ）
+  const LANG_KEYS = Object.keys(I18N.LANGS);
+  if (LANG_KEYS.length > 1) {
+    const next = LANG_KEYS[(LANG_KEYS.indexOf(I18N.lang) + 1) % LANG_KEYS.length];
+    $('btn-lang').textContent = '🌐 ' + I18N.LANGS[next];
+    $('btn-lang').hidden = false;
+    $('btn-lang').addEventListener('click', () => I18N.set(next));
+  }
   // 本編の設定の絵は 'images/…' なので、このページ（pon/）からは '../' を付ける
   const IMG = (name) => {
     const src = C.images[name] || name;   // 本編の一覧にない絵は、ファイルの場所をそのまま書く
@@ -129,16 +150,18 @@
     ]
   };
   const STAGES = {
-    lane:  { name: 'ステージ1（ながれる）', next: 'belly' },
-    belly: { name: 'ステージ2（おなか）', next: 'food' },
-    food:  { name: 'ステージ3（まんぷく）', next: null }
+    lane:  { num: 1, label: 'ながれる', next: 'belly' },
+    belly: { num: 2, label: 'おなか', next: 'food' },
+    food:  { num: 3, label: 'まんぷく', next: null }
   };
+  // 「ステージ1（ながれる）」など（いまの言語で）
+  const stageName = (m) => tr('ステージ{n}（{s}）', { n: STAGES[m].num, s: tr(STAGES[m].label) });
   /* ステージが始まってから最初の ◉ が出るまでの間（数を数えている間）に出す、遊び方の説明
      ◉ や 〜 は、ゲームの中と同じ見た目の小さな絵で出す */
   const NOTE_IC = '<i class="ic-note"></i>', PURUN_IC = '<i class="ic-purun">〜</i>';
-  const HOWTO = {
-    lane:  [NOTE_IC + ' が わくに来たら <b>タップ</b>', PURUN_IC + ' は さっと <b>すべらせる</b>'],
-    belly: [NOTE_IC + ' に 輪が重なったら <b>タップ</b>', PURUN_IC + ' は さっと <b>すべらせる</b>'],
+  const HOWTO = {   // {note} は ◉、{purun} は 〜 の小さな絵に入れかわる
+    lane:  ['{note} が わくに来たら <b>タップ</b>', '{purun} は さっと <b>すべらせる</b>'],
+    belly: ['{note} に 輪が重なったら <b>タップ</b>', '{purun} は さっと <b>すべらせる</b>'],
     food:  ['「🍙 たべたい！」なら 🍙 を <b>タップ</b>', 'ちがうものは たたかないでね']
   };
   const onBelly = () => mode !== 'lane';   // ◉ がおなかの上に出るステージ（おなか・まんぷく）
@@ -518,7 +541,7 @@
     belly.ready();
     if (ac) ac.close();
     ac = makeAudio();
-    if (!ac) { $('start').querySelector('.small').textContent = 'このブラウザでは音が出せません。別のブラウザで開いてね'; return; }
+    if (!ac) { $('start').querySelector('.small').textContent = tr('このブラウザでは音が出せません。別のブラウザで開いてね'); return; }
     ac.resume();
     chart = buildChart();
     t0 = ac.currentTime + SONG.lead;
@@ -566,7 +589,8 @@
     showBar();
     // 遊び方の説明：最初の ◉ が見えはじめる少し前に消す
     const howto = $('howto');
-    howto.innerHTML = HOWTO[mode].map((line) => '<p>' + line + '</p>').join('') + '<p class="howto-sub">8ビート・だんだん速くなるよ</p>';
+    howto.innerHTML = HOWTO[mode].map((line) => '<p>' + tr(line, { note: NOTE_IC, purun: PURUN_IC }) + '</p>').join('') +
+      '<p class="howto-sub">' + tr('8ビート・だんだん速くなるよ') + '</p>';
     howto.classList.remove('out', 'top');
     howto.hidden = false;
     howtoUntil = chart.notes[0].t - (mode === 'lane' ? 0.6 : appearT() + 0.1);
@@ -627,7 +651,7 @@
     if (nb && now >= nb.t - (nb.cutin != null ? 0 : 0.4)) {
       nextBanner++;
       if (nb.cutin != null) cutin(nb.bpm, nb.cutin);
-      else banner('スタート！ BPM ' + nb.bpm);
+      else banner(tr('スタート！ BPM {n}', { n: nb.bpm }));
     }
     // まんぷく：吹き出しの「たべたい！」を切りかえる
     if (mode === 'food' && nextWant < chart.wants.length && now >= chart.wants[nextWant].t) {
@@ -689,7 +713,7 @@
       found.note.done = true;
       found.note.el.classList.add('done');
       if (ac) soundWrong(ac.currentTime);
-      popWord('それじゃないよ〜', p.sx, p.sy, 'wrong');
+      popWord(tr('それじゃないよ〜'), p.sx, p.sy, 'wrong');
       wrongUntil = p.now + 0.8;
       wrongs++;
       judge(null, p.now, found.note);
@@ -699,7 +723,7 @@
     if (ac) (kind === 'poko' ? soundPoko : soundPon)(ac.currentTime, 1);
     react(false);
     const eat = found && found.note.food;
-    popWord(eat ? 'ぱくっ！' : kind === 'poko' ? 'ぽこ！' : 'ぽん！', p.sx, p.sy, kind);
+    popWord(tr(eat ? 'ぱくっ！' : kind === 'poko' ? 'ぽこ！' : 'ぽん！'), p.sx, p.sy, kind);
     if (playing && hit(found, p.now) && eat) feed();
   }
   // まんぷく：食べた数に合わせて、おなかをふくらませる
@@ -718,7 +742,7 @@
     if (ac) soundGrow(ac.currentTime);
     const a = ART.fat;
     // 文字は、おなかにかぶらないように、おなかの上（胸のあたり）に出す
-    popWord('ぽよ〜ん！', offX + a.x / 100 * ART.w * scale, offY + (a.y - a.ry * 0.8) / 100 * ART.h * scale, 'big');
+    popWord(tr('ぽよ〜ん！'), offX + a.x / 100 * ART.w * scale, offY + (a.y - a.ry * 0.8) / 100 * ART.h * scale, 'big');
     if (now != null) shyUntil = now + SHY_SECONDS;
   }
   // 最後の「ごちそうさまタイム」：大きくなったおなかを眺めたり、自由にぽんぽこしたりできる時間
@@ -727,8 +751,8 @@
     showBar();
     grow(null);
     const el = $('howto');
-    el.innerHTML = '<p class="feast">ごちそうさま！</p><p>' +
-      (fed / Math.max(1, targets) >= 0.66 ? 'おなか いっぱい〜！' : 'もうちょっと 食べたかったな〜') + '</p>';
+    el.innerHTML = '<p class="feast">' + tr('ごちそうさま！') + '</p><p>' +
+      tr(fed / Math.max(1, targets) >= 0.66 ? 'おなか いっぱい〜！' : 'もうちょっと 食べたかったな〜') + '</p>';
     el.classList.remove('out');
     el.classList.add('top');   // おなかが見えるように、画面の上のほうに
     el.hidden = false;
@@ -743,7 +767,7 @@
     const el = $('want');
     el.textContent = '';
     el.appendChild(Object.assign(document.createElement('span'), { className: 'want-food', textContent: food }));
-    el.appendChild(document.createTextNode('たべたい！'));
+    el.appendChild(document.createTextNode(tr('たべたい！')));
     el.hidden = false;
     el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
     if (ac) soundBell(ac.currentTime);
@@ -752,7 +776,7 @@
     p.purun = true;
     if (ac) soundPurun(ac.currentTime);
     react(true);
-    popWord('ぷるん！', p.sx, p.sy, 'purun');
+    popWord(tr('ぷるん！'), p.sx, p.sy, 'purun');
     if (playing) hit(nearest(p.now, ['purun'], p), p.now);
   }
 
@@ -803,7 +827,7 @@
       counts.miss++;
       combo = 0;
       lastMiss = now;
-      showJudge('ミス', 'miss', n);
+      showJudge(tr('ミス'), 'miss', n);
     } else {
       counts[j.key]++;
       combo++;
@@ -812,7 +836,7 @@
       // コンボ10ごとに、1回の点数が10点ずつ増える（最大 +50）
       score += j.point + Math.min(50, Math.floor(combo / 10) * 10);
       $('score').textContent = score;
-      showJudge(j.label, j.key, n);
+      showJudge(tr(j.label), j.key, n);
       target.classList.remove('hit'); void target.offsetWidth; target.classList.add('hit');
     }
     showCombo();
@@ -831,14 +855,14 @@
   }
   function showCombo() {
     const el = $('combo');
-    el.textContent = combo >= 2 ? combo + ' コンボ' : '';
+    el.textContent = combo >= 2 ? tr('{n} コンボ', { n: combo }) : '';
     if (combo >= 2) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
   }
   // カットイン：がんばる顔と「スピードアップ！」の帯が、右から入って左へ抜ける
   function cutin(bpm, i) {
     const el = $('cutin'), lv = CUTIN.levels[Math.min(i, CUTIN.levels.length - 1)];
     $('cutin-bpm').textContent = 'BPM ' + bpm;
-    $('cutin-text').textContent = lv.text;
+    $('cutin-text').textContent = tr(lv.text);
     $('cutin-face').src = cutFaces[CUTIN.levels.indexOf(lv)];
     const band = el.firstElementChild;
     band.style.setProperty('--c1', lv.colors[0]);
@@ -894,21 +918,23 @@
     const rate = (counts.perfect + counts.good * 0.6 + counts.ok * 0.2) / total;
     const rank = RANKS.find((r) => rate >= r.rate);
     setFace(rank.face);
-    $('r-title').textContent = rank.title;
+    $('r-title').textContent = tr(rank.title);
     $('r-img').src = rank.src;
     $('result').scrollTop = 0;
     $('r-score').textContent = score;
     ['perfect', 'good', 'ok', 'miss'].forEach((k) => { $('r-' + k).textContent = counts[k]; });
     $('r-combo').textContent = maxCombo;
-    $('r-line').textContent = 'タヌくん「' + rank.line + '」';
+    $('r-line').textContent = tr('タヌくん「{s}」', { s: tr(rank.line) });
     const url = /^https?:/.test(location.href) ? location.href.split(/[?#]/)[0] : 'https://tanukun.pages.dev/pon/';
-    const text = '🥁 ぽんぽこリズム ' + STAGES[mode].name + '\n' + score + 'てん「' + rank.title + '」さいだい' + maxCombo + 'コンボ\n#タヌくん #ぽんぽこリズム\n' + url;
+    const text = tr('🥁 ぽんぽこリズム {stage}\n{n}てん「{rank}」さいだい{m}コンボ\n#タヌくん #ぽんぽこリズム\n',
+      { stage: stageName(mode), n: score, rank: tr(rank.title), m: maxCombo }) + url;
     $('btn-post').href = 'https://x.com/intent/post?text=' + encodeURIComponent(text);
     // 次のステージへ
     const next = STAGES[mode].next;
     $('btn-next').hidden = !next;
-    if (next) $('btn-next').textContent = STAGES[next].name.replace(/（.*/, '') + ' へ ▶';
-    if (mode === 'food') $('r-line').textContent = 'タヌくん「ごちそうさま！' + (fed / Math.max(1, targets) >= 0.66 ? 'おなかいっぱい〜！」' : 'もうちょっと食べたかったな〜」');
+    if (next) $('btn-next').textContent = tr('ステージ{n} へ ▶', { n: STAGES[next].num });
+    if (mode === 'food') $('r-line').textContent = tr('タヌくん「{s}」',
+      { s: tr(fed / Math.max(1, targets) >= 0.66 ? 'ごちそうさま！おなかいっぱい〜！' : 'ごちそうさま！もうちょっと食べたかったな〜') });
     // 本編とのつながり：1日1回のごほうび
     let bonus = false;
     updateSave((d) => {
@@ -918,7 +944,7 @@
       bonus = true;
     });
     $('r-bonus').hidden = !bonus;
-    $('r-bonus').textContent = '💗 なかよしポイント +' + BONUS + '（タヌくんのところで受け取れるよ）';
+    $('r-bonus').textContent = tr('💗 なかよしポイント +{n}（タヌくんのところで受け取れるよ）', { n: BONUS });
     $('result').hidden = false;
   }
 

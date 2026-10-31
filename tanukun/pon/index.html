@@ -13,9 +13,9 @@
 
   <!-- 上のバー：中断（プレイ中）または本編へ・点数・コンボ。右上はタヌくんの顔のワイプ -->
   <header class="bar">
-    <button id="btn-pause" class="pause" type="button" aria-label="中断" hidden>⏸</button>
-    <a id="back-home" class="back" href="../" hidden>‹ タヌくん</a>
-    <div class="score"><span id="score">0</span><small>てん</small></div>
+    <button id="btn-pause" class="pause" type="button" aria-label="中断" data-i18n-attr="aria-label" hidden>⏸</button>
+    <a id="back-home" class="back" href="../" hidden data-i18n>‹ タヌくん</a>
+    <div class="score"><span id="score">0</span><small data-i18n>てん</small></div>
     <div class="combo" id="combo"></div>
   </header>
   <!-- クリアまでのバー（左から右へのびる。右はしの 🏁 でクリア） -->
@@ -23,7 +23,7 @@
   <div id="wipe" class="wipe" aria-hidden="true"><div id="wipe-face"></div></div>
   <!-- ステージ3 まんぷく：ワイプの下の吹き出し（たべたい食べもの）と、まんぷくゲージ -->
   <div id="want" class="want" hidden></div>
-  <div id="full" class="full" aria-hidden="true"><span>まんぷく</span><i><b id="full-fill"></b></i></div>
+  <div id="full" class="full" aria-hidden="true"><span data-i18n>まんぷく</span><i><b id="full-fill"></b></i></div>
 
   <!-- ◉ が右から左に流れてくる道。左のわくに重なったときにたたく -->
   <div id="lane" class="lane" aria-hidden="true">
@@ -36,7 +36,7 @@
   <!-- おなかのアップ。どこをたたいてもOK -->
   <div id="stage">
     <div id="body">
-      <img id="tanu-img" alt="タヌくんのおなか" draggable="false">
+      <img id="tanu-img" alt="タヌくんのおなか" data-i18n-attr="alt" draggable="false">
       <!-- きせかえパーツ（デベソなど）。揺れている間は canvas の絵に入る -->
       <div id="parts-layer" aria-hidden="true"></div>
       <canvas id="belly-canvas" aria-hidden="true"></canvas>
@@ -47,22 +47,23 @@
 
   <!-- はじめる前 -->
   <section id="start" class="sheet">
-    <h1>🥁 ぽんぽこリズム</h1>
-    <p class="small">🔊 音を出して遊んでね</p>
-    <button id="btn-lane" class="btn btn-stage" type="button"><small>ステージ1</small>ながれる</button>
-    <button id="btn-belly" class="btn btn-stage" type="button"><small>ステージ2</small>おなか</button>
-    <button id="btn-food" class="btn btn-stage" type="button"><small>ステージ3</small>まんぷく</button>
+    <button id="btn-lang" class="lang-btn" type="button" hidden></button>
+    <h1 data-i18n>🥁 ぽんぽこリズム</h1>
+    <p class="small" data-i18n>🔊 音を出して遊んでね</p>
+    <button id="btn-lane" class="btn btn-stage" type="button" data-i18n-html><small>ステージ1</small>ながれる</button>
+    <button id="btn-belly" class="btn btn-stage" type="button" data-i18n-html><small>ステージ2</small>おなか</button>
+    <button id="btn-food" class="btn btn-stage" type="button" data-i18n-html><small>ステージ3</small>まんぷく</button>
     <!-- 本編をまだ遊んだことがない人にだけ -->
-    <a id="start-home" class="start-home" href="../" hidden>タヌくんと なかよくなる ›</a>
+    <a id="start-home" class="start-home" href="../" hidden data-i18n>タヌくんと なかよくなる ›</a>
   </section>
 
   <!-- 中断 -->
   <section id="pause" class="sheet" hidden>
-    <h2>ひとやすみ</h2>
-    <button id="btn-resume" class="btn" type="button">つづける</button>
-    <button id="btn-retry" class="btn btn-sub" type="button">さいしょから</button>
-    <button id="btn-quit" class="btn btn-sub" type="button">ステージをえらぶ</button>
-    <a id="pause-home" class="btn btn-sub" href="../">タヌくんのところへ もどる</a>
+    <h2 data-i18n>ひとやすみ</h2>
+    <button id="btn-resume" class="btn" type="button" data-i18n>つづける</button>
+    <button id="btn-retry" class="btn btn-sub" type="button" data-i18n>さいしょから</button>
+    <button id="btn-quit" class="btn btn-sub" type="button" data-i18n>ステージをえらぶ</button>
+    <a id="pause-home" class="btn btn-sub" href="../" data-i18n>タヌくんのところへ もどる</a>
   </section>
   <!-- 速さが変わる前のカットイン（がんばる顔＋「スピードアップ！」の帯） -->
   <div id="cutin" class="cutin" aria-hidden="true" hidden>
@@ -83,26 +84,28 @@
       <h2 id="r-title"></h2>
     </div>
     <div class="r-card">
-      <div class="r-score"><b id="r-score">0</b> てん</div>
+      <div class="r-score" data-i18n-html><b id="r-score">0</b> てん</div>
       <ul class="r-list">
-        <li>ぴったり <b id="r-perfect">0</b></li>
-        <li>いいね <b id="r-good">0</b></li>
-        <li>おしい <b id="r-ok">0</b></li>
-        <li>ミス <b id="r-miss">0</b></li>
-        <li>さいだいコンボ <b id="r-combo">0</b></li>
+        <li data-i18n-html>ぴったり <b id="r-perfect">0</b></li>
+        <li data-i18n-html>いいね <b id="r-good">0</b></li>
+        <li data-i18n-html>おしい <b id="r-ok">0</b></li>
+        <li data-i18n-html>ミス <b id="r-miss">0</b></li>
+        <li data-i18n-html>さいだいコンボ <b id="r-combo">0</b></li>
       </ul>
       <p id="r-line" class="r-line"></p>
       <p id="r-bonus" class="r-bonus" hidden></p>
-      <a id="btn-post" class="btn btn-x" target="_blank" rel="noopener">𝕏 でポストする</a>
+      <a id="btn-post" class="btn btn-x" target="_blank" rel="noopener" data-i18n>𝕏 でポストする</a>
       <button id="btn-next" class="btn" type="button" hidden>ステージ2 へ ▶</button>
-      <button id="btn-again" class="btn btn-sub" type="button">もう一回</button>
-      <button id="btn-mode" class="btn btn-sub" type="button">ステージをえらぶ</button>
+      <button id="btn-again" class="btn btn-sub" type="button" data-i18n>もう一回</button>
+      <button id="btn-mode" class="btn btn-sub" type="button" data-i18n>ステージをえらぶ</button>
     </div>
   </section>
 
 </main>
-<!-- 本編と同じ設定（おなかの揺れ）と揺れの仕組みを使う -->
+<!-- 本編と同じ設定（おなかの揺れ）・ことば（i18n.js。ぽんぽこリズムの訳は pon.i18n.js）と揺れの仕組みを使う -->
 <script src="../config.js"></script>
+<script src="pon.i18n.js"></script>
+<script src="../i18n.js"></script>
 <script src="../belly.js"></script>
 <script src="pon.js"></script>
 </body>
