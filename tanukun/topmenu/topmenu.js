@@ -26,7 +26,7 @@
      iconPx       … ズームしたときのアイコンの大きさ（画面のピクセル） */
   const T = {
     feet: 0.86, height: 0.62,
-    greet: 2.6, again: 1.2,
+    greet: 1.3, again: 0.6,
     focus: { x: 208, y: 410 }, bellyW: 0.86, maxZoom: 3, at: 0.56,
     iconPx: 66
   };
