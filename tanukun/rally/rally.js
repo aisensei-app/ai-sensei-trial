@@ -2,8 +2,9 @@
    ぽよんラリー（試作。2026-10-30）
    ・手前のビーチボールを、指で上へはじいて（スワイプして）投げる（ポケモンGO のように）
    ・タヌくんがおなかで「ぽよん！」とはね返す（おなかの揺れは本編と同じ belly.js）
-   ・もどってくるボールのまわりに「輪」が出て、ボールに向かって縮んでいく。輪が近づくと（打てる間）光って、ボールの下に 👆↑。
+   ・もどってくるボールのまわりに「輪」が出て、ボールに向かって縮んでいく。輪が近づくと（打てる間）光る。
      指をはなした瞬間に打てる間ならOK、輪がボールにぴたっと重なる瞬間ならナイス。
+     毎回、最初の guideRallies ラリーの間は、ボールから上へのびるスワイプのガイド線（点線の矢印と 👆）がボールについてくる
      輪はボールと一緒に動くので、風やカーブでもずれない。打てる間は、ボールがふわっとゆっくりになる（ビーチボールらしく。打ちやすく）
    ・ボールは3こ。落とすと1こ減って、手前から投げなおし。3こ落としたら結果（合計ラリー数と、いちばん続いた数）
    ・3ラリー続くごとに、タヌくんが1歩近づいてきて、ボールも速くなる（落とすと、元の場所にもどる）
@@ -51,6 +52,7 @@
      returnTime   … もどってくるのにかかる秒数（最初 → ラリーごとに speedUp、1歩ごとに stepSpeed 短く → 最短 minTime）
      zone         … 打てる間。in は、もどってくる道すじのどこから打てるか（割合。1 で輪がボールにぴたっと重なる）、
                     show は輪が出はじめる所、ring はそのときの輪の大きさ（ボールの何倍）。slow は、打てる間にボールがゆっくりになる割合（0.5 で半分の速さ）
+     guideRallies … 毎回、このラリー数まではスワイプのガイド線を出す
      nice         … 輪が重なる瞬間（1）から、この割合以内で打ち返したら「ナイス！」
      late         … 重なってから、この割合まで待ってくれる（それを過ぎたら落ちてミス）
      balls        … ボールの数（落とせる回数）
@@ -70,7 +72,7 @@
     ballSize: 0.2, maxBall: 88, far: 0.36,
     flick: 36,
     returnTime: 1.15, speedUp: 0.015, stepSpeed: 0.08, minTime: 0.55,
-    zone: { in: 0.85, show: 0.55, ring: 2.6, slow: 0.5 }, nice: 0.08, late: 0.12,
+    zone: { in: 0.85, show: 0.55, ring: 2.6, slow: 0.5 }, guideRallies: 3, nice: 0.08, late: 0.12,
     balls: 3,
     birds: 0.2, feint: { rate: 0.15, seconds: [0.45, 0.9] }, wind: { rate: 0.15, drift: 0.22 },
     kinds: { fast: { time: 0.72, arc: 0.11 }, lob: { time: 1.3, arc: 0.38 }, curve: { time: 1.0, bend: 0.24 }, edge: 0.55 },
@@ -580,7 +582,7 @@
   }
 
   // 輪：ボールのまわりに出て（show から）、ボールに向かって縮み、u = 1 でボールにぴたっと重なる。ボールと一緒に動く。
-  //   打てる間（in から）は光って、ボールもぽっと光り、下に 👆↑
+  //   打てる間（in から）は光って、ボールもぽっと光る。最初の guideRallies ラリーは、スワイプのガイド線もボールについてくる
   function drawTarget(u) {
     if (u < T.zone.show) return;
     const d = G.size * scaleAt(ball.z), k = lerp(T.zone.ring, 1, clamp((u - T.zone.show) / (1 - T.zone.show), 0, 1)), r = d * k;
@@ -590,8 +592,13 @@
     const now = u >= T.zone.in;
     targetEl.classList.toggle('now', now);
     ballEl.classList.toggle('now', now);
+    if (total < T.guideRallies && !flight.tutorial) {
+      guideEl.style.left = ball.x + 'px';
+      guideEl.style.top = ball.y + d * 0.3 + 'px';
+      if (guideEl.hidden) { guideEl.lastChild.textContent = '上へ シュッ！'; guideEl.hidden = false; }
+    }
   }
-  const hideTarget = () => { targetEl.hidden = true; ballEl.classList.remove('now'); };
+  const hideTarget = () => { targetEl.hidden = true; ballEl.classList.remove('now'); hideGuide(); };
 
   /* ---------- もどってきたボールを、上へスワイプして打ち返す ----------
      len（スワイプの長さ）でねらう所が変わる（aimAt。頭・おなか・おしり、どれでも返ってくる）

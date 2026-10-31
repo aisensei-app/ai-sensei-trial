@@ -205,7 +205,7 @@ body.in-x .special-btn { bottom: calc(25vh + 10px); }
 }
 
 /* ---- もどってくるボールのまわりの輪（位置と大きさは rally.js。ボールと一緒に動く）----
-   縮んでボールに重なったらナイス。打てる間（.now）は光って、上に「いまだ！」、ボールの下に 👆↑（em） */
+   縮んでボールに重なったらナイス。打てる間（.now）は光って、上に「いまだ！」 */
 .target {
   position: absolute;
   z-index: 4;
@@ -215,28 +215,6 @@ body.in-x .special-btn { bottom: calc(25vh + 10px); }
   pointer-events: none;
   --c: #FFB13B;
 }
-.target em {
-  position: absolute;
-  left: 50%; top: calc(50% + var(--d, 60px) / 2 + 4px);
-  transform: translateX(-50%);
-  font-size: 34px;
-  font-style: normal;
-  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .3));
-  opacity: 0;
-}
-.target em::before {   /* 指の上の「↑」 */
-  content: "";
-  position: absolute;
-  left: 50%; top: -10px;
-  width: 14px; height: 14px;
-  margin-left: -7px;
-  border-left: 5px solid #fff;
-  border-top: 5px solid #fff;
-  transform: rotate(45deg);
-  filter: drop-shadow(0 0 2px rgba(224, 103, 31, .9));
-}
-.target.now em { opacity: 1; animation: nudge .5s ease-in-out infinite; }
-@keyframes nudge { 50% { transform: translate(-50%, -8px); } }
 .target span {
   position: absolute;
   left: 50%; bottom: 100%;
@@ -252,7 +230,7 @@ body.in-x .special-btn { bottom: calc(25vh + 10px); }
 .target.now { border-color: var(--c); box-shadow: 0 0 12px 4px rgba(255, 177, 59, .85); }
 .target.now span { opacity: 1; }
 .ball.now i { filter: brightness(1.12); box-shadow: inset -6px -8px 14px rgba(0, 0, 0, .18), 0 0 12px 4px rgba(255, 230, 120, .9); }
-.guiding .target span, .guiding .target em { display: none; }   /* ガイドの説明・指と重ならないように */
+.guiding .target span { display: none; }   /* ガイドの説明・指と重ならないように */
 /* 返ってくる球の種類の予告（輪の色）：⚡ はやい（赤）／🎈 ふんわり（水色）／🌀 カーブ（むらさき） */
 .target.t-fast { border-color: #FF5E5E; --c: #FF5E5E; }
 .target.t-lob { border-color: #3FA9F5; --c: #3FA9F5; }
@@ -412,5 +390,5 @@ body.in-x .special-btn { bottom: calc(25vh + 10px); }
 body.in-x .sheet { top: 40%; }
 
 @media (prefers-reduced-motion: reduce) {
-  .ball.ready i, .hint, .target.now em { animation: none; }
+  .ball.ready i, .hint { animation: none; }
 }
