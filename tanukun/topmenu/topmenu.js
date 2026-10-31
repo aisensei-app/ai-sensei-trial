@@ -53,8 +53,10 @@
   const HAPPY = IMG('images/happy.webp');
   new Image().src = HAPPY;
   const BJ = C.bellyJiggle;
+  // おなかの揺れ：揺れる範囲を、見えているおなかのまんなか（x, y）を中心に本編より小さく（rx, ry。腕までゆがまないように）、へこみも控えめに
   const belly = window.TanuBelly({
-    config: Object.assign({}, BJ, { tapDent: 0.2, damp: 5, reboundBoost: 1, poke: Object.assign({}, BJ.poke, { depth: 0.6 }) }),
+    config: Object.assign({}, BJ, { x: 30.8, y: 46.1, rx: 17, ry: 11, tapDent: 0.1, damp: 7, reboundBoost: 0.6,
+      poke: Object.assign({}, BJ.poke, { size: 0.4, depth: 0.35 }) }),
     img: img, canvas: $('belly-canvas')
   });
   img.addEventListener('load', () => belly.warm([IMG('normal')]), { once: true });
