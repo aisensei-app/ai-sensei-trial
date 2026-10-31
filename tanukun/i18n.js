@@ -216,5 +216,46 @@ window.TanuI18n = (function () {
   const extra = (window.TANU_CONFIG_I18N || {})[lang];
   if (lang !== 'ja' && extra && window.TANU_CONFIG) overlay(window.TANU_CONFIG, extra);
 
-  return { get lang() { return lang; }, LANGS: LANGS, t: t, tr: tr, apply: apply, set: set, lines: lines };
+  /* ---- ことばの切りかえボタン（本編・ぽんぽこ・ラリーで共通。2026-10-31 中国語が入って3つになったので、一覧から選ぶ形に）----
+     label()：ボタンに出す文（いまの言語を短く。「🌐 日本語 ▾」）
+     menu(ボタン)：ボタンの下に、使える言語の一覧を出す。選ぶとその言語で開きなおす。一覧の外を押すと閉じる
+     bind(ボタン)：言語が2つ以上なら、ボタンを出して、押すと一覧（ボタンは hidden で置いておく） */
+  const SHORT = { ja: '日本語', en: 'EN', zh: '中文' };
+  const label = () => '🌐 ' + (SHORT[lang] || LANGS[lang]) + ' ▾';
+  function menu(anchor) {
+    const old = document.getElementById('lang-menu');
+    if (old) { old.remove(); return; }
+    const m = document.createElement('div');
+    m.id = 'lang-menu';
+    m.setAttribute('role', 'menu');
+    const r = anchor.getBoundingClientRect();
+    m.style.cssText = 'position:fixed;z-index:1000;display:flex;flex-direction:column;min-width:140px;padding:6px;' +
+      'border-radius:16px;background:#FFF9EF;box-shadow:0 6px 20px rgba(74,46,22,.25);' +
+      'top:' + (r.bottom + 6) + 'px;' + (r.left + r.width / 2 > window.innerWidth / 2
+        ? 'right:' + Math.max(8, window.innerWidth - r.right) + 'px;' : 'left:' + Math.max(8, r.left) + 'px;');
+    Object.keys(LANGS).forEach((l) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.lang = l;
+      b.setAttribute('role', 'menuitemradio');
+      b.setAttribute('aria-checked', l === lang ? 'true' : 'false');
+      b.textContent = (l === lang ? '✓ ' : '') + LANGS[l];
+      b.style.cssText = 'padding:10px 14px;border:0;border-radius:10px;background:none;font:inherit;font-size:15px;' +
+        'font-weight:700;text-align:left;cursor:pointer;color:' + (l === lang ? '#E0671F' : '#4A2E16');
+      b.addEventListener('click', (e) => { e.stopPropagation(); m.remove(); if (l !== lang) set(l); });
+      m.appendChild(b);
+    });
+    document.body.appendChild(m);
+    setTimeout(() => document.addEventListener('click', function off(e) {
+      if (!m.contains(e.target)) { m.remove(); document.removeEventListener('click', off, true); }
+    }, true), 0);
+  }
+  function bind(btn) {
+    if (!btn || Object.keys(LANGS).length < 2) return;
+    btn.textContent = label();
+    btn.hidden = false;
+    btn.addEventListener('click', (e) => { e.stopPropagation(); menu(btn); });
+  }
+
+  return { get lang() { return lang; }, LANGS: LANGS, t: t, tr: tr, apply: apply, set: set, lines: lines, label: label, menu: menu, bind: bind };
 })();

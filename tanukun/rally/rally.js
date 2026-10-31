@@ -60,14 +60,8 @@
     document.querySelectorAll('[data-i18n-html]').forEach((el) => { el.innerHTML = tr(el.innerHTML.trim()); });
     document.title = tr('ぽよんラリー｜タヌくん');
   }
-  // はじめる前の画面の右上「🌐 English / 🌐 日本語」：押すと、もう一方の言語へ（本編と同じ）
-  const LANG_KEYS = Object.keys(I18N.LANGS);
-  if (LANG_KEYS.length > 1) {
-    const next = LANG_KEYS[(LANG_KEYS.indexOf(I18N.lang) + 1) % LANG_KEYS.length];
-    $('btn-lang').textContent = '🌐 ' + I18N.LANGS[next];
-    $('btn-lang').hidden = false;
-    $('btn-lang').addEventListener('click', () => I18N.set(next));
-  }
+  // はじめる前の画面の右上「🌐 日本語 ▾」：押すと、言語の一覧（i18n.js の bind。本編・ぽんぽこと同じ）
+  if (I18N.bind) I18N.bind($('btn-lang'));
   // 本編の設定の絵は 'images/…' なので、このページ（rally/）からは '../' を付ける
   const IMG = (name) => {
     const src = C.images[name] || name;

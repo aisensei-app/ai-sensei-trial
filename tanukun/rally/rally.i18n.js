@@ -7,7 +7,7 @@
 window.TANU_TEXT_I18N = window.TANU_TEXT_I18N || {};
 window.TANU_TEXT_I18N.en = Object.assign(window.TANU_TEXT_I18N.en || {}, {
   // 画面（index.html）
-  'ぽよんラリー｜タヌくん': 'Poyon Rally | Tanu-kun',
+  'ぽよんラリー｜タヌくん': 'Poyon Rally – Tanu-kun',   // 「|」は単数・複数の区切りになるので使わない
   '‹ タヌくん': '‹ Tanu-kun',
   'のこりのボール': 'Balls left',
   'ラリー': 'rallies',

@@ -21,42 +21,10 @@
   if (/Twitter/i.test(navigator.userAgent) || /[?&]inx\b/.test(location.search)) document.body.classList.add('in-x');
   const $ = (id) => document.getElementById(id);
   /* ---- ことばの切りかえ（左上の「🌐 日本語 ▾」。言語が2つ以上のときだけ出す。設定からも変えられる）----
-     押すと、使える言語の一覧が出て、選ぶとその言語で開きなおす（2026-10-31 中国語が入って3つになったので、一覧の形に）。
-     ボタンには、いまの言語を短く出す（上のバーはせまいので） */
+     押すと、使える言語の一覧が出て、選ぶとその言語で開きなおす（i18n.js の bind・menu。ぽんぽこ・ラリーと共通） */
   const LANG_KEYS = Object.keys(I18N.LANGS);
-  const LANG_SHORT = { ja: '日本語', en: 'EN', zh: '中文' };
-  const langLabel = () => '🌐 ' + (LANG_SHORT[I18N.lang] || I18N.LANGS[I18N.lang]) + ' ▾';
-  function langMenu(anchor) {
-    const old = $('lang-menu');
-    if (old) { old.remove(); return; }
-    const m = document.createElement('div');
-    m.id = 'lang-menu';
-    m.className = 'lang-menu';
-    m.setAttribute('role', 'menu');
-    LANG_KEYS.forEach((l) => {
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.setAttribute('role', 'menuitemradio');
-      b.setAttribute('aria-checked', l === I18N.lang ? 'true' : 'false');
-      b.lang = l;
-      b.textContent = (l === I18N.lang ? '✓ ' : '') + I18N.LANGS[l];
-      b.addEventListener('click', (e) => { e.stopPropagation(); m.remove(); if (l !== I18N.lang) I18N.set(l); });
-      m.appendChild(b);
-    });
-    const r = anchor.getBoundingClientRect();
-    m.style.left = Math.max(8, r.left) + 'px';
-    m.style.top = r.bottom + 6 + 'px';
-    document.body.appendChild(m);
-    // 一覧の外を押したら閉じる
-    setTimeout(() => document.addEventListener('click', function off(e) {
-      if (!m.contains(e.target)) { m.remove(); document.removeEventListener('click', off, true); }
-    }, true), 0);
-  }
-  if (LANG_KEYS.length > 1) {
-    $('btn-lang').textContent = langLabel();
-    $('btn-lang').hidden = false;
-    $('btn-lang').addEventListener('click', (e) => { e.stopPropagation(); langMenu($('btn-lang')); });
-  }
+  const langMenu = (el) => (I18N.menu ? I18N.menu(el) : null);
+  if (I18N.bind) I18N.bind($('btn-lang'));
 
   const area   = $('tanu-area');
   const move   = $('tanu-move');    // 隠れる・戻る（スライド）
@@ -1752,7 +1720,7 @@
       panel: (name) => { const b = $('btn-' + name); if (b) b.click(); },
       blocked: () => mode !== 'home' || !sheet.hidden || !$('event').hidden,
       // ことばのボタン（いまの言語を短く。押すと一覧）
-      langLabel: LANG_KEYS.length > 1 ? langLabel() : '',
+      langLabel: LANG_KEYS.length > 1 && I18N.label ? I18N.label() : '',
       onLang: () => langMenu($('home-lang')),
       // 寝ている時間に起こしたとき：時間帯のひとこと（「起こされちゃった」など）
       wakeText: () => { const b = bandNow(); return b && b.wake ? withName(b.wake) : ''; }

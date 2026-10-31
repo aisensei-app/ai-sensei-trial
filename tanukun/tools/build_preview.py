@@ -57,8 +57,8 @@ def build_pon(out, folder='pon', title='ぽんぽこリズム'):
     css = css.replace('height: 100vh;\n  height: 100dvh;', 'height: 100%;')
     page = (ROOT / folder / 'index.html').read_text(encoding='utf8')
     body = page[page.index('<main id="' + folder + '"'):page.index('<!-- 本編と同じ設定')]
-    # ぽよんラリーは、ことば（訳の rally.i18n.js と i18n.js）も入れる
-    words = [js('rally/rally.i18n.js'), js('i18n.js')] if folder == 'rally' else []
+    # ぽよんラリー・ぽんぽこリズムは、ことば（それぞれの訳 〇〇.i18n.js、中国語の共通の文 i18n.zh.js、i18n.js）も入れる
+    words = [js(folder + '/' + folder + '.i18n.js'), js('i18n.zh.js'), js('i18n.js')] if folder in ('rally', 'pon') else []
     scripts = ''.join('<script>\n' + text + '\n</script>\n' for text in
                       [js('config.js')] + words + [js('belly.js'), js(folder + '/' + folder + '.js')])
     out.parent.mkdir(parents=True, exist_ok=True)

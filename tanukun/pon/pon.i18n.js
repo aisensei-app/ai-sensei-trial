@@ -7,11 +7,11 @@
 window.TANU_TEXT_I18N = window.TANU_TEXT_I18N || {};
 window.TANU_TEXT_I18N.en = Object.assign(window.TANU_TEXT_I18N.en || {}, {
   // 画面（index.html）
-  'ぽんぽこリズム｜タヌくん': 'Ponpoko Rhythm | Tanu-kun',
+  'ぽんぽこリズム｜タヌくん': 'Ponpoko Rhythm – Tanu-kun',
   '中断': 'Pause',
   '‹ タヌくん': '‹ Tanu-kun',
   'てん': 'pts',
-  'まんぷく': 'Full',
+  'まんぷく': 'Full Belly',
   'タヌくんのおなか': 'Tanu-kun\'s belly',
   '🥁 ぽんぽこリズム': '🥁 Ponpoko Rhythm',
   '🔊 音を出して遊んでね': '🔊 Play with the sound on',
