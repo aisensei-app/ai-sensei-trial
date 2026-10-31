@@ -23,12 +23,12 @@ import shutil
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent      # tanukun フォルダ
-FILES = ['index.html', 'style.css', 'config.js', 'config.en.js', 'lines.js', 'lines.en.js', 'i18n.js', 'save.js', 'belly.js', 'home.js', 'app.js',
+FILES = ['index.html', 'style.css', 'config.js', 'config.en.js', 'config.zh.js', 'lines.js', 'lines.en.js', 'lines.zh.js', 'i18n.zh.js', 'i18n.js', 'save.js', 'belly.js', 'home.js', 'app.js',
          'sw.js', 'manifest.webmanifest']
 TITLE = 'タヌくん｜Tanu-kun'
 # リンクのカードの説明（英語版を出したので、日本語と英語の両方）
 DESCRIPTION = 'さわって遊ぶ、なでなでアプリ。なでて、ぽんぽこして、毎日なかよくなろう。／ A touch-and-pet app: pat, drum his belly, and grow closer every day!'
-PON_FILES = ['index.html', 'pon.css', 'pon.js']
+PON_FILES = ['index.html', 'pon.css', 'pon.js', 'pon.i18n.js']
 RALLY_FILES = ['index.html', 'rally.css', 'rally.js', 'rally.i18n.js']
 RALLY_TITLE = 'ぽよんラリー｜タヌくん'
 RALLY_DESCRIPTION = 'ビーチボールを投げると、タヌくんがおなかで「ぽよん！」と返してくれる。何回つづくかな？／ Toss a beach ball and Tanu-kun bounces it back with his belly. How long can you keep it going?'

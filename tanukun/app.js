@@ -11,6 +11,7 @@
   const tr = I18N.tr || ((ja, v) => (v ? Object.keys(v).reduce((s, k) => s.split('{' + k + '}').join(v[k]), ja) : ja));
   I18N.apply();
   if (I18N.lang === 'en') document.title = 'Tanu-kun';
+  if (I18N.lang === 'zh') document.title = '狸君';
   // いまの言語のセリフ集（i18n.js。訳がなければ日本語）。公開スイッチがまだの機能のセリフ（feature）は入れない
   const LINES = I18N.lines().filter((l) => !l.feature || feature(l.feature) === 'open');
   const SAVE = window.TanuSave;
@@ -19,13 +20,42 @@
   // style.css の body.in-x で、下に余白を空けて中身を上に寄せる。確認用に URL の ?inx でも
   if (/Twitter/i.test(navigator.userAgent) || /[?&]inx\b/.test(location.search)) document.body.classList.add('in-x');
   const $ = (id) => document.getElementById(id);
-  // 左上の「🌐 English / 🌐 日本語」：押すと、もう一方の言語へ（言語が2つ以上のときだけ出す。設定からも変えられる）
+  /* ---- ことばの切りかえ（左上の「🌐 日本語 ▾」。言語が2つ以上のときだけ出す。設定からも変えられる）----
+     押すと、使える言語の一覧が出て、選ぶとその言語で開きなおす（2026-10-31 中国語が入って3つになったので、一覧の形に）。
+     ボタンには、いまの言語を短く出す（上のバーはせまいので） */
   const LANG_KEYS = Object.keys(I18N.LANGS);
+  const LANG_SHORT = { ja: '日本語', en: 'EN', zh: '中文' };
+  const langLabel = () => '🌐 ' + (LANG_SHORT[I18N.lang] || I18N.LANGS[I18N.lang]) + ' ▾';
+  function langMenu(anchor) {
+    const old = $('lang-menu');
+    if (old) { old.remove(); return; }
+    const m = document.createElement('div');
+    m.id = 'lang-menu';
+    m.className = 'lang-menu';
+    m.setAttribute('role', 'menu');
+    LANG_KEYS.forEach((l) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.setAttribute('role', 'menuitemradio');
+      b.setAttribute('aria-checked', l === I18N.lang ? 'true' : 'false');
+      b.lang = l;
+      b.textContent = (l === I18N.lang ? '✓ ' : '') + I18N.LANGS[l];
+      b.addEventListener('click', (e) => { e.stopPropagation(); m.remove(); if (l !== I18N.lang) I18N.set(l); });
+      m.appendChild(b);
+    });
+    const r = anchor.getBoundingClientRect();
+    m.style.left = Math.max(8, r.left) + 'px';
+    m.style.top = r.bottom + 6 + 'px';
+    document.body.appendChild(m);
+    // 一覧の外を押したら閉じる
+    setTimeout(() => document.addEventListener('click', function off(e) {
+      if (!m.contains(e.target)) { m.remove(); document.removeEventListener('click', off, true); }
+    }, true), 0);
+  }
   if (LANG_KEYS.length > 1) {
-    const next = LANG_KEYS[(LANG_KEYS.indexOf(I18N.lang) + 1) % LANG_KEYS.length];
-    $('btn-lang').textContent = '🌐 ' + I18N.LANGS[next];
+    $('btn-lang').textContent = langLabel();
     $('btn-lang').hidden = false;
-    $('btn-lang').addEventListener('click', () => I18N.set(next));
+    $('btn-lang').addEventListener('click', (e) => { e.stopPropagation(); langMenu($('btn-lang')); });
   }
 
   const area   = $('tanu-area');
@@ -773,6 +803,12 @@
   function withName(text) {
     const name = SAVE.data.name;
     if (name) return text.split('{name}').join(name);
+    // 中国語：呼びかけ（「{name}，」「，{name}！」）は消して、文の途中は「你」
+    if (I18N.lang === 'zh') {
+      return text
+        .replace(/^\{name\}[，,]\s*/, '').replace(/[，,]\s*\{name\}(?=[！!。？?～~…♪]|$)/g, '')
+        .split('{name}').join('你');
+    }
     // 英語：呼びかけ（「{name}, 」「, {name}」）は消して、文の途中は you（文のはじめなら You）
     if (I18N.lang === 'en') {
       return text
@@ -1297,7 +1333,7 @@
     const comment = REP.comments[top] || REP.comments.even;
     const L = REP.labels;
     // 名前の幅をそろえる（日本語は全角で4文字分＋1文字あける。英語は「: 」）
-    const pad = (s) => (I18N.lang === 'ja' ? s + '　'.repeat(Math.max(0, 4 - s.length)) : s + ': ');
+    const pad = (s) => (I18N.lang === 'ja' ? s + '　'.repeat(Math.max(0, 4 - s.length)) : I18N.lang === 'zh' ? s + '：' : s + ': ');
     // ポストの文章：？？？（ひみつの場所）も回数を出す（棒は紫）
     const lines = REP_PLACES.map((p) => pad(L[p]) + (p === 'crotch' ? '🟪' : '🟧').repeat(repCount[p]) + ' ' + repCount[p]);
     const postText = tr('タヌくんと遊んだよ！（なかよし{n}日目）', { n: days }) + '\n' + lines.join('\n') +
@@ -1349,7 +1385,7 @@
     const d = SAVE.data, s = d.stats;
     const total = new Set(LINES.map((l) => l.text)).size;
     const rows = [
-      [I18N.lang === 'ja' ? 'なかよし' : 'Days together', tr('{n} 日', { n: d.totalDays })],
+      [{ ja: 'なかよし', zh: '亲密天数' }[I18N.lang] || 'Days together', tr('{n} 日', { n: d.totalDays })],
       [tr('れんぞく（いま／最高）'), tr('{a} 日 ／ {b} 日', { a: d.streak, b: d.bestStreak })],
       [tr('頭をなでた'), tr('{n} 回', { n: s.tap.head })],
       [tr('むねをさわった'), tr('{n} 回', { n: s.tap.chest || 0 })],
@@ -1706,7 +1742,6 @@
     if (bootNext) { bootNext = false; HOME.boot(go); } else go();
   }
   if (!DEMO && HC.normal) {
-    const langNext = LANG_KEYS.length > 1 ? LANG_KEYS[(LANG_KEYS.indexOf(I18N.lang) + 1) % LANG_KEYS.length] : null;
     HOME = window.TanuHome({
       config: C, tr: tr,
       normal: HC.normal, background: HC.background || '',
@@ -1716,9 +1751,9 @@
       nose: TB && TB.nose,
       panel: (name) => { const b = $('btn-' + name); if (b) b.click(); },
       blocked: () => mode !== 'home' || !sheet.hidden || !$('event').hidden,
-      // ことばのボタン（上のバーは場所がせまいので、英語は「EN」と短く）
-      langLabel: langNext ? '🌐 ' + (langNext === 'en' ? 'EN' : I18N.LANGS[langNext]) : '',
-      onLang: () => I18N.set(langNext),
+      // ことばのボタン（いまの言語を短く。押すと一覧）
+      langLabel: LANG_KEYS.length > 1 ? langLabel() : '',
+      onLang: () => langMenu($('home-lang')),
       // 寝ている時間に起こしたとき：時間帯のひとこと（「起こされちゃった」など）
       wakeText: () => { const b = bandNow(); return b && b.wake ? withName(b.wake) : ''; }
     });

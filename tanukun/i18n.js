@@ -18,10 +18,13 @@ window.TanuI18n = (function () {
 
   const KEY = 'tanukun-lang';
   const C = window.TANU_CONFIG || {};
-  // 使える言語。英語は公開スイッチが 'open' のときだけ（書いていなければ 'open'）
+  // 使える言語。英語は公開スイッチが 'open' のときだけ（書いていなければ 'open'）。
+  // 中国語（簡体字。2026-10-31〜）は features.chinese が 'open' のときだけ（書いていなければ出さない）。
+  // スマホの言語が中国語なら、繁体字（台湾・香港）の人も簡体字にする（zh-TW なども先頭2文字が zh）
   const LANGS = { ja: '日本語' };
   const EN = (C.features && C.features.english) || 'open';
   if (EN === 'open') LANGS.en = 'English';
+  if (C.features && C.features.chinese === 'open') LANGS.zh = '简体中文';
 
   /* 画面の文字（日本語の文で引く）。英語のときの訳 */
   const TEXT = {
@@ -142,7 +145,7 @@ window.TanuI18n = (function () {
       if (saved && LANGS[saved]) return saved;
     } catch (e) {}
     const list = (navigator.languages || [navigator.language || 'ja']).map((l) => String(l).slice(0, 2));
-    // 日本語より先に英語が来たら英語。日本語でも英語でもない言語は、英語があれば英語にする
+    // 日本語より先に英語（中国語）が来たら英語（中国語）。どれでもない言語は、英語があれば英語にする
     const hit = list.filter((l) => LANGS[l])[0];
     if (hit) return hit;
     return LANGS.en ? 'en' : 'ja';

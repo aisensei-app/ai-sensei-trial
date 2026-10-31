@@ -3,7 +3,7 @@
    つながらないときだけ保存しておいたファイルを使います。 */
 const CACHE = 'tanukun-v24';
 const FILES = [
-  './', './index.html', './style.css', './config.js', './config.en.js', './lines.js', './lines.en.js', './i18n.js', './save.js', './belly.js', './home.js', './app.js',
+  './', './index.html', './style.css', './config.js', './config.en.js', './config.zh.js', './lines.js', './lines.en.js', './lines.zh.js', './i18n.zh.js', './i18n.js', './save.js', './belly.js', './home.js', './app.js',
   './manifest.webmanifest', './images/icon-192.png', './images/icon-512.png',
   './images/normal.webp', './images/shy.webp', './images/happy.webp',
   './images/muni.webp', './images/ponpoko1.webp', './images/ponpoko2.webp',
@@ -18,7 +18,7 @@ const FILES = [
   // 時間帯の立ち絵
   './images/time_morning.webp', './images/time_evening.webp', './images/time_night.webp', './images/time_sleep.webp',
   // ぽんぽこリズム（pon/）
-  './pon/', './pon/index.html', './pon/pon.css', './pon/pon.js',
+  './pon/', './pon/index.html', './pon/pon.css', './pon/pon.js', './pon/pon.i18n.js',
   './images/pon/rank1.webp', './images/pon/rank2.webp', './images/pon/rank3.webp', './images/pon/rank4.webp',
   './images/pon/face_full.webp', './images/pon/face_cut1.webp', './images/pon/face_cut2.webp',
   './images/pon/face_cut3.webp', './images/pon/face_cut4.webp',

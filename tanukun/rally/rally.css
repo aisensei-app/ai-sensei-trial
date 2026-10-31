@@ -583,3 +583,6 @@ body::after {
 body.leaving::after { animation: tanu-veil-leave .42s cubic-bezier(.45, 0, .7, .6) both; }
 @keyframes tanu-veil-leave { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { body::after, body.leaving::after { animation-duration: .01s; } }
+
+/* 中国語のとき：中国語の字体を優先（本編の style.css と同じ） */
+html[lang="zh"] body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", "Noto Sans CJK SC", sans-serif; }
