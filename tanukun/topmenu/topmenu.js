@@ -1,6 +1,7 @@
 /* =========================================================
    トップ画面の試作（2026-10-31）
-   ・アプリを開くと、いつもの大きなタヌくんが笑顔であいさつ（来かたで変わる）
+   ・アプリを開くと、ほんの一瞬（約0.75秒）幕がかかって「タヌくん」の名前が浮かび、ふわっと明ける（起動した感じ）。タヌくんは、ぽんっと出てくる
+   ・いつもの大きなタヌくんが笑顔であいさつ（来かたで変わる）
    ・2〜3秒たつと、自動でおなかにズーム（タヌくんをタップすれば、すぐズーム）
    ・大きなおなかの上に、ゲームのアイコン（文字なし）が ぽこぽこ 並ぶ。まんなかの大きいのが「タヌくん なでなで」（タヌくんの顔）
    ・アイコンが並んでいる間は、タヌくんが息をして、おなかとアイコンがゆっくり上下する
@@ -19,6 +20,7 @@
 
   /* ---------- 調整する数字 ----------
      feet, height … タヌくんの足もとの高さ・絵の高さ（画面の高さに対する割合）
+     boot         … 起動の幕が明けて、あいさつが始まるまでの秒数
      greet        … あいさつしてからズームするまでの秒数（同じ日の2回目は again 秒）
      focus        … ズームしたときに画面のまんなかに来る所（絵の 720×900 の位置。おなかのまんなか）
      bellyW       … ズームしたとき、おなかの幅（絵で 250px 分）が画面の横幅のこの割合になる。maxZoom まで
@@ -26,7 +28,7 @@
      iconPx       … ズームしたときのアイコンの大きさ（画面のピクセル） */
   const T = {
     feet: 0.86, height: 0.62,
-    greet: 1.3, again: 0.6,
+    boot: 0.6, greet: 1.3, again: 0.6,
     focus: { x: 208, y: 410 }, bellyW: 0.86, maxZoom: 3, at: 0.56,
     iconPx: 66
   };
@@ -164,7 +166,17 @@
     setTimeout(() => sayHead(GREET[visit]), 350);
     timer = setTimeout(zoomIn, ((visit === 'again' ? T.again : T.greet) + 0.35) * 1000);
   }
-  document.querySelectorAll('.proto button').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); greet(b.dataset.visit); }));
+  // 起動：幕が明けてから、あいさつ
+  function boot(visit) {
+    clearTimeout(timer);
+    if (zoomed) { zoomed = false; root.classList.remove('zoomed'); $('btn-back').hidden = true; applyZoom(); }
+    $('say').hidden = true;
+    img.src = visit === 'again' ? IMG('normal') : HAPPY;
+    root.classList.remove('booting'); void root.offsetWidth; root.classList.add('booting');
+    setTimeout(() => root.classList.remove('booting'), 1000);
+    timer = setTimeout(() => greet(visit), T.boot * 1000);
+  }
+  document.querySelectorAll('.proto button').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); boot(b.dataset.visit); }));
 
   /* ---------- 音 ---------- */
   let ac = null;
@@ -246,5 +258,5 @@
 
   window.addEventListener('resize', layout);
   layout();
-  greet('first');
+  boot('first');
 })();

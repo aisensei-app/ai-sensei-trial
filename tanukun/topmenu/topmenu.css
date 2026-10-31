@@ -170,6 +170,35 @@ html, body {
   white-space: nowrap;
 }
 
+/* ---- 起動：幕（クリーム色）に名前が浮かんで、ふわっと明ける。タヌくんは少し小さい所から、ぽんっと出てくる ---- */
+.boot {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 50% 45%, #FFFDF6, #FFE9C7);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+}
+.boot b {
+  font-size: 34px;
+  font-weight: 900;
+  color: #fff;
+  -webkit-text-stroke: 7px #E0671F;
+  paint-order: stroke fill;
+}
+.booting .boot { visibility: visible; animation: bootOut .75s ease-in both; }
+.booting .boot b { animation: bootName .75s ease-out both; }
+@keyframes bootOut { 0%, 45% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes bootName { 0% { transform: scale(.8); opacity: 0; } 30% { transform: scale(1.05); opacity: 1; } 60% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.15); opacity: 0; } }
+.booting #body img { animation: tanuIn .6s .35s cubic-bezier(.3, 1.5, .5, 1) both; }
+@keyframes tanuIn { from { transform: scale(.94) translateY(2%); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .booting .boot, .booting .boot b, .booting #body img { animation-duration: .01s; }
+}
+
 /* ---- 試作だけ：来かたの切りかえ ---- */
 .proto {
   position: absolute;
