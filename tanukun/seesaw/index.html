@@ -170,15 +170,15 @@ function endKick(dir, v) {
   const k = 0.5 + 0.5 * Math.min(1, v * 3);
   S.jb.v += dir * 430 * k;
   S.st.v += dir * 3.0 * k;
-  setTimeout(() => { S.jcL.v += dir * 420 * k; S.jcR.v += dir * 380 * k; }, 60);
+  setTimeout(() => { S.jcL.v += dir * 640 * k; S.jcR.v += dir * 590 * k; }, 60);
 }
 // 立ち絵（720×900）：1m = 562px、座る所（腰）を画像の (262, 585) に
 // 座った絵（808×1009。tools/make_seesaw_art.py）：1m = 620px、丸太に座る所（またの上）を画像の (395, 740) に
 const TW = 808, TH = 1009, PXM = 620, AX = 395, AY = 740;
 const HEAD_Y = 15, BELLY_UP = 270;                       // 頭のてっぺん、おなかの中心（座る所からの高さ。px）
 const BELLY = { cx: 395, cy: 470, rx: 145, ry: 125 };
-const CHEST = [{ cx: 300, cy: 318, rx: 85, ry: 55 }, { cx: 490, cy: 318, rx: 85, ry: 55 }];
-const BX0 = 210, BX1 = 580, BY0 = 262, BY1 = 596;
+const CHEST = [{ cx: 300, cy: 320, rx: 92, ry: 64 }, { cx: 490, cy: 320, rx: 92, ry: 64 }];
+const BX0 = 205, BX1 = 585, BY0 = 254, BY1 = 596;
 const SHORE = 4.4;   // カメラから波打ち際まで（m）。タヌくんのすぐうしろが波打ち際
 const BAR_UP = 0.235;                                    // 持ち手の横棒の高さ（丸太の上から m。こぶしの位置）
 const TIERS = [
@@ -232,15 +232,15 @@ function step(h) {
     spring(S.jb, 420 * dv, 110, 2.4, 56, h, -PULL * 16 * vy);
     // 胸はおなかより少し遅れて（約0.06秒）、少し速いばねで。左右でもわずかにずらす
     const q = S.chestQ, dvc = q[S.qi]; q[S.qi] = dv; S.qi = (S.qi + 1) % q.length;
-    spring(S.jcL, 260 * dvc, 230, 3.2, 30, h, -PULL * 9 * vy);
-    spring(S.jcR, 260 * dvc, 255, 3.5, 30, h, -PULL * 9 * vy);
+    spring(S.jcL, 380 * dvc, 230, 3.0, 42, h, -PULL * 14 * vy);
+    spring(S.jcR, 380 * dvc, 255, 3.3, 42, h, -PULL * 14 * vy);
     // おなかの伸び縮み（上の付け根は止めて、下側が伸びる・つぶれる）。下へ動く＝下へ伸びる、上へ動く＝上へつぶれる
     spring(S.st, 3.2 * dv, 110, 2.6, 0.24, h, -PULL * 0.17 * vy);
     // 体ぜんたいも、動く向きに少し伸びる
     spring(S.sq, 0.05 * dv, 500, 14, 0.07, h, PULL * 0.03 * vy);
   } else {
     spring(S.st, 0, 110, 2.6, 0.24, h);
-    spring(S.jb, 0, 110, 2.4, 56, h); spring(S.jcL, 0, 230, 3.2, 30, h); spring(S.jcR, 0, 255, 3.5, 30, h); spring(S.sq, 0, 500, 14, 0.07, h);
+    spring(S.jb, 0, 110, 2.4, 56, h); spring(S.jcL, 0, 230, 3.0, 42, h); spring(S.jcR, 0, 255, 3.3, 42, h); spring(S.sq, 0, 500, 14, 0.07, h);
   }
   // 海へ飛びこむ
   const d = S.dive;
