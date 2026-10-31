@@ -122,9 +122,9 @@
     { at: 30, text: 'でんせつのラリーだ…！' }
   ];
   // 結果のランク（合計ラリー数。いちばん下から順に、min 回以上）
-  //   image … 結果の絵（720×1080。tools/make_rally_art.py でつくる）。pos は映す高さ（上 0% 〜 下 100%。顔が切れないように）。れんしゅう中は「砂だらけ」の絵ができるまで、汗をぬぐう絵
+  //   image … 結果の絵（720×1080。tools/make_rally_art.py でつくる）。pos は映す高さ（上 0% 〜 下 100%。顔が切れないように）
   const RANKS = [
-    { min: 0, title: 'れんしゅう中', line: 'もう一回やろ〜！', image: 'images/rally/clear_sweat.webp', pos: '10%' },
+    { min: 0, title: 'れんしゅう中', line: 'もう一回やろ〜！', image: 'images/rally/clear_sand.webp', pos: '12%' },
     { min: 5, title: 'なかなか！', line: 'おなかで返すの、たのしいね♪', image: 'images/rally/clear_sweat.webp', pos: '10%' },
     { min: 15, title: 'ぽよんマスター', line: 'ぼくたち、いいコンビだね！', image: 'images/rally/clear_sweat.webp', pos: '10%' },
     { min: 30, title: '伝説のおなか', line: 'こんなに続いたの、はじめて！', image: 'images/rally/clear_rest.webp', pos: '18%' }

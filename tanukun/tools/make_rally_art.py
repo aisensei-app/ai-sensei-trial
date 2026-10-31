@@ -5,7 +5,7 @@
 
 元の絵（ChatGPT で作ったもの。プロンプトは pon/ILLUST_PROMPTS.md の⑧）は rally/art に置いてある。公開用のファイルには入れない。
     R1_sweat.webp     … 汗をぬぐう（採用）。R1_sweat_alt.webp はしっぽが左がわ・汗が多すぎるので不採用
-    R2_sand.webp      … 砂だらけ（足の指が5本・爪があるので、作り直し待ち。まだ使わない）
+    R2_sand.webp      … 砂だらけ（足の指が5本・爪があり不採用）→ R2_sand_v2.webp（直したもの。採用）
     R3_daiji.webp     … 大の字で ひと休み（採用）
 """
 from pathlib import Path
@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parent.parent
 ART = ROOT / 'rally' / 'art'
 OUT = ROOT / 'images' / 'rally'
 # 元の絵 → 公開用の名前
-PICK = {'R1_sweat.webp': 'clear_sweat.webp', 'R3_daiji.webp': 'clear_rest.webp'}
+PICK = {'R1_sweat.webp': 'clear_sweat.webp', 'R2_sand_v2.webp': 'clear_sand.webp', 'R3_daiji.webp': 'clear_rest.webp'}
 
 if __name__ == '__main__':
     OUT.mkdir(parents=True, exist_ok=True)

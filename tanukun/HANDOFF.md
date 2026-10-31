@@ -114,7 +114,7 @@
     build_app.py・build_preview.py・sw.js に rally.i18n.js を追加。※ rally/index.html の <title> は build_app.py が探すので、印（data-i18n）を付けない（題は rally.js で切りかえる）
   - **2026-10-31 結果の絵（クリア後のイラスト）**：結果画面を、ぽんぽこリズムと同じ「上に絵、下に回数とボタン」に。元の絵は rally/art（公開しない）、
     `python3 tools/make_rally_art.py` で images/rally に 720×1080。採用：R1 汗をぬぐう（clear_sweat）→ れんしゅう中・なかなか・ぽよんマスター、R3 大の字（clear_rest）→ 伝説のおなか。
-    R1_sweat_alt はしっぽが左がわ・汗が多すぎて不採用。**R2 砂だらけは足の指が5本・小さな爪があり、作り直し待ち**（できたら PICK に足して、れんしゅう中へ）。
+    R1_sweat_alt はしっぽが左がわ・汗が多すぎて不採用。R2 砂だらけは1回目が足の指5本・爪ありで不採用 → 直した R2_sand_v2（clear_sand）を**れんしゅう中**に採用。
     ランクごとの映す高さは RANKS の pos。sw.js は tanukun-v21
   - クリア後のイラストのプロンプト：pon/ILLUST_PROMPTS.md の「⑧」（R1 汗をぬぐう・R2 砂だらけ・R3 大の字）。絵ができたら結果画面に組みこむ
 - **🎉 2026-10-30 英語版を本番に公開**（左上の言語ボタン・パネルの × も一緒に。ぽんぽこ=soon、ラリー・しっぽ・時間帯=hidden のまま）。次は英語の宣伝ポスト

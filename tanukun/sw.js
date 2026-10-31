@@ -22,7 +22,7 @@ const FILES = [
   './images/pon/face_cut3.webp', './images/pon/face_cut4.webp',
   // ぽよんラリー（rally/）
   './rally/', './rally/index.html', './rally/rally.css', './rally/rally.js', './rally/rally.i18n.js', './images/bg/beach_day.webp',
-  './images/rally/clear_sweat.webp', './images/rally/clear_rest.webp'
+  './images/rally/clear_sweat.webp', './images/rally/clear_sand.webp', './images/rally/clear_rest.webp'
 ];
 
 self.addEventListener('install', (e) => {
