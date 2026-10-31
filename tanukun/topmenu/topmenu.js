@@ -2,7 +2,8 @@
    トップ画面の試作（2026-10-31）
    ・アプリを開くと、いつもの大きなタヌくんが笑顔であいさつ（来かたで変わる）
    ・2〜3秒たつと、自動でおなかにズーム（タヌくんをタップすれば、すぐズーム）
-   ・大きなおなかの上に、ゲームのアイコンが ぽこぽこ 並ぶ。おへそが「なでなで」
+   ・大きなおなかの上に、ゲームのアイコン（文字なし）が ぽこぽこ 並ぶ。まんなかの大きいのが「タヌくん なでなで」（タヌくんの顔）
+   ・アイコンが並んでいる間は、タヌくんが息をして、おなかとアイコンがゆっくり上下する
    ・アイコンをタップすると、その所がへこんで「ぽよん！」、アイコンもぷるん → ゲームへ（試作では、お知らせだけ）
    ・ズーム中に、おなかの外をタップするか「‹ もどる」で、ズームが戻る
    ========================================================= */
@@ -29,13 +30,14 @@
     focus: { x: 208, y: 410 }, bellyW: 0.86, maxZoom: 3, at: 0.56,
     iconPx: 66
   };
-  // おなかの上のアイコン（x, y は絵の 720×900 の位置）。main はおへそ（なでなで）
+  // おなかの上のアイコン（x, y は絵の 720×900 の位置。文字は出さず、name は読み上げ・お知らせ用）
+  //   main … タヌくん なでなで（タヌくんの顔の絵 images/topmenu/pet.webp。少し大きい）
   const GAMES = [
-    { id: 'pet', icon: '🤚', name: 'なでなで', x: 192, y: 463, cls: 'main' },
-    { id: 'pon', icon: '🥁', name: 'ぽんぽこリズム', x: 128, y: 398 },
-    { id: 'rally', icon: '🏐', name: 'ぽよんラリー', x: 262, y: 396 },
-    { id: 'soon1', icon: '🔒', name: 'もうすぐ', x: 168, y: 340, cls: 'soon' },
-    { id: 'soon2', icon: '🔒', name: 'もうすぐ', x: 290, y: 345, cls: 'soon' }
+    { id: 'pet', img: 'images/topmenu/pet.webp', badge: '🤚', name: 'タヌくん なでなで', x: 208, y: 405, cls: 'main' },
+    { id: 'pon', icon: '🥁', name: 'ぽんぽこリズム', x: 122, y: 432 },
+    { id: 'rally', icon: '🏐', name: 'ぽよんラリー', x: 296, y: 430 },
+    { id: 'soon1', icon: '🔒', name: 'もうすぐ', x: 150, y: 345, cls: 'soon' },
+    { id: 'soon2', icon: '🔒', name: 'もうすぐ', x: 272, y: 343, cls: 'soon' }
   ];
   // 来かたで変わる、あいさつ（本編では lines.js の scene: 'home' を使う）
   const GREET = {
@@ -92,7 +94,8 @@
     b.style.left = g.x / 720 * 100 + '%';
     b.style.top = g.y / 900 * 100 + '%';
     b.style.setProperty('--i', i);
-    b.innerHTML = '<i>' + g.icon + '</i><b>' + g.name + '</b>';
+    b.setAttribute('aria-label', g.name);
+    b.innerHTML = g.img ? '<i><img src="' + IMG(g.img) + '" alt="" draggable="false"><u>' + g.badge + '</u></i>' : '<i>' + g.icon + '</i>';
     b.addEventListener('click', (e) => { e.stopPropagation(); pick(g, b); });
     $('icons').appendChild(b);
   });
@@ -131,6 +134,8 @@
     }
     body.classList.remove('boing'); void body.offsetWidth; body.classList.add('boing');
     el.classList.remove('wobble'); void el.offsetWidth; el.classList.add('wobble');
+    // 終わったら、また息をする動きにもどす
+    setTimeout(() => { body.classList.remove('boing'); el.classList.remove('wobble'); }, 520);
     const p = toScreen(g.x, g.y);
     pop(p.x, p.y - 50, 'ぽよん！');
     setTimeout(() => {
