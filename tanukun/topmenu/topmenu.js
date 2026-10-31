@@ -26,13 +26,15 @@
      bellyW       … ズームしたとき、おなかの幅（絵で 250px 分）が画面の横幅のこの割合になる。maxZoom まで
      at           … ズームしたとき、focus が来る画面の高さ（割合）
      iconPx       … ズームしたときのアイコンの大きさ（画面のピクセル）
-     mouth        … タヌくんの口（絵の 720×900 の位置）。ズーム中のふきだしのしっぽが、ここを指す */
+     mouth        … タヌくんの口（絵の 720×900 の位置）。ズーム中のふきだしのしっぽが、ここを指す
+     head         … 頭のてっぺん（髪のまんなかの上。絵の位置）。あいさつのふきだしは、しっぽの先がここに届くように出す */
   const T = {
     feet: 0.86, height: 0.62,
     boot: 0.6, greet: 1.3, again: 0.6,
     focus: { x: 208, y: 410 }, bellyW: 0.86, maxZoom: 3, at: 0.56,
     iconPx: 66,
-    mouth: { x: 282, y: 140 }
+    mouth: { x: 282, y: 140 },
+    head: { x: 310, y: 26 }
   };
   // おなかの上のアイコン（x, y は絵の 720×900 の位置。文字は出さず、name は読み上げ・お知らせ用）
   //   main … タヌくん なでなで（タヌくんの顔の絵 images/topmenu/pet.webp。少し大きい）
@@ -247,7 +249,11 @@
     clearTimeout(sayTimer);
     sayTimer = setTimeout(() => { el.hidden = true; }, 2600);
   }
-  const sayHead = (text) => say(text, { x: G.left + G.w * 0.46, y: G.top + G.h * 0.02 }, false, toScreen(T.mouth.x, T.mouth.y).x);
+  // あいさつ：ふきだしは頭の上。しっぽ（長さ 11px）の先が、髪のまんなかに少しもぐるように（浮いて見えないように）
+  const sayHead = (text) => {
+    const hd = toScreen(T.head.x, T.head.y);
+    say(text, { x: hd.x, y: hd.y - 2 }, false, hd.x);
+  };
   function pop(x, y, text) {
     const el = document.createElement('span');
     el.className = 'pop';
