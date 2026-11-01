@@ -93,7 +93,27 @@ window.TANU_TEXT_I18N.en = Object.assign(window.TANU_TEXT_I18N.en || {}, {
   '<b>ブラシで、よごれをこすってね</b><br><span class="sub">右上のアイコンで、ブラシとシャワーを切りかえ。右下のボタンで、うしろも洗えるよ</span>': '<b>Scrub the dirt with the brush</b><br><span class="sub">Switch tools with the icons at the top right. Use the button at the bottom right to wash his back</span>',
   // はじめのガイド（2026-11-02）
   'ブラシで泡立てて！': 'Lather up with the brush!',
-  '泡を流して！': 'Rinse off the bubbles!'
+  '泡を流して！': 'Rinse off the bubbles!',
+  'ずかん': 'Collection',
+  'ずかんに とうろく！': 'Added to the collection!',
+  'ずかんに あたらしく {n}こ とうろく！': '{n} new in the collection!',
+  'ずかんコンプリート！': 'Collection complete!',
+  'ずかん {a} / {b}': 'Collection {a} / {b}',
+  '？？？': '???',
+  'どこかに いるかも…': 'Maybe somewhere out there…',
+  'ぜんぶ あつめると、とくべつイラストが 見られるよ': 'Collect them all to see a special picture',
+  '🎁 とくべつイラスト': '🎁 Special picture',
+  'とじる': 'Close',
+  'もどる': 'Back',
+  'まきがい': 'Spiral shell',
+  'くるくる うずまきの かいがら': 'A swirly little shell',
+  'にまいがい': 'Clam',
+  'ぱかっと ひらく かいがら': 'A shell that pops open',
+  'おほしさまみたいな いきもの': 'Looks like a little star',
+  'ぬるぬる ひろがる うみのくさ': 'Slippery sea plant',
+  'ワカメ': 'Wakame',
+  'ひらひら ゆれる うみのくさ': 'Waves around in the water',
+  'ぜんぶ あつめたね！ ありがとう〜！': 'You collected them all! Thank you~!'
 });
 window.TANU_TEXT_I18N.zh = Object.assign(window.TANU_TEXT_I18N.zh || {}, {
   // 画面
@@ -184,5 +204,25 @@ window.TANU_TEXT_I18N.zh = Object.assign(window.TANU_TEXT_I18N.zh || {}, {
   '<b>ブラシで、よごれをこすってね</b><br><span class="sub">右上のアイコンで、ブラシとシャワーを切りかえ。右下のボタンで、うしろも洗えるよ</span>': '<b>用刷子把脏东西刷掉吧</b><br><span class="sub">点右上的图标切换工具。点右下的按钮，也能洗背后</span>',
   // はじめのガイド（2026-11-02）
   'ブラシで泡立てて！': '用刷子搓出泡泡！',
-  '泡を流して！': '把泡泡冲掉！'
+  '泡を流して！': '把泡泡冲掉！',
+  'ずかん': '图鉴',
+  'ずかんに とうろく！': '已登记到图鉴！',
+  'ずかんに あたらしく {n}こ とうろく！': '图鉴新增了 {n} 个！',
+  'ずかんコンプリート！': '图鉴全部集齐！',
+  'ずかん {a} / {b}': '图鉴 {a} / {b}',
+  '？？？': '？？？',
+  'どこかに いるかも…': '说不定藏在哪里…',
+  'ぜんぶ あつめると、とくべつイラストが 見られるよ': '全部集齐，就能看到特别插画哦',
+  '🎁 とくべつイラスト': '🎁 特别插画',
+  'とじる': '关闭',
+  'もどる': '返回',
+  'まきがい': '螺旋贝',
+  'くるくる うずまきの かいがら': '卷成漩涡的小贝壳',
+  'にまいがい': '蛤蜊',
+  'ぱかっと ひらく かいがら': '会啪地张开的贝壳',
+  'おほしさまみたいな いきもの': '像小星星一样的生物',
+  'ぬるぬる ひろがる うみのくさ': '滑溜溜的海草',
+  'ワカメ': '裙带菜',
+  'ひらひら ゆれる うみのくさ': '在水里飘来飘去',
+  'ぜんぶ あつめたね！ ありがとう〜！': '全部都集齐啦！谢谢～！'
 });

@@ -19,7 +19,10 @@
   <div class="hud">
     <div class="row">
       <a class="sign back" href="../" data-i18n>‹ タヌくん</a>
-      <button class="sign btn" id="snd" type="button" aria-pressed="true">音 ON</button>
+      <div class="rbtns">
+        <button class="sign btn" id="zkBtn" type="button" aria-label="ずかん" data-i18n-attr="aria-label">📖 <span id="zkCount">0/5</span></button>
+        <button class="sign btn" id="snd" type="button" aria-pressed="true">音 ON</button>
+      </div>
     </div>
     <div class="sign gauge" id="gauge" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
       <span class="glabel" data-i18n>よごれ</span>
@@ -51,6 +54,7 @@
       <img id="rwImg" alt="" draggable="false">
       <p class="cline" id="cLine"></p>
       <p class="cnote" id="cNote"></p>
+      <p class="cnote zknew" id="cZk" hidden></p>
       <div class="cbtns">
         <button class="sign btn" id="again" type="button" data-i18n>もう一回</button>
         <a class="sign btn" href="../" data-i18n>‹ タヌくん</a>
@@ -62,6 +66,26 @@
     <div class="cutin-band">
       <img id="cutFace" alt="" draggable="false">
       <div class="cutin-text"><b data-i18n>きれいになった！</b></div>
+    </div>
+  </div>
+  <!-- ずかん（見つけた落としもの）。全部そろうと、とくべつイラスト -->
+  <div class="zukan" id="zukan" hidden>
+    <div class="zkcard">
+      <p class="zktitle">📖 <span data-i18n>ずかん</span> <span id="zkNum"></span></p>
+      <div class="zkgrid" id="zkGrid"></div>
+      <p class="zknote" id="zkNote"></p>
+      <div class="cbtns">
+        <button class="sign btn" id="zkArtBtn" type="button" hidden data-i18n>🎁 とくべつイラスト</button>
+        <button class="sign btn" id="zkClose" type="button" data-i18n>とじる</button>
+      </div>
+    </div>
+  </div>
+  <div class="clear" id="zkArt" hidden>
+    <div class="card">
+      <img class="artimg" id="zkArtImg" alt="" draggable="false">
+      <p class="cline" id="zkArtTitle"></p>
+      <p class="cnote" id="zkArtLine"></p>
+      <div class="cbtns"><button class="sign btn" id="zkArtBack" type="button" data-i18n>もどる</button></div>
     </div>
   </div>
   <div id="pops" aria-hidden="true"></div>

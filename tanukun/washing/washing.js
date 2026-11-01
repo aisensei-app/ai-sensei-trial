@@ -161,7 +161,8 @@ const S = {
   drops: [], sparks: [], ripples: [],
   showerOn: false, sx: 0, sy: 0, brush: null,
   dirt0: 1, gauge: 100, asked: {},
-  lastInput: 0, tickle: 0, said: {}
+  lastInput: 0, tickle: 0, said: {},
+  newZ: [], zkJust: false          // このあそびで、ずかんに初めて登録した小物の id・ずかんがそろった（結果の画面でとくべつイラスト）
 };
 const events = [];
 
@@ -272,24 +273,95 @@ function makeDirt(name) {
   gridFrom(sd.dirt, sd.dirtGrid);
 }
 
-/* ---------- くっついている小物（貝がら・ヒトデ・コンブ） ---------- */
+/* ---------- くっついている小物と、ずかん ----------
+   ZUKAN … 小物の定義表。絵（SRC の key）を足して、ここに1行書けば種類がふえる（ずかんの数も自動）。
+     id（記録の名前。あとで変えない）・key（SRC の絵の名前）・group（どの場所に出るか。shell・star・kelp・rare）・weight（出やすさ。同じ group の中で）・w（絵の幅）
+     name・line（ずかんの名前とひとこと。3言語は washing.i18n.js）
+   rare は、ときどき（chance）出る特別な場所。rare の定義が1つも無ければ出ない */
+const ZUKAN = [
+  { id: 'conch', key: 'conch', group: 'shell', weight: 1, w: 40, name: 'まきがい',   line: 'くるくる うずまきの かいがら' },
+  { id: 'clam',  key: 'clam',  group: 'shell', weight: 1, w: 46, name: 'にまいがい', line: 'ぱかっと ひらく かいがら' },
+  { id: 'star',  key: 'star',  group: 'star',  weight: 1, w: 50, name: 'ヒトデ',     line: 'おほしさまみたいな いきもの' },
+  { id: 'kelp1', key: 'kelp1', group: 'kelp',  weight: 1, w: 50, name: 'コンブ',     line: 'ぬるぬる ひろがる うみのくさ' },
+  { id: 'kelp2', key: 'kelp2', group: 'kelp',  weight: 1, w: 48, name: 'ワカメ',     line: 'ひらひら ゆれる うみのくさ' }
+];
 const ITEM_SPOTS = {
-  front: [{ k: ['conch', 'clam'], name: '貝がら', at: [[205, 300], [330, 385], [470, 270]] },
-          { k: ['star'], name: 'ヒトデ', at: [[300, 470], [160, 420], [480, 400]] },
-          { k: ['kelp1', 'kelp2'], name: 'コンブ', at: [[250, 250], [110, 470], [420, 700]] }],
-  back:  [{ k: ['conch', 'clam'], name: '貝がら', at: [[250, 270], [400, 300]].map(([x, y]) => bk(x, y)) },
-          { k: ['star'], name: 'ヒトデ', at: [[225, 500], [180, 380]].map(([x, y]) => bk(x, y)) },
-          { k: ['kelp1', 'kelp2'], name: 'コンブ', at: [[480, 470], [150, 300]].map(([x, y]) => bk(x, y)) }],
+  front: [{ g: 'shell', at: [[205, 300], [330, 385], [470, 270]] },
+          { g: 'star', at: [[300, 470], [160, 420], [480, 400]] },
+          { g: 'kelp', at: [[250, 250], [110, 470], [420, 700]] },
+          { g: 'rare', chance: 0.4, at: [[360, 255], [170, 340], [330, 520], [400, 640], [170, 620]] }],
+  back:  [{ g: 'shell', at: [[250, 270], [400, 300]].map(([x, y]) => bk(x, y)) },
+          { g: 'star', at: [[225, 500], [180, 380]].map(([x, y]) => bk(x, y)) },
+          { g: 'kelp', at: [[480, 470], [150, 300]].map(([x, y]) => bk(x, y)) },
+          { g: 'rare', chance: 0.4, at: [[300, 260], [200, 450], [420, 430]].map(([x, y]) => bk(x, y)) }],
   pit: []
 };
-const ITEM_W = { conch: 40, clam: 46, star: 50, kelp1: 50, kelp2: 48 };
+const ITEM_W = {}; ZUKAN.forEach((z) => { ITEM_W[z.key] = z.w; });
+const pickWeighted = (list) => { let r = Math.random() * list.reduce((a, z) => a + z.weight, 0); for (const z of list) { if ((r -= z.weight) < 0) return z; } return list[0]; };
 function makeItems(name) {
-  SIDES[name].items = ITEM_SPOTS[name].map((s) => {
-    const [x, y] = pick(s.at), key = pick(s.k);
-    return { key, name: s.name, x, y, rot: rnd(-0.6, 0.6), hp: 1, stuck: true, vx: 0, vy: 0, vr: 0 };
+  SIDES[name].items = ITEM_SPOTS[name].filter((s) => ZUKAN.some((z) => z.group === s.g) && (s.chance == null || Math.random() < s.chance)).map((s) => {
+    const [x, y] = pick(s.at), z = pickWeighted(ZUKAN.filter((q) => q.group === s.g));
+    return { id: z.id, key: z.key, name: z.name, x, y, rot: rnd(-0.6, 0.6), hp: 1, stuck: true, vx: 0, vy: 0, vr: 0 };
   });
 }
 function drawItem(x, it) { stamp(x, it.key, it.x, it.y, ITEM_W[it.key], it.rot, 1); }
+
+/* ---------- ずかん（記録・画面） ----------
+   記録は、この端末の localStorage（tanu-washing-zukan。{id: とれた数}）だけ。そろったときのとくべつイラストを見たかは tanu-washing-zukan-done
+   とくべつイラスト（ZK_SPECIAL）は、src が null の間は仮の絵（準備中）。絵ができたら img/sp_zukan.webp（tools/make_washing_art.py の REWARD_IDS に zukan）を文字列で書く */
+const ZK_KEY = 'tanu-washing-zukan', ZK_DONE = 'tanu-washing-zukan-done';
+const ZK_SPECIAL = { src: null, title: 'ずかんコンプリート！', line: 'ぜんぶ あつめたね！ ありがとう〜！' };
+let zkSeen = {}, zkDoneSeen = false;
+try { zkSeen = JSON.parse(localStorage.getItem(ZK_KEY) || '{}') || {}; zkDoneSeen = localStorage.getItem(ZK_DONE) === '1'; } catch (e) { zkSeen = {}; }
+const zkFound = () => ZUKAN.filter((z) => zkSeen[z.id]).length;
+const zkBtn = document.getElementById('zkBtn');
+function zkUpdate() { document.getElementById('zkCount').textContent = zkFound() + '/' + ZUKAN.length; }
+function zkSave() { try { localStorage.setItem(ZK_KEY, JSON.stringify(zkSeen)); if (zkDoneSeen) localStorage.setItem(ZK_DONE, '1'); } catch (e) {} }
+// 小物がとれたとき（または最後のシャワーで流れ落ちたとき）。初めてなら true
+function zkRegister(it) {
+  const isNew = !zkSeen[it.id];
+  zkSeen[it.id] = (zkSeen[it.id] || 0) + 1;
+  if (isNew) {
+    S.newZ.push(it.id);
+    if (zkFound() === ZUKAN.length && !zkDoneSeen) S.zkJust = true;
+    zkBtn.classList.remove('bump'); void zkBtn.offsetWidth; zkBtn.classList.add('bump');
+  }
+  zkSave(); zkUpdate();
+  return isNew;
+}
+const zkEl = document.getElementById('zukan'), zkGrid = document.getElementById('zkGrid');
+function zkOpen() {
+  document.getElementById('zkNum').textContent = zkFound() + ' / ' + ZUKAN.length;
+  zkGrid.textContent = '';
+  for (const z of ZUKAN) {
+    const have = zkSeen[z.id], d = document.createElement('div');
+    d.className = 'zk' + (have ? '' : ' lock');
+    const pic = document.createElement('div'); pic.className = 'pic';
+    const im = document.createElement('img'); im.src = IMG[z.key].src; im.alt = ''; im.draggable = false; pic.appendChild(im);
+    const nm = document.createElement('b'); nm.textContent = have ? tr(z.name) : '？？？';
+    const cn = document.createElement('span'); cn.className = 'cnt'; cn.textContent = have ? '×' + zkSeen[z.id] : '';
+    const ln = document.createElement('i'); ln.textContent = have ? tr(z.line) : tr('どこかに いるかも…');
+    d.append(pic, nm, cn, ln); zkGrid.appendChild(d);
+  }
+  const all = zkFound() === ZUKAN.length;
+  document.getElementById('zkNote').textContent = all ? '' : tr('ぜんぶ あつめると、とくべつイラストが 見られるよ');
+  document.getElementById('zkArtBtn').hidden = !(all && zkDoneSeen);
+  zkEl.hidden = false;
+}
+zkBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); audioInit(); zkOpen(); });
+zkBtn.addEventListener('click', (e) => { e.stopPropagation(); if (e.detail === 0) zkOpen(); });   // キーボードで押したとき
+document.getElementById('zkClose').addEventListener('click', () => { zkEl.hidden = true; });
+const zkArtEl = document.getElementById('zkArt');
+document.getElementById('zkArtBtn').addEventListener('click', () => {
+  const img = document.getElementById('zkArtImg');
+  img.src = ZK_SPECIAL.src || rewardPlaceholder({ id: 'zukan' });
+  img.alt = tr(ZK_SPECIAL.title);
+  document.getElementById('zkArtTitle').textContent = tr(ZK_SPECIAL.title);
+  document.getElementById('zkArtLine').textContent = tr(ZK_SPECIAL.line);
+  zkArtEl.hidden = false; requestAnimationFrame(() => zkArtEl.classList.add('on'));
+});
+document.getElementById('zkArtBack').addEventListener('click', () => { zkArtEl.classList.remove('on'); setTimeout(() => { zkArtEl.hidden = true; }, 400); });
+zkUpdate();
 
 /* ---------- 泡としずく ---------- */
 // 白い泡（お股を隠す泡。透けない）
@@ -719,6 +791,7 @@ for (const t of ['brush', 'shower']) {
 function updateTools() {
   for (const t of ['brush', 'shower']) { toolBtns[t].classList.toggle('on', S.tool === t); toolBtns[t].setAttribute('aria-pressed', String(S.tool === t)); }
   toolEl.hidden = S.stage !== 'wash';
+  zkBtn.hidden = S.stage !== 'wash';
 }
 function toolStep() {
   // 汚れが落ちたのにブラシのままなら、シャワーのアイコンをゆらしてさそう
@@ -738,7 +811,7 @@ function toCutin() {
   // 残った少しの汚れは消す。くっついている小物も落とす
   for (const n of ['front', 'back', 'pit']) {
     const sd = SIDES[n]; clr(sd.dirt.x); sd.dirtGrid.fill(0);
-    for (const it of sd.items) if (it.stuck) { it.stuck = false; it.vx = rnd(-60, 60); it.vy = -100; it.vr = rnd(-5, 5); }
+    for (const it of sd.items) if (it.stuck) { zkRegister(it); it.stuck = false; it.vx = rnd(-60, 60); it.vy = -100; it.vr = rnd(-5, 5); }   // 残った小物も、シャワーで流れて、ずかんに入る
   }
   updateTurnBtn(); updateTools(); hintEl.classList.add('small');
   bubbleEl.classList.remove('on'); bubbleUntil = 0;   // 前のひとことは消す（帯に重ならないように）
@@ -792,7 +865,20 @@ function rewardPlaceholder(rw) {
   x.fillText('ごほうびの絵「' + rw.id + '」（準備中）', 320, 762);
   return c.toDataURL('image/png');
 }
+const ctitleEl = document.querySelector('#clear .ctitle'), cZkEl = document.getElementById('cZk');
 function showReward() {
+  ctitleEl.textContent = tr('ピカピカ！'); ctitleEl.classList.remove('long'); cZkEl.hidden = true;
+  if (S.zkJust) {   // ずかんがそろった！ → ごほうびの代わりに、とくべつイラスト
+    S.zkJust = false; zkDoneSeen = true; zkSave();
+    ctitleEl.textContent = tr('ずかんコンプリート！'); ctitleEl.classList.add('long');
+    const im = document.getElementById('rwImg');
+    im.src = ZK_SPECIAL.src || rewardPlaceholder({ id: 'zukan' }); im.alt = tr(ZK_SPECIAL.title);
+    document.getElementById('cLine').textContent = tr(ZK_SPECIAL.title);
+    document.getElementById('cNote').textContent = tr(ZK_SPECIAL.line);
+    document.getElementById('rwNew').style.visibility = 'visible';
+    document.getElementById('rwCount').textContent = tr('ずかん {a} / {b}', { a: zkFound(), b: ZUKAN.length });
+    return;
+  }
   let r = Math.random() * REWARDS.reduce((a, s) => a + s.weight, 0), rw = REWARDS[0];
   for (const s of REWARDS) { if ((r -= s.weight) < 0) { rw = s; break; } }
   const isNew = !rwSeen[rw.id];
@@ -805,6 +891,7 @@ function showReward() {
   document.getElementById('cNote').textContent = tr(rw.line);
   document.getElementById('rwNew').style.visibility = isNew ? 'visible' : 'hidden';
   document.getElementById('rwCount').textContent = tr('あつめた {a} / {b}', { a: REWARDS.filter((s) => rwSeen[s.id]).length, b: REWARDS.length });
+  if (S.newZ.length) { cZkEl.textContent = tr('ずかんに あたらしく {n}こ とうろく！', { n: S.newZ.length }); cZkEl.hidden = false; }
 }
 function toClear() {
   S.stage = 'clear';
@@ -1115,6 +1202,7 @@ function handleEvents() {
     if (type === 'item') {
       const sc = toScr(v.x, v.y);
       pop(tr('{n}、とれた！', { n: tr(v.name) }), sc.x, sc.y - 30, 'small'); sfx.sparkle(1);
+      if (zkRegister(v)) { pop(tr('ずかんに とうろく！'), sc.x, sc.y + 8, 'blue small'); sfx.sparkle(1.6); }
       for (let i = 0; i < 6; i++) spark(v.x + rnd(-24, 24), v.y + rnd(-24, 24), 0.9, true);
     } else if (type === 'plop') sfx.plop();
   }
@@ -1141,7 +1229,7 @@ function handleEvents() {
 /* ---------- はじめる ---------- */
 function start() {
   S.stage = 'wash'; S.side = 'front'; S.turn = null; setPose('stand'); S.face = null;
-  cutinEl.hidden = true; S.cutT = 0;
+  cutinEl.hidden = true; S.cutT = 0; S.newZ = []; S.zkJust = false;
   S.tool = 'brush'; S.foamRef = null; S.cf = 1; S.finT = 0; S.clearShown = false; toolBtns.shower.classList.remove('ask');
   S.showerOn = false; showerSound(false); makeCrotchFoam();
   S.drops = []; S.sparks = []; S.ripples = []; S.tickle = 0; S.said = {}; S.asked = {};
