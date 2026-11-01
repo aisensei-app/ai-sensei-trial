@@ -14,6 +14,7 @@
 rare group は「ときどき出る特別な場所」（ITEM_SPOTS の chance 0.4。定義が無ければ出ない）。いまの種類は5（まきがい・にまいがい・ヒトデ・コンブ・ワカメ）→ 1〜2回遊ぶとそろう。**継続の目的には少ないので、絵を足して10〜12種に（レア入り）する予定**。
 記録は localStorage の tanu-washing-zukan（この端末のみ）・tanu-washing-zukan-done。**カットインのとき、まだ体にくっついている小物も、シャワーで流れて図鑑に入る**（取り残しでがっかりしないように）。
 特別イラスト＝ZK_SPECIAL（src が null の間は仮の絵）。絵ができたら washing/art/sp_zukan_src.* → make_washing_art.py（REWARD_IDS に zukan 済み）→ img/sp_zukan.webp → ZK_SPECIAL.src を 'img/sp_zukan.webp' に。3言語は washing.i18n.js（中国語は要確認）。
+図鑑にふやす小物の絵（7種：うにのから・さんご・ハイビスカスの花びら・シーグラス・ヤドカリ・真珠・金のヒトデ）は、ユーザーが ChatGPT で描く。プロンプトは washing/ZUKAN_PROMPTS.md（届いたら make_washing_art.py に切り分けを足して ZUKAN に追加）。
 **2026-11-02 洗い終わったときのカットイン**（ユーザー「いきなり過ぎて戸惑う」）：汚れが 0% になったら、すぐ真上からのシャワーではなく、まず約1.5秒のカットイン（笑顔の丸い絵＋水色の帯「きれいになった！」が右から入って左へ抜ける。ぽんぽこリズムの「スピードアップ！」と同じ形）→ そのあと真上からのシャワー → 結果の画面。
 流れ：stage は wash → **cutin（toCutin・cutinStep。CUTIN_SEC=1.5）** → finale（toFinale）→ clear。カットインの間は、まえ向きの立ち絵に戻し・笑顔（happy）・残りの汚れと小物を消し・前のひとことの吹き出しを消し・キラキラ＋シュッの音。笑顔は仕上げのシャワーのあいだも続く。
 笑顔の絵＝img/cut_face.webp（本編の笑い顔 images/happy.webp を 208,4,442,238 で切りぬき、水色の背景にのせて 320×320。make_washing_art.py の make_cutface）。3言語（「きれいになった！」）。帯の高さは胸のあたり（OY+345*K）。
