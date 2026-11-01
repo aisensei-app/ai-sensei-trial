@@ -29,10 +29,10 @@
     <div class="sign hint" id="hint"></div>
   </div>
 
-  <!-- 左下：ブラシゲージ・シャワーゲージ（使っている方が明るい。使っていない方は回復していく） -->
-  <div class="sign tools brush" id="tools" aria-hidden="true">
-    <div class="tool tb"><span class="ti">🪥</span><span class="tbar"><span class="tfill" id="tgB"></span></span></div>
-    <div class="tool tw"><span class="ti">🚿</span><span class="tbar"><span class="tfill" id="tgW"></span></span></div>
+  <!-- タヌくんの右上：道具（ブラシ・シャワー）。タップで切りかえ。選んでいる方が光る（位置は washing.js の placeTools） -->
+  <div class="tools" id="tools" role="group" aria-label="道具" data-i18n-attr="aria-label">
+    <button class="tool on" id="tBrush" type="button" aria-pressed="true" aria-label="ブラシ" data-i18n-attr="aria-label"><img src="img/item_brush.webp" alt=""></button>
+    <button class="tool" id="tShower" type="button" aria-pressed="false" aria-label="シャワー" data-i18n-attr="aria-label"><span class="temoji">🚿</span></button>
   </div>
 
   <!-- 右下：まえ・うしろを入れかえる -->

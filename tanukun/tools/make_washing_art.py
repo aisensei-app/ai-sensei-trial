@@ -77,6 +77,22 @@ def components(mask, step=4):
     return boxes
 
 
+# うしろの絵の縮め方（倍率・横・縦）。まえの立ち絵と形の重なりがいちばん大きい値（重なり 83%。しっぽの向きがちがう分は残る）。
+# washing.js の BACK（座標の変換）と同じ値にすること：新しい位置 = 古い位置 × k ＋ (x0, y0 − PAD + PAD × k)
+BACK_FIT = (0.94, 10, 48)
+
+
+def refit(name, fit):
+    """720×940 の絵を k 倍に縮めて、(x0, y0) に置きなおす"""
+    k, x0, y0 = fit
+    im = Image.open(OUT / (name + '.webp')).convert('RGBA')
+    im = im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS)
+    out = Image.new('RGBA', (CANVAS[0], CANVAS[1] + PAD), (0, 0, 0, 0))
+    out.alpha_composite(im, (x0, y0))
+    out.save(OUT / (name + '.webp'), 'WEBP', quality=90, method=6)
+    print('縮めました:', name, fit)
+
+
 def match_colors(name, ref, y_from=200):
     """name の絵の色を、ref の絵にそろえる（両方とも不透明な所のうち、y_from より下＝顔をのぞいた体の所で、チャンネルごとに平均と散らばりを合わせる）"""
     a = np.asarray(Image.open(OUT / (name + '.webp')).convert('RGBA')).astype(np.float64)
@@ -100,6 +116,9 @@ def main():
         out.alpha_composite(img, (max(dx, 0), max(dy + pad, 0)), (max(-dx, 0), max(-(dy + pad), 0)))
         out.save(OUT / (name + '.webp'), 'WEBP', quality=90, method=6)
         print('できました:', OUT / (name + '.webp'))
+    # うしろの絵は、まえより一回り大きかった（ユーザーの指摘「うしろの方がガタイが大きい？」）→ まえの形といちばん重なるように縮める
+    for n in ('back', 'lookback'):
+        refit(n, BACK_FIT)
     # ふり返りの絵は、真後ろの絵より少し色が薄い（ユーザーの指摘）→ 体の重なる所（首から下）で、色の平均と散らばりを真後ろの絵にそろえる
     match_colors('lookback', 'back')
     # 小物

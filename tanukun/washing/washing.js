@@ -94,12 +94,21 @@ const ZONES = {
   banzai: [{ cx: 290, cy: 452, rx: 168, ry: 108, s: 'jb', f: 1, name: 'belly' },
            { cx: 210, cy: 300, rx: 72, ry: 50, s: 'jcL', f: 0.3, name: 'chest' },
            { cx: 385, cy: 312, rx: 70, ry: 50, s: 'jcR', f: 0.3, name: 'chest' }],
+  // うしろ：左のお尻・右のお尻（しっぽの下）・しっぽの横（2026-11-02 ユーザー「しっぽの横あたりも、ぷるん」）。座標は縮める前の絵の座標で書き、下で BACK に合わせる
   back:   [{ cx: 234, cy: 495, rx: 100, ry: 90, s: 'jb', f: 1, name: 'butt' },
-           { cx: 410, cy: 485, rx: 90, ry: 82, s: 'jcR', f: 0.6, name: 'butt' }],
+           { cx: 410, cy: 485, rx: 90, ry: 82, s: 'jcR', f: 0.6, name: 'butt' },
+           { cx: 525, cy: 470, rx: 78, ry: 78, s: 'jcL', f: 0.5, name: 'butt' }],
   mojimoji: [], shake: []
 };
+/* うしろの絵は、まえより一回り大きかったので縮めた（tools/make_washing_art.py の BACK_FIT）。
+   うしろの座標は縮める前の絵の座標で書いておき、ここで変換する：新しい位置 = 古い位置 × k ＋ (dx, dy) */
+const BACK = { k: 0.94, dx: 10, dy: 40 * 0.94 + 48 - 40 };
+const bk = (x, y) => [x * BACK.k + BACK.dx, y * BACK.k + BACK.dy];
+const unBk = (x, y) => [(x - BACK.dx) / BACK.k, (y - BACK.dy) / BACK.k];
+const bkE = (e) => { const [cx, cy] = bk(e.cx, e.cy); return Object.assign({}, e, { cx, cy, rx: e.rx * BACK.k, ry: e.ry * BACK.k }); };
+ZONES.back = ZONES.back.map(bkE);
 ZONES.lookback = ZONES.back;
-const LOOK_FACE = { cx: 262, cy: 92, rx: 62, ry: 66 };   // ふり返ったときの横顔（うしろでは、ここに汚れ・泡をのせない）
+const LOOK_FACE = bkE({ cx: 262, cy: 92, rx: 62, ry: 66 });   // ふり返ったときの横顔（うしろでは、ここに汚れ・泡をのせない）
 const CROTCH = { cx: 242, cy: 570, rx: 92, ry: 62 };                // まえ：お股のあたり（さわるともじもじ）
 const PIT_HINT = [{ cx: 140, cy: 300, rx: 40, ry: 44 }, { cx: 408, cy: 290, rx: 40, ry: 44 }];   // まえ：ここをこすると、ばんざい
 const PITS = [{ cx: 165, cy: 245, rx: 34, ry: 50 }, { cx: 466, cy: 252, rx: 34, ry: 52 }];       // ばんざい：脇
@@ -118,7 +127,14 @@ function resize() {
   OX = W / 2 - BODY_CX * K;
   OY = H - bottom - FLOOR * K;
 }
-addEventListener('resize', resize); resize();
+addEventListener('resize', () => { resize(); placeTools(); }); resize();
+// 道具のアイコンは、タヌくんの右上（頭の右の上）。画面のはしや上のゲージにかからないように
+function placeTools() {
+  const el = document.getElementById('tools'); if (!el) return;
+  const x = OX + 610 * K, y = OY + 40 * K;
+  el.style.left = Math.min(W - 44, Math.max(W * 0.72, x)) + 'px';
+  el.style.top = Math.max(150, y) + 'px';
+}
 // 息：体が足もとを中心に、ゆっくりふくらむ（BR.sx, BR.sy）。指の位置も、それに合わせて直す
 const BR = { sx: 1, sy: 1 };
 const toImg = (x, y) => {
@@ -130,8 +146,8 @@ const toScr = (x, y) => ({ x: OX + (BODY_CX + (x - BODY_CX) * BR.sx + S.shakeX) 
 /* ---------- 状態 ---------- */
 const S = {
   t: 0, stage: 'wash',             // wash（洗う。ブラシとシャワーを行き来する）→ finale（仕上げのシャワー）→ clear
-  tool: 'brush', bg: 1, wg: 1,     // いまの道具・ブラシゲージ・シャワーゲージ（0〜1）
-  noFoamT: 0, foamRef: null,       // シャワーで流す泡がない時間・汚れが落ちたときの泡の量（ゲージ用）
+  tool: 'brush',                   // いまの道具（brush・shower。右上のアイコンで切りかえ）
+  foamRef: null,                   // 汚れが落ちたときの泡の量（ゲージ用）
   cf: 1, finT: 0,                  // お股の泡の大きさ（1 → 最後に小さく）・仕上げの時間
   side: 'front', pose: 'stand', poseUntil: 0, turn: null,
   bx: { y: 0, v: 0 }, by: { y: 0, v: 0 }, jb: { y: 0, v: 0 }, jcL: { y: 0, v: 0 }, jcR: { y: 0, v: 0 },
@@ -214,7 +230,7 @@ const DIRT_AREAS = {   // [中心x, 中心y, 横, 縦, 数]
   front: [[325, 48, 70, 22, 1], [270, 290, 120, 40, 3], [270, 440, 140, 80, 5], [100, 430, 32, 70, 2], [470, 320, 55, 110, 2], [520, 545, 45, 30, 1],
           [200, 720, 45, 60, 1], [410, 720, 45, 60, 1], [205, 840, 40, 25, 1], [415, 840, 40, 25, 1]],
   back:  [[360, 60, 50, 30, 1], [320, 260, 150, 70, 5], [232, 505, 60, 45, 2], [470, 480, 70, 50, 2], [110, 420, 30, 60, 1], [550, 420, 30, 60, 1],
-          [215, 730, 45, 60, 1], [400, 730, 45, 60, 1]],
+          [215, 730, 45, 60, 1], [400, 730, 45, 60, 1]].map(([x, y, rx, ry, n]) => [...bk(x, y), rx * BACK.k, ry * BACK.k, n]),
   pit:   [[PITS[0].cx, PITS[0].cy, 14, 22, 1], [PITS[1].cx, PITS[1].cy, 14, 22, 1]]
 };
 function stamp(x, key, cx, cy, w, rot, alpha) {
@@ -257,9 +273,9 @@ const ITEM_SPOTS = {
   front: [{ k: ['conch', 'clam'], name: '貝がら', at: [[205, 300], [330, 385], [470, 270]] },
           { k: ['star'], name: 'ヒトデ', at: [[300, 470], [160, 420], [480, 400]] },
           { k: ['kelp1', 'kelp2'], name: 'コンブ', at: [[250, 250], [110, 470], [420, 700]] }],
-  back:  [{ k: ['conch', 'clam'], name: '貝がら', at: [[250, 270], [400, 300]] },
-          { k: ['star'], name: 'ヒトデ', at: [[225, 500], [180, 380]] },
-          { k: ['kelp1', 'kelp2'], name: 'コンブ', at: [[480, 470], [150, 300]] }],
+  back:  [{ k: ['conch', 'clam'], name: '貝がら', at: [[250, 270], [400, 300]].map(([x, y]) => bk(x, y)) },
+          { k: ['star'], name: 'ヒトデ', at: [[225, 500], [180, 380]].map(([x, y]) => bk(x, y)) },
+          { k: ['kelp1', 'kelp2'], name: 'コンブ', at: [[480, 470], [150, 300]].map(([x, y]) => bk(x, y)) }],
   pit: []
 };
 const ITEM_W = { conch: 40, clam: 46, star: 50, kelp1: 50, kelp2: 48 };
@@ -272,20 +288,49 @@ function makeItems(name) {
 function drawItem(x, it) { stamp(x, it.key, it.x, it.y, ITEM_W[it.key], it.rot, 1); }
 
 /* ---------- 泡としずく ---------- */
+// 白い泡（お股を隠す泡。透けない）
 function bubbleAt(x, cx, cy, r) {
   x.beginPath(); x.arc(cx, cy, r, 0, Math.PI * 2);
-  x.fillStyle = 'rgba(255,255,255,.82)'; x.fill();
-  x.lineWidth = 1.2; x.strokeStyle = 'rgba(150,185,220,.85)'; x.stroke();
-  x.fillStyle = 'rgba(255,255,255,1)'; x.beginPath(); x.arc(cx - r * 0.35, cy - r * 0.35, r * 0.25, 0, Math.PI * 2); x.fill();
+  const g = x.createRadialGradient(cx - r * 0.3, cy - r * 0.3, r * 0.1, cx, cy, r);
+  g.addColorStop(0, '#ffffff'); g.addColorStop(0.75, '#f6faff'); g.addColorStop(1, '#dfeaf6');
+  x.fillStyle = g; x.fill();
+  x.lineWidth = 1.4; x.strokeStyle = 'rgba(160,190,220,.7)'; x.stroke();
+  x.fillStyle = 'rgba(255,255,255,1)'; x.beginPath(); x.ellipse(cx - r * 0.38, cy - r * 0.42, r * 0.22, r * 0.14, -0.6, 0, Math.PI * 2); x.fill();
 }
+/* シャボン玉の泡（2026-11-02 ユーザー：シャボン玉っぽく、虹色を含ませて）。
+   ふちが虹色に光る、透き通った玉。先に何種類か絵を作っておき、それを押して並べる（毎回描くより軽い） */
+const SOAP = [];
+function makeSoap() {
+  const R = 40;
+  for (let v = 0; v < 6; v++) {
+    const c = document.createElement('canvas'); c.width = c.height = R * 2 + 4;
+    const x = c.getContext('2d'), o = R + 2, rot = v * Math.PI / 3;
+    // 中：ほとんど透明。ふちに向かって少し白く
+    const body = x.createRadialGradient(o, o, R * 0.2, o, o, R);
+    body.addColorStop(0, 'rgba(255,255,255,0.06)'); body.addColorStop(0.7, 'rgba(255,255,255,0.16)'); body.addColorStop(1, 'rgba(255,255,255,0.55)');
+    x.fillStyle = body; x.beginPath(); x.arc(o, o, R, 0, Math.PI * 2); x.fill();
+    // ふちの虹色（色の帯を、玉ごとに少し回す）
+    const hues = ['rgba(255,120,200,.55)', 'rgba(255,220,120,.5)', 'rgba(120,240,200,.5)', 'rgba(120,190,255,.55)', 'rgba(200,140,255,.55)', 'rgba(255,120,200,.55)'];
+    const lg = x.createLinearGradient(o + Math.cos(rot) * R, o + Math.sin(rot) * R, o - Math.cos(rot) * R, o - Math.sin(rot) * R);
+    hues.forEach((h, i) => lg.addColorStop(i / (hues.length - 1), h));
+    x.lineWidth = R * 0.16; x.strokeStyle = lg; x.beginPath(); x.arc(o, o, R * 0.9, 0, Math.PI * 2); x.stroke();
+    x.lineWidth = 1.5; x.strokeStyle = 'rgba(255,255,255,.85)'; x.beginPath(); x.arc(o, o, R - 0.8, 0, Math.PI * 2); x.stroke();
+    // 光の反射（窓のような大きい光と、小さな点）
+    x.fillStyle = 'rgba(255,255,255,.9)';
+    x.beginPath(); x.ellipse(o - R * 0.42, o - R * 0.45, R * 0.24, R * 0.12, -0.75, 0, Math.PI * 2); x.fill();
+    x.fillStyle = 'rgba(255,255,255,.7)'; x.beginPath(); x.arc(o + R * 0.45, o + R * 0.5, R * 0.07, 0, Math.PI * 2); x.fill();
+    SOAP.push(c);
+  }
+}
+function soapAt(x, cx, cy, r) { const c = SOAP[(Math.random() * SOAP.length) | 0]; x.drawImage(c, cx - r * 1.05, cy - r * 1.05, r * 2.1, r * 2.1); }
 // 泡は、マスごとに上限まで（同じ所をこすり続けても、もこもこになりすぎない）。まえの顔の上にはのせない
 const onFace = (x, y, pose) => (pose === 'back' || pose === 'lookback' ? inE(x, y, LOOK_FACE) : ((x - FACE.cx) / (FACE.rx * 0.95)) ** 2 + ((y - FACE.cy + 8) / (FACE.ry * 0.95)) ** 2 < 1);
-function addFoam(sd, pose, px, py, R, n) {
+function addFoam(sd, pose, px, py, R, n, ok) {
   for (let i = 0; i < (n || 2); i++) {
     const a = Math.random() * Math.PI * 2, d = Math.sqrt(Math.random()) * R * 0.9, cx = px + Math.cos(a) * d, cy = py + Math.sin(a) * d;
-    if (!isOn(pose, cx, cy) || onFace(cx, cy, pose)) continue;
+    if (!isOn(pose, cx, cy) || onFace(cx, cy, pose) || (ok && !ok(cx, cy))) continue;
     if (sd.foamGrid[cellOf(cx, cy)] >= 0.7) continue;
-    bubbleAt(sd.foam.x, cx, cy, rnd(7, 15));   // 泡は大きめ（ユーザーの要望）
+    soapAt(sd.foam.x, cx, cy, rnd(6, 17));   // シャボン玉。大小を混ぜる
     eachCell(cx, cy, 14, (j) => { sd.foamGrid[j] = Math.min(1, sd.foamGrid[j] + 0.12); });
   }
 }
@@ -305,10 +350,11 @@ function partAt(x, y) {
   if (!isBody(x, y)) return null;
   if (y > 640) return 'leg';
   if (p === 'back' || p === 'lookback') {
-    if (y < 165) return 'head';
-    if (x > 320 && y > 400 && !inE(x, y, ZONES.back[0])) return 'tail';
-    if (inE(x, y, ZONES.back[0])) return 'butt';
-    if (x < 135 || x > 520) return 'arm';
+    const [ox, oy] = unBk(x, y);   // うしろの場所分けの線は、縮める前の座標で書いてある
+    if (oy < 165) return 'head';
+    if (ZONES.back.some((z) => inE(x, y, z))) return 'butt';
+    if (ox > 320 && oy > 400) return 'tail';
+    if (ox < 135 || ox > 520) return 'arm';
     return 'back';
   }
   if (p === 'banzai') {
@@ -331,7 +377,11 @@ function scrub(x0, y0, x1, y1, part) {
     const x = x0 + (x1 - x0) * s / n, y = y0 + (y1 - y0) * s / n;
     if (!isBody(x, y) && !isBody(x, y - 12) && !isBody(x, y + 12)) continue;
     eachCell(x, y, BRUSH, (i) => { removed += sd.dirtGrid[i]; sd.dirtGrid[i] = 0; });
-    if (S.pose !== 'mojimoji') addFoam(foamSd, S.pose, x, y, BRUSH);
+    if (S.pose !== 'mojimoji') {
+      // ばんざいのとき、上げた腕など「ふだんの立ち絵の形の外」についた泡は、ばんざい専用の泡（腕を下ろすと見えない）
+      if (S.pose === 'banzai') { addFoam(SIDES.pit, 'banzai', x, y, BRUSH, 2, (fx, fy) => !isOn('stand', fx, fy)); addFoam(foamSd, 'banzai', x, y, BRUSH, 2, (fx, fy) => isOn('stand', fx, fy)); }
+      else addFoam(foamSd, S.pose, x, y, BRUSH);
+    }
     // 小物：何度かこすると取れる
     for (const it of sd.items) if (it.stuck && Math.hypot(it.x - x, it.y - y) < 32) {
       it.hp -= 0.05; it.rot += rnd(-0.05, 0.05);
@@ -528,7 +578,6 @@ cv.addEventListener('pointermove', (e) => {
   if (S.tool === 'brush') {
     if (part && part !== 'crotch') {
       scrub(ptr.x, ptr.y, p.x, p.y, part); sfx.rub(); rubReact(part, d);
-      useBrush(d);   // ブラシゲージが減る
     }
     S.brush = part && part !== 'crotch' ? { x: p.x, y: p.y, a: Math.sin(S.t * 30) * 0.15 } : null;
     // おなか・お尻：指につられて動く（こすった向きに）
@@ -606,54 +655,34 @@ function purun(x, y) {
   compDirty = true;
 }
 
-/* ---------- ブラシとシャワー（2つのゲージで、自動で入れかわる。2026-11-02 ユーザーの案） ----------
-   ・ブラシで体をこすっている間はブラシゲージが減る（BRUSH_PX 分こすると 0）。0 になったらシャワーへ
-   ・シャワーを出している間はシャワーゲージが減る（SHOWER_SEC 秒で 0）。0 になったらブラシへ
-   ・使っていない方のゲージは、スーっと回復する（RECOVER_SEC 秒で満タン）
-   ・汚れがもう残っていないときはシャワーのまま（ゲージを満タンにする）。シャワーで流す泡がないまま少したつと、ブラシへ */
-const BRUSH_PX = 2600, SHOWER_SEC = 4, RECOVER_SEC = 2.6;
+/* ---------- ブラシとシャワー（右上のアイコンをタップして切りかえる。2026-11-02 ユーザー：ゲージでの自動切りかえはやめた） ---------- */
 const toolEl = document.getElementById('tools');
-const tgB = document.getElementById('tgB'), tgW = document.getElementById('tgW');
+const toolBtns = { brush: document.getElementById('tBrush'), shower: document.getElementById('tShower') };
 const dirtLeft = () => dirtOf('front') + dirtOf('back') + dirtOf('pit');
 const dirtDone = () => dirtLeft() / S.dirt0 < 0.12;
-function useBrush(d) { S.bg = Math.max(0, S.bg - d / BRUSH_PX); }
 function setTool(t, quiet) {
   if (S.tool === t) return;
-  S.tool = t; S.noFoamT = 0;
-  S.brush = null;
+  S.tool = t; S.brush = null;
   if (t === 'shower') {
     if (ptr) { S.showerOn = true; S.sx = ptr.x; S.sy = ptr.y; showerSound(true); }
-    if (!quiet) { say('foam', true); sfx.whoosh(); }
-    setHint('<b>シャワーで、泡を流してね</b><br><span class="sub">指でなぞると、上からシャワーが出るよ。おなかや胸・お尻をタップすると…？</span>');
+    setHint('<b>指でなぞると、シャワーが出るよ</b><br><span class="sub">泡を流してね。おなかや胸・お尻をタップすると…？</span>');
   } else {
     S.showerOn = false; showerSound(false);
-    if (!quiet) { say('toBrush', true); sfx.whoosh(); }
-    setHint('<b>ブラシで、よごれをこすってね</b><br><span class="sub">脇の下をこすると、ばんざいしてくれるよ。右下のボタンで、うしろも洗えるよ</span>');
+    setHint('<b>ブラシで、よごれをこすってね</b><br><span class="sub">右上のアイコンで、ブラシとシャワーを切りかえられるよ</span>');
   }
-  const sc = toScr(325, 40); pop(t === 'shower' ? '🚿 シャワー！' : '🪥 ブラシ！', sc.x, sc.y + 30, 'small blue');
+  if (!quiet) sfx.whoosh();
+  toolBtns.shower.classList.remove('ask');
   updateTools();
 }
+for (const t of ['brush', 'shower']) toolBtns[t].addEventListener('click', (e) => { e.stopPropagation(); audioInit(); setTool(t); });
 function updateTools() {
-  tgB.style.width = Math.round(S.bg * 100) + '%';
-  tgW.style.width = Math.round(S.wg * 100) + '%';
-  toolEl.classList.toggle('brush', S.tool === 'brush');
-  toolEl.classList.toggle('shower', S.tool === 'shower');
+  for (const t of ['brush', 'shower']) { toolBtns[t].classList.toggle('on', S.tool === t); toolBtns[t].setAttribute('aria-pressed', String(S.tool === t)); }
   toolEl.hidden = S.stage !== 'wash';
 }
-function toolStep(h) {
-  if (S.stage !== 'wash') return;
-  if (S.tool === 'brush') {
-    S.wg = Math.min(1, S.wg + h / RECOVER_SEC);
-    if (S.bg <= 0) setTool('shower');
-    else if (dirtDone()) setTool('shower');   // 汚れが落ちたら、仕上げに泡を流す
-  } else {
-    S.bg = Math.min(1, S.bg + h / RECOVER_SEC);
-    if (S.showerOn) S.wg = Math.max(0, S.wg - h / SHOWER_SEC);
-    const foam = foamOf('front') + foamOf('back');
-    if (dirtDone()) { S.wg = Math.max(S.wg, 0.35); return; }   // 汚れが残っていなければ、シャワーのまま
-    if (S.wg <= 0) setTool('brush');
-    else if (foam < 2 && !S.showerOn) { S.noFoamT += h; if (S.noFoamT > 1.2 && S.bg > 0.6) setTool('brush'); }
-    else S.noFoamT = 0;
+function toolStep() {
+  // 汚れが落ちたのにブラシのままなら、シャワーのアイコンをゆらしてさそう
+  if (S.stage === 'wash' && S.tool === 'brush' && dirtDone() && !S.said.toShower) {
+    S.said.toShower = S.t; toolBtns.shower.classList.add('ask'); say('foam', true);
   }
 }
 
@@ -680,7 +709,7 @@ function finaleStep(h) {
 }
 function toClear() {
   S.stage = 'clear';
-  for (const n of ['front', 'back']) { SIDES[n].foamGrid.fill(0); clr(SIDES[n].foam.x); clr(SIDES[n].wet.x); }
+  for (const n of ['front', 'back', 'pit']) { SIDES[n].foamGrid.fill(0); clr(SIDES[n].foam.x); clr(SIDES[n].wet.x); }
   compDirty = true;
   updateGauge(); sfx.fanfare(); setFace('shy', 99);
   say('clean', true);
@@ -698,7 +727,10 @@ document.getElementById('again').addEventListener('click', () => {
 
 /* ---------- 泡を流す（シャワーの水・流れ落ちる水） ---------- */
 function rinse(x, y, r, amount, alpha) {
-  const sd = cur();
+  if (S.pose === 'banzai') rinseLayer(SIDES.pit, x, y, r, amount, alpha);   // 上げた腕の泡
+  rinseLayer(cur(), x, y, r, amount, alpha);
+}
+function rinseLayer(sd, x, y, r, amount, alpha) {
   let had = 0;
   eachCell(x, y, r, (i) => { had += sd.foamGrid[i]; sd.foamGrid[i] = Math.max(0, sd.foamGrid[i] - amount); });
   if (had <= 0.01) return;
@@ -741,7 +773,7 @@ function step(h) {
   // 息：足もとを中心に、ゆっくりふくらむ（いつも）
   const br = Math.sin(S.t * 2 * Math.PI / 3.4);
   BR.sx = 1 + 0.006 * br; BR.sy = 1 + 0.012 * br;
-  toolStep(h);
+  toolStep();
   if (S.stage === 'finale') finaleStep(h);
   // 取れた小物：床に落ちて、少しして消える
   for (const n of ['front', 'back', 'pit']) for (const it of SIDES[n].items) if (!it.stuck && !it.gone) {
@@ -752,7 +784,8 @@ function step(h) {
   }
   // シャワーの水
   if (S.tool === 'shower' && S.stage === 'wash' && S.showerOn && Math.random() < 0.9) {
-    for (let i = 0; i < 2; i++) S.drops.push({ x: S.sx + rnd(-16, 16), y: S.sy - 150, vx: rnd(-25, 25), vy: rnd(650, 800), r: rnd(2, 3.5), life: 1.5, target: S.sy + rnd(-30, 20) });
+    // 水はたっぷり、広めに（2026-11-02 ユーザー：流せる量を多く、爽快に）
+    for (let i = 0; i < 5; i++) S.drops.push({ x: S.sx + rnd(-34, 34), y: S.sy - 150, vx: rnd(-30, 30), vy: rnd(700, 860), r: rnd(2, 3.8), life: 1.5, target: S.sy + rnd(-40, 30) });
   }
   const zs = ZONES[S.pose] || [];
   for (const d of S.drops) {
@@ -761,7 +794,7 @@ function step(h) {
       // 体をつたって流れ落ちる水：通った所の泡を少しずつ流す
       d.x += d.vx * h; d.y += d.vy * h;
       if (!isBody(d.x, d.y) || d.life <= 0) { d.run = false; d.free = true; d.vy = 60; d.life = 0.8; continue; }
-      if (Math.random() < 0.5) rinse(d.x, d.y, 12, 0.08, 0.35);
+      if (Math.random() < 0.6) rinse(d.x, d.y, 22, 0.15, 0.5);
       continue;
     }
     d.vy += 1500 * h; d.x += d.vx * h; d.y += d.vy * h;
@@ -769,7 +802,7 @@ function step(h) {
     if (d.y > FLOOR) { d.dead = true; if (Math.random() < 0.25) S.ripples.push({ x: d.x, t: 0 }); continue; }
     // 水は、指のあたり（target）で体に当たる。上の方の体は通りぬける（シャワーを当てたい所に当てられるように）
     if (d.y >= d.target && isBody(d.x, d.y)) {
-      rinse(d.x, d.y + 8, 22, 0.25, 0.6);
+      rinse(d.x, d.y + 8, 40, 0.5, 0.95);
       if (Math.random() < 0.06) wetDrop(d.x + rnd(-14, 14), d.y + rnd(0, 26));
       // おなか・胸・お尻に当たった水は、ぽよんとはねる（半分くらい。残りは体をつたって流れる）
       const z = zs.find((q) => inE(d.x, d.y, q));
@@ -810,8 +843,9 @@ function recompose() {
   if (S.pose === 'stand' && S.face && FACES[S.face]) x.drawImage(FACES[S.face], 0, -TOP);
   const base = basePose();
   if (S.pose !== 'shake') drawLayers(x, cur(), S.pose === base ? null : S.pose);
-  if (S.pose === 'banzai') {   // 脇の汚れ
+  if (S.pose === 'banzai') {   // 脇の汚れと、上げた腕の泡
     x.drawImage(SIDES.pit.dirt.c, 0, -TOP);
+    x.drawImage(SIDES.pit.foam.c, 0, -TOP);
   }
   compDirty = false;
   return true;
@@ -936,11 +970,12 @@ function drawFloorFx() {   // 床に落ちた水の輪
 let cfBubbles = [];
 function makeCrotchFoam() {
   cfBubbles = [];
-  for (let i = 0; i < 16; i++) {
-    const a = (i / 16) * Math.PI * 2 + rnd(-0.2, 0.2), d = rnd(0.55, 0.95);
-    cfBubbles.push({ ux: Math.cos(a) * d, uy: Math.sin(a) * d, r: rnd(13, 20), ph: rnd(0, 6) });
+  // 白い大きな泡を少しだけ（2026-11-02 ユーザー：白いまま、大きさ2倍、丸の数を減らす）
+  for (let i = 0; i < 7; i++) {
+    const a = (i / 7) * Math.PI * 2 + rnd(-0.25, 0.25), d = rnd(0.5, 0.8);
+    cfBubbles.push({ ux: Math.cos(a) * d, uy: Math.sin(a) * d, r: rnd(26, 38), ph: rnd(0, 6) });
   }
-  for (let i = 0; i < 7; i++) cfBubbles.push({ ux: rnd(-0.45, 0.45), uy: rnd(-0.4, 0.4), r: rnd(15, 22), ph: rnd(0, 6) });
+  cfBubbles.push({ ux: rnd(-0.15, 0.15), uy: rnd(-0.15, 0.1), r: rnd(32, 40), ph: rnd(0, 6) });
 }
 function drawCrotchFoam() {
   if (S.side !== 'front') return;
@@ -1057,18 +1092,19 @@ function handleEvents() {
 /* ---------- はじめる ---------- */
 function start() {
   S.stage = 'wash'; S.side = 'front'; S.turn = null; setPose('stand'); S.face = null;
-  S.tool = 'brush'; S.bg = 1; S.wg = 1; S.noFoamT = 0; S.foamRef = null; S.cf = 1; S.finT = 0; S.clearShown = false;
+  S.tool = 'brush'; S.foamRef = null; S.cf = 1; S.finT = 0; S.clearShown = false; toolBtns.shower.classList.remove('ask');
   S.showerOn = false; showerSound(false); makeCrotchFoam();
   S.drops = []; S.sparks = []; S.ripples = []; S.tickle = 0; S.said = {}; S.asked = {};
   for (const n of ['front', 'back', 'pit']) {
     const sd = SIDES[n]; clr(sd.foam.x); clr(sd.wet.x); sd.foamGrid.fill(0);
     makeDirt(n); makeItems(n);
+    // （pit の foam は、ばんざいで上げた腕についた泡）
   }
   S.side0 = { front: dirtOf('front') + dirtOf('pit'), back: dirtOf('back') };
   S.dirt0 = Math.max(1, dirtOf('front') + dirtOf('back') + dirtOf('pit'));
   S.gauge = -1; updateGauge(); updateTurnBtn(); updateTools(); turnBtn.classList.remove('ask');
   compDirty = true; S.lastInput = S.t;
-  setHint('<b>ブラシで、よごれをこすってね</b><br><span class="sub">ブラシのゲージがなくなると、シャワーに変わるよ。右下のボタンで、うしろも洗えるよ</span>');
+  setHint('<b>ブラシで、よごれをこすってね</b><br><span class="sub">右上のアイコンで、ブラシとシャワーを切りかえ。右下のボタンで、うしろも洗えるよ</span>');
   setTimeout(() => say('start', true), 700);
 }
 
@@ -1082,6 +1118,7 @@ Promise.all(KEYS.map((k) => load(SRC[k]))).then((imgs) => {
     for (let i = 0; i < IW * CH; i++) m[i] = d[i * 4 + 3];
     MASK[p] = m;
   }
+  makeSoap(); placeTools();
   document.getElementById('loading').remove();
   start();
   let last = performance.now(), acc = 0;

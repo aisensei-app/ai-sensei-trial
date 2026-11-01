@@ -90,16 +90,13 @@ body.leaving::after{animation:tanu-veil-leave .42s cubic-bezier(.45,0,.7,.6) bot
 /* 中国語のとき：中国語の字体を優先（本編の style.css と同じ） */
 html[lang="zh"] body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC","Noto Sans CJK SC",sans-serif}
 
-/* ブラシゲージ・シャワーゲージ（左下）。使っている道具の方を明るく、もう片方はうすく（回復していく） */
-.tools{position:fixed;z-index:5;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 16px);
-  display:flex;flex-direction:column;gap:5px;width:min(46vw,190px);padding:6px 10px}
-.tool{display:flex;align-items:center;gap:6px;opacity:.45;transition:opacity .3s}
-.ti{font-size:18px;line-height:1}
-.tbar{flex:1;height:10px;border-radius:999px;background:#eadfca;border:1.5px solid var(--wood);overflow:hidden}
-.tfill{display:block;height:100%;width:100%;border-radius:999px;transition:width .15s linear}
-.tb .tfill{background:linear-gradient(90deg,#ffd58a,#f2a33c)}
-.tw .tfill{background:linear-gradient(90deg,#cfe9ff,#4aa8e8)}
-.tools.brush .tb,.tools.shower .tw{opacity:1}
-.tools.brush .tb .ti,.tools.shower .tw .ti{animation:toolbob 1s ease-in-out infinite}
-@keyframes toolbob{50%{transform:translateY(-2px) rotate(-8deg)}}
-@media (prefers-reduced-motion: reduce){.tools .ti{animation:none!important}}
+/* 道具（ブラシ・シャワー）。タヌくんの右上に、丸いアイコンをたてに2つ。選んでいる方が光る（位置は washing.js が決める） */
+.tools{position:fixed;z-index:5;display:flex;flex-direction:column;gap:10px;transform:translate(-50%,0)}
+.tool{width:58px;height:58px;border-radius:50%;border:3px solid var(--wood);background:var(--cream);box-shadow:0 3px 0 var(--wood);
+  display:grid;place-items:center;padding:0;cursor:pointer;opacity:.6;transition:transform .15s,opacity .2s,background .2s}
+.tool img{width:46px;height:auto;transform:rotate(-20deg);pointer-events:none}
+.temoji{font-size:30px;line-height:1}
+.tool.on{opacity:1;background:#fff3b8;box-shadow:0 3px 0 var(--wood),0 0 0 4px rgba(255,214,90,.7);transform:scale(1.08)}
+.tool:active{transform:translateY(3px) scale(1.02)}
+.tool.ask{animation:wob 1.2s ease-in-out infinite;opacity:1}
+@media (prefers-reduced-motion: reduce){.tool.ask{animation:none;outline:3px solid var(--sea)}}
