@@ -71,8 +71,13 @@ body{margin:0;background:#bfe3f7;color:var(--ink);font-family:var(--font);overfl
 .clear.on{opacity:1}
 .card{display:flex;flex-direction:column;align-items:center;gap:8px;max-width:420px;width:100%;text-align:center}
 .ctitle{margin:0;font-size:clamp(40px,12vw,60px);font-weight:900;color:#fff;-webkit-text-stroke:7px var(--wood);paint-order:stroke fill}
-.cline{margin:0;font-size:17px;font-weight:900}
-.cnote{margin:0;font-size:13px;font-weight:700;color:#6b4a2c}
+.cline{margin:0;font-size:20px;font-weight:900}
+.cnote{margin:0;font-size:14px;font-weight:700;color:#6b4a2c}
+/* ごほうびの特別イラスト（集める。シーソーと同じ形） */
+.cardtop{display:flex;justify-content:space-between;align-items:center;width:100%;font-size:12px;font-weight:700}
+.chip{font-size:11px;font-weight:700;background:var(--sun);border:1.5px solid var(--wood);border-radius:999px;padding:0 7px;letter-spacing:.05em}
+.count{font-variant-numeric:tabular-nums}
+#rwImg{width:100%;max-height:48vh;object-fit:contain;border-radius:16px;border:3px solid var(--wood);box-shadow:0 4px 0 var(--wood);background:#fff}
 .cbtns{display:flex;gap:10px;margin-top:8px}
 .cbtns .btn{font-size:16px;padding:8px 20px}
 

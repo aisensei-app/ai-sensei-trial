@@ -746,6 +746,42 @@ function finaleStep(h) {
   S.cf = Math.max(0, 1 - S.finT / 1.6);
   if (S.finT > 1.25 && !S.clearShown) { S.clearShown = true; showerSound(false); toClear(); }
 }
+/* ---------- ごほうびの特別イラスト（ピカピカになったら1枚。出やすさは weight。シーソーと同じ「集める」形） ----------
+   src が null の間は、仮の絵（準備中）を出す。絵ができたら img/sp_foam.webp のようなパスを文字列で書く（tools/make_washing_art.py が washing/art/sp_〇〇_src.* から作る）
+   集めた記録は、この端末の localStorage（tanu-washing-special）だけ。本編のアルバムとはまだつないでいない */
+const REWARDS = [
+  { id: 'foam',   weight: 6, src: null, title: '泡あわで、ふわふわ！', line: 'シャボン玉に包まれちゃった♪' },
+  { id: 'towel',  weight: 3, src: null, title: 'ほかほか〜',           line: 'タオルでふいたら、いい気持ち♪' },
+  { id: 'fluffy', weight: 1, src: null, title: 'もふもふ大爆発！',     line: 'ドライヤーで、毛がぶわ〜っ！' }
+];
+let rwSeen = {};
+try { rwSeen = JSON.parse(localStorage.getItem('tanu-washing-special') || '{}') || {}; } catch (e) { rwSeen = {}; }
+function rewardPlaceholder(rw) {
+  // 仮の絵：空の色の上に、立ち絵と「準備中」
+  const c = document.createElement('canvas'); c.width = 640; c.height = 800;
+  const x = c.getContext('2d');
+  const g = x.createLinearGradient(0, 0, 0, 800); g.addColorStop(0, '#bfe6ff'); g.addColorStop(1, '#eaf7ff');
+  x.fillStyle = g; x.fillRect(0, 0, 640, 800);
+  x.drawImage(IMG.stand, 0, 0, 640, 800);
+  x.fillStyle = 'rgba(255,255,255,.85)'; x.fillRect(0, 700, 640, 100);
+  x.fillStyle = '#3a2210'; x.font = '700 30px sans-serif'; x.textAlign = 'center';
+  x.fillText('ごほうびの絵「' + rw.id + '」（準備中）', 320, 762);
+  return c.toDataURL('image/png');
+}
+function showReward() {
+  let r = Math.random() * REWARDS.reduce((a, s) => a + s.weight, 0), rw = REWARDS[0];
+  for (const s of REWARDS) { if ((r -= s.weight) < 0) { rw = s; break; } }
+  const isNew = !rwSeen[rw.id];
+  rwSeen[rw.id] = (rwSeen[rw.id] || 0) + 1;
+  try { localStorage.setItem('tanu-washing-special', JSON.stringify(rwSeen)); } catch (e) {}
+  const img = document.getElementById('rwImg');
+  img.src = rw.src || rewardPlaceholder(rw);
+  img.alt = tr(rw.title) + ' ' + tr(rw.line);
+  document.getElementById('cLine').textContent = tr(rw.title);
+  document.getElementById('cNote').textContent = tr(rw.line);
+  document.getElementById('rwNew').style.visibility = isNew ? 'visible' : 'hidden';
+  document.getElementById('rwCount').textContent = tr('あつめた {a} / {b}', { a: REWARDS.filter((s) => rwSeen[s.id]).length, b: REWARDS.length });
+}
 function toClear() {
   S.stage = 'clear';
   for (const n of ['front', 'back', 'pit']) { SIDES[n].foamGrid.fill(0); clr(SIDES[n].foam.x); clr(SIDES[n].wet.x); }
@@ -755,8 +791,7 @@ function toClear() {
   for (let i = 0; i < 40; i++) { const x = rnd(80, 560), y = rnd(20, FLOOR - 40); if (isBody(x, y)) spark(x, y, rnd(0.8, 1.8), true); }
   // 結果の画面は、すぐにかぶせる（泡がこれ以上流れる前に）
   const el = document.getElementById('clear');
-  document.getElementById('cLine').textContent = tr('ふわふわ、いいにおい〜♪');
-  document.getElementById('cNote').textContent = tr('（ごほうびの絵は、これから入ります）');
+  showReward();
   el.hidden = false; requestAnimationFrame(() => el.classList.add('on'));
 }
 document.getElementById('again').addEventListener('click', () => {
