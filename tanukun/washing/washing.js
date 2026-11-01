@@ -85,7 +85,8 @@ const FENCE_Y = 250;                                                 // 竹の�
 // 目のあたり（汚れ・小物をのせない）
 const EYES = { cx: 325, cy: 116, rx: 100, ry: 40 };
 // お股を隠す泡（絵ごとの中心。この泡はシャワーで流れない）。MIN は最後に小さくなっても必ず隠れる大きさ
-const CROTCH_FOAM = { stand: { cx: 242, cy: 566 }, banzai: { cx: 248, cy: 565 }, mojimoji: { cx: 238, cy: 562 }, shake: { cx: 246, cy: 567 } };
+// もじもじ（手でお股を隠している絵）は、ここに書かない＝泡を出さない（手と泡がかぶらないように。2026-11-02 ユーザー）。
+const CROTCH_FOAM = { stand: { cx: 242, cy: 566 }, banzai: { cx: 248, cy: 565 }, shake: { cx: 246, cy: 567 } };
 const CF = { rx: 62, ry: 44, minRx: 46, minRy: 32 };
 const inE = (x, y, e, k) => ((x - e.cx) / e.rx) ** 2 + ((y - e.cy) / e.ry) ** 2 < (k || 1);
 // 揺れる所（絵ごと）。s：どのばねで動くか（jb＝おなか・お尻、jcL/jcR＝胸・もう片方のお尻）、f：指につられて動くか
