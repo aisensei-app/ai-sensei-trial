@@ -51,7 +51,24 @@ window.TANU_TEXT_I18N.en = Object.assign(window.TANU_TEXT_I18N.en || {}, {
   'ぷるんっ！': 'Jiggle!',
   'えへへ、はじいた〜': 'Hehe, it bounced off~',
   'ぶるぶる〜っ！': 'Shake shake~!',
-  'ピカピカになった〜！ ありがと♪': 'I\'m all clean~! Thank you♪'
+  'ピカピカになった〜！ ありがと♪': 'I\'m all clean~! Thank you♪',
+  // まえ・うしろ・脇（2026-11-01）
+  '↻ うしろ': '↻ Back',
+  '↻ まえ': '↻ Front',
+  '<b>よごれている所を、指でこすってね</b><br><span class="sub">脇の下をこすると、ばんざいしてくれるよ。右下のボタンで、うしろも洗えるよ</span>': '<b>Rub the dirty spots with your finger</b><br><span class="sub">Rub under his arms and he\'ll raise them. Use the button at the bottom right to wash his back</span>',
+  '<b>指でなぞると、上からシャワーが出るよ</b><br><span class="sub">泡を流してね。おなかや胸・お尻をタップすると…？</span>': '<b>Slide your finger to pour the shower from above</b><br><span class="sub">Rinse off the bubbles. And if you tap his belly, chest or bottom…?</span>',
+  'ばんざ〜い！ わきも洗って〜': 'Hands up~! Wash my armpits too~',
+  'わきは、くすぐった〜い！': 'My armpits are so ticklish~!',
+  'あはは、だめ〜！': 'Ahaha, nooo~!',
+  'せなか、きもちいい〜': 'Back scrubs feel great~',
+  'そこそこ〜♪': 'Right there~♪',
+  'ひゃっ、おしり〜！': 'Eek, my bottom~!',
+  'は、はずかしい〜': 'S-so embarrassing~',
+  'おしりも、ぽよん…': 'My bottom goes boing too…',
+  'うしろも、お願い〜': 'Do my back too, please~',
+  'まえも、お願い〜': 'Do my front too, please~',
+  'うしろの泡も、流して〜': 'Rinse the bubbles off my back too~',
+  'まえの泡も、流して〜': 'Rinse the bubbles off my front too~'
 });
 window.TANU_TEXT_I18N.zh = Object.assign(window.TANU_TEXT_I18N.zh || {}, {
   // 画面
@@ -100,5 +117,22 @@ window.TANU_TEXT_I18N.zh = Object.assign(window.TANU_TEXT_I18N.zh || {}, {
   'ぷるんっ！': 'Q弹！',
   'えへへ、はじいた〜': '嘿嘿，弹开啦～',
   'ぶるぶる〜っ！': '抖抖抖～！',
-  'ピカピカになった〜！ ありがと♪': '变得亮晶晶啦～！谢谢你♪'
+  'ピカピカになった〜！ ありがと♪': '变得亮晶晶啦～！谢谢你♪',
+  // まえ・うしろ・脇（2026-11-01）
+  '↻ うしろ': '↻ 背面',
+  '↻ まえ': '↻ 正面',
+  '<b>よごれている所を、指でこすってね</b><br><span class="sub">脇の下をこすると、ばんざいしてくれるよ。右下のボタンで、うしろも洗えるよ</span>': '<b>用手指搓一搓脏的地方吧</b><br><span class="sub">搓搓腋下，他会举起双手哦。用右下角的按钮，也能洗背面哦</span>',
+  '<b>指でなぞると、上からシャワーが出るよ</b><br><span class="sub">泡を流してね。おなかや胸・お尻をタップすると…？</span>': '<b>用手指滑动，上面就会出水哦</b><br><span class="sub">把泡泡冲掉吧。点一点肚子、胸口或屁股会…？</span>',
+  'ばんざ〜い！ わきも洗って〜': '举高高～！腋下也帮我洗洗～',
+  'わきは、くすぐった〜い！': '腋下好痒～！',
+  'あはは、だめ〜！': '哈哈，不要啦～！',
+  'せなか、きもちいい〜': '搓背好舒服～',
+  'そこそこ〜♪': '就是那里～♪',
+  'ひゃっ、おしり〜！': '呀，屁股～！',
+  'は、はずかしい〜': '好、好害羞～',
+  'おしりも、ぽよん…': '屁股也弹弹的…',
+  'うしろも、お願い〜': '背面也拜托啦～',
+  'まえも、お願い〜': '正面也拜托啦～',
+  'うしろの泡も、流して〜': '背上的泡泡也冲掉吧～',
+  'まえの泡も、流して〜': '前面的泡泡也冲掉吧～'
 });

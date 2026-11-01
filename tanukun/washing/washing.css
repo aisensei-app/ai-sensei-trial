@@ -57,6 +57,14 @@ body{margin:0;background:#bfe3f7;color:var(--ink);font-family:var(--font);overfl
   70%{opacity:1}100%{opacity:0;transform:translate(-50%,-120%) scale(1)}}
 #loading{position:fixed;inset:0;display:grid;place-items:center;font-weight:900;font-size:18px;color:var(--wood)}
 
+/* まえ・うしろのボタン（右下）。もう片方へさそうときは、ゆれる */
+.turn{position:fixed;z-index:5;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 18px);
+  font-size:16px;padding:9px 16px;background:var(--sun)}
+.turn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--wood)}
+.turn.ask{animation:wob 1.2s ease-in-out infinite}
+@keyframes wob{50%{transform:rotate(-3deg) scale(1.06)}}
+@media (prefers-reduced-motion: reduce){.turn.ask{animation:none;outline:3px solid var(--sea)}}
+
 /* ピカピカになったら（ごほうびの絵は、あとで入れる） */
 .clear{position:fixed;inset:0;z-index:9;display:grid;place-items:center;background:rgba(233,246,255,.78);opacity:0;transition:opacity .6s ease;
   padding:calc(env(safe-area-inset-top,0px) + 16px) max(16px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 16px) max(16px,env(safe-area-inset-left,0px))}
