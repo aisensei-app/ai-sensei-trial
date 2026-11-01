@@ -33,7 +33,7 @@ ART = {
     'banzai':   ('banzai_src.png',   0.5975, 52, -20, PAD),   # 重なり 93%（下半身）
     'mojimoji': ('mojimoji_src.png', 0.5925, 62, -5, PAD),    # 重なり 90%
     'shake':    ('shake_src.png',    0.59,   55, -4, PAD),    # 重なり 91%
-    'back':     ('back_src.png',     0.6025, 50, -31, PAD),   # 後ろ向き（大きさと足の位置をそろえた）
+    'back':     ('back_src.png',     0.6125, 51, -39, PAD),   # 真後ろ（大きさと足の位置をそろえた。ふり返りの絵は耳の位置が不自然なのでやめた）
 }
 # 小物のまとめ絵（items_src.png）を切り分けたときの名前（左上から右へ、上の段から順に）
 ITEMS = ['conch', 'clam', 'star', 'kelp1', 'kelp2', 'sand1', 'sand2', 'sand3', 'mud1', 'mud2', 'brush', 'dryer', 'bamboo']

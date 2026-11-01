@@ -50,7 +50,7 @@ const SRC = {
   banzai:   'img/banzai.webp',             // ばんざい（脇を洗う。720×940）
   mojimoji: 'img/mojimoji.webp',           // もじもじ（お股のあたり。720×940）
   shake:    'img/shake.webp',              // ぶるぶる（720×940）
-  back:     'img/back.webp',               // うしろ（ふり返り。720×940）
+  back:     'img/back.webp',               // うしろ（真後ろ。720×940）
   happy:    '../images/happy.webp',        // くすぐったい（笑う）… 顔だけ使う
   melt:     '../images/melt.webp',         // うっとり（頭を洗う）
   shy:      '../images/shy.webp',          // えへへ（おなか）
@@ -86,8 +86,8 @@ const ZONES = {
   banzai: [{ cx: 290, cy: 452, rx: 168, ry: 108, s: 'jb', f: 1, name: 'belly' },
            { cx: 210, cy: 300, rx: 72, ry: 50, s: 'jcL', f: 0.3, name: 'chest' },
            { cx: 385, cy: 312, rx: 70, ry: 50, s: 'jcR', f: 0.3, name: 'chest' }],
-  back:   [{ cx: 232, cy: 512, rx: 102, ry: 82, s: 'jb', f: 1, name: 'butt' },
-           { cx: 392, cy: 500, rx: 84, ry: 76, s: 'jcR', f: 0.6, name: 'butt' }],
+  back:   [{ cx: 234, cy: 495, rx: 100, ry: 90, s: 'jb', f: 1, name: 'butt' },
+           { cx: 410, cy: 485, rx: 90, ry: 82, s: 'jcR', f: 0.6, name: 'butt' }],
   mojimoji: [], shake: []
 };
 const CROTCH = { x0: 178, x1: 335, y0: 528 };                        // まえ：お股のあたり（おけのふちの上）
@@ -251,8 +251,7 @@ function bubbleAt(x, cx, cy, r) {
   x.fillStyle = 'rgba(255,255,255,1)'; x.beginPath(); x.arc(cx - r * 0.35, cy - r * 0.35, r * 0.25, 0, Math.PI * 2); x.fill();
 }
 // 泡は、マスごとに上限まで（同じ所をこすり続けても、もこもこになりすぎない）。まえの顔の上にはのせない
-const BACK_FACE = { cx: 405, cy: 112, rx: 52, ry: 58 };   // うしろ：ふり返った横顔
-const onFace = (x, y, pose) => (pose === 'back' ? inE(x, y, BACK_FACE) : ((x - FACE.cx) / (FACE.rx * 0.95)) ** 2 + ((y - FACE.cy + 8) / (FACE.ry * 0.95)) ** 2 < 1);
+const onFace = (x, y, pose) => pose !== 'back' && ((x - FACE.cx) / (FACE.rx * 0.95)) ** 2 + ((y - FACE.cy + 8) / (FACE.ry * 0.95)) ** 2 < 1;   // うしろは真後ろの絵なので顔なし
 function addFoam(sd, pose, px, py, R, n) {
   for (let i = 0; i < (n || 2); i++) {
     const a = Math.random() * Math.PI * 2, d = Math.sqrt(Math.random()) * R * 0.9, cx = px + Math.cos(a) * d, cy = py + Math.sin(a) * d;
@@ -281,7 +280,7 @@ function partAt(x, y) {
   if (!isBody(x, y)) return null;
   if (p === 'back') {
     if (y < 165) return 'head';
-    if (x > 335 && y > 405 && !inE(x, y, ZONES.back[0])) return 'tail';
+    if (x > 320 && y > 400 && !inE(x, y, ZONES.back[0])) return 'tail';
     if (inE(x, y, ZONES.back[0])) return 'butt';
     if (x < 135 || x > 520) return 'arm';
     return 'back';
