@@ -24,7 +24,7 @@ body{margin:0;background:#bfe3f7;color:var(--ink);font-family:var(--font);overfl
   display:flex;flex-direction:column;gap:8px}
 .row{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
 .sign{background:var(--cream);border:2px solid var(--wood);border-radius:12px 9px 13px 10px;box-shadow:0 3px 0 var(--wood);padding:5px 11px}
-.btn{pointer-events:auto;font-family:inherit;font-weight:900;color:var(--ink);cursor:pointer;text-decoration:none}
+.btn{pointer-events:auto;touch-action:manipulation;font-family:inherit;font-weight:900;color:var(--ink);cursor:pointer;text-decoration:none}
 .btn:focus-visible{outline:3px solid var(--sea);outline-offset:2px}
 #snd{font-size:13px;min-width:62px}
 .back{pointer-events:auto;color:var(--ink);text-decoration:none;font-weight:900;font-size:15px;line-height:1.5}
@@ -92,7 +92,7 @@ html[lang="zh"] body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",
 
 /* 道具（ブラシ・シャワー）。タヌくんの右上に、丸いアイコンをたてに2つ。選んでいる方が光る（位置は washing.js が決める） */
 .tools{position:fixed;z-index:5;display:flex;flex-direction:column;gap:10px;transform:translate(-50%,0)}
-.tool{width:58px;height:58px;border-radius:50%;border:3px solid var(--wood);background:var(--cream);box-shadow:0 3px 0 var(--wood);
+.tool{touch-action:manipulation;width:58px;height:58px;border-radius:50%;border:3px solid var(--wood);background:var(--cream);box-shadow:0 3px 0 var(--wood);
   display:grid;place-items:center;padding:0;cursor:pointer;opacity:.6;transition:transform .15s,opacity .2s,background .2s}
 .tool img{width:46px;height:auto;transform:rotate(-20deg);pointer-events:none}
 .temoji{font-size:30px;line-height:1}

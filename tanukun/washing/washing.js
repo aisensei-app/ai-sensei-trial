@@ -518,7 +518,9 @@ function updateTurnBtn() {
   turnBtn.textContent = tr(S.side === 'front' ? '↻ うしろ' : '↻ まえ');
   turnBtn.hidden = S.stage !== 'wash';
 }
-turnBtn.addEventListener('click', () => { audioInit(); turn(); });
+// まえ・うしろのボタンも、指がふれた瞬間に（道具のアイコンと同じ理由）。キーボードの Enter・スペースは click で
+turnBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); audioInit(); turn(); });
+turnBtn.addEventListener('click', (e) => { if (e.detail === 0) { audioInit(); turn(); } });
 function turn() {
   if (S.turn || S.stage !== 'wash') return;
   S.turn = { t: 0, swapped: false };
@@ -706,7 +708,12 @@ function setTool(t, quiet) {
   toolBtns.shower.classList.remove('ask');
   updateTools();
 }
-for (const t of ['brush', 'shower']) toolBtns[t].addEventListener('click', (e) => { e.stopPropagation(); audioInit(); endGuide(); setTool(t); });
+// 指がふれた瞬間に切りかえる（click を待たない）。スマホでは、こすった直後のタップを「ダブルタップ」とみなして
+// click が来ないことがあった（2026-11-02 ユーザー「すぐシャワーに変えようとしても反応しない」）
+for (const t of ['brush', 'shower']) {
+  toolBtns[t].addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); audioInit(); endGuide(); setTool(t); });
+  toolBtns[t].addEventListener('click', (e) => { e.stopPropagation(); setTool(t); });   // キーボードで押したとき
+}
 function updateTools() {
   for (const t of ['brush', 'shower']) { toolBtns[t].classList.toggle('on', S.tool === t); toolBtns[t].setAttribute('aria-pressed', String(S.tool === t)); }
   toolEl.hidden = S.stage !== 'wash';
