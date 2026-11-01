@@ -68,7 +68,16 @@ window.TANU_TEXT_I18N.en = Object.assign(window.TANU_TEXT_I18N.en || {}, {
   'うしろも、お願い〜': 'Do my back too, please~',
   'まえも、お願い〜': 'Do my front too, please~',
   'うしろの泡も、流して〜': 'Rinse the bubbles off my back too~',
-  'まえの泡も、流して〜': 'Rinse the bubbles off my front too~'
+  'まえの泡も、流して〜': 'Rinse the bubbles off my front too~',
+  // シャワールーム・ブラシとシャワーのゲージ・仕上げ（2026-11-02）
+  '南国のシャワールームのタヌくん': 'Tanu-kun in a tropical shower room',
+  '<b>ブラシで、よごれをこすってね</b><br><span class="sub">ブラシのゲージがなくなると、シャワーに変わるよ。右下のボタンで、うしろも洗えるよ</span>': '<b>Scrub the dirt with the brush</b><br><span class="sub">When the brush gauge runs out, it turns into a shower. Use the button at the bottom right to wash his back</span>',
+  '<b>ブラシで、よごれをこすってね</b><br><span class="sub">脇の下をこすると、ばんざいしてくれるよ。右下のボタンで、うしろも洗えるよ</span>': '<b>Scrub the dirt with the brush</b><br><span class="sub">Rub under his arms and he\'ll raise them. Use the button at the bottom right to wash his back</span>',
+  '<b>シャワーで、泡を流してね</b><br><span class="sub">指でなぞると、上からシャワーが出るよ。おなかや胸・お尻をタップすると…？</span>': '<b>Rinse off the bubbles with the shower</b><br><span class="sub">Slide your finger to pour water from above. And if you tap his belly, chest or bottom…?</span>',
+  '🚿 シャワー！': '🚿 Shower!',
+  '🪥 ブラシ！': '🪥 Brush!',
+  'もっと、ゴシゴシして〜': 'Scrub me some more~',
+  'さいごに、ザーッと流して〜！': 'One last big rinse~!'
 });
 window.TANU_TEXT_I18N.zh = Object.assign(window.TANU_TEXT_I18N.zh || {}, {
   // 画面
@@ -134,5 +143,14 @@ window.TANU_TEXT_I18N.zh = Object.assign(window.TANU_TEXT_I18N.zh || {}, {
   'うしろも、お願い〜': '背面也拜托啦～',
   'まえも、お願い〜': '正面也拜托啦～',
   'うしろの泡も、流して〜': '背上的泡泡也冲掉吧～',
-  'まえの泡も、流して〜': '前面的泡泡也冲掉吧～'
+  'まえの泡も、流して〜': '前面的泡泡也冲掉吧～',
+  // シャワールーム・ブラシとシャワーのゲージ・仕上げ（2026-11-02）
+  '南国のシャワールームのタヌくん': '在南国淋浴间里的狸君',
+  '<b>ブラシで、よごれをこすってね</b><br><span class="sub">ブラシのゲージがなくなると、シャワーに変わるよ。右下のボタンで、うしろも洗えるよ</span>': '<b>用刷子把脏东西刷掉吧</b><br><span class="sub">刷子的槽用完了，就会换成淋浴哦。点右下的按钮，也能洗背后</span>',
+  '<b>ブラシで、よごれをこすってね</b><br><span class="sub">脇の下をこすると、ばんざいしてくれるよ。右下のボタンで、うしろも洗えるよ</span>': '<b>用刷子把脏东西刷掉吧</b><br><span class="sub">刷刷胳肢窝，他会举起双手哦。点右下的按钮，也能洗背后</span>',
+  '<b>シャワーで、泡を流してね</b><br><span class="sub">指でなぞると、上からシャワーが出るよ。おなかや胸・お尻をタップすると…？</span>': '<b>用淋浴把泡泡冲掉吧</b><br><span class="sub">用手指划一划，上面就会出水哦。点一点肚子、胸口或屁股会…？</span>',
+  '🚿 シャワー！': '🚿 淋浴！',
+  '🪥 ブラシ！': '🪥 刷子！',
+  'もっと、ゴシゴシして〜': '再多刷刷我嘛～',
+  'さいごに、ザーッと流して〜！': '最后哗啦啦冲干净吧～！'
 });

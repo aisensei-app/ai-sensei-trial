@@ -77,6 +77,20 @@ def components(mask, step=4):
     return boxes
 
 
+def match_colors(name, ref, y_from=200):
+    """name の絵の色を、ref の絵にそろえる（両方とも不透明な所のうち、y_from より下＝顔をのぞいた体の所で、チャンネルごとに平均と散らばりを合わせる）"""
+    a = np.asarray(Image.open(OUT / (name + '.webp')).convert('RGBA')).astype(np.float64)
+    r = np.asarray(Image.open(OUT / (ref + '.webp')).convert('RGBA')).astype(np.float64)
+    m = (a[..., 3] > 220) & (r[..., 3] > 220)
+    m[:y_from + PAD] = False
+    for c in range(3):
+        sa, sr = a[..., c][m], r[..., c][m]
+        a[..., c] = (a[..., c] - sa.mean()) * (sr.std() / max(1e-6, sa.std())) + sr.mean()
+    out = Image.fromarray(np.clip(a, 0, 255).round().astype(np.uint8), 'RGBA')
+    out.save(OUT / (name + '.webp'), 'WEBP', quality=90, method=6)
+    print('色をそろえました:', name, '→', ref)
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     for name, (src, s, dx, dy, pad) in ART.items():
@@ -86,6 +100,8 @@ def main():
         out.alpha_composite(img, (max(dx, 0), max(dy + pad, 0)), (max(-dx, 0), max(-(dy + pad), 0)))
         out.save(OUT / (name + '.webp'), 'WEBP', quality=90, method=6)
         print('できました:', OUT / (name + '.webp'))
+    # ふり返りの絵は、真後ろの絵より少し色が薄い（ユーザーの指摘）→ 体の重なる所（首から下）で、色の平均と散らばりを真後ろの絵にそろえる
+    match_colors('lookback', 'back')
     # 小物
     items = key_out(Image.open(SRC / 'items_src.png'))
     boxes = components(np.asarray(items)[..., 3] > 40)

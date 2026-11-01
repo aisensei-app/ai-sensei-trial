@@ -11,8 +11,8 @@
 <body>
 <main id="washing">
 
-  <!-- 浜辺・おけのお風呂・タヌくん・汚れ・泡・シャワー・水しぶきは、ぜんぶこのキャンバスに描く -->
-  <canvas id="stage" aria-label="おけのお風呂に入ったタヌくん" data-i18n-attr="aria-label"></canvas>
+  <!-- 南国のシャワールーム・タヌくん・汚れ・泡・シャワー・水しぶきは、ぜんぶこのキャンバスに描く -->
+  <canvas id="stage" aria-label="南国のシャワールームのタヌくん" data-i18n-attr="aria-label"></canvas>
   <div id="loading" data-i18n>よみこみ中…</div>
 
   <!-- 上：タヌくんのところへ・よごれゲージ・音 -->
@@ -27,6 +27,12 @@
       <span class="gnum" id="gnum">100%</span>
     </div>
     <div class="sign hint" id="hint"></div>
+  </div>
+
+  <!-- 左下：ブラシゲージ・シャワーゲージ（使っている方が明るい。使っていない方は回復していく） -->
+  <div class="sign tools brush" id="tools" aria-hidden="true">
+    <div class="tool tb"><span class="ti">🪥</span><span class="tbar"><span class="tfill" id="tgB"></span></span></div>
+    <div class="tool tw"><span class="ti">🚿</span><span class="tbar"><span class="tfill" id="tgW"></span></span></div>
   </div>
 
   <!-- 右下：まえ・うしろを入れかえる -->
