@@ -80,6 +80,7 @@ def components(mask, step=4):
 # うしろの絵の縮め方（倍率・横・縦）。まえの立ち絵と形の重なりがいちばん大きい値（重なり 83%。しっぽの向きがちがう分は残る）。
 # washing.js の BACK（座標の変換）と同じ値にすること：新しい位置 = 古い位置 × k ＋ (x0, y0 − PAD + PAD × k)
 BACK_FIT = (0.94, 10, 48)
+SHOWER_CUT_Y = 472   # シャワーヘッドの元の絵で、これより上（横の管と壁の台）を切りとる
 
 
 def refit(name, fit):
@@ -121,6 +122,18 @@ def main():
         refit(n, BACK_FIT)
     # ふり返りの絵は、真後ろの絵より少し色が薄い（ユーザーの指摘）→ 体の重なる所（首から下）で、色の平均と散らばりを真後ろの絵にそろえる
     match_colors('lookback', 'back')
+    # シャワールームの背景（2026-11-02。ユーザーが Gemini で描いた絵。そのまま縮めて使う）
+    room = Image.open(SRC / 'room_src.png').convert('RGB')
+    room = room.resize((900, round(room.height * 900 / room.width)), Image.LANCZOS)
+    room.save(OUT / 'room.webp', 'WEBP', quality=86, method=6)
+    print('できました:', OUT / 'room.webp', room.size)
+    # シャワーヘッド（2026-11-02。指の上を動くので、壁につける横の管と丸い台は切りとって、頭と短い首だけにする）
+    sh = key_out(Image.open(SRC / 'showerhead_src.png'))
+    sh = sh.crop((0, SHOWER_CUT_Y, sh.width, sh.height))
+    sh = sh.crop(sh.getbbox())
+    sh = sh.resize((sh.width // 3, sh.height // 3), Image.LANCZOS)
+    sh.save(OUT / 'item_showerhead.webp', 'WEBP', quality=90, method=6)
+    print('できました:', OUT / 'item_showerhead.webp', sh.size)
     # 小物
     items = key_out(Image.open(SRC / 'items_src.png'))
     boxes = components(np.asarray(items)[..., 3] > 40)

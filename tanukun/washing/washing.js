@@ -70,7 +70,9 @@ const SRC = {
   mud1:     'img/item_mud1.webp',
   mud2:     'img/item_mud2.webp',
   brush:    'img/item_brush.webp',
-  bamboo:   'img/item_bamboo.webp'
+  bamboo:   'img/item_bamboo.webp',
+  shower:   'img/item_showerhead.webp',    // シャワーヘッド（2026-11-02。ユーザーが描いた絵。横の管は切りとった）
+  room:     'img/room.webp'                // シャワールームの背景（2026-11-02。ユーザーが描いた絵）
 };
 const POSES = ['stand', 'banzai', 'mojimoji', 'shake', 'back', 'lookback'];
 
@@ -702,7 +704,7 @@ function toFinale() {
 function finaleStep(h) {
   S.finT += h;
   // 上から、たっぷりのシャワー
-  for (let i = 0; i < 3; i++) S.drops.push({ x: rnd(120, 480), y: -60 - rnd(0, 120), vx: rnd(-20, 20), vy: rnd(700, 900), r: rnd(2, 3.5), life: 1.6, target: rnd(80, 700) });
+  for (let i = 0; i < 4; i++) S.drops.push({ x: BODY_CX + rnd(-60, 60), y: -60, vx: rnd(-140, 140), vy: rnd(700, 900), r: rnd(2, 3.5), life: 1.6, target: rnd(80, 700) });
   // お股の泡が、少しずつ流れて小さくなる（でも、いちばん小さくても必ず隠れる）
   S.cf = Math.max(0, 1 - S.finT / 1.6);
   if (S.finT > 1.25 && !S.clearShown) { S.clearShown = true; showerSound(false); toClear(); }
@@ -785,7 +787,7 @@ function step(h) {
   // シャワーの水
   if (S.tool === 'shower' && S.stage === 'wash' && S.showerOn && Math.random() < 0.9) {
     // 水はたっぷり、広めに（2026-11-02 ユーザー：流せる量を多く、爽快に）
-    for (let i = 0; i < 5; i++) S.drops.push({ x: S.sx + rnd(-34, 34), y: S.sy - 150, vx: rnd(-30, 30), vy: rnd(700, 860), r: rnd(2, 3.8), life: 1.5, target: S.sy + rnd(-40, 30) });
+    for (let i = 0; i < 5; i++) S.drops.push({ x: S.sx + rnd(-44, 44), y: S.sy - 145, vx: rnd(-30, 30), vy: rnd(700, 860), r: rnd(2, 3.8), life: 1.5, target: S.sy + rnd(-40, 30) });
   }
   const zs = ZONES[S.pose] || [];
   for (const d of S.drops) {
@@ -900,64 +902,13 @@ function drawRoom() {
   if (roomKey !== key) { roomKey = key; roomCache = makeRoom(); }
   ctx.drawImage(roomCache, 0, 0, W, H);
 }
+// 背景の絵（room.webp）を画面いっぱいに（高さに合わせ、はみ出す左右は切る）。タヌくんが目立つように、ほんの少しだけ淡く
 function makeRoom() {
   const c = document.createElement('canvas'); c.width = Math.round(W * DPR); c.height = Math.round(H * DPR);
   const x = c.getContext('2d'); x.scale(DPR, DPR);
-  const fenceY = OY + FENCE_Y * K, floorY = OY + (FLOOR - 26) * K;
-  // 空
-  const sky = x.createLinearGradient(0, 0, 0, fenceY);
-  sky.addColorStop(0, '#5fb6ee'); sky.addColorStop(1, '#c4e9fb');
-  x.fillStyle = sky; x.fillRect(0, 0, W, fenceY + 4);
-  // 雲
-  x.fillStyle = 'rgba(255,255,255,.9)';
-  for (const [cx, cy, s] of [[0.18, 0.2, 1], [0.78, 0.12, 0.8], [0.55, 0.32, 0.6]]) {
-    const X = W * cx, Y = fenceY * cy + 20, r = 26 * s * Math.max(1, W / 420);
-    for (const [dx, dy, k] of [[-1.3, 0.3, 0.7], [-0.5, -0.1, 1], [0.5, 0, 0.9], [1.3, 0.35, 0.65]]) { x.beginPath(); x.arc(X + dx * r, Y + dy * r, r * k, 0, Math.PI * 2); x.fill(); }
-  }
-  // 塀の向こうのヤシの葉（左右のはし）
-  const leaf = (bx, by, ang, len) => {
-    x.save(); x.translate(bx, by); x.rotate(ang);
-    x.strokeStyle = '#3f7a2c'; x.lineWidth = 3; x.beginPath(); x.moveTo(0, 0); x.quadraticCurveTo(len * 0.5, -len * 0.18, len, 0); x.stroke();
-    x.fillStyle = '#4f9a36';
-    for (let i = 1; i < 12; i++) {
-      const t = i / 12, px = len * t, py = -len * 0.18 * 4 * t * (1 - t) * 0.5, l = len * 0.28 * (1 - t * 0.6);
-      for (const s of [-1, 1]) { x.beginPath(); x.moveTo(px, py); x.quadraticCurveTo(px + l * 0.3, py + s * l * 0.5, px + l * 0.55, py + s * l * 0.9); x.lineTo(px + 6, py); x.fill(); }
-    }
-    x.restore();
-  };
-  const L = Math.max(120, W * 0.35);
-  leaf(-10, fenceY + 10, -0.55, L); leaf(-20, fenceY + 30, -0.15, L * 0.85);
-  leaf(W + 10, fenceY + 10, Math.PI + 0.55, L); leaf(W + 20, fenceY + 34, Math.PI + 0.15, L * 0.8);
-  // 竹の塀（たての竹を並べて、横に2本の竹でしばる）
-  const pole = Math.max(18, 30 * K);
-  for (let px = -pole * 0.3, i = 0; px < W + pole; px += pole, i++) {
-    const top = fenceY - (i % 3 === 1 ? 10 : i % 3 === 2 ? 4 : 0) * K * 2;
-    const g = x.createLinearGradient(px, 0, px + pole, 0);
-    g.addColorStop(0, '#9c8a3c'); g.addColorStop(0.35, '#d8c46a'); g.addColorStop(0.7, '#c2ad55'); g.addColorStop(1, '#857430');
-    x.fillStyle = g; x.fillRect(px + 1, top, pole - 2, floorY - top + 4);
-    x.fillStyle = '#7a6a2c'; x.beginPath(); x.ellipse(px + pole / 2, top, pole / 2 - 1, pole * 0.16, 0, 0, Math.PI * 2); x.fill();   // 切り口
-    x.fillStyle = '#e8db8f'; x.beginPath(); x.ellipse(px + pole / 2, top, pole / 2 - 4, pole * 0.1, 0, 0, Math.PI * 2); x.fill();
-    x.strokeStyle = 'rgba(110,94,38,.75)'; x.lineWidth = 2;   // 節
-    for (let ny = top + 40 * K + (i % 2) * 30 * K; ny < floorY; ny += 110 * K) { x.beginPath(); x.moveTo(px + 2, ny); x.lineTo(px + pole - 2, ny); x.stroke(); }
-  }
-  for (const ty of [fenceY + 60 * K, fenceY + 330 * K]) {   // 横の竹と、しばったひも
-    const h2 = Math.max(10, 16 * K);
-    const g = x.createLinearGradient(0, ty, 0, ty + h2);
-    g.addColorStop(0, '#c9b45c'); g.addColorStop(0.5, '#e5d382'); g.addColorStop(1, '#8f7c34');
-    x.fillStyle = g; x.fillRect(0, ty, W, h2);
-    x.fillStyle = '#6b4a24';
-    for (let px = pole * 1.5; px < W; px += pole * 3) { x.fillRect(px - 3, ty - 3, 6, h2 + 6); }
-  }
-  // 板の床（すのこ）と、まんなかの水はけ
-  const fg = x.createLinearGradient(0, floorY, 0, H);
-  fg.addColorStop(0, '#9b6b3e'); fg.addColorStop(1, '#6d4524');
-  x.fillStyle = fg; x.fillRect(0, floorY, W, H - floorY);
-  x.strokeStyle = 'rgba(60,34,14,.55)'; x.lineWidth = 2;
-  for (let fy = floorY + 10; fy < H; fy += Math.max(12, 22 * K)) { x.beginPath(); x.moveTo(0, fy); x.lineTo(W, fy); x.stroke(); }
-  x.fillStyle = 'rgba(255,255,255,.12)'; x.fillRect(0, floorY, W, 4);
-  // 足もとの、うすい水たまり
-  x.fillStyle = 'rgba(180,225,250,.35)';
-  x.beginPath(); x.ellipse(OX + BODY_CX * K, OY + (FLOOR - 4) * K, 300 * K, 26 * K, 0, 0, Math.PI * 2); x.fill();
+  const bg = IMG.room, s = Math.max(W / bg.width, H / bg.height);
+  x.drawImage(bg, (W - bg.width * s) / 2, H - bg.height * s, bg.width * s, bg.height * s);
+  x.fillStyle = 'rgba(255,250,240,.14)'; x.fillRect(0, 0, W, H);
   return c;
 }
 function drawFloorFx() {   // 床に落ちた水の輪
@@ -1002,10 +953,10 @@ function drawSpark(p) {
   ctx.fillStyle = 'rgba(255,255,255,' + a + ')'; ctx.beginPath(); ctx.arc(0, 0, s * 0.22, 0, Math.PI * 2); ctx.fill();
   ctx.restore();
 }
-// 竹のシャワー（小物の絵の上の部分＝横の筒と結び目だけ使う）。筒の口（絵の左はし）から水が出る
+// シャワーヘッド（丸い面から、雨のように水が出る）。(x, y) が水の出る所（面のまんなか）
 function drawShower(x, y) {
-  const im = IMG.bamboo, sw = im.width, sh = im.height * 0.52, sc = 1.25;
-  ctx.drawImage(im, 0, 0, sw, sh, x - 12 * sc, y - 56 * sc, sw * sc, sh * sc);
+  const im = IMG.shower, w = 150, h = w * im.height / im.width;
+  ctx.drawImage(im, x - w / 2, y - h * 0.72, w, h);
 }
 function drawBrush() {
   const b = S.brush, im = IMG.brush, w = 92, h = w * im.height / im.width;
@@ -1048,6 +999,7 @@ function render() {
   for (const p of S.sparks) drawSpark(p);
   if (S.brush && S.tool === 'brush' && S.stage === 'wash') drawBrush();
   if (S.tool === 'shower' && S.stage === 'wash' && S.showerOn) drawShower(S.sx, S.sy - 150);
+  if (S.stage === 'finale') drawShower(BODY_CX, -70);
   ctx.restore();
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   tanuTop = toScr(325, 10);
@@ -1119,6 +1071,9 @@ Promise.all(KEYS.map((k) => load(SRC[k]))).then((imgs) => {
     MASK[p] = m;
   }
   makeSoap(); placeTools();
+  // 道具のアイコンの絵（確認用の1ファイル版でも出るように、読みこんだ絵を使う）
+  toolBtns.brush.querySelector('img').src = IMG.brush.src;
+  toolBtns.shower.innerHTML = '<img class="shead" alt="" src="' + IMG.shower.src + '">';
   document.getElementById('loading').remove();
   start();
   let last = performance.now(), acc = 0;

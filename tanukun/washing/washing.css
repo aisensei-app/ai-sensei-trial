@@ -96,6 +96,7 @@ html[lang="zh"] body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",
   display:grid;place-items:center;padding:0;cursor:pointer;opacity:.6;transition:transform .15s,opacity .2s,background .2s}
 .tool img{width:46px;height:auto;transform:rotate(-20deg);pointer-events:none}
 .temoji{font-size:30px;line-height:1}
+.tool img.shead{width:46px;transform:none}
 .tool.on{opacity:1;background:#fff3b8;box-shadow:0 3px 0 var(--wood),0 0 0 4px rgba(255,214,90,.7);transform:scale(1.08)}
 .tool:active{transform:translateY(3px) scale(1.02)}
 .tool.ask{animation:wob 1.2s ease-in-out infinite;opacity:1}
