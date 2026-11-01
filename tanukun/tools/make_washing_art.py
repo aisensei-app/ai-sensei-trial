@@ -3,8 +3,11 @@
 使い方（tanukun フォルダで）:
     python3 tools/make_washing_art.py
 
-washing/art/stand_src.jpg（Gemini で描いた、腰みの・ネックレスなしの前向きの立ち絵。848×1264、背景はマゼンタ）
-  → washing/img/stand.webp（720×900。立ち絵 images/normal.webp とぴったり重なる大きさ・位置。背景は透明）
+washing/art/*_src（Gemini で描いた、腰みの・ネックレスなしの絵。背景はマゼンタ）
+  stand（前向き。848×1264）→ washing/img/stand.webp（720×900。立ち絵 images/normal.webp とぴったり重なる大きさ・位置。背景は透明）
+  banzai（ばんざい）・mojimoji（もじもじ）・shake（ぶるぶる）・back（後ろ向き・ふり返り）（1027×1532）
+    → washing/img/*.webp（720×940。上に PAD=40px の余白をつけて、上げた手や頭が切れないように。ゲームでは y=-40 に置く）
+  items（小物のまとめ絵）→ washing/img/item_*.webp（1つずつ切り分け。半分の大きさ）
 
 ・立ち絵と同じ並べ方にそろえるので、表情は今ある立ち絵（images/happy.webp など）の顔だけを、ゲームの中で上に重ねて使える
 ・FIT（倍率と、ずらす量）は、立ち絵と形がいちばん重なる値を探して決めた（重なり 96%。残りは腰みのの分）
@@ -13,6 +16,7 @@ washing/art/stand_src.jpg（Gemini で描いた、腰みの・ネックレスな
 import sys
 from pathlib import Path
 
+import numpy as np
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -22,21 +26,76 @@ from make_seesaw_art import key_out  # noqa: E402
 SRC = ROOT / 'washing' / 'art'
 OUT = ROOT / 'washing' / 'img'
 CANVAS = (720, 900)
+PAD = 40   # stand 以外の絵は、上にこの余白をつける
 ART = {
-    # 名前: (元の絵, 倍率, 横にずらす, 縦にずらす)
-    'stand': ('stand_src.jpg', 0.71, 56, 2),
+    # 名前: (元の絵, 倍率, 横にずらす, 縦にずらす, 上の余白)。倍率とずらす量は、立ち絵と下半身の形がいちばん重なる値
+    'stand':    ('stand_src.jpg',    0.71,   56,  2, 0),
+    'banzai':   ('banzai_src.png',   0.5975, 52, -20, PAD),   # 重なり 93%（下半身）
+    'mojimoji': ('mojimoji_src.png', 0.5925, 62, -5, PAD),    # 重なり 90%
+    'shake':    ('shake_src.png',    0.59,   55, -4, PAD),    # 重なり 91%
+    'back':     ('back_src.png',     0.6025, 50, -31, PAD),   # 後ろ向き（大きさと足の位置をそろえた）
 }
+# 小物のまとめ絵（items_src.png）を切り分けたときの名前（左上から右へ、上の段から順に）
+ITEMS = ['conch', 'clam', 'star', 'kelp1', 'kelp2', 'sand1', 'sand2', 'sand3', 'mud1', 'mud2', 'brush', 'dryer', 'bamboo']
+
+
+def components(mask, step=4):
+    """不透明な所のかたまりを、外わくの四角で返す（小さく縮めて数える。scipy なし）"""
+    small = mask[::step, ::step]
+    h, w = small.shape
+    seen = np.zeros_like(small, bool)
+    boxes = []
+    for y in range(h):
+        for x in range(w):
+            if not small[y, x] or seen[y, x]:
+                continue
+            stack = [(y, x)]; seen[y, x] = True
+            x0 = x1 = x; y0 = y1 = y; n = 0
+            while stack:
+                cy, cx = stack.pop(); n += 1
+                x0, x1, y0, y1 = min(x0, cx), max(x1, cx), min(y0, cy), max(y1, cy)
+                for ny in range(cy - 2, cy + 3):          # 少しはなれた点（泥はねのしずく）も同じかたまりに
+                    for nx in range(cx - 2, cx + 3):
+                        if 0 <= ny < h and 0 <= nx < w and small[ny, nx] and not seen[ny, nx]:
+                            seen[ny, nx] = True; stack.append((ny, nx))
+            if n > 20:
+                boxes.append((x0 * step, y0 * step, (x1 + 1) * step, (y1 + 1) * step))
+    # 近くの小さなかたまり（砂よごれのはしの小さな粒など）は、となりのかたまりにまとめる
+    merged = True
+    while merged:
+        merged = False
+        for i in range(len(boxes)):
+            for j in range(i + 1, len(boxes)):
+                a, c = boxes[i], boxes[j]
+                if a[0] - 24 < c[2] and c[0] - 24 < a[2] and a[1] - 24 < c[3] and c[1] - 24 < a[3]:
+                    boxes[i] = (min(a[0], c[0]), min(a[1], c[1]), max(a[2], c[2]), max(a[3], c[3])); del boxes[j]; merged = True; break
+            if merged:
+                break
+    # 上の段から（行のまんなかの高さで3段に分ける）、左から
+    boxes.sort(key=lambda b: (round(((b[1] + b[3]) / 2) / (mask.shape[0] / 3) - 0.5), b[0]))
+    return boxes
 
 
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
-    for name, (src, s, dx, dy) in ART.items():
+    for name, (src, s, dx, dy, pad) in ART.items():
         img = key_out(Image.open(SRC / src))
         img = img.resize((round(img.width * s), round(img.height * s)), Image.LANCZOS)
-        out = Image.new('RGBA', CANVAS, (0, 0, 0, 0))
-        out.alpha_composite(img, (dx, dy))
+        out = Image.new('RGBA', (CANVAS[0], CANVAS[1] + pad), (0, 0, 0, 0))
+        out.alpha_composite(img, (max(dx, 0), max(dy + pad, 0)), (max(-dx, 0), max(-(dy + pad), 0)))
         out.save(OUT / (name + '.webp'), 'WEBP', quality=90, method=6)
         print('できました:', OUT / (name + '.webp'))
+    # 小物
+    items = key_out(Image.open(SRC / 'items_src.png'))
+    boxes = components(np.asarray(items)[..., 3] > 40)
+    if len(boxes) != len(ITEMS):
+        raise SystemExit(f'小物の数が合いません（見つかった数 {len(boxes)}、名前の数 {len(ITEMS)}）')
+    for name, (x0, y0, x1, y1) in zip(ITEMS, boxes):
+        m = 6
+        part = items.crop((max(0, x0 - m), max(0, y0 - m), min(items.width, x1 + m), min(items.height, y1 + m)))
+        part = part.resize((max(1, part.width // 2), max(1, part.height // 2)), Image.LANCZOS)
+        part.save(OUT / ('item_' + name + '.webp'), 'WEBP', quality=90, method=6)
+        print('できました:', OUT / ('item_' + name + '.webp'), part.size)
 
 
 if __name__ == '__main__':
