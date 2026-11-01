@@ -59,6 +59,16 @@ def make_rewards():
         print('できました:', OUT / f'sp_{name}.webp', im.size)
 
 
+def make_cutface():
+    """カットインの笑顔：本編の笑い顔（images/happy.webp）の顔まわりを、水色の背景にのせて 320×320 に"""
+    im = Image.open(ROOT / 'images' / 'happy.webp').convert('RGBA').crop((208, 4, 442, 238))   # 顔と耳（首かざりより上）
+    bg = Image.new('RGBA', im.size, (191, 230, 255, 255))
+    bg.alpha_composite(im)
+    bg = bg.convert('RGB').resize((320, 320), Image.LANCZOS)
+    bg.save(OUT / 'cut_face.webp', 'WEBP', quality=90, method=6)
+    print('できました:', OUT / 'cut_face.webp')
+
+
 def components(mask, step=4):
     """不透明な所のかたまりを、外わくの四角で返す（小さく縮めて数える。scipy なし）"""
     small = mask[::step, ::step]
@@ -142,6 +152,7 @@ def main():
     # ふり返りの絵は、真後ろの絵より少し色が薄い（ユーザーの指摘）→ 体の重なる所（首から下）で、色の平均と散らばりを真後ろの絵にそろえる
     match_colors('lookback', 'back')
     make_rewards()
+    make_cutface()   # 洗い終わったときのカットインの笑顔
     # シャワールームの背景（2026-11-02。ユーザーが Gemini で描いた絵。そのまま縮めて使う）
     room = Image.open(SRC / 'room_src.png').convert('RGB')
     room = room.resize((900, round(room.height * 900 / room.width)), Image.LANCZOS)

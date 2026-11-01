@@ -72,7 +72,8 @@ const SRC = {
   brush:    'img/item_brush.webp',
   bamboo:   'img/item_bamboo.webp',
   shower:   'img/item_showerhead.webp',    // シャワーヘッド（2026-11-02。ユーザーが描いた絵。横の管は切りとった）
-  room:     'img/room.webp'                // シャワールームの背景（2026-11-02。ユーザーが描いた絵）
+  room:     'img/room.webp',               // シャワールームの背景（2026-11-02。ユーザーが描いた絵）
+  cutface:  'img/cut_face.webp'            // カットインの笑顔（本編の笑い顔 images/happy.webp を丸く切りぬいた絵。tools/make_washing_art.py）
 };
 const POSES = ['stand', 'banzai', 'mojimoji', 'shake', 'back', 'lookback'];
 
@@ -726,15 +727,37 @@ function toolStep() {
   }
 }
 
-/* ---------- 仕上げ：シャワーで最後の泡が流れて、お股の泡も流れはじめる → ぎりぎり見えないところで結果の画面へ ---------- */
-function toFinale() {
-  S.stage = 'finale'; S.finT = 0; S.showerOn = false; showerSound(false); ptr = null; S.brush = null;
-  S.side = 'front'; setPose('stand'); S.face = null; compDirty = true;
+/* ---------- 洗い終わったときのカットイン（2026-11-02 ユーザー「いきなり過ぎて戸惑う」）：
+   笑顔と「きれいになった！」の帯が右から入って左へ抜ける（約1.5秒。ぽんぽこリズムの「スピードアップ！」と同じ形）→ そのあと真上からのシャワー（toFinale） ---------- */
+const CUTIN_SEC = 1.5;
+const cutinEl = document.getElementById('cutin');
+document.getElementById('cutFace').src = SRC.cutface;
+function toCutin() {
+  S.stage = 'cutin'; S.cutT = 0; S.showerOn = false; showerSound(false); ptr = null; S.brush = null;
+  S.side = 'front'; setPose('stand'); setFace('happy', 99); compDirty = true;
   // 残った少しの汚れは消す。くっついている小物も落とす
   for (const n of ['front', 'back', 'pit']) {
     const sd = SIDES[n]; clr(sd.dirt.x); sd.dirtGrid.fill(0);
     for (const it of sd.items) if (it.stuck) { it.stuck = false; it.vx = rnd(-60, 60); it.vy = -100; it.vr = rnd(-5, 5); }
   }
+  updateTurnBtn(); updateTools(); hintEl.classList.add('small');
+  bubbleEl.classList.remove('on'); bubbleUntil = 0;   // 前のひとことは消す（帯に重ならないように）
+  // 帯の高さ：タヌくんの胸のあたり（顔は帯の上に見える）
+  const band = cutinEl.firstElementChild;
+  band.style.top = (OY + 345 * K - 64) + 'px';
+  cutinEl.hidden = false; cutinEl.classList.remove('go'); void cutinEl.offsetWidth; cutinEl.classList.add('go');
+  sfx.whoosh(); sfx.sparkle(1.4);
+  for (let i = 0; i < 24; i++) { const x = rnd(80, 560), y = rnd(20, FLOOR - 40); if (isBody(x, y)) spark(x, y, rnd(0.8, 1.8), true); }
+}
+function cutinStep(h) {
+  S.cutT += h;
+  if (S.cutT > CUTIN_SEC) { cutinEl.hidden = true; toFinale(); }
+}
+
+/* ---------- 仕上げ：真上からのシャワーで最後の泡が流れて、お股の泡も流れはじめる → ぎりぎり見えないところで結果の画面へ ---------- */
+function toFinale() {
+  S.stage = 'finale'; S.finT = 0; S.showerOn = false; showerSound(false); ptr = null; S.brush = null;
+  compDirty = true;   // 顔は、カットインの笑顔のまま
   updateTurnBtn(); updateTools(); hintEl.classList.add('small');
   say('rinse', true);
   if (AC && soundOn) showerSound(true);
@@ -849,6 +872,7 @@ function step(h) {
   const br = Math.sin(S.t * 2 * Math.PI / 3.4);
   BR.sx = 1 + 0.006 * br; BR.sy = 1 + 0.012 * br;
   toolStep();
+  if (S.stage === 'cutin') cutinStep(h);
   if (S.stage === 'finale') finaleStep(h);
   // 取れた小物：床に落ちて、少しして消える
   for (const n of ['front', 'back', 'pit']) for (const it of SIDES[n].items) if (!it.stuck && !it.gone) {
@@ -1097,7 +1121,7 @@ function handleEvents() {
   if (S.face && S.t > S.faceUntil) { S.face = null; compDirty = true; }
   const g = updateGauge();
   updateTools();
-  if (S.stage === 'wash' && g <= 0) toFinale();
+  if (S.stage === 'wash' && g <= 0) toCutin();
   // 片方がだいたいきれいになったら、もう片方へさそう（ボタンをゆらす）
   if (S.stage === 'wash' && !S.turn) {
     const here = S.side, there = here === 'front' ? 'back' : 'front';
@@ -1117,6 +1141,7 @@ function handleEvents() {
 /* ---------- はじめる ---------- */
 function start() {
   S.stage = 'wash'; S.side = 'front'; S.turn = null; setPose('stand'); S.face = null;
+  cutinEl.hidden = true; S.cutT = 0;
   S.tool = 'brush'; S.foamRef = null; S.cf = 1; S.finT = 0; S.clearShown = false; toolBtns.shower.classList.remove('ask');
   S.showerOn = false; showerSound(false); makeCrotchFoam();
   S.drops = []; S.sparks = []; S.ripples = []; S.tickle = 0; S.said = {}; S.asked = {};
