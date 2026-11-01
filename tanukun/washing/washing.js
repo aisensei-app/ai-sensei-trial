@@ -85,7 +85,7 @@ const FENCE_Y = 250;                                                 // 竹の�
 // 目のあたり（汚れ・小物をのせない）
 const EYES = { cx: 325, cy: 116, rx: 100, ry: 40 };
 // お股を隠す泡（絵ごとの中心。この泡はシャワーで流れない）。MIN は最後に小さくなっても必ず隠れる大きさ
-const CROTCH_FOAM = { stand: { cx: 242, cy: 566 }, banzai: { cx: 247, cy: 571 }, mojimoji: { cx: 238, cy: 562 }, shake: { cx: 246, cy: 567 } };
+const CROTCH_FOAM = { stand: { cx: 242, cy: 566 }, banzai: { cx: 248, cy: 565 }, mojimoji: { cx: 238, cy: 562 }, shake: { cx: 246, cy: 567 } };
 const CF = { rx: 62, ry: 44, minRx: 46, minRy: 32 };
 const inE = (x, y, e, k) => ((x - e.cx) / e.rx) ** 2 + ((y - e.cy) / e.ry) ** 2 < (k || 1);
 // 揺れる所（絵ごと）。s：どのばねで動くか（jb＝おなか・お尻、jcL/jcR＝胸・もう片方のお尻）、f：指につられて動くか
@@ -93,9 +93,9 @@ const ZONES = {
   stand:  [{ cx: 272, cy: 440, rx: 170, ry: 110, s: 'jb', f: 1, name: 'belly' },
            { cx: 200, cy: 292, rx: 74, ry: 54, s: 'jcL', f: 0.3, name: 'chest' },
            { cx: 342, cy: 298, rx: 70, ry: 52, s: 'jcR', f: 0.3, name: 'chest' }],
-  banzai: [{ cx: 290, cy: 452, rx: 168, ry: 108, s: 'jb', f: 1, name: 'belly' },
-           { cx: 210, cy: 300, rx: 72, ry: 50, s: 'jcL', f: 0.3, name: 'chest' },
-           { cx: 385, cy: 312, rx: 70, ry: 50, s: 'jcR', f: 0.3, name: 'chest' }],
+  banzai: [{ cx: 290, cy: 440, rx: 168, ry: 108, s: 'jb', f: 1, name: 'belly' },
+           { cx: 190, cy: 284, rx: 66, ry: 50, s: 'jcL', f: 0.3, name: 'chest' },
+           { cx: 372, cy: 304, rx: 66, ry: 50, s: 'jcR', f: 0.3, name: 'chest' }],
   // うしろ：左のお尻・右のお尻（しっぽの下）・しっぽの横（2026-11-02 ユーザー「しっぽの横あたりも、ぷるん」）。座標は縮める前の絵の座標で書き、下で BACK に合わせる
   back:   [{ cx: 234, cy: 495, rx: 100, ry: 90, s: 'jb', f: 1, name: 'butt' },
            { cx: 410, cy: 485, rx: 90, ry: 82, s: 'jcR', f: 0.6, name: 'butt' },
@@ -113,7 +113,7 @@ ZONES.lookback = ZONES.back;
 const LOOK_FACE = bkE({ cx: 262, cy: 92, rx: 62, ry: 66 });   // ふり返ったときの横顔（うしろでは、ここに汚れ・泡をのせない）
 const CROTCH = { cx: 242, cy: 570, rx: 92, ry: 62 };                // まえ：お股のあたり（さわるともじもじ）
 const PIT_HINT = [{ cx: 140, cy: 300, rx: 40, ry: 44 }, { cx: 408, cy: 290, rx: 40, ry: 44 }];   // まえ：ここをこすると、ばんざい
-const PITS = [{ cx: 165, cy: 245, rx: 34, ry: 50 }, { cx: 466, cy: 252, rx: 34, ry: 52 }];       // ばんざい：脇
+const PITS = [{ cx: 170, cy: 245, rx: 34, ry: 50 }, { cx: 440, cy: 248, rx: 34, ry: 52 }];       // ばんざい：脇
 
 /* ---------- 画面 ---------- */
 const cv = document.getElementById('stage');

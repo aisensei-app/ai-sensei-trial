@@ -5,7 +5,7 @@
 
 washing/art/*_src（Gemini で描いた、腰みの・ネックレスなしの絵。背景はマゼンタ）
   stand（前向き。848×1264）→ washing/img/stand.webp（720×900。立ち絵 images/normal.webp とぴったり重なる大きさ・位置。背景は透明）
-  banzai（ばんざい）・mojimoji（もじもじ）・shake（ぶるぶる）・back（真後ろ）・lookback（うしろでふり返る）（1027×1532）
+  banzai（ばんざい。1152×1712）・mojimoji（もじもじ）・shake（ぶるぶる）・back（真後ろ）・lookback（うしろでふり返る）（1027×1532）
     → washing/img/*.webp（720×940。上に PAD=40px の余白をつけて、上げた手や頭が切れないように。ゲームでは y=-40 に置く）
   items（小物のまとめ絵）→ washing/img/item_*.webp（1つずつ切り分け。半分の大きさ）
 
@@ -30,7 +30,7 @@ PAD = 40   # stand 以外の絵は、上にこの余白をつける
 ART = {
     # 名前: (元の絵, 倍率, 横にずらす, 縦にずらす, 上の余白)。倍率とずらす量は、立ち絵と下半身の形がいちばん重なる値
     'stand':    ('stand_src.jpg',    0.71,   56,  2, 0),
-    'banzai':   ('banzai_src.png',   0.5975, 52, -20, PAD),   # 重なり 93%（下半身）
+    'banzai':   ('banzai_src.jpg',   0.557,  28, -57, PAD),   # 描き直し版（2026-11-02。ひじを曲げた拳のばんざい。1152×1712）。足もと優先で合わせた：重なり 87%（足から下）・91%（下半身）
     'mojimoji': ('mojimoji_src.png', 0.5925, 62, -5, PAD),    # 重なり 90%
     'shake':    ('shake_src.png',    0.59,   55, -4, PAD),    # 重なり 91%
     'back':     ('back_src.png',     0.6125, 51, -39, PAD),   # 真後ろ（大きさと足の位置をそろえた。ふり返りの絵は耳の位置が不自然なのでやめた）
