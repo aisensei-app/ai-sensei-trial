@@ -1049,16 +1049,23 @@
     const release = mode === 'home' ? holdHome() : null;
     renderStatus();
     const msg = (C.friendship.rewards || [])[SAVE.hearts() - 1];
-    const gotText = tr('💖 ハートをゲット！') + (msg ? '\n' + msg : '');
+    let gotText = tr('💖 ハートをゲット！') + (msg ? '\n' + msg : '');
+    // 💖5（最大）になったら、ひみつの思い出の予告（あと何日来ればよいか）
+    let hintMs = 0;
+    if (!DEMO && C.clear && SAVE.hearts() >= C.friendship.heartAt.length && !SAVE.data.cleared) {
+      const rem = SAVE.clearRemain();
+      gotText += '\n' + tr('…まだ、ひみつがあるんだ。あと{n}日、また来てくれる？🌺', { n: rem == null ? (C.clear.afterDays || 0) : rem });
+      hintMs = 2400;
+    }
     // そのハートの「思い出」があれば、特別イラストと台詞を見せてから、お知らせ
     const m = memoryOf(SAVE.hearts());
     if (m && mode !== 'name') {
-      setTimeout(() => playMemory(m, true).then(() => { toast(gotText, 3600); if (release) setTimeout(release, 1800); }), 600);
+      setTimeout(() => playMemory(m, true).then(() => { toast(gotText, 3600 + hintMs); if (release) setTimeout(release, 1800 + hintMs); }), 600);
     } else {
       // タヌくんも、ひとこと（ハートの数ごとのセリフ）
       if (mode !== 'name') say({ scene: 'heartUp' });
-      toast(gotText, 3600);
-      if (release) setTimeout(release, 2400);
+      toast(gotText, 3600 + hintMs);
+      if (release) setTimeout(release, 2400 + hintMs);
     }
     const h = $('play-hearts');
     h.classList.remove('pop'); void h.offsetWidth; h.classList.add('pop');
@@ -1480,11 +1487,14 @@
     const hearts = SAVE.hearts();
     const all = MEM.concat(CLR ? [Object.assign({ secret: true }, CLR.memory)] : []);
     const open = (m) => m.secret ? SAVE.data.cleared : m.hearts <= hearts;
+    // ひみつの思い出：💖5 になったら「🌺 あと○日…」（開いた日の数。ヒント）。それまでは「？？？」
+    const remain = SAVE.clearRemain();
+    const secretLabel = remain == null ? '？？？' : remain > 0 ? tr('🌺 あと{n}日…', { n: remain }) : tr('🌺 もうすぐ…✨');
     const album = all.length ? '<h3>' + tr('📖 思い出アルバム（{a} ／ {b}）', { a: all.filter(open).length, b: all.length }) + '</h3>' +
       '<div class="album">' + all.map((m, i) => open(m)
         ? '<button class="mem" type="button" data-i="' + i + '"><span class="mem-pic"><img alt=""></span><span class="mem-t"></span></button>'
-        : '<div class="mem locked"><span class="mem-pic">？</span><span class="mem-t">' +
-          (m.secret ? '？？？' : tr('💖{n}で見られる', { n: m.hearts })) + '</span></div>').join('') +
+        : '<div class="mem locked"><span class="mem-pic">' + (m.secret && remain != null ? '🌺' : '？') + '</span><span class="mem-t">' +
+          (m.secret ? secretLabel : tr('💖{n}で見られる', { n: m.hearts })) + '</span></div>').join('') +
       '</div>' : '';
     openSheet(tr('実績'),
       album +

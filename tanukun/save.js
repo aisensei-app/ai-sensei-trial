@@ -165,6 +165,12 @@ window.TanuSave = (function () {
     const after = (C.clear && C.clear.afterDays) || 0;
     return !data.cleared && data.heart5Day != null && data.totalDays - data.heart5Day >= after;
   }
+  // ひみつの思い出まで、あと何日（開いた日の数）。💖5 になっていない・クリア済みのときは null
+  function clearRemain() {
+    const after = (C.clear && C.clear.afterDays) || 0;
+    if (data.cleared || data.heart5Day == null) return null;
+    return Math.max(0, after - (data.totalDays - data.heart5Day));
+  }
   function setCleared() {
     if (!data.cleared) { data.cleared = true; data.clearDay = data.totalDays; save(); }
   }
@@ -244,6 +250,7 @@ window.TanuSave = (function () {
     claimPonPoints: claimPonPoints,
     tapCapped: tapCapped,
     clearReady: clearReady,
+    clearRemain: clearRemain,
     setCleared: setCleared,
     setFlag: setFlag,
     heartProgress: heartProgress,

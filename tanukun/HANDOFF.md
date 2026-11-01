@@ -8,6 +8,11 @@
 
 ### ★★★★★ 新しいチャットはここから（2026-11-02 夜。まずここだけ読めば始められる）
 **次にやること：洗うゲーム（washing/）のイラストの直しの続き**（ばんざいは組みこみ済み。残りはユーザーが決める：背景の消した版など）。そのあと、本番への組みこみを相談。
+**2026-11-02 本編の更新 v29（ひみつの思い出のヒント。洗うゲームより先に公開）**：💖5 のユーザーに、ひみつの思い出（クリア）まであと何日かを出す。
+①実績の6枚目：💖5 になったら「？？？」→「🌺 あと2日…」→（次の日）「🌺 あと1日…」（絵は🌺。💖5未満は今までどおり「？？？」）。save.js の clearRemain()（= afterDays − (totalDays − heart5Day)。開いた日の数。クリア済み・💖5前は null）
+②💖5 になった直後（「だいすき」の思い出のあと）のお知らせに「…まだ、ひみつがあるんだ。あと2日、また来てくれる？🌺」を足した（その分、表示を2.4秒長く）。3言語（i18n.js・i18n.zh.js。中国語は要確認）。
+sw.js は tanukun-v29。`python3 tools/build_app.py --base-url https://tanukun.pages.dev/` で app-dist.zip を作った（washing は入れていない・testHearts=false）→ **Cloudflare へのアップロードはユーザーが行う**（Preview：ブランチ名 test → https://test.tanukun.pages.dev/ → Production）。
+公開後：X に「6枚目のヒント」ポスト（モザイク画像＋案B）。確認のしかた：実績の画面で、💖5 の人は6枚目が「🌺 あと○日…」になる。
 **2026-11-02 落としものの図鑑（ユーザー「図鑑やりましょう。コンプしたら特別イラストを出します」）**：取れた小物を図鑑に記録。画面の右上に「📖 1/5」ボタン（洗っている間だけ表示）→ 図鑑の画面（見つけたものは絵・名前・×とれた数・ひとこと、まだは「？？？」のシルエット）。
 初めて取れたら「ずかんに とうろく！」（青いポップ＋ボタンがぽん）。結果の画面に「ずかんに あたらしく ○こ とうろく！」。**全部そろったら、結果の画面でごほうびの代わりに「ずかんコンプリート！」のとくべつイラスト**（1回目だけ。あとから図鑑の画面の「🎁 とくべつイラスト」で見返せる）。
 **データ式**：washing.js の ZUKAN（id・key＝SRC の絵・group＝shell/star/kelp/rare・weight＝出やすさ・w＝絵の幅・name・line）。**絵を足して ZUKAN に1行（と SRC・washing.i18n.js）書けば、種類も「n/全部」も自動でふえる**。
@@ -58,7 +63,7 @@ make_washing_art.py の ART は倍率 0.557・横 28・縦 -57（足もと優先
 
 **3. 本番（https://tanukun.pages.dev/）のいま**
 - 2026-11-01 公開：トップ画面（あいさつ → おなかにズーム → アイコンで選ぶ）＋日本語・英語・中国語（簡体字）＋遊び方の数え方（stats.js）＋取りこみもれの直し。sw.js はそのとき v27
-- その後このブランチで：丸太シーソー（seesaw/。hidden）・トップ画面スワイプ版の試作（topmenu/swipe.html）・洗うゲーム（hidden）。sw.js は今 v28（次に公開するとき上げる）
+- その後このブランチで：丸太シーソー（seesaw/。hidden）・トップ画面スワイプ版の試作（topmenu/swipe.html）・洗うゲーム（hidden）。sw.js は v29 に上げて公開準備済み（上の「本編の更新 v29」）
 - 公開スイッチ：pon=soon、rally・timeOfDay・tailFlick・seesaw・washing=hidden、english・chinese=open
 - 公開のしかた：`python3 tools/build_app.py --base-url https://tanukun.pages.dev/` → app-dist.zip → Cloudflare の tanukun で Preview（ブランチ名 test → https://test.tanukun.pages.dev/）→ Production
 

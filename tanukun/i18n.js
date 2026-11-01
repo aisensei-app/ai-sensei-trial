@@ -127,6 +127,9 @@ window.TanuI18n = (function () {
       'セリフ図鑑': 'Line collection',
       '📖 思い出アルバム（{a} ／ {b}）': '📖 Memory Album ({a} / {b})',
       '💖{n}で見られる': 'Unlocks at 💖{n}',
+      '🌺 あと{n}日…': '🌺 {n} day to go…|🌺 {n} days to go…',
+      '🌺 もうすぐ…✨': '🌺 Almost there…✨',
+      '…まだ、ひみつがあるんだ。あと{n}日、また来てくれる？🌺': '…I still have a secret. Will you come see me {n} more day?🌺|…I still have a secret. Will you come see me {n} more days?🌺',
       'きろく': 'Stats',
       'バッジ（実績のごほうび）は準備中だよ': 'Badges (rewards) are coming soon',
       // きせかえ
