@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>タヌくんを洗おう｜タヌくん</title>
+<meta name="theme-color" content="#8CC8F2">
+<link rel="icon" href="../images/icon-192.png">
+<link rel="stylesheet" href="washing.css">
+</head>
+<body>
+<main id="washing">
+
+  <!-- 浜辺・おけのお風呂・タヌくん・汚れ・泡・シャワー・水しぶきは、ぜんぶこのキャンバスに描く -->
+  <canvas id="stage" aria-label="おけのお風呂に入ったタヌくん" data-i18n-attr="aria-label"></canvas>
+  <div id="loading" data-i18n>よみこみ中…</div>
+
+  <!-- 上：タヌくんのところへ・よごれゲージ・音 -->
+  <div class="hud">
+    <div class="row">
+      <a class="sign back" href="../" data-i18n>‹ タヌくん</a>
+      <button class="sign btn" id="snd" type="button" aria-pressed="true">音 ON</button>
+    </div>
+    <div class="sign gauge" id="gauge" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
+      <span class="glabel" data-i18n>よごれ</span>
+      <span class="gbar"><span class="gfill" id="gfill"></span></span>
+      <span class="gnum" id="gnum">100%</span>
+    </div>
+    <div class="sign hint" id="hint"></div>
+  </div>
+
+  <div class="bubble" id="bubble"></div>
+
+  <!-- ピカピカになったら -->
+  <div class="clear" id="clear" hidden>
+    <div class="card">
+      <p class="ctitle" data-i18n>ピカピカ！</p>
+      <p class="cline" id="cLine"></p>
+      <p class="cnote" id="cNote"></p>
+      <div class="cbtns">
+        <button class="sign btn" id="again" type="button" data-i18n>もう一回</button>
+        <a class="sign btn" href="../" data-i18n>‹ タヌくん</a>
+      </div>
+    </div>
+  </div>
+  <div id="pops" aria-hidden="true"></div>
+
+</main>
+<!-- 本編と同じ設定（公開スイッチ）・ことば（i18n.js。洗うゲームの訳は washing.i18n.js）を使う -->
+<script src="../config.js"></script>
+<script src="washing.i18n.js"></script>
+<!-- 中国語の画面の文字（本編と共通の文。英語は i18n.js の中にある） -->
+<script src="../i18n.zh.js"></script>
+<script src="../i18n.js"></script>
+<!-- 遊び方の数え方（だれのものかわからない形で、数だけ） -->
+<script src="../stats.js"></script>
+<script>window.TanuStats && window.TanuStats.ping('p-wash');</script>
+<script src="washing.js"></script>
+</body>
+</html>
