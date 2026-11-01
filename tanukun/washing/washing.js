@@ -454,8 +454,38 @@ function setPose(name, sec) {
 }
 const basePose = () => (S.side === 'back' ? 'back' : 'stand');
 
+// 上の説明の文はやめた（2026-11-02 ユーザー）。代わりに、はじめに道具のアイコンを点滅させるガイド（runGuide）
 const hintEl = document.getElementById('hint');
-function setHint(html) { hintEl.innerHTML = tr(html); hintEl.classList.remove('small'); }
+hintEl.hidden = true;
+function setHint() {}
+/* ---------- はじめのガイド（3秒以内）：ブラシのアイコンが点滅して「ブラシで泡立てて！」→ シャワーのアイコンが点滅して「泡を流して！」
+   ページを開いて最初の1回だけ。途中で画面にさわったら、すぐ終わる ---------- */
+const tipEl = document.getElementById('tip');
+let guide = null;
+function showTip(btn, text) {
+  for (const b of Object.values(toolBtns)) b.classList.remove('blink');
+  btn.classList.add('blink');
+  tipEl.textContent = tr(text);
+  const r = btn.getBoundingClientRect();
+  tipEl.style.top = (r.top + r.height / 2) + 'px';
+  tipEl.style.right = (W - r.left + 12) + 'px';
+  tipEl.hidden = false;
+  tipEl.classList.remove('on'); void tipEl.offsetWidth; tipEl.classList.add('on');
+}
+function endGuide() {
+  if (!guide) return;
+  guide.timers.forEach(clearTimeout); guide = null;
+  for (const b of Object.values(toolBtns)) b.classList.remove('blink');
+  tipEl.classList.remove('on'); tipEl.hidden = true;
+}
+function runGuide(after) {
+  endGuide();
+  guide = { timers: [] };
+  const g = guide;
+  g.timers.push(setTimeout(() => showTip(toolBtns.brush, 'ブラシで泡立てて！'), 250));
+  g.timers.push(setTimeout(() => showTip(toolBtns.shower, '泡を流して！'), 1550));
+  g.timers.push(setTimeout(() => { endGuide(); if (after) after(); }, 2850));
+}
 const gaugeEl = document.getElementById('gauge'), gfill = document.getElementById('gfill'), gnum = document.getElementById('gnum');
 const dirtOf = (n) => sumGrid(SIDES[n].dirtGrid);
 const foamOf = (n) => sumGrid(SIDES[n].foamGrid);
@@ -560,7 +590,7 @@ function showerSound(on) {
 let ptr = null;
 const soft = (v, m) => m * Math.tanh(v / m);
 cv.addEventListener('pointerdown', (e) => {
-  audioInit();
+  audioInit(); endGuide();
   if (S.stage !== 'wash' || S.turn) return;
   const p = toImg(e.clientX, e.clientY);
   ptr = { x: p.x, y: p.y, sx: p.x, sy: p.y, t: S.t, moved: 0, part: partAt(p.x, p.y), lastPart: null };
@@ -676,7 +706,7 @@ function setTool(t, quiet) {
   toolBtns.shower.classList.remove('ask');
   updateTools();
 }
-for (const t of ['brush', 'shower']) toolBtns[t].addEventListener('click', (e) => { e.stopPropagation(); audioInit(); setTool(t); });
+for (const t of ['brush', 'shower']) toolBtns[t].addEventListener('click', (e) => { e.stopPropagation(); audioInit(); endGuide(); setTool(t); });
 function updateTools() {
   for (const t of ['brush', 'shower']) { toolBtns[t].classList.toggle('on', S.tool === t); toolBtns[t].setAttribute('aria-pressed', String(S.tool === t)); }
   toolEl.hidden = S.stage !== 'wash';
@@ -1056,8 +1086,9 @@ function start() {
   S.dirt0 = Math.max(1, dirtOf('front') + dirtOf('back') + dirtOf('pit'));
   S.gauge = -1; updateGauge(); updateTurnBtn(); updateTools(); turnBtn.classList.remove('ask');
   compDirty = true; S.lastInput = S.t;
-  setHint('<b>ブラシで、よごれをこすってね</b><br><span class="sub">右上のアイコンで、ブラシとシャワーを切りかえ。右下のボタンで、うしろも洗えるよ</span>');
-  setTimeout(() => say('start', true), 700);
+  // はじめての1回はガイドのあとに、タヌくんのひとこと。もう一回のときは、すぐひとこと
+  if (!S.guided) { S.guided = true; runGuide(() => say('start', true)); }
+  else setTimeout(() => say('start', true), 700);
 }
 
 const KEYS = Object.keys(SRC);

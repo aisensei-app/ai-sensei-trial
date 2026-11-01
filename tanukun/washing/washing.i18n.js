@@ -84,7 +84,10 @@ window.TANU_TEXT_I18N.en = Object.assign(window.TANU_TEXT_I18N.en || {}, {
   'シャワー': 'Shower',
   '<b>指でなぞると、シャワーが出るよ</b><br><span class="sub">泡を流してね。おなかや胸・お尻をタップすると…？</span>': '<b>Slide your finger to turn on the shower</b><br><span class="sub">Rinse off the bubbles. And if you tap his belly, chest or bottom…?</span>',
   '<b>ブラシで、よごれをこすってね</b><br><span class="sub">右上のアイコンで、ブラシとシャワーを切りかえられるよ</span>': '<b>Scrub the dirt with the brush</b><br><span class="sub">Switch between the brush and shower with the icons at the top right</span>',
-  '<b>ブラシで、よごれをこすってね</b><br><span class="sub">右上のアイコンで、ブラシとシャワーを切りかえ。右下のボタンで、うしろも洗えるよ</span>': '<b>Scrub the dirt with the brush</b><br><span class="sub">Switch tools with the icons at the top right. Use the button at the bottom right to wash his back</span>'
+  '<b>ブラシで、よごれをこすってね</b><br><span class="sub">右上のアイコンで、ブラシとシャワーを切りかえ。右下のボタンで、うしろも洗えるよ</span>': '<b>Scrub the dirt with the brush</b><br><span class="sub">Switch tools with the icons at the top right. Use the button at the bottom right to wash his back</span>',
+  // はじめのガイド（2026-11-02）
+  'ブラシで泡立てて！': 'Lather up with the brush!',
+  '泡を流して！': 'Rinse off the bubbles!'
 });
 window.TANU_TEXT_I18N.zh = Object.assign(window.TANU_TEXT_I18N.zh || {}, {
   // 画面
@@ -166,5 +169,8 @@ window.TANU_TEXT_I18N.zh = Object.assign(window.TANU_TEXT_I18N.zh || {}, {
   'シャワー': '淋浴',
   '<b>指でなぞると、シャワーが出るよ</b><br><span class="sub">泡を流してね。おなかや胸・お尻をタップすると…？</span>': '<b>用手指划一划，就会出水哦</b><br><span class="sub">把泡泡冲掉吧。点一点肚子、胸口或屁股会…？</span>',
   '<b>ブラシで、よごれをこすってね</b><br><span class="sub">右上のアイコンで、ブラシとシャワーを切りかえられるよ</span>': '<b>用刷子把脏东西刷掉吧</b><br><span class="sub">点右上的图标，可以切换刷子和淋浴</span>',
-  '<b>ブラシで、よごれをこすってね</b><br><span class="sub">右上のアイコンで、ブラシとシャワーを切りかえ。右下のボタンで、うしろも洗えるよ</span>': '<b>用刷子把脏东西刷掉吧</b><br><span class="sub">点右上的图标切换工具。点右下的按钮，也能洗背后</span>'
+  '<b>ブラシで、よごれをこすってね</b><br><span class="sub">右上のアイコンで、ブラシとシャワーを切りかえ。右下のボタンで、うしろも洗えるよ</span>': '<b>用刷子把脏东西刷掉吧</b><br><span class="sub">点右上的图标切换工具。点右下的按钮，也能洗背后</span>',
+  // はじめのガイド（2026-11-02）
+  'ブラシで泡立てて！': '用刷子搓出泡泡！',
+  '泡を流して！': '把泡泡冲掉！'
 });
