@@ -7,7 +7,7 @@ washing/art/*_src（Gemini で描いた、腰みの・ネックレスなしの�
   stand（前向き。848×1264）→ washing/img/stand.webp（720×900。立ち絵 images/normal.webp とぴったり重なる大きさ・位置。背景は透明）
   banzai（ばんざい。1152×1712）・mojimoji（もじもじ）・shake（ぶるぶる）・back（真後ろ）・lookback（うしろでふり返る）（1027×1532）
     → washing/img/*.webp（720×940。上に PAD=40px の余白をつけて、上げた手や頭が切れないように。ゲームでは y=-40 に置く）
-  sp_<名前>_src → img/sp_<名前>.webp（ごほうびの特別イラスト 800×1000。あるものだけ）
+  sp_<名前>_src → img/sp_<名前>.webp（ごほうびの特別イラスト。幅 810・縦横比はそのまま。あるものだけ）
   items（小物のまとめ絵）→ washing/img/item_*.webp（1つずつ切り分け。半分の大きさ）
 
 ・立ち絵と同じ並べ方にそろえるので、表情は今ある立ち絵（images/happy.webp など）の顔だけを、ゲームの中で上に重ねて使える
@@ -41,20 +41,20 @@ ART = {
 ITEMS = ['conch', 'clam', 'star', 'kelp1', 'kelp2', 'sand1', 'sand2', 'sand3', 'mud1', 'mud2', 'brush', 'dryer', 'bamboo']
 
 
-# ごほうびの特別イラスト（結果の画面に出す）。washing/art/sp_<名前>_src.（png か jpg）を置くと、img/sp_<名前>.webp（800×1000。シーソーと同じ）になる。
+# ごほうびの特別イラスト（結果の画面に出す）。washing/art/sp_<名前>_src.（png か jpg）を置くと、img/sp_<名前>.webp になる。
 # 名前は washing.js の REWARDS の id と同じ。絵が置いてあるものだけ作る。できたら REWARDS の src を 'img/sp_<名前>.webp' にする
-REWARD_IDS = ['foam', 'towel', 'fluffy']
-REWARD_SIZE = (800, 1000)
+REWARD_IDS = ['towel', 'stumble', 'splash']
+REWARD_WIDTH = 810   # 縦横 3:4 の絵（1086×1448）を、切らずに幅 810（810×1080）に縮める
 
 
 def make_rewards():
-    from PIL import ImageOps
     for name in REWARD_IDS:
         src = next((p for ext in ('png', 'jpg', 'jpeg', 'webp') for p in [SRC / f'sp_{name}_src.{ext}'] if p.exists()), None)
         if not src:
             print('ごほうびの絵はまだありません:', name)
             continue
-        im = ImageOps.fit(Image.open(src).convert('RGB'), REWARD_SIZE, Image.LANCZOS)   # 4:5 からはみ出す分は、まんなか基準で切る
+        im = Image.open(src).convert('RGB')
+        im = im.resize((REWARD_WIDTH, round(im.height * REWARD_WIDTH / im.width)), Image.LANCZOS)
         im.save(OUT / f'sp_{name}.webp', 'WEBP', quality=88, method=6)
         print('できました:', OUT / f'sp_{name}.webp', im.size)
 

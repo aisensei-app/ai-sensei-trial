@@ -747,12 +747,12 @@ function finaleStep(h) {
   if (S.finT > 1.25 && !S.clearShown) { S.clearShown = true; showerSound(false); toClear(); }
 }
 /* ---------- ごほうびの特別イラスト（ピカピカになったら1枚。出やすさは weight。シーソーと同じ「集める」形） ----------
-   src が null の間は、仮の絵（準備中）を出す。絵ができたら img/sp_foam.webp のようなパスを文字列で書く（tools/make_washing_art.py が washing/art/sp_〇〇_src.* から作る）
+   src が null の間は、仮の絵（準備中）を出す。絵ができたら img/sp_towel.webp のようなパスを文字列で書く（tools/make_washing_art.py が washing/art/sp_〇〇_src.* から作る）
    集めた記録は、この端末の localStorage（tanu-washing-special）だけ。本編のアルバムとはまだつないでいない */
 const REWARDS = [
-  { id: 'foam',   weight: 6, src: null, title: '泡あわで、ふわふわ！', line: 'シャボン玉に包まれちゃった♪' },
-  { id: 'towel',  weight: 3, src: null, title: 'ほかほか〜',           line: 'タオルでふいたら、いい気持ち♪' },
-  { id: 'fluffy', weight: 1, src: null, title: 'もふもふ大爆発！',     line: 'ドライヤーで、毛がぶわ〜っ！' }
+  { id: 'towel',   weight: 6, src: 'img/sp_towel.webp',   title: 'タオルで、フキフキ〜',   line: 'ふわふわのタオル、気持ちいい〜♪' },
+  { id: 'splash',  weight: 3, src: 'img/sp_splash.webp',  title: 'ぶるぶる〜っ！',         line: '水しぶき、飛ばしちゃえ〜♪' },
+  { id: 'stumble', weight: 1, src: 'img/sp_stumble.webp', title: 'あわわっ、よろけちゃう！', line: '着替えようとして、バランスをくずしちゃった〜！' }
 ];
 let rwSeen = {};
 try { rwSeen = JSON.parse(localStorage.getItem('tanu-washing-special') || '{}') || {}; } catch (e) { rwSeen = {}; }
