@@ -113,7 +113,21 @@ window.TANU_TEXT_I18N.en = Object.assign(window.TANU_TEXT_I18N.en || {}, {
   'ぬるぬる ひろがる うみのくさ': 'Slippery sea plant',
   'ワカメ': 'Wakame',
   'ひらひら ゆれる うみのくさ': 'Waves around in the water',
-  'ぜんぶ あつめたね！ ありがとう〜！': 'You collected them all! Thank you~!'
+  'ぜんぶ あつめたね！ ありがとう〜！': 'You collected them all! Thank you~!',
+  'うにのから': 'Urchin shell',
+  'トゲトゲの あとが ある から': 'A shell with a prickly pattern',
+  'さんご': 'Coral',
+  'えだわかれした あかい さんご': 'A little branching red coral',
+  'はなびら': 'Petal',
+  'ぬれて つやつやの はなびら': 'A shiny, wet flower petal',
+  'シーグラス': 'Sea glass',
+  'なみに みがかれた ガラスの かけら': 'Glass polished smooth by the waves',
+  'ヤドカリ': 'Hermit crab',
+  'ちいさな おうちを せおってるよ': 'Carrying its tiny house',
+  'しんじゅ': 'Pearl',
+  'ひかる ふしぎな まるい たま': 'A glowing, mysterious little ball',
+  'きんのヒトデ': 'Golden starfish',
+  'めったに みつからない ひかる ヒトデ': 'A shiny starfish that is hard to find'
 });
 window.TANU_TEXT_I18N.zh = Object.assign(window.TANU_TEXT_I18N.zh || {}, {
   // 画面
@@ -224,5 +238,19 @@ window.TANU_TEXT_I18N.zh = Object.assign(window.TANU_TEXT_I18N.zh || {}, {
   'ぬるぬる ひろがる うみのくさ': '滑溜溜的海草',
   'ワカメ': '裙带菜',
   'ひらひら ゆれる うみのくさ': '在水里飘来飘去',
-  'ぜんぶ あつめたね！ ありがとう〜！': '全部都集齐啦！谢谢～！'
+  'ぜんぶ あつめたね！ ありがとう〜！': '全部都集齐啦！谢谢～！',
+  'うにのから': '海胆壳',
+  'トゲトゲの あとが ある から': '留有小刺痕迹的壳',
+  'さんご': '珊瑚',
+  'えだわかれした あかい さんご': '分了枝的红色小珊瑚',
+  'はなびら': '花瓣',
+  'ぬれて つやつやの はなびら': '湿漉漉、亮晶晶的花瓣',
+  'シーグラス': '海玻璃',
+  'なみに みがかれた ガラスの かけら': '被海浪磨圆的玻璃碎片',
+  'ヤドカリ': '寄居蟹',
+  'ちいさな おうちを せおってるよ': '背着小小的家',
+  'しんじゅ': '珍珠',
+  'ひかる ふしぎな まるい たま': '闪闪发光的神奇圆珠',
+  'きんのヒトデ': '金海星',
+  'めったに みつからない ひかる ヒトデ': '很难找到的闪亮海星'
 });

@@ -39,6 +39,8 @@ ART = {
 }
 # 小物のまとめ絵（items_src.png）を切り分けたときの名前（左上から右へ、上の段から順に）
 ITEMS = ['conch', 'clam', 'star', 'kelp1', 'kelp2', 'sand1', 'sand2', 'sand3', 'mud1', 'mud2', 'brush', 'dryer', 'bamboo']
+# 図鑑にふやした小物（items2_src.png。上の段4つ・下の段3つ。ChatGPT で描いた）
+ITEMS2 = ['urchin', 'coral', 'petal', 'glass', 'hermit', 'pearl', 'goldstar']
 
 
 # ごほうびの特別イラスト（結果の画面に出す）。washing/art/sp_<名前>_src.（png か jpg）を置くと、img/sp_<名前>.webp になる。
@@ -165,18 +167,20 @@ def main():
     sh = sh.resize((sh.width // 3, sh.height // 3), Image.LANCZOS)
     sh.save(OUT / 'item_showerhead.webp', 'WEBP', quality=90, method=6)
     print('できました:', OUT / 'item_showerhead.webp', sh.size)
-    # 小物
-    items = key_out(Image.open(SRC / 'items_src.png'))
-    boxes = components(np.asarray(items)[..., 3] > 40)
-    if len(boxes) != len(ITEMS):
-        raise SystemExit(f'小物の数が合いません（見つかった数 {len(boxes)}、名前の数 {len(ITEMS)}）')
-    for name, (x0, y0, x1, y1) in zip(ITEMS, boxes):
-        m = 6
-        part = items.crop((max(0, x0 - m), max(0, y0 - m), min(items.width, x1 + m), min(items.height, y1 + m)))
-        part = part.resize((max(1, part.width // 2), max(1, part.height // 2)), Image.LANCZOS)
-        part.save(OUT / ('item_' + name + '.webp'), 'WEBP', quality=90, method=6)
-        print('できました:', OUT / ('item_' + name + '.webp'), part.size)
-
+    # 小物（まとめ絵ごとに、切り分ける。2枚目は図鑑にふやした7種）
+    for sheet, names in (('items_src.png', ITEMS), ('items2_src.png', ITEMS2)):
+        if not (SRC / sheet).exists():
+            continue
+        items = key_out(Image.open(SRC / sheet))
+        boxes = components(np.asarray(items)[..., 3] > 40)
+        if len(boxes) != len(names):
+            raise SystemExit(f'小物の数が合いません（{sheet}：見つかった数 {len(boxes)}、名前の数 {len(names)}）')
+        for name, (x0, y0, x1, y1) in zip(names, boxes):
+            m = 6
+            part = items.crop((max(0, x0 - m), max(0, y0 - m), min(items.width, x1 + m), min(items.height, y1 + m)))
+            part = part.resize((max(1, part.width // 2), max(1, part.height // 2)), Image.LANCZOS)
+            part.save(OUT / ('item_' + name + '.webp'), 'WEBP', quality=90, method=6)
+            print('できました:', OUT / ('item_' + name + '.webp'), part.size)
 
 if __name__ == '__main__':
     main()

@@ -64,6 +64,13 @@ const SRC = {
   star:     'img/item_star.webp',
   kelp1:    'img/item_kelp1.webp',
   kelp2:    'img/item_kelp2.webp',
+  urchin:   'img/item_urchin.webp',        // ずかんにふやした小物（2026-11-02。ChatGPT で描いた絵）
+  coral:    'img/item_coral.webp',
+  petal:    'img/item_petal.webp',
+  glass:    'img/item_glass.webp',
+  hermit:   'img/item_hermit.webp',
+  pearl:    'img/item_pearl.webp',
+  goldstar: 'img/item_goldstar.webp',
   sand1:    'img/item_sand1.webp',
   sand2:    'img/item_sand2.webp',
   sand3:    'img/item_sand3.webp',
@@ -283,7 +290,15 @@ const ZUKAN = [
   { id: 'clam',  key: 'clam',  group: 'shell', weight: 1, w: 46, name: 'にまいがい', line: 'ぱかっと ひらく かいがら' },
   { id: 'star',  key: 'star',  group: 'star',  weight: 1, w: 50, name: 'ヒトデ',     line: 'おほしさまみたいな いきもの' },
   { id: 'kelp1', key: 'kelp1', group: 'kelp',  weight: 1, w: 50, name: 'コンブ',     line: 'ぬるぬる ひろがる うみのくさ' },
-  { id: 'kelp2', key: 'kelp2', group: 'kelp',  weight: 1, w: 48, name: 'ワカメ',     line: 'ひらひら ゆれる うみのくさ' }
+  { id: 'kelp2', key: 'kelp2', group: 'kelp',  weight: 1, w: 48, name: 'ワカメ',     line: 'ひらひら ゆれる うみのくさ' },
+  // 2026-11-02 ふやした7種（ふつう4・レア3）。ふつうは shell・kelp の場所に少しまざる。レアは rare の場所に、ときどき（weight：ヤドカリ 3・しんじゅ 2・きんのヒトデ 1）
+  { id: 'urchin',   key: 'urchin',   group: 'shell', weight: 0.7, w: 46, name: 'うにのから',   line: 'トゲトゲの あとが ある から' },
+  { id: 'coral',    key: 'coral',    group: 'shell', weight: 0.7, w: 46, name: 'さんご',       line: 'えだわかれした あかい さんご' },
+  { id: 'petal',    key: 'petal',    group: 'kelp',  weight: 0.7, w: 42, name: 'はなびら',     line: 'ぬれて つやつやの はなびら' },
+  { id: 'glass',    key: 'glass',    group: 'kelp',  weight: 0.7, w: 40, name: 'シーグラス',   line: 'なみに みがかれた ガラスの かけら' },
+  { id: 'hermit',   key: 'hermit',   group: 'rare',  weight: 3,   w: 58, name: 'ヤドカリ',     line: 'ちいさな おうちを せおってるよ' },
+  { id: 'pearl',    key: 'pearl',    group: 'rare',  weight: 2,   w: 42, name: 'しんじゅ',     line: 'ひかる ふしぎな まるい たま' },
+  { id: 'goldstar', key: 'goldstar', group: 'rare',  weight: 1,   w: 62, name: 'きんのヒトデ', line: 'めったに みつからない ひかる ヒトデ' }
 ];
 const ITEM_SPOTS = {
   front: [{ g: 'shell', at: [[205, 300], [330, 385], [470, 270]] },
