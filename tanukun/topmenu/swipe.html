@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+</head>
+<body>
+<!-- トップ画面「スワイプ版」の試作（2026-11-01）。おなかを左右にスワイプしてゲームを選ぶ。
+     確認用リンク https://claude.ai/artifact/J3g6jJVyofGubti4pMmogk（絵を文字データにして1ファイルにしたもの） -->
+<title>トップ画面スワイプ版</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* 画面いっぱいの浜辺とタヌくん（おなかにズーム）。おなかの上にゲームのカードを1枚ずつ。左右に ‹ ›、下に白い丸 */
+:root{
+  --ink:#3a2210; --wood:#7a4a24; --cream:#fff6e4; --sun:#ffcf4d; --pink:#ff5e95;
+  --font:-apple-system,BlinkMacSystemFont,"Hiragino Maru Gothic ProN","Noto Sans JP",sans-serif;
+  color-scheme:light;
+}
+html,body{height:100%}
+[hidden]{display:none!important}
+body{margin:0;background:#bfe3f7;color:var(--ink);font-family:var(--font);overflow:hidden;overscroll-behavior:none;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+#stage{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+
+.top{position:fixed;top:0;left:0;right:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:8px;pointer-events:none;
+  padding-top:calc(env(safe-area-inset-top,0px) + 10px);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.chip{background:rgba(255,246,228,.92);border:2px solid var(--wood);border-radius:999px;padding:4px 12px;font-size:13px;font-weight:800;pointer-events:auto}
+.chip b{color:#b0461b}
+button.chip{font-family:inherit;color:var(--ink);cursor:pointer}
+
+/* ゲームのカード（おなかの上） */
+.cards{position:fixed;left:0;top:0;width:0;height:0;z-index:3;pointer-events:none}
+.card{position:absolute;left:0;top:0;width:320px;margin-left:-160px;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:12px;
+  transform-origin:50% 50%;will-change:transform,opacity}
+.card .ic{position:relative;flex:none;width:88px;height:88px;border-radius:50%;display:grid;place-items:center;font-size:48px;line-height:1;
+  background:radial-gradient(circle at 40% 35%,#fff,#fff3dc);border:3px solid rgba(122,74,36,.55);box-shadow:0 6px 0 rgba(122,74,36,.35),0 10px 24px rgba(80,40,10,.18)}
+.card .new{position:absolute;top:-6px;right:-14px;background:var(--pink);color:#fff;font-size:12px;font-weight:900;letter-spacing:.06em;border-radius:999px;padding:2px 8px;border:2px solid #fff}
+.card .lock{position:absolute;bottom:-4px;right:-6px;font-size:26px}
+.card .tt{font-size:24px;font-weight:900;color:#fff;white-space:nowrap;text-align:left;
+  -webkit-text-stroke:6px var(--wood);paint-order:stroke fill;letter-spacing:.02em}
+.card.soon .ic{filter:grayscale(.6);opacity:.85}
+
+/* 左右の ‹ ›（めくれることを伝える） */
+.nav{position:fixed;z-index:4;width:44px;height:64px;margin:-32px 0 0 -22px;border:0;background:none;padding:0;cursor:pointer;
+  display:grid;place-items:center;color:#fff;font-size:46px;font-weight:900;line-height:1;
+  -webkit-text-stroke:5px var(--wood);paint-order:stroke fill;font-family:var(--font)}
+.nav span{display:block;animation:nudgeL 1.6s ease-in-out infinite}
+.nav.right span{animation-name:nudgeR}
+@keyframes nudgeL{0%,60%,100%{transform:translateX(0)}30%{transform:translateX(-6px)}}
+@keyframes nudgeR{0%,60%,100%{transform:translateX(0)}30%{transform:translateX(6px)}}
+.nav:focus-visible{outline:3px solid #1f86cf;border-radius:12px}
+
+/* 白い丸（いくつあって、いまどこか） */
+.dots{position:fixed;z-index:4;left:50%;display:flex;align-items:center;gap:8px;transform:translateX(-50%);padding:7px 12px;border-radius:999px;background:rgba(58,34,16,.38)}
+.dots i{display:block;width:11px;height:11px;border-radius:50%;background:rgba(255,255,255,.65);transition:transform .25s,background .25s,width .25s;cursor:pointer}
+.dots i.on{background:#fff;width:22px;border-radius:6px}
+.dots i.s1{transform:scale(.7)} .dots i.s2{transform:scale(.45)}
+
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 28px);transform:translateX(-50%);z-index:9;background:rgba(58,34,16,.88);color:#fff;
+  font-weight:800;font-size:14px;padding:9px 16px;border-radius:999px;white-space:nowrap;opacity:0;transition:opacity .25s;pointer-events:none}
+.toast.on{opacity:1}
+#loading{position:fixed;inset:0;display:grid;place-items:center;font-weight:900;color:var(--wood)}
+@media (prefers-reduced-motion: reduce){.nav span{animation:none}}
+</style>
+
+<canvas id="stage" aria-label="タヌくんのおなか。左右にスワイプして、遊ぶゲームをえらぶ"></canvas>
+<div id="loading">よみこみ中…</div>
+<div class="top">
+  <span class="chip"><b>スワイプ版</b> 試作</span>
+  <button class="chip" id="many" type="button">12こ にする</button>
+</div>
+<div class="cards" id="cards"></div>
+<button class="nav left" id="prev" type="button" aria-label="前のゲーム"><span>‹</span></button>
+<button class="nav right" id="next" type="button" aria-label="次のゲーム"><span>›</span></button>
+<div class="dots" id="dots" role="tablist" aria-label="ゲームの数"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+'use strict';
+const SRC = { tanu: '../images/topmenu/normal_hd.webp', beach: '../images/bg/beach_day.webp' };
+
+/* ゲーム（いちばん左が なでなで。最後に「もうすぐ」を1枚だけ） */
+const BASE = [
+  { icon: '🤚', title: 'なでなで',       sub: 'タヌくんと なかよくなろう' },
+  { icon: '🥁', title: 'ぽんぽこリズム', sub: 'おなかで リズムゲーム' },
+  { icon: '🏐', title: 'ぽよんラリー',   sub: 'おなかで ぽよんと 打ちかえす' },
+  { icon: '🌴', title: '丸太シーソー',   sub: '指でゆらして 海へざぶーん', isNew: true },
+  { icon: '🔒', title: 'もうすぐ',       sub: 'あたらしい遊び 準備中', soon: true }
+];
+const EXTRA = ['🍉', '🎣', '🏄', '🍡', '🎆', '🛁', '🎤'].map((e, i) => ({ icon: e, title: 'ためしのゲーム ' + (i + 1), sub: '白い丸が多いときの見え方' }));
+let GAMES = BASE.slice();
+
+/* ---------- 画面 ---------- */
+const cv = document.getElementById('stage'), ctx = cv.getContext('2d');
+let W = 0, H = 0, DPR = 1;
+function resize() {
+  DPR = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight;
+  cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  layout();
+}
+
+/* タヌくんの絵（1080×1350）：おなかにズーム。FOCUS が画面の (W/2, H*AT) に来る */
+const TW = 1080, TH = 1350, FOCUS = { x: 312, y: 615 }, BELLY_W = 375, AT = 0.5;
+const BELLY = { cx: 333, cy: 622, rx: 190, ry: 150 };
+const BX0 = BELLY.cx - BELLY.rx, BX1 = BELLY.cx + BELLY.rx, BY0 = BELLY.cy - BELLY.ry, BY1 = BELLY.cy + BELLY.ry;
+let Z = 1, OX = 0, OY = 0;   // 絵→画面：x' = OX + x * Z
+function layout() {
+  Z = Math.min(W * 0.86 / BELLY_W, H * 0.7 / 420);
+  OX = W / 2 - FOCUS.x * Z; OY = H * AT - FOCUS.y * Z;
+  const bx = (x) => OX + x * Z, by = (y) => OY + y * Z;
+  const cards = document.getElementById('cards');
+  cards.style.left = bx(FOCUS.x) + 'px'; cards.style.top = (by(FOCUS.y) - 84) + 'px';
+  place('prev', bx(BELLY.cx - BELLY.rx) + 6, by(FOCUS.y));
+  place('next', bx(BELLY.cx + BELLY.rx) - 6, by(FOCUS.y));
+  const prev = document.getElementById('prev'), next = document.getElementById('next');
+  prev.style.left = Math.max(30, parseFloat(prev.style.left)) + 'px';
+  next.style.left = Math.min(W - 30, parseFloat(next.style.left)) + 'px';
+  // 白い丸：カード（アイコンとタイトル）のすぐ下＝おへその上
+  const c0 = cards.firstElementChild;
+  document.getElementById('dots').style.top = (by(FOCUS.y) - 84 + (c0 ? c0.offsetHeight : 92) + 8) + 'px';
+  SPACING = Math.min(W * 0.62, 280);
+}
+function place(id, x, y) { const e = document.getElementById(id); e.style.left = x + 'px'; e.style.top = y + 'px'; }
+
+/* ---------- おなかの横の「ぷるん」（網目の変形。横にずらす＋少しだけ波打つ） ---------- */
+const tc = document.createElement('canvas'); tc.width = TW; tc.height = TH;
+const tctx = tc.getContext('2d');
+let src = null, out = null, moved = true;
+const jx = { y: 0, v: 0 };
+function warp() {
+  const soft = (v, m) => m * Math.tanh(v / m);
+  const j = soft(jx.y, 46);
+  if (Math.abs(j) < 0.1 && !moved) return;
+  moved = Math.abs(j) >= 0.1;
+  const d = src.data, o = out.data;
+  for (let y = BY0; y < BY1; y++) {
+    for (let x = BX0; x < BX1; x++) {
+      const u = (x - BELLY.cx) / BELLY.rx, v = (y - BELLY.cy) / BELLY.ry, r2 = u * u + v * v;
+      const i = (y * TW + x) * 4;
+      if (r2 >= 1) { o[i] = d[i]; o[i + 1] = d[i + 1]; o[i + 2] = d[i + 2]; o[i + 3] = d[i + 3]; continue; }
+      const w = (1 - r2) * (1 - r2);
+      // まんなかほど大きく横へ。上と下で少しずらして「〜」の波に
+      let sx = x - j * w * (1 + 0.25 * v), sy = y - Math.abs(j) * 0.08 * w;
+      if (sx < 0) sx = 0; else if (sx > TW - 2) sx = TW - 2;
+      const x0 = sx | 0, y0 = sy | 0, fx = sx - x0, fy = sy - y0;
+      const a = (y0 * TW + x0) * 4, b = a + 4, c = a + TW * 4, e = c + 4;
+      const w00 = (1 - fx) * (1 - fy), w10 = fx * (1 - fy), w01 = (1 - fx) * fy, w11 = fx * fy;
+      for (let ch = 0; ch < 4; ch++) o[i + ch] = d[a + ch] * w00 + d[b + ch] * w10 + d[c + ch] * w01 + d[e + ch] * w11;
+    }
+  }
+  tctx.putImageData(out, 0, 0, BX0, BY0, BX1 - BX0, BY1 - BY0);
+}
+
+/* ---------- めくる（pos はいま見ているゲームの番号。小数のときは途中） ---------- */
+const N = () => GAMES.length;
+const mod = (i) => ((i % N()) + N()) % N();
+// いまの番号から見た i 番のずれ（輪になっているので、近い方の向き）
+const near = (i, p) => { const n = N(); let d = ((i - p) % n + n) % n; if (d > n / 2) d -= n; return d; };
+let pos = 0, vel = 0, target = 0, SPACING = 240, drag = null, tutA = 1, swiped = 0;
+const cardsEl = document.getElementById('cards');
+function buildCards() {
+  cardsEl.innerHTML = '';
+  GAMES.forEach((g, i) => {
+    const c = document.createElement('div');
+    c.className = 'card' + (g.soon ? ' soon' : '');
+    c.innerHTML = '<div class="ic">' + g.icon + (g.isNew ? '<span class="new">NEW</span>' : '') + '</div>'
+      + '<div class="tt"></div>';
+    c.querySelector('.tt').textContent = g.title;
+    cardsEl.appendChild(c);
+  });
+  buildDots();
+}
+function buildDots() {
+  const dots = document.getElementById('dots'); dots.innerHTML = '';
+  GAMES.forEach((g, i) => {
+    const d = document.createElement('i'); d.setAttribute('role', 'tab'); d.setAttribute('aria-label', g.title);
+    d.addEventListener('click', (e) => { e.stopPropagation(); go(target + Math.round(near(i, target))); });
+    dots.appendChild(d);
+  });
+}
+function renderCards() {
+  [...cardsEl.children].forEach((c, i) => {
+    const d = near(i, pos), ad = Math.abs(d);
+    if (ad > 1.6) { c.style.opacity = 0; c.style.transform = 'translateX(' + (d * SPACING) + 'px)'; return; }
+    c.style.opacity = Math.max(0, 1 - ad * 1.1);
+    c.style.transform = 'translateX(' + (d * SPACING) + 'px) scale(' + (1 - Math.min(1, ad) * 0.25) + ') rotate(' + (d * 8) + 'deg)';
+  });
+  // 白い丸：いまの所を横長に。7こより多いときは、はしを小さくして「まだ続く」を見せる（Instagram と同じ考え方）
+  const cur = mod(Math.round(pos));
+  const MAXD = 7, half = 3;
+  let from = 0, to = GAMES.length - 1;
+  if (GAMES.length > MAXD) { from = Math.max(0, Math.min(cur - half, GAMES.length - MAXD)); to = from + MAXD - 1; }
+  [...document.getElementById('dots').children].forEach((d, i) => {
+    d.hidden = i < from || i > to;
+    d.className = (i === cur ? 'on' : '') + (GAMES.length > MAXD && ((i === from && from > 0) || (i === to && to < GAMES.length - 1)) ? ' s2'
+      : GAMES.length > MAXD && ((i === from + 1 && from > 0) || (i === to - 1 && to < GAMES.length - 1)) ? ' s1' : '');
+  });
+
+}
+function go(i, kick) {
+  if (i !== target) {
+    const dir = Math.sign(i - target);
+    jx.v += -dir * (kick || 420);   // めくった向きと逆へ、おなかが「ぷるん」
+    sfx(dir);
+    target = i;
+  }
+}
+
+/* 指の操作：横にスワイプでめくる／タップで、そのゲームへ */
+cv.addEventListener('pointerdown', (e) => {
+  audioInit();
+  drag = { x: e.clientX, y: e.clientY, start: pos, t: performance.now(), lastX: e.clientX, lastT: performance.now(), vx: 0, moved: false };
+  try { cv.setPointerCapture(e.pointerId); } catch (err) {}
+});
+cv.addEventListener('pointermove', (e) => {
+  if (!drag) return;
+  const dx = e.clientX - drag.x, now = performance.now();
+  if (Math.abs(dx) > 8) drag.moved = true;
+  drag.vx = 0.7 * drag.vx + 0.3 * ((e.clientX - drag.lastX) / Math.max(1, now - drag.lastT));
+  drag.lastX = e.clientX; drag.lastT = now;
+  pos = drag.start - dx / SPACING;   // 輪になっているので、はしは無い（なでなでの前は、いちばん最後）
+  target = Math.round(pos);
+  jx.rest = Math.max(-38, Math.min(38, dx / Z * 0.22));                               // 指につられて、おなかが横に
+});
+function end(e) {
+  if (!drag) return;
+  const d = drag; drag = null; jx.rest = 0;
+  if (!d.moved && Math.abs(e.clientY - d.y) < 10) { tapCard(); return; }
+  let i = Math.round(pos);
+  if (Math.abs(d.vx) > 0.35) i = Math.round(d.start) + (d.vx < 0 ? 1 : -1);          // すばやく払ったら、となりへ
+  const before = Math.round(d.start);
+  target = before;                                                                     // go() で向きを判定するため
+  if (i !== before) { go(i); swiped++; }
+  else { jx.v += (pos - before) * 300; }                                               // もどるときも、少しぷるん
+}
+cv.addEventListener('pointerup', end);
+cv.addEventListener('pointercancel', end);
+document.getElementById('prev').addEventListener('click', () => go(target - 1));
+document.getElementById('next').addEventListener('click', () => go(target + 1));
+addEventListener('keydown', (e) => { if (e.key === 'ArrowLeft') go(target - 1); if (e.key === 'ArrowRight') go(target + 1); });
+function tapCard() {
+  const g = GAMES[mod(target)];
+  jx.v += 260 * (Math.random() < 0.5 ? 1 : -1);
+  toast(g.soon ? '🔒 もうすぐ 遊べるよ！' : '▶ ' + g.title + ' へ（試作なので、ここで止まります）');
+}
+let toastT = 0;
+function toast(t) { const el = document.getElementById('toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('on'), 1800); }
+
+document.getElementById('many').addEventListener('click', (e) => {
+  const many = GAMES.length === BASE.length;
+  GAMES = many ? BASE.slice(0, 4).concat(EXTRA, BASE.slice(4)) : BASE.slice();
+  e.currentTarget.textContent = many ? '5こ にもどす' : '12こ にする';
+  pos = target = mod(Math.round(target)); vel = 0; buildCards(); layout();
+});
+
+/* ---------- 音（めくると「ぷるん」） ---------- */
+let AC = null;
+function audioInit() { if (AC) { if (AC.state === 'suspended') AC.resume(); return; } try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
+function sfx(dir) {
+  if (!AC) return;
+  const t = AC.currentTime, o = AC.createOscillator(), g = AC.createGain();
+  const f = dir > 0 ? 300 : 260;
+  o.type = 'sine'; o.frequency.setValueAtTime(f, t); o.frequency.exponentialRampToValueAtTime(f * 2, t + 0.08); o.frequency.exponentialRampToValueAtTime(f * 1.2, t + 0.24);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.25, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.28);
+  o.connect(g).connect(AC.destination); o.start(t); o.stop(t + 0.3);
+}
+
+/* ---------- 描く ---------- */
+function drawTutorial(dt) {
+  // ↔ の白い矢印と 👆（2回めくるまで。さわっている間は消す）
+  const want = swiped < 2 && !drag ? 1 : 0;
+  tutA += (want - tutA) * Math.min(1, dt * 3);
+  if (tutA < 0.02) return;
+  const y = OY + (FOCUS.y + 120) * Z, x = W / 2, len = Math.min(W * 0.5, 220);
+  const sw = 34, hw = 74, hl = 50, L = x - len / 2 - 20, R = x + len / 2 + 20;
+  ctx.save(); ctx.globalAlpha = tutA * 0.95;
+  ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.shadowColor = 'rgba(40,30,20,.3)'; ctx.shadowBlur = 12;
+  ctx.beginPath();
+  ctx.moveTo(L, y); ctx.lineTo(L + hl, y - hw / 2); ctx.lineTo(L + hl, y - sw / 2); ctx.lineTo(R - hl, y - sw / 2); ctx.lineTo(R - hl, y - hw / 2);
+  ctx.lineTo(R, y); ctx.lineTo(R - hl, y + hw / 2); ctx.lineTo(R - hl, y + sw / 2); ctx.lineTo(L + hl, y + sw / 2); ctx.lineTo(L + hl, y + hw / 2);
+  ctx.closePath(); ctx.fill(); ctx.shadowBlur = 0;
+  ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 2.5; ctx.lineJoin = 'round'; ctx.stroke();
+  // 👆：右から左へ（次のゲームへ）をくり返す
+  const T = 2.2, t = (performance.now() / 1000) % T;
+  const ease = (v) => 0.5 - 0.5 * Math.cos(Math.PI * v);
+  let p = 0, a = 1;
+  if (t < 0.3) { a = t / 0.3; } else if (t < 1.6) { p = ease((t - 0.3) / 1.3); } else if (t < 1.9) { p = 1; a = 1 - (t - 1.6) / 0.3; } else { a = 0; p = 1; }
+  const fx = x + len / 2 - len * p;
+  ctx.globalAlpha = tutA * a;
+  ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(fx, y, 16, 0, Math.PI * 2); ctx.stroke();
+  ctx.font = '44px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif'; ctx.textBaseline = 'top';
+  ctx.fillText('👆', fx - 16, y - 2);
+  ctx.restore();
+}
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  // めくり：指をはなしたら、target へばねで（少しだけ行きすぎて止まる）
+  if (!drag) {
+    const k = 140, c = 19;
+    for (let s = 0; s < 4; s++) { const h = dt / 4; vel += (k * (target - pos) - c * vel) * h; pos += vel * h; }
+    if (Math.abs(target - pos) < 0.001 && Math.abs(vel) < 0.001) { pos = target; vel = 0; }
+  } else vel = 0;
+  // おなかのばね（ゆれやすく、ゆっくり止まる）
+  for (let s = 0; s < 4; s++) { const h = dt / 4; jx.v += (-170 * (jx.y - (jx.rest || 0)) - 4.2 * jx.v) * h; jx.y += jx.v * h; }
+  warp();
+  ctx.fillStyle = '#bfe3f7'; ctx.fillRect(0, 0, W, H);
+  const bs = Math.max(W / 720, H / 1281);
+  ctx.drawImage(IMG.beach, (W - 720 * bs) / 2, (H - 1281 * bs) / 2, 720 * bs, 1281 * bs);
+  ctx.drawImage(tc, OX, OY, TW * Z, TH * Z);
+  drawTutorial(dt);
+  renderCards();
+  requestAnimationFrame(frame);
+}
+
+const IMG = {};
+const load = (s) => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = s; });
+Promise.all([load(SRC.tanu), load(SRC.beach)]).then(([t, b]) => {
+  IMG.beach = b;
+  tctx.drawImage(t, 0, 0); src = tctx.getImageData(0, 0, TW, TH); out = tctx.createImageData(TW, TH); out.data.set(src.data);
+  document.getElementById('loading').remove();
+  addEventListener('resize', resize); buildCards(); resize();
+  requestAnimationFrame(frame);
+});
+})();
+</script>
+
+</body>
+</html>
