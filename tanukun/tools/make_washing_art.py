@@ -5,7 +5,7 @@
 
 washing/art/*_src（Gemini で描いた、腰みの・ネックレスなしの絵。背景はマゼンタ）
   stand（前向き。848×1264）→ washing/img/stand.webp（720×900。立ち絵 images/normal.webp とぴったり重なる大きさ・位置。背景は透明）
-  banzai（ばんざい）・mojimoji（もじもじ）・shake（ぶるぶる）・back（後ろ向き・ふり返り）（1027×1532）
+  banzai（ばんざい）・mojimoji（もじもじ）・shake（ぶるぶる）・back（真後ろ）・lookback（うしろでふり返る）（1027×1532）
     → washing/img/*.webp（720×940。上に PAD=40px の余白をつけて、上げた手や頭が切れないように。ゲームでは y=-40 に置く）
   items（小物のまとめ絵）→ washing/img/item_*.webp（1つずつ切り分け。半分の大きさ）
 
@@ -34,6 +34,7 @@ ART = {
     'mojimoji': ('mojimoji_src.png', 0.5925, 62, -5, PAD),    # 重なり 90%
     'shake':    ('shake_src.png',    0.59,   55, -4, PAD),    # 重なり 91%
     'back':     ('back_src.png',     0.6125, 51, -39, PAD),   # 真後ろ（大きさと足の位置をそろえた。ふり返りの絵は耳の位置が不自然なのでやめた）
+    'lookback': ('lookback_src.png', 0.6225, 47, -36, PAD),   # うしろで、ふり返る（体は back と 98% 重なる。顔だけちがう）
 }
 # 小物のまとめ絵（items_src.png）を切り分けたときの名前（左上から右へ、上の段から順に）
 ITEMS = ['conch', 'clam', 'star', 'kelp1', 'kelp2', 'sand1', 'sand2', 'sand3', 'mud1', 'mud2', 'brush', 'dryer', 'bamboo']

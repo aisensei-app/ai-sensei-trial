@@ -51,6 +51,7 @@ const SRC = {
   mojimoji: 'img/mojimoji.webp',           // もじもじ（お股のあたり。720×940）
   shake:    'img/shake.webp',              // ぶるぶる（720×940）
   back:     'img/back.webp',               // うしろ（真後ろ。720×940）
+  lookback: 'img/lookback.webp',           // うしろで、ふり返る（お尻・しっぽを洗うと。体は back と同じ位置）
   happy:    '../images/happy.webp',        // くすぐったい（笑う）… 顔だけ使う
   melt:     '../images/melt.webp',         // うっとり（頭を洗う）
   shy:      '../images/shy.webp',          // えへへ（おなか）
@@ -69,7 +70,7 @@ const SRC = {
   bamboo:   'img/item_bamboo.webp',
   beach:    '../images/bg/beach_day.webp'
 };
-const POSES = ['stand', 'banzai', 'mojimoji', 'shake', 'back'];
+const POSES = ['stand', 'banzai', 'mojimoji', 'shake', 'back', 'lookback'];
 
 /* ---------- 絵の中の場所（立ち絵 720×900 の座標） ---------- */
 const IW = 720, IH = 900, TOP = 40, CH = IH + TOP;
@@ -90,6 +91,8 @@ const ZONES = {
            { cx: 410, cy: 485, rx: 90, ry: 82, s: 'jcR', f: 0.6, name: 'butt' }],
   mojimoji: [], shake: []
 };
+ZONES.lookback = ZONES.back;
+const LOOK_FACE = { cx: 262, cy: 92, rx: 62, ry: 66 };   // ふり返ったときの横顔（うしろでは、ここに汚れ・泡をのせない）
 const CROTCH = { x0: 178, x1: 335, y0: 528 };                        // まえ：お股のあたり（おけのふちの上）
 const PIT_HINT = [{ cx: 140, cy: 300, rx: 40, ry: 44 }, { cx: 408, cy: 290, rx: 40, ry: 44 }];   // まえ：ここをこすると、ばんざい
 const PITS = [{ cx: 165, cy: 245, rx: 34, ry: 50 }, { cx: 466, cy: 252, rx: 34, ry: 52 }];       // ばんざい：脇
@@ -193,7 +196,7 @@ const rnd = (a, b) => a + Math.random() * (b - a);
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
 const DIRT_AREAS = {   // [中心x, 中心y, 横, 縦, 数]
   front: [[325, 70, 80, 40, 2], [270, 290, 120, 40, 3], [270, 440, 140, 80, 5], [100, 430, 32, 70, 2], [470, 320, 55, 110, 2], [520, 545, 45, 30, 1]],
-  back:  [[300, 80, 80, 40, 1], [320, 260, 150, 70, 5], [232, 505, 60, 45, 2], [470, 480, 70, 50, 2], [110, 420, 30, 60, 1], [550, 420, 30, 60, 1]],
+  back:  [[360, 60, 50, 30, 1], [320, 260, 150, 70, 5], [232, 505, 60, 45, 2], [470, 480, 70, 50, 2], [110, 420, 30, 60, 1], [550, 420, 30, 60, 1]],
   pit:   [[PITS[0].cx, PITS[0].cy, 14, 22, 1], [PITS[1].cx, PITS[1].cy, 14, 22, 1]]
 };
 function stamp(x, key, cx, cy, w, rot, alpha) {
@@ -231,7 +234,7 @@ const ITEM_SPOTS = {
           { k: ['kelp1', 'kelp2'], name: 'コンブ', at: [[355, 70], [250, 250], [110, 470]] }],
   back:  [{ k: ['conch', 'clam'], name: '貝がら', at: [[250, 270], [400, 300]] },
           { k: ['star'], name: 'ヒトデ', at: [[225, 500], [180, 380]] },
-          { k: ['kelp1', 'kelp2'], name: 'コンブ', at: [[480, 470], [300, 90]] }],
+          { k: ['kelp1', 'kelp2'], name: 'コンブ', at: [[480, 470], [150, 300]] }],
   pit: []
 };
 const ITEM_W = { conch: 40, clam: 46, star: 50, kelp1: 50, kelp2: 48 };
@@ -251,7 +254,7 @@ function bubbleAt(x, cx, cy, r) {
   x.fillStyle = 'rgba(255,255,255,1)'; x.beginPath(); x.arc(cx - r * 0.35, cy - r * 0.35, r * 0.25, 0, Math.PI * 2); x.fill();
 }
 // 泡は、マスごとに上限まで（同じ所をこすり続けても、もこもこになりすぎない）。まえの顔の上にはのせない
-const onFace = (x, y, pose) => pose !== 'back' && ((x - FACE.cx) / (FACE.rx * 0.95)) ** 2 + ((y - FACE.cy + 8) / (FACE.ry * 0.95)) ** 2 < 1;   // うしろは真後ろの絵なので顔なし
+const onFace = (x, y, pose) => (pose === 'back' || pose === 'lookback' ? inE(x, y, LOOK_FACE) : ((x - FACE.cx) / (FACE.rx * 0.95)) ** 2 + ((y - FACE.cy + 8) / (FACE.ry * 0.95)) ** 2 < 1);
 function addFoam(sd, pose, px, py, R, n) {
   for (let i = 0; i < (n || 2); i++) {
     const a = Math.random() * Math.PI * 2, d = Math.sqrt(Math.random()) * R * 0.9, cx = px + Math.cos(a) * d, cy = py + Math.sin(a) * d;
@@ -278,7 +281,7 @@ function partAt(x, y) {
   }
   if (y > RIM) return 'water';
   if (!isBody(x, y)) return null;
-  if (p === 'back') {
+  if (p === 'back' || p === 'lookback') {
     if (y < 165) return 'head';
     if (x > 320 && y > 400 && !inE(x, y, ZONES.back[0])) return 'tail';
     if (inE(x, y, ZONES.back[0])) return 'butt';
@@ -530,10 +533,11 @@ function touchPart(part, first) {
 function rubReact(part, d) {
   if (S.pose === 'banzai') S.poseUntil = Math.max(S.poseUntil, S.t + 2.5);   // 脇を洗っている間は、ばんざいのまま
   if (part === 'head') { if (S.pose === 'stand') setFace('melt', 1.0); if (Math.random() < 0.02) say('head'); }
+  else if (part === 'tail' && S.side === 'back') { lookBack(); if (Math.random() < 0.015) say('tail'); }
   else if (part === 'tail') { if (S.face !== 'troubled' && S.pose === 'stand') { setFace('troubled', 1.2); say('tail'); S.shakeT = 0.2; } else if (S.pose === 'stand') setFace('troubled', 1.0); else if (Math.random() < 0.015) say('tail'); }
   else if (part === 'belly') { if (S.pose === 'stand') setFace('shy', 1.0); if (Math.random() < 0.012) say('belly'); }
   else if (part === 'back') { if (Math.random() < 0.012) say('back'); }
-  else if (part === 'butt') { if (Math.random() < 0.015) { say('butt'); S.shakeT = 0.2; } }
+  else if (part === 'butt') { lookBack(); if (Math.random() < 0.015) { say('butt'); S.shakeT = 0.2; } }
   else if (part === 'pit') {
     S.tickle += d * 1.6;
     if (S.tickle > rnd(300, 600)) { S.tickle = 0; S.shakeT = 0.45; say('pit', true); sfx.giggle(); S.jcL.v += 120; S.jcR.v += 110; S.jb.v += 90; }
@@ -546,13 +550,16 @@ function rubReact(part, d) {
   }
 }
 
+// うしろで、お尻・しっぽをさわると、ふり返る
+function lookBack() { if (S.side === 'back' && (S.pose === 'back' || S.pose === 'lookback')) setPose('lookback', 1.6); }
+
 /* ---------- ぷるん！（水をはじく） ---------- */
 function purun(x, y) {
   const zs = ZONES[S.pose] || [];
   let z = zs.find((q) => inE(x, y, q, 1.3)) || zs[0];
   if (!z) return;
   S.jb.v += 520; setTimeout(() => { S.jcL.v += 420; S.jcR.v += 390; }, 50);
-  sfx.boing(1); if (S.pose === 'stand') setFace('shy', 1.2);
+  sfx.boing(1); if (S.pose === 'stand') setFace('shy', 1.2); lookBack();
   const sc = toScr(x, y); pop('ぷるん！', sc.x + 40, sc.y - 30);
   if (Math.random() < 0.5) say(S.side === 'back' ? 'butt' : 'purun');
   // ぷるんした所（おなか・お尻なら両方）から、しずくが飛ぶ
@@ -697,6 +704,7 @@ function step(h) {
       if (z && Math.random() < 0.5) {
         d.free = true; d.vy = -d.vy * rnd(0.35, 0.55); d.vx = (d.x - z.cx) * rnd(1.2, 2.2) + rnd(-60, 60);
         S[z.s].v += z.s === 'jb' ? 14 : 10;
+        if (z.name === 'butt' && Math.random() < 0.03) lookBack();
         if (Math.random() < 0.04) sfx.boing(0.25);
       } else { d.run = true; d.vx = rnd(-12, 12); d.vy = rnd(110, 170); d.life = 1.6; }
     }
