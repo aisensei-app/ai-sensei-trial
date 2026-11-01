@@ -323,9 +323,9 @@ function drawItem(x, it) { stamp(x, it.key, it.x, it.y, ITEM_W[it.key], it.rot, 
 
 /* ---------- ずかん（記録・画面） ----------
    記録は、この端末の localStorage（tanu-washing-zukan。{id: とれた数}）だけ。そろったときのとくべつイラストを見たかは tanu-washing-zukan-done
-   とくべつイラスト（ZK_SPECIAL）は、src が null の間は仮の絵（準備中）。絵ができたら img/sp_zukan.webp（tools/make_washing_art.py の REWARD_IDS に zukan）を文字列で書く */
+   とくべつイラスト（ZK_SPECIAL）は、src が null の間は仮の絵（準備中）。絵は img/sp_zukan.webp（2026-11-02。貝がらの箱を見せてくれる絵。ユーザーが ChatGPT で描いた。縦横 2:3）。tools/make_washing_art.py の REWARD_IDS に zukan */
 const ZK_KEY = 'tanu-washing-zukan', ZK_DONE = 'tanu-washing-zukan-done';
-const ZK_SPECIAL = { src: null, title: 'ずかんコンプリート！', line: 'ぜんぶ あつめたね！ ありがとう〜！' };
+const ZK_SPECIAL = { src: 'img/sp_zukan.webp', title: 'ずかんコンプリート！', line: 'ぜんぶ あつめたね！ ありがとう〜！' };
 let zkSeen = {}, zkDoneSeen = false;
 try { zkSeen = JSON.parse(localStorage.getItem(ZK_KEY) || '{}') || {}; zkDoneSeen = localStorage.getItem(ZK_DONE) === '1'; } catch (e) { zkSeen = {}; }
 const zkFound = () => ZUKAN.filter((z) => zkSeen[z.id]).length;
