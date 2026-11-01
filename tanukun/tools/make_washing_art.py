@@ -45,7 +45,7 @@ ITEMS2 = ['urchin', 'coral', 'petal', 'glass', 'hermit', 'pearl', 'goldstar']
 
 # ごほうびの特別イラスト（結果の画面に出す）。washing/art/sp_<名前>_src.（png か jpg）を置くと、img/sp_<名前>.webp になる。
 # 名前は washing.js の REWARDS の id と同じ。絵が置いてあるものだけ作る。できたら REWARDS の src を 'img/sp_<名前>.webp' にする
-REWARD_IDS = ['towel', 'stumble', 'splash', 'zukan']   # zukan＝ずかんがそろったときのとくべつイラスト（ZK_SPECIAL）
+REWARD_IDS = ['towel', 'stumble', 'splash', 'zukan', 'zukan_rare']   # zukan＝ずかんがそろったときのとくべつイラスト、zukan_rare＝2回目のコンプ以降に、ときどき出るレア（washing.js の ZK_SPECIALS）
 REWARD_WIDTH = 810   # 縦横 3:4 の絵（1086×1448）を、切らずに幅 810（810×1080）に縮める
 
 

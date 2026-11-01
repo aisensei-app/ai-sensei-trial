@@ -127,7 +127,15 @@ window.TANU_TEXT_I18N.en = Object.assign(window.TANU_TEXT_I18N.en || {}, {
   'しんじゅ': 'Pearl',
   'ひかる ふしぎな まるい たま': 'A glowing, mysterious little ball',
   'きんのヒトデ': 'Golden starfish',
-  'めったに みつからない ひかる ヒトデ': 'A shiny starfish that is hard to find'
+  'めったに みつからない ひかる ヒトデ': 'A shiny starfish that is hard to find',
+  '{n}しゅうめ': 'Round {n}',
+  '🔄 もう一度 あつめる': '🔄 Collect again',
+  'ほんとうに リセットする？（とくべつイラストは のこるよ）': 'Really reset? (Special pictures stay)',
+  'もう一度 あつめると… ひみつの絵が 出るかも？': 'Collect them all again… a secret picture might show up?',
+  'つぎへ ▶': 'Next ▶',
+  'レアなイラストが 出たよ！': 'A rare picture appeared!',
+  'ひみつの おしゃれ♪': 'Secret outfit♪',
+  'あつめた貝がらで、おきがえしてみたよ！ どうかな？': 'I dressed up with the shells I collected! How do I look?'
 });
 window.TANU_TEXT_I18N.zh = Object.assign(window.TANU_TEXT_I18N.zh || {}, {
   // 画面
@@ -252,5 +260,13 @@ window.TANU_TEXT_I18N.zh = Object.assign(window.TANU_TEXT_I18N.zh || {}, {
   'しんじゅ': '珍珠',
   'ひかる ふしぎな まるい たま': '闪闪发光的神奇圆珠',
   'きんのヒトデ': '金海星',
-  'めったに みつからない ひかる ヒトデ': '很难找到的闪亮海星'
+  'めったに みつからない ひかる ヒトデ': '很难找到的闪亮海星',
+  '{n}しゅうめ': '第{n}轮',
+  '🔄 もう一度 あつめる': '🔄 重新收集',
+  'ほんとうに リセットする？（とくべつイラストは のこるよ）': '真的要重置吗？（特别插画会保留）',
+  'もう一度 あつめると… ひみつの絵が 出るかも？': '再集齐一次…说不定会出现秘密插画？',
+  'つぎへ ▶': '下一张 ▶',
+  'レアなイラストが 出たよ！': '出现了稀有插画！',
+  'ひみつの おしゃれ♪': '秘密的装扮♪',
+  'あつめた貝がらで、おきがえしてみたよ！ どうかな？': '用收集的贝壳打扮了一下！怎么样？'
 });

@@ -169,7 +169,7 @@ const S = {
   showerOn: false, sx: 0, sy: 0, brush: null,
   dirt0: 1, gauge: 100, asked: {},
   lastInput: 0, tickle: 0, said: {},
-  newZ: [], zkJust: false          // このあそびで、ずかんに初めて登録した小物の id・ずかんがそろった（結果の画面でとくべつイラスト）
+  newZ: []                         // このあそびで、ずかんに初めて登録した小物の id
 };
 const events = [];
 
@@ -322,31 +322,57 @@ function makeItems(name) {
 function drawItem(x, it) { stamp(x, it.key, it.x, it.y, ITEM_W[it.key], it.rot, 1); }
 
 /* ---------- ずかん（記録・画面） ----------
-   記録は、この端末の localStorage（tanu-washing-zukan。{id: とれた数}）だけ。そろったときのとくべつイラストを見たかは tanu-washing-zukan-done
-   とくべつイラスト（ZK_SPECIAL）は、src が null の間は仮の絵（準備中）。絵は img/sp_zukan.webp（2026-11-02。貝がらの箱を見せてくれる絵。ユーザーが ChatGPT で描いた。縦横 2:3）。tools/make_washing_art.py の REWARD_IDS に zukan */
-const ZK_KEY = 'tanu-washing-zukan', ZK_DONE = 'tanu-washing-zukan-done';
-const ZK_SPECIAL = { src: 'img/sp_zukan.webp', title: 'ずかんコンプリート！', line: 'ぜんぶ あつめたね！ ありがとう〜！' };
-let zkSeen = {}, zkDoneSeen = false;
-try { zkSeen = JSON.parse(localStorage.getItem(ZK_KEY) || '{}') || {}; zkDoneSeen = localStorage.getItem(ZK_DONE) === '1'; } catch (e) { zkSeen = {}; }
+   記録は、この端末の localStorage だけ：tanu-washing-zukan＝{id: とれた数}、tanu-washing-zukan-meta＝{rounds: コンプした回数, sp: {手に入れたとくべつイラスト: 回数}, miss: レアが出なかった連続回数, pending: そろったが、まだ結果の画面で絵を見ていない}
+   （tanu-washing-zukan-done は前の版の記録。あれば「1回コンプ済み」として引きつぐ）
+   とくべつイラスト（ZK_SPECIALS）：box＝1回目のコンプ（貝がらの箱を見せてくれる絵）／rare＝2回目のコンプ以降に、ときどき（ZK_RARE_P。外れが ZK_RARE_PITY 回つづいたら次は必ず）。どちらも ChatGPT でユーザーが描いた。tools/make_washing_art.py の REWARD_IDS
+   コンプ後は、ずかんの画面の「もう一度 あつめる」で、記録（ずかん）だけリセット。とくべつイラスト・コンプの回数は残る */
+const ZK_KEY = 'tanu-washing-zukan', ZK_META = 'tanu-washing-zukan-meta', ZK_DONE = 'tanu-washing-zukan-done';
+const ZK_SPECIALS = {
+  box:  { src: 'img/sp_zukan.webp',      title: 'ずかんコンプリート！', line: 'ぜんぶ あつめたね！ ありがとう〜！' },
+  rare: { src: 'img/sp_zukan_rare.webp', title: 'ひみつの おしゃれ♪',   line: 'あつめた貝がらで、おきがえしてみたよ！ どうかな？' }
+};
+const ZK_RARE_P = 0.3, ZK_RARE_PITY = 3;
+let zkSeen = {}, zk = { rounds: 0, sp: {}, miss: 0, pending: false };
+try {
+  zkSeen = JSON.parse(localStorage.getItem(ZK_KEY) || '{}') || {};
+  const meta = JSON.parse(localStorage.getItem(ZK_META) || 'null');
+  if (meta) { zk.rounds = meta.rounds || 0; zk.sp = meta.sp || {}; zk.miss = meta.miss || 0; zk.pending = !!meta.pending; }
+  else if (localStorage.getItem(ZK_DONE) === '1') { zk.rounds = 1; zk.sp = { box: 1 }; }
+} catch (e) { zkSeen = {}; }
 const zkFound = () => ZUKAN.filter((z) => zkSeen[z.id]).length;
+const zkAll = () => zkFound() === ZUKAN.length;
 const zkBtn = document.getElementById('zkBtn');
 function zkUpdate() { document.getElementById('zkCount').textContent = zkFound() + '/' + ZUKAN.length; }
-function zkSave() { try { localStorage.setItem(ZK_KEY, JSON.stringify(zkSeen)); if (zkDoneSeen) localStorage.setItem(ZK_DONE, '1'); } catch (e) {} }
+function zkSave() { try { localStorage.setItem(ZK_KEY, JSON.stringify(zkSeen)); localStorage.setItem(ZK_META, JSON.stringify(zk)); } catch (e) {} }
 // 小物がとれたとき（または最後のシャワーで流れ落ちたとき）。初めてなら true
 function zkRegister(it) {
   const isNew = !zkSeen[it.id];
   zkSeen[it.id] = (zkSeen[it.id] || 0) + 1;
   if (isNew) {
     S.newZ.push(it.id);
-    if (zkFound() === ZUKAN.length && !zkDoneSeen) S.zkJust = true;
+    if (zkAll()) zk.pending = true;   // そろった！ → 結果の画面で、とくべつイラスト（見るまで覚えておく）
     zkBtn.classList.remove('bump'); void zkBtn.offsetWidth; zkBtn.classList.add('bump');
   }
   zkSave(); zkUpdate();
   return isNew;
 }
+// 結果の画面で、そろったときのとくべつイラストを決める：1回目は box。2回目以降は、ときどき rare（外れが続いたら次は必ず）
+function zkClaim() {
+  zk.pending = false; zk.rounds++;
+  let key = 'box';
+  if (zk.rounds >= 2) { if (Math.random() < (zk.miss >= ZK_RARE_PITY ? 1 : ZK_RARE_P)) { key = 'rare'; zk.miss = 0; } else zk.miss++; }
+  const isNew = !zk.sp[key];
+  zk.sp[key] = (zk.sp[key] || 0) + 1;
+  zkSave();
+  return { key, isNew };
+}
+const zkSpList = () => ['box', 'rare'].filter((k) => zk.sp[k]);   // 手に入れたとくべつイラスト
 const zkEl = document.getElementById('zukan'), zkGrid = document.getElementById('zkGrid');
+const zkResetBtn = document.getElementById('zkReset');
+let zkResetTimer = 0;
 function zkOpen() {
-  document.getElementById('zkNum').textContent = zkFound() + ' / ' + ZUKAN.length;
+  const all = zkAll(), round = zk.rounds + (all && !zk.pending ? 0 : 1);
+  document.getElementById('zkNum').textContent = zkFound() + ' / ' + ZUKAN.length + (zk.rounds >= 1 ? '　' + tr('{n}しゅうめ', { n: round }) : '');
   zkGrid.textContent = '';
   for (const z of ZUKAN) {
     const have = zkSeen[z.id], d = document.createElement('div');
@@ -358,23 +384,40 @@ function zkOpen() {
     const ln = document.createElement('i'); ln.textContent = have ? tr(z.line) : tr('どこかに いるかも…');
     d.append(pic, nm, cn, ln); zkGrid.appendChild(d);
   }
-  const all = zkFound() === ZUKAN.length;
-  document.getElementById('zkNote').textContent = all ? '' : tr('ぜんぶ あつめると、とくべつイラストが 見られるよ');
-  document.getElementById('zkArtBtn').hidden = !(all && zkDoneSeen);
+  // 一言：1回目のコンプの前は「ぜんぶ集めると…」、1回目のあとは、レアが出るまで「もう一度…？」
+  document.getElementById('zkNote').textContent = zk.rounds === 0 ? tr('ぜんぶ あつめると、とくべつイラストが 見られるよ') : (zk.sp.rare ? '' : tr('もう一度 あつめると… ひみつの絵が 出るかも？'));
+  document.getElementById('zkArtBtn').hidden = zkSpList().length === 0;
+  zkResetBtn.hidden = !(all && !zk.pending);   // コンプしたあと（絵を見たあと）だけ
+  clearTimeout(zkResetTimer); zkResetBtn.textContent = tr('🔄 もう一度 あつめる');
   zkEl.hidden = false;
 }
 zkBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); audioInit(); zkOpen(); });
 zkBtn.addEventListener('click', (e) => { e.stopPropagation(); if (e.detail === 0) zkOpen(); });   // キーボードで押したとき
 document.getElementById('zkClose').addEventListener('click', () => { zkEl.hidden = true; });
-const zkArtEl = document.getElementById('zkArt');
-document.getElementById('zkArtBtn').addEventListener('click', () => {
-  const img = document.getElementById('zkArtImg');
-  img.src = ZK_SPECIAL.src || rewardPlaceholder({ id: 'zukan' });
-  img.alt = tr(ZK_SPECIAL.title);
-  document.getElementById('zkArtTitle').textContent = tr(ZK_SPECIAL.title);
-  document.getElementById('zkArtLine').textContent = tr(ZK_SPECIAL.line);
-  zkArtEl.hidden = false; requestAnimationFrame(() => zkArtEl.classList.add('on'));
+// リセット：1回目のタップで確認の文に変わり、もう一度タップでリセット（4秒でもどる）。とくべつイラスト・コンプの回数は残る
+zkResetBtn.addEventListener('click', () => {
+  if (zkResetBtn.dataset.arm !== '1') {
+    zkResetBtn.dataset.arm = '1'; zkResetBtn.textContent = tr('ほんとうに リセットする？（とくべつイラストは のこるよ）');
+    zkResetTimer = setTimeout(() => { zkResetBtn.dataset.arm = ''; zkResetBtn.textContent = tr('🔄 もう一度 あつめる'); }, 4000);
+    return;
+  }
+  zkResetBtn.dataset.arm = ''; zkSeen = {}; zkSave(); zkUpdate(); S.newZ = [];
+  zkOpen();
 });
+// とくべつイラストを見返す（手に入れた絵を、順に）
+const zkArtEl = document.getElementById('zkArt'), zkArtNext = document.getElementById('zkArtNext');
+let zkArtI = 0;
+function zkArtShow() {
+  const list = zkSpList(); if (!list.length) return;
+  const sp = ZK_SPECIALS[list[zkArtI % list.length]], img = document.getElementById('zkArtImg');
+  img.src = sp.src || rewardPlaceholder({ id: 'zukan' }); img.alt = tr(sp.title);
+  document.getElementById('zkArtTitle').textContent = tr(sp.title);
+  document.getElementById('zkArtLine').textContent = tr(sp.line);
+  zkArtNext.hidden = list.length < 2;
+  zkArtEl.hidden = false; requestAnimationFrame(() => zkArtEl.classList.add('on'));
+}
+document.getElementById('zkArtBtn').addEventListener('click', () => { zkArtI = 0; zkArtShow(); });
+zkArtNext.addEventListener('click', () => { zkArtI++; zkArtShow(); });
 document.getElementById('zkArtBack').addEventListener('click', () => { zkArtEl.classList.remove('on'); setTimeout(() => { zkArtEl.hidden = true; }, 400); });
 zkUpdate();
 
@@ -883,15 +926,16 @@ function rewardPlaceholder(rw) {
 const ctitleEl = document.querySelector('#clear .ctitle'), cZkEl = document.getElementById('cZk');
 function showReward() {
   ctitleEl.textContent = tr('ピカピカ！'); ctitleEl.classList.remove('long'); cZkEl.hidden = true;
-  if (S.zkJust) {   // ずかんがそろった！ → ごほうびの代わりに、とくべつイラスト
-    S.zkJust = false; zkDoneSeen = true; zkSave();
+  if (zk.pending) {   // ずかんがそろった！ → ごほうびの代わりに、とくべつイラスト（2回目以降は、ときどきレア）
+    const { key, isNew } = zkClaim(), sp = ZK_SPECIALS[key];
     ctitleEl.textContent = tr('ずかんコンプリート！'); ctitleEl.classList.add('long');
     const im = document.getElementById('rwImg');
-    im.src = ZK_SPECIAL.src || rewardPlaceholder({ id: 'zukan' }); im.alt = tr(ZK_SPECIAL.title);
-    document.getElementById('cLine').textContent = tr(ZK_SPECIAL.title);
-    document.getElementById('cNote').textContent = tr(ZK_SPECIAL.line);
-    document.getElementById('rwNew').style.visibility = 'visible';
-    document.getElementById('rwCount').textContent = tr('ずかん {a} / {b}', { a: zkFound(), b: ZUKAN.length });
+    im.src = sp.src || rewardPlaceholder({ id: 'zukan' }); im.alt = tr(sp.title);
+    document.getElementById('cLine').textContent = tr(sp.title);
+    document.getElementById('cNote').textContent = tr(sp.line);
+    document.getElementById('rwNew').style.visibility = isNew ? 'visible' : 'hidden';
+    document.getElementById('rwCount').textContent = tr('ずかん {a} / {b}', { a: zkFound(), b: ZUKAN.length }) + '　' + tr('{n}しゅうめ', { n: zk.rounds });
+    if (key === 'rare') { cZkEl.textContent = tr('レアなイラストが 出たよ！'); cZkEl.hidden = false; }
     return;
   }
   let r = Math.random() * REWARDS.reduce((a, s) => a + s.weight, 0), rw = REWARDS[0];
@@ -1244,7 +1288,7 @@ function handleEvents() {
 /* ---------- はじめる ---------- */
 function start() {
   S.stage = 'wash'; S.side = 'front'; S.turn = null; setPose('stand'); S.face = null;
-  cutinEl.hidden = true; S.cutT = 0; S.newZ = []; S.zkJust = false;
+  cutinEl.hidden = true; S.cutT = 0; S.newZ = [];
   S.tool = 'brush'; S.foamRef = null; S.cf = 1; S.finT = 0; S.clearShown = false; toolBtns.shower.classList.remove('ask');
   S.showerOn = false; showerSound(false); makeCrotchFoam();
   S.drops = []; S.sparks = []; S.ripples = []; S.tickle = 0; S.said = {}; S.asked = {};
