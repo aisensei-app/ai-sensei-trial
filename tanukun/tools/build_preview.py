@@ -52,7 +52,9 @@ def build(demo, out):
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text('<title>' + title + '</title>\n'
                    '<meta name="claude:viewport-fit-sides" content="cover">\n'
-                   '<style>\nhtml,body{color-scheme:light}\n' + css + '\n</style>\n'
+                   '<style>\nhtml,body{color-scheme:light}\nhtml.arriving,html.arriving body{background:#3A2210}\n' + css + '\n</style>\n'
+                   # ゲームから戻ってきたときは、最初から こげ茶の幕（本番の index.html の head と同じ。iris.js が丸く開く）
+                   + "<script>try { if (sessionStorage.getItem('tanukun.homeZoom')) document.documentElement.classList.add('arriving'); } catch (e) {}</script>\n"
                    + body + scripts, encoding='utf8')
     print('できました:', out, f'({out.stat().st_size // 1024} KB)')
 
