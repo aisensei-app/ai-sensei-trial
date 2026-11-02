@@ -1050,6 +1050,7 @@
     $('back-home').hidden = playing || paused || !IN_SITE;
   }
   $('pause-home').hidden = !IN_SITE;
+  $('r-home').hidden = !IN_SITE;   // 結果の画面からも、タヌくんのところ（トップ画面）へ
   // 本編をまだ遊んだことがない人（X のポストから来た人など）にだけ、本編への入り口を出す
   $('start-home').hidden = !IN_SITE || !!loadSave().lastDay;
 
