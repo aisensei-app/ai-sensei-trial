@@ -871,6 +871,13 @@
   }
   function veilOut() { setTimeout(() => veil.classList.remove('on'), 60); }
   function veilArrive() {
+    // ゲームから戻ってきたとき：こげ茶の画面から、丸く開いて明ける（iris.js。ゲームを出るときに丸く閉じたのと対になる）
+    if (window.TanuIris) {
+      window.TanuIris.cover();
+      document.documentElement.classList.remove('arriving');
+      requestAnimationFrame(() => requestAnimationFrame(() => window.TanuIris.open()));
+      return;
+    }
     veil.classList.add('arrive');
     document.documentElement.classList.remove('arriving');
     setTimeout(() => veil.classList.remove('arrive'), 800);
@@ -1841,9 +1848,10 @@
         name: f === 'soon' ? g.name + ' ' + tr('🔒 もうすぐ') : g.name,
         isNew: f === 'open' && !!g.isNew,
         // ゲームへ：幕がかかってから、ゲームのページへ（ゲームのページは、同じ幕が明けるところから始まる）
-        go: f === 'soon' ? () => toast(g.soon) : () => {
+        // ゲームへは、タップしたカードに向かって丸く閉じてから（iris.js。マリオのステージに入るときのように）
+        go: f === 'soon' ? () => toast(g.soon) : (pt) => {
           store((ss) => ss.setItem(BACK_KEY, '1'));
-          veilIn().then(() => { location.href = g.href; });
+          (window.TanuIris ? window.TanuIris.close(pt && pt.x, pt && pt.y) : veilIn()).then(() => { location.href = g.href; });
         }
       }));
     });

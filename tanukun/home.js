@@ -360,7 +360,10 @@ window.TanuHome = function (opts) {
     setTimeout(() => { body.classList.remove('boing'); el.classList.remove('wobble'); }, 520);
     const r = el.getBoundingClientRect(), rr = root.getBoundingClientRect();
     pop(r.left - rr.left + r.width / 2, r.top - rr.top - 16, tr('ぽよん！'));
-    setTimeout(() => { busy = false; g.go(); }, 550);
+    // カードのアイコンのまんなか（画面の位置）。ゲームへ行くときは、ここに向かって丸く閉じる（iris.js）
+    const ic = (el.querySelector('i') || el).getBoundingClientRect();
+    const at = { x: ic.left + ic.width / 2, y: ic.top + ic.height / 2 };
+    setTimeout(() => { busy = false; g.go(at); }, 550);
   }
 
   // タップ：ズーム前はタヌくんをタップでズーム（寝ているときは起こす）。ズーム中のタップ・スワイプは、上の「指の操作」で

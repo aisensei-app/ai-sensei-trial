@@ -33,6 +33,12 @@
     e.preventDefault();
     try { sessionStorage.setItem('tanukun.homeZoom', '1'); } catch (err) {}
     document.body.classList.add('leaving');
+    // 「もどる」に向かって丸く閉じてから戻る（iris.js。本編は、こげ茶から丸く開いて始まる）
+    if (window.TanuIris) {
+      const r = a.getBoundingClientRect();
+      window.TanuIris.close(r.left + r.width / 2, r.top + r.height / 2).then(() => { location.href = a.href; });
+      return;
+    }
     setTimeout(() => { location.href = a.href; }, 430);
   });
   const $ = (id) => document.getElementById(id);
@@ -1068,7 +1074,15 @@
   // ページの読みこみが終わって、2回描いたあと。おそくても 2.5秒で明ける
   (function () {
     let done = false;
-    const ready = () => { if (done) return; done = true; requestAnimationFrame(() => requestAnimationFrame(() => document.body.classList.add('ready'))); };
+    const ready = () => {
+      if (done) return;
+      done = true;
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        // こげ茶の幕（CSS）から、丸く開いて明ける（iris.js。本編のカードから丸く閉じて来たのと対になる）
+        if (window.TanuIris) { window.TanuIris.cover(); document.body.classList.add('ready', 'iris'); window.TanuIris.open(); }
+        else document.body.classList.add('ready');
+      }));
+    };
     if (document.readyState === 'complete') ready(); else window.addEventListener('load', ready, { once: true });
     setTimeout(ready, 2500);
   })();

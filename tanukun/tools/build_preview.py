@@ -39,7 +39,7 @@ def build(demo, out):
     css = css.replace('height: 100vh;\n  height: 100dvh;', 'height: 100%;')
     page = (ROOT / 'index.html').read_text(encoding='utf8')
     body = page[page.index('<main id="app">'):page.index('<!-- 読み込む順番')]
-    names = ['config.js', 'config.en.js', 'config.zh.js', 'lines.js', 'lines.en.js', 'lines.zh.js', 'i18n.zh.js', 'i18n.js', 'save.js', 'belly.js', 'home.js', 'app.js']
+    names = ['config.js', 'config.en.js', 'config.zh.js', 'lines.js', 'lines.en.js', 'lines.zh.js', 'i18n.zh.js', 'i18n.js', 'save.js', 'belly.js', 'iris.js', 'home.js', 'app.js']
     title = 'タヌくん'
     if demo:
         names.insert(1, 'demo.js')
@@ -71,7 +71,7 @@ def build_pon(out, folder='pon', title='ぽんぽこリズム'):
         game = re.sub(r"'((?:\.\./)?(?:img|images)/[^']+\.webp)'",
                       lambda m: "'data:image/webp;base64," + base64.b64encode((ROOT / folder / m.group(1)).resolve().read_bytes()).decode() + "'", game)
     scripts = ''.join('<script>\n' + text + '\n</script>\n' for text in
-                      [js('config.js')] + words + ([] if folder in ('seesaw', 'washing') else [js('belly.js')]) + [game])
+                      [js('config.js')] + words + ([] if folder in ('seesaw', 'washing') else [js('belly.js')]) + ([js('iris.js')] if folder in ('pon', 'rally') else []) + [game])
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text('<title>' + title + '</title>\n'
                    '<meta name="claude:viewport-fit-sides" content="cover">\n'
@@ -121,5 +121,5 @@ if __name__ == '__main__':
         # Artifact では、いっしょに載せるページは そのまま出るので、文字コードと画面の幅の宣言を先頭に付ける
         pon.write_text('<!doctype html>\n<html lang="ja"><head><meta charset="utf-8">'
                        '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">'
-                       '<meta name="color-scheme" content="light"><style>html{background:#EED8B2;color-scheme:light}</style></head><body>\n'
+                       '<meta name="color-scheme" content="light"><style>html{background:#3A2210;color-scheme:light}</style></head><body>\n'
                        + pon.read_text(encoding='utf8') + '\n</body></html>\n', encoding='utf8')

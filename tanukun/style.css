@@ -1096,3 +1096,6 @@ html[lang="zh"] body { font-family: -apple-system, BlinkMacSystemFont, "PingFang
 @media (prefers-reduced-motion: reduce) { .scroll-more.more::after { animation: none; } }
 .sheet-box.scroll-more { --fade: #FFF9EF; }
 .sheet-box.scroll-more::after { margin-top: -56px; bottom: -20px; }   /* 中身の間（gap 10px）と、パネルの内側の余白（20px）の分 */
+
+/* ゲームから戻ってきたとき：幕は こげ茶（ゲームを出るときの「丸く閉じる」と同じ色。iris.js が丸く開いて明ける） */
+html.arriving .veil { background: #3A2210 !important; }
