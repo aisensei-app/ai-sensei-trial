@@ -620,7 +620,10 @@
   /* =========================================================
      怒る → 隠れる → 戻ってくる
      ========================================================= */
+  // 怒る〜隠れる〜戻ってくる の流れの番号。「もどる」でトップ画面へ行ったら番号を進めて、続きを止める（calmDown）
+  let hideToken = 0, comeTimer = 0;
   async function getAngry(base) {
+    const tk = hideToken;
     state.phase = 'angry';
     state.faceSeq = null;
     belly.stop();
@@ -637,16 +640,18 @@
       { transform: 'translate(0, 0) rotate(0)' }
     ], { duration: 90, iterations: 13 }).finished;
 
-    await hide();
+    if (tk !== hideToken) return;
+    await hide(tk);
   }
 
-  async function hide() {
+  async function hide(tk) {
     // しゅっと下に引っこむ
     const out = move.animate([
       { transform: 'translateY(0) scale(1)', opacity: 1 },
       { transform: 'translateY(20%) scale(.9, .8)', opacity: 0 }
     ], { duration: 260, easing: 'ease-in', fill: 'forwards' });
     await out.finished;
+    if (tk !== hideToken) { out.cancel(); return; }
 
     state.phase = 'hidden';
     refreshFace();   // 茂みの絵に
@@ -656,7 +661,7 @@
       { transform: 'translateY(0) scale(1)', opacity: 1 }
     ], { duration: 320, easing: 'cubic-bezier(.3,1.5,.5,1)' });
 
-    setTimeout(comeBack, rand(C.hide.minSeconds, C.hide.maxSeconds) * 1000);
+    comeTimer = setTimeout(comeBack, rand(C.hide.minSeconds, C.hide.maxSeconds) * 1000);
   }
 
   function rustle() {
@@ -676,14 +681,17 @@
   }
 
   async function comeBack() {
+    const tk = hideToken;
     state.phase = 'returning';
     rustle();
     await wait(420);
+    if (tk !== hideToken) return;
 
     const out = move.animate([
       { opacity: 1 }, { opacity: 0 }
     ], { duration: 150, fill: 'forwards' });
     await out.finished;
+    if (tk !== hideToken) { out.cancel(); return; }
 
     // 気分をリセット
     state.taps = [];
@@ -921,12 +929,25 @@
     go();
   }
 
+  // 怒っている・隠れている途中で「もどる」を押したとき：続きを止めて、ふつうのタヌくんに戻しておく
+  // （2026-11-02 ユーザーの要望で、隠れている間も もどれるように。前は もどれなかった）
+  function calmDown() {
+    hideToken += 1;
+    clearTimeout(comeTimer);
+    [body, move].forEach((el) => { if (el.getAnimations) el.getAnimations().forEach((a) => a.cancel()); });
+    state.taps = [];
+    state.mood = 'normal';
+    state.phase = 'active';
+    refreshFace();
+  }
   let leaving = false;
   function backHome() {
-    if (state.phase !== 'active' || leaving) return;   // 怒って隠れている間はもどれない
+    if (leaving) return;
+    const upset = state.phase !== 'active';
+    if (upset) { hideToken += 1; clearTimeout(comeTimer); }   // 幕がかかる間に、戻ってくる続きが始まらないように
     // 幕がふわっとかかってから、トップ画面へ（明けるときは、ズームしたおなかの画面）
     leaving = true;
-    veilIn().then(() => { leaving = false; showHome(); veilOut(); });
+    veilIn().then(() => { leaving = false; if (upset) calmDown(); showHome(); veilOut(); });
   }
   function showHome() {
     endMelt(true);

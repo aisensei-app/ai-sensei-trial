@@ -1061,4 +1061,12 @@
   $('btn-mode').addEventListener('click', quit);
   setFace('normal');
   showBar();
+  // 幕を明ける：絵とプログラムの準備ができてから（2026-11-02。開いた直後に、準備中の画面がちらっと見えないように）。
+  // ページの読みこみが終わって、2回描いたあと。おそくても 2.5秒で明ける
+  (function () {
+    let done = false;
+    const ready = () => { if (done) return; done = true; requestAnimationFrame(() => requestAnimationFrame(() => document.body.classList.add('ready'))); };
+    if (document.readyState === 'complete') ready(); else window.addEventListener('load', ready, { once: true });
+    setTimeout(ready, 2500);
+  })();
 })();
