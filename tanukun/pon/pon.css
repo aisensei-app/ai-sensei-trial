@@ -653,3 +653,26 @@ body.leaving::after { animation: tanu-veil-leave .42s cubic-bezier(.45, 0, .7, .
 
 /* 中国語のとき：中国語の字体を優先（本編の style.css と同じ） */
 html[lang="zh"] body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", "Noto Sans CJK SC", sans-serif; }
+
+/* ---- 下に続きがあるときの目印（2026-11-02。JS の scrollHint）----
+   スクロールできる枠の下のはしを、背景の色へ うすくぼかして、小さな ︾ をゆっくり上下に。いちばん下まで見たら消える。
+   目立たないように、︾ はうすい茶色（--chev）。枠の背景の色は --fade で合わせる */
+.scroll-more::after {
+  content: "";
+  position: sticky;
+  bottom: 0;
+  display: block;
+  flex-shrink: 0;
+  height: 46px;
+  margin-top: -46px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .25s;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 16'%3E%3Cpath d='M4 3l8 5 8-5M4 9l8 5 8-5' fill='none' stroke='%238A5A2B' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' opacity='.38'/%3E%3C/svg%3E") 50% calc(100% - 6px) / 22px 15px no-repeat,
+    linear-gradient(rgba(255, 255, 255, 0), var(--fade, #FFF4E0) 78%);
+}
+.scroll-more.more::after { opacity: 1; animation: scroll-chev 1.8s ease-in-out infinite; }
+@keyframes scroll-chev { 50% { background-position: 50% calc(100% - 2px), 0 0; } }
+@media (prefers-reduced-motion: reduce) { .scroll-more.more::after { animation: none; } }
+.result.scroll-more { --fade: #fff; }   /* 下のカード（.r-card）が白いので、白へぼかす */

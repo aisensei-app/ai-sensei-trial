@@ -36,6 +36,23 @@
     setTimeout(() => { location.href = a.href; }, 430);
   });
   const $ = (id) => document.getElementById(id);
+
+  // 下に続きがあるときの目印（2026-11-02）：スクロールできる枠の下のはしを、背景の色へ うすくぼかして、小さな ︾ を出す。
+  // いちばん下まで見たら消える。色は CSS の .scroll-more（--fade・--chev）
+  function scrollHint(el) {
+    if (!el) return;
+    el.classList.add('scroll-more');
+    let q = 0;
+    const upd = () => { q = 0; el.classList.toggle('more', el.scrollHeight - el.scrollTop - el.clientHeight > 8); };
+    const soon = () => { if (!q) q = requestAnimationFrame(upd); };
+    el.addEventListener('scroll', soon, { passive: true });
+    window.addEventListener('resize', soon);
+    if (window.ResizeObserver) new ResizeObserver(soon).observe(el);
+    if (window.MutationObserver) new MutationObserver(soon).observe(el, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'src'] });
+    el.addEventListener('load', soon, true);   // 絵が読みこまれて高さが変わったとき
+    soon();
+  }
+  scrollHint($('result'));
   /* ことば：本編と同じ i18n.js（ぽんぽこリズムの訳は pon.i18n.js）。tr('日本語の文', { n: 3 }) でいまの言語の文 */
   const I18N = window.TanuI18n || { lang: 'ja', LANGS: { ja: '日本語' }, tr: (s) => s, apply: () => {}, set: () => {} };
   const tr = (ja, vars) => {
@@ -512,8 +529,23 @@
   let score = 0, combo = 0, maxCombo = 0, lastMiss = -9, shyUntil = -9;
   let counts = { perfect: 0, good: 0, ok: 0, miss: 0 };
 
-  // いま聞こえている音が「曲の始まりから何秒目か」
+  // 画面に使う「曲の何秒目か」：音の時計（rawSongTime）に、なめらかに合わせる。
+  // スマホが重いときなどに音の時計が止まったり飛んだりしても（2026-11-02 実機で「カットインが遅れて、そのあと ◉ がすごい速さ」）、
+  // 画面の進み方は ふつうの 0.6〜1.4倍におさめて、少しずつ追いつく。ずれが2秒より大きいときだけ、一気に合わせる
+  const clock = { song: null, perf: 0 };
+  function resetClock() { clock.song = null; }
   function songTime() {
+    const raw = rawSongTime(), p = performance.now() / 1000;
+    if (clock.song == null || !isFinite(clock.song)) { clock.song = raw; clock.perf = p; return raw; }
+    const dt = Math.max(0, Math.min(0.25, p - clock.perf));
+    clock.perf = p;
+    const pred = clock.song + dt, err = raw - pred;
+    if (Math.abs(err) < 0.004 || Math.abs(err) > 2) clock.song = raw;
+    else clock.song = pred + Math.max(-dt * 0.4, Math.min(dt * 0.4, err * 0.15));
+    return clock.song;
+  }
+  // いま聞こえている音が「曲の始まりから何秒目か」（音の時計そのまま）
+  function rawSongTime() {
     if (ac.getOutputTimestamp) {
       const ts = ac.getOutputTimestamp();
       // 中断から戻った直後などで、記録が古い（0.1秒より前）ときは使わない
@@ -539,6 +571,7 @@
     ac.resume();
     chart = buildChart();
     t0 = ac.currentTime + SONG.lead;
+    resetClock();
     chart.clicks.forEach((c) => soundClick(t0 + c.t, c.high));
     chart.hats.forEach((h) => soundHat(t0 + h.t, h.accent));
 
@@ -968,6 +1001,7 @@
         el.hidden = true;
         ac.resume().then(() => {
           if (!paused) return;
+          resetClock();
           paused = false;
           playing = true;
           showBar();

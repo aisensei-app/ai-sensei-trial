@@ -47,6 +47,23 @@
     setTimeout(() => { location.href = a.href; }, 430);
   });
   const $ = (id) => document.getElementById(id);
+
+  // 下に続きがあるときの目印（2026-11-02）：スクロールできる枠の下のはしを、背景の色へ うすくぼかして、小さな ︾ を出す。
+  // いちばん下まで見たら消える。色は CSS の .scroll-more（--fade・--chev）
+  function scrollHint(el) {
+    if (!el) return;
+    el.classList.add('scroll-more');
+    let q = 0;
+    const upd = () => { q = 0; el.classList.toggle('more', el.scrollHeight - el.scrollTop - el.clientHeight > 8); };
+    const soon = () => { if (!q) q = requestAnimationFrame(upd); };
+    el.addEventListener('scroll', soon, { passive: true });
+    window.addEventListener('resize', soon);
+    if (window.ResizeObserver) new ResizeObserver(soon).observe(el);
+    if (window.MutationObserver) new MutationObserver(soon).observe(el, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'src'] });
+    el.addEventListener('load', soon, true);   // 絵が読みこまれて高さが変わったとき
+    soon();
+  }
+  scrollHint($('result'));
   /* ことば：本編と同じ i18n.js（ラリーの訳は rally.i18n.js）。tr('日本語の文', { n: 3 }) でいまの言語の文 */
   const I18N = window.TanuI18n || { lang: 'ja', LANGS: { ja: '日本語' }, tr: (s) => s, apply: () => {}, set: () => {} };
   const tr = (ja, vars) => {

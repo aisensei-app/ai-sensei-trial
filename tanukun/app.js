@@ -37,6 +37,23 @@
   // style.css の body.in-x で、下に余白を空けて中身を上に寄せる。確認用に URL の ?inx でも
   if (/Twitter/i.test(navigator.userAgent) || /[?&]inx\b/.test(location.search)) document.body.classList.add('in-x');
   const $ = (id) => document.getElementById(id);
+
+  // 下に続きがあるときの目印（2026-11-02）：スクロールできる枠の下のはしを、背景の色へ うすくぼかして、小さな ︾ を出す。
+  // いちばん下まで見たら消える。色は CSS の .scroll-more（--fade・--chev）
+  function scrollHint(el) {
+    if (!el) return;
+    el.classList.add('scroll-more');
+    let q = 0;
+    const upd = () => { q = 0; el.classList.toggle('more', el.scrollHeight - el.scrollTop - el.clientHeight > 8); };
+    const soon = () => { if (!q) q = requestAnimationFrame(upd); };
+    el.addEventListener('scroll', soon, { passive: true });
+    window.addEventListener('resize', soon);
+    if (window.ResizeObserver) new ResizeObserver(soon).observe(el);
+    if (window.MutationObserver) new MutationObserver(soon).observe(el, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'src'] });
+    el.addEventListener('load', soon, true);   // 絵が読みこまれて高さが変わったとき
+    soon();
+  }
+  scrollHint(document.querySelector('#sheet .sheet-box'));
   /* ---- ことばの切りかえ（左上の「🌐 日本語 ▾」。言語が2つ以上のときだけ出す。設定からも変えられる）----
      押すと、使える言語の一覧が出て、選ぶとその言語で開きなおす（i18n.js の bind・menu。ぽんぽこ・ラリーと共通） */
   const LANG_KEYS = Object.keys(I18N.LANGS);

@@ -205,13 +205,16 @@ window.TanuHome = function (opts) {
     requestAnimationFrame(() => belly.release('belly', false));
   }
   // カードのめくりの動き（指をはなしたら、target へばねで。少しだけ行きすぎて止まる）
-  function step(now) {
+  // ※ 時間の差は performance.now() どうしで測る。requestAnimationFrame の時刻は、少し前の時刻のことがあり、
+  //   差がマイナスになると、ばねの揺れが大きくなり続けて止まらなくなる（2026-11-02 実機で発生）。0〜0.05秒におさめる
+  function step() {
     raf = 0;
-    const dt = Math.min(0.05, ((now || performance.now()) - (lastT || now || 0)) / 1000);
+    const now = performance.now();
+    const dt = Math.max(0, Math.min(0.05, (now - lastT) / 1000));
     lastT = now;
     if (!drag) {
       for (let s = 0; s < 4; s++) { const h = dt / 4; vel += (140 * (target - pos) - 19 * vel) * h; pos += vel * h; }
-      if (Math.abs(target - pos) < 0.001 && Math.abs(vel) < 0.001) { pos = target; vel = 0; }
+      if ((Math.abs(target - pos) < 0.001 && Math.abs(vel) < 0.001) || !isFinite(pos) || !isFinite(vel)) { pos = target; vel = 0; }
     }
     renderCards();
     if (drag || pos !== target || vel) loop();
@@ -260,6 +263,7 @@ window.TanuHome = function (opts) {
   }
   root.addEventListener('pointerup', endDrag);
   root.addEventListener('pointercancel', endDrag);
+  root.addEventListener('lostpointercapture', endDrag);   // 指の追跡が切れたときも、ちゃんと終わらせる
   function tapAt(x, y) {
     const rect = root.getBoundingClientRect();
     x -= rect.left; y -= rect.top;
