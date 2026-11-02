@@ -20,6 +20,8 @@
   決めたこと（ユーザーに確認していない仮の決定。変えるなら言ってもらう）：**2回目以降は、最後に選んだゲームのカードから**（localStorage tanukun.homeCard。初めては なでなで）／**「🔒 もうすぐ」は1枚**（config.js home.soonSlots: 1）。↔👆 のチュートリアルは、スワイプで2回めくるまで（tanukun.homeSwiped）。
   おなかが小さく映るとき（X アプリの中）は、カードを 82% まで縮める（layoutCards の sc）。3言語：前のゲーム・次のゲーム・もうすぐ（i18n.js・i18n.zh.js）。古いアイコン（.h-gi・#home-icons・SLOTS・iconPx）は消した。
   確認：日本語・英語・中国語、幅 390／360、X アプリの中、なでなで→戻る、ぽんぽこ→戻る（ズームした画面の ぽんぽこ のカードに戻り NEW が消える）、エラーなし。**実機（Android・iPhone）でのスワイプの手ざわりは、ユーザーの Preview で確認**
+- **本編の確認用リンク（チャットの中で試せる）＝ https://claude.ai/artifact/XApM945UdUziQMRXG8AQfH を v30 に更新**（2026-11-02）。作り方：`python3 tools/build_preview.py --public --with-pon --out <場所>/tanukun.html` → Artifact で同じ URL に publish（files に `pon/index.html` ＝ <場所>/pon/index.html）。
+  `--public`＝公開スイッチを config.js のまま（公開される状態と同じ。付けないと全部 open になり、ラリー・シーソー・洗うゲームのカードも出る）／`--with-pon`＝🥁 から入れるぽんぽこリズムを pon/index.html に作る（doctype・charset 付き）。testHearts（確認用のハート切りかえ）は確認用リンクでは出る
   次：ユーザーが Web Analytics の数字（スクリーンショット）をくれるので、分析して今後の方針を相談する（見る所は下の「4」と、上の「アクセス数は Cloudflare の Web Analytics」の行）
 - **本編 v29（sw.js = tanukun-v29）**：💖5 のユーザーに、ひみつの思い出（クリア）まで「🌺 あと○日…」を実績の6枚目に出す＋💖5 になった直後のひとこと。`app-dist.zip` は作ってユーザーに渡した。**Cloudflare へのアップロードはユーザー作業（済んだかを最初に聞く）**。公開後：X に「6枚目のヒント」ポスト（モザイク画像＋案B。文面は下のログ参照）
 - **洗うゲーム（washing/。公開スイッチ hidden）**：機能はほぼそろった。ばんざい描き直し・ごほうび3種・洗い終わりのカットイン・落としもの図鑑（12種）・コンプの特別イラスト（box／レア）・図鑑リセット（○しゅうめ）。詳しくは下のログ

@@ -8,6 +8,9 @@
     python3 tools/build_preview.py --topmenu  → preview/topmenu.html（トップ画面の試作）
     python3 tools/build_preview.py --seesaw   → preview/seesaw.html（丸太シーソー）
     python3 tools/build_preview.py --washing  → preview/washing.html（タヌくんを洗おう）
+    python3 tools/build_preview.py --public --with-pon
+        → 本編を「公開スイッチは config.js のまま」（公開される状態と同じ）で作り、
+          ぽんぽこリズムを preview/pon/index.html に作る（本編の 🥁 から入れる。Artifact の files に pon/index.html として載せる）
 
 絵（images/*.webp）を文字データにしてHTMLの中に埋めこみ、1つのファイルにまとめます。
 """
@@ -17,11 +20,12 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+PUBLIC = False   # True なら、公開スイッチ（features）を config.js のままにする（--public）
 
 
 def js(name):
     text = (ROOT / name).read_text(encoding='utf8')
-    if name == 'config.js':
+    if name == 'config.js' and not PUBLIC:
         # 確認用リンクでは、公開スイッチ（features）をすべて 'open' にして、作った機能を全部見られるように
         text = re.sub(r"(\n  features: \{.*?\n  \})", lambda m: re.sub(r"'(soon|hidden)'", "'open'", m.group(1)), text, count=1, flags=re.S)
     return re.sub(r"'(images/[^']+\.webp)'",
@@ -84,8 +88,11 @@ if __name__ == '__main__':
     ap.add_argument('--topmenu', action='store_true', help='トップ画面の試作をつくる')
     ap.add_argument('--seesaw', action='store_true', help='丸太シーソーをつくる')
     ap.add_argument('--washing', action='store_true', help='タヌくんを洗おうをつくる')
+    ap.add_argument('--public', action='store_true', help='公開スイッチを config.js のままにする（公開される状態で確認）')
+    ap.add_argument('--with-pon', action='store_true', help='本編といっしょに、ぽんぽこリズムを（出力先のフォルダ）/pon/index.html に作る')
     ap.add_argument('--out', default=None, help='出力先')
     a = ap.parse_args()
+    PUBLIC = a.public
     if a.topmenu:
         build_pon(Path(a.out) if a.out else ROOT / 'preview' / 'topmenu.html', 'topmenu', 'トップ画面の試作')
         raise SystemExit
@@ -102,4 +109,16 @@ if __name__ == '__main__':
         build_pon(Path(a.out) if a.out else ROOT / 'preview' / 'pon.html')
         raise SystemExit
     default = ROOT / 'preview' / ('tanukun-demo.html' if a.demo else 'tanukun.html')
-    build(a.demo, Path(a.out) if a.out else default)
+    out = Path(a.out) if a.out else default
+    build(a.demo, out)
+    if a.with_pon:
+        # 確認用リンクでは pon/ がフォルダとして開けないので、pon/index.html を指すように
+        text = out.read_text(encoding='utf8')
+        text = text.replace("href: 'pon/'", "href: 'pon/index.html'").replace('href="pon/"', 'href="pon/index.html"')
+        out.write_text(text, encoding='utf8')
+        pon = out.parent / 'pon' / 'index.html'
+        build_pon(pon)
+        # Artifact では、いっしょに載せるページは そのまま出るので、文字コードと画面の幅の宣言を先頭に付ける
+        pon.write_text('<!doctype html>\n<html lang="ja"><head><meta charset="utf-8">'
+                       '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"></head><body>\n'
+                       + pon.read_text(encoding='utf8') + '\n</body></html>\n', encoding='utf8')
