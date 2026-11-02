@@ -3,9 +3,9 @@
    ・アプリを開くと、クリーム色の幕から始まり、約0.8秒でふわっと薄くなってトップ画面になる
    ・いつもの大きなタヌくんが笑顔であいさつ（セリフは app.js が lines.js の scene: 'home' から選ぶ）
    ・少したつと、自動でおなかにズーム（タヌくんをタップすれば、すぐズーム）
-   ・大きなおなかの上に、遊ぶもののアイコン（文字なし）が ぽこぽこ 並ぶ。まんなかの大きいのが「タヌくん なでなで」
-   ・アイコンが並んでいる間は、タヌくんが息をして、おなかとアイコンがゆっくり上下する
-   ・アイコンをタップすると、その所がへこんで「ぽよん！」、アイコンもぷるん → 遊ぶ画面へ
+   ・大きなおなかの上に、遊ぶもののカード（アイコン＋タイトル）が1枚。おなかを左右にスワイプしてめくる（2026-11-02〜 スワイプ版）
+   ・ズームしている間は、タヌくんが息をして、おなかがゆっくりふくらむ
+   ・おなかかカードをタップすると、おなかがへこんで「ぽよん！」、カードもぷるん → 遊ぶ画面へ
    ・ズーム中に、おなかの外をタップするか「‹ もどる」で、ズームが戻る
    ・ハートが増えた・思い出・クリアの演出やパネルが出ている間は、ズームを待つ（hold・blocked）
    画面の文字は app.js からもらう tr()（i18n.js）で、いまの言語に。
@@ -25,7 +25,6 @@ window.TanuHome = function (opts) {
      focus        … ズームしたときに画面のまんなかに来る所（絵の 720×900 の位置。おなかのまんなか）
      bellyW       … ズームしたとき、おなかの幅（絵で 250px 分）が画面の横幅のこの割合になる。maxZoom まで
      at           … ズームしたとき、focus が来る画面の高さ（割合）
-     iconPx       … ズームしたときのアイコンの大きさ（画面のピクセル）
      mouth        … タヌくんの口（絵の 720×900 の位置）。ズーム中のふきだしのしっぽが、ここを指す
      head         … 頭のてっぺん（髪のまんなかの上）。あいさつのふきだしは、しっぽの先がここに届くように出す */
   const T = {
@@ -33,13 +32,11 @@ window.TanuHome = function (opts) {
     inX: { feet: 0.68, height: 0.46, at: 0.47, bellyW: 0.7 },
     boot: 0.6, greet: 1.3, again: 0.6,
     focus: { x: 208, y: 410 }, bellyW: 0.86, maxZoom: 3, at: 0.56,
-    iconPx: 66,
     mouth: { x: 282, y: 140 },
     head: { x: 310, y: 26 }
   };
-  // アイコンの場所（絵の 720×900）。main はまんなかの「タヌくん なでなで」、slots はそのまわり（並べる順）
+  // ゲームを選んだとき、おなかがへこむ所（絵の 720×900。おなかのまんなか）
   const MAIN = { x: 208, y: 405 };
-  const SLOTS = [{ x: 122, y: 432 }, { x: 296, y: 430 }, { x: 150, y: 345 }, { x: 272, y: 343 }];
 
   const root = $('home'), cam = $('home-cam'), body = $('home-body'), img = $('home-img');
   const NORMAL = opts.normal;   // ズームするときの絵（高画質の立ち絵 images/topmenu/normal_hd.webp）
@@ -93,8 +90,8 @@ window.TanuHome = function (opts) {
     const k = w / 720;   // 絵 → 画面
     const Z = Math.min(T.maxZoom, W * L.bellyW / (250 * k));
     Object.assign(G, { W: W, H: H, left: left, top: top, w: w, h: h, k: k, Z: Z, at: L.at });
-    $('home-icons').style.setProperty('--s', T.iconPx / Z);
     applyZoom();
+    layoutCards();
   }
   function applyZoom() {
     if (!zoomed) { cam.style.transform = 'none'; return; }
@@ -108,32 +105,185 @@ window.TanuHome = function (opts) {
     return { x: G.W / 2 + (sx - (G.left + T.focus.x * G.k)) * G.Z, y: G.H * G.at + (sy - (G.top + T.focus.y * G.k)) * G.Z };
   }
 
-  /* ---------- アイコン ----------
-     opts.games() … [{ id, name（読み上げ用）, icon または img, badge（右下の丸。soon でなければ省略可）, state: 'open'|'soon', isNew, go() }]
-     まんなか（id: 'pet'）＋まわりの場所に順に並べる */
-  let games = [];
+  /* ---------- ゲームのカード（スワイプ版。2026-11-02。試作 topmenu/swipe.html を組みこんだもの） ----------
+     opts.games() … [{ id, name（読み上げ用）, title（カードの文字。なければ name）, icon または img, badge, state: 'open'|'soon', isNew, go() }]
+     ・ズームしたおなかの上に、カードを1枚ずつ（左にアイコン、右にタイトル）。輪になっていて、最初の前は最後
+     ・おなかを左右にスワイプ（おなかが指につられて横に引っぱられ、はなすと ぷるん＋音）か、‹ › か、下の白い丸でめくる
+     ・おなかかカードをタップで、そのゲームへ。おなかの外をタップで、ズームが戻る
+     ・次に開いたときは、最後に選んだゲームのカードから（localStorage の tanukun.homeCard）
+     ・↔ と 👆 のチュートリアルは、2回めくるまで（tanukun.homeSwiped） */
+  const CARD_KEY = 'tanukun.homeCard', SWIPED_KEY = 'tanukun.homeSwiped';
+  const ls = (fn) => { try { return fn(window.localStorage); } catch (err) { return null; } };
+  const BELLY = { x: 222, y: 415, rx: 127, ry: 100 };   // おなか（絵の 720×900）。タップの当たりと ‹ › の位置
+  const cardsEl = $('home-cards'), dotsEl = $('home-dots');
+  let games = [], pos = 0, vel = 0, target = 0, SPACING = 240, drag = null, raf = 0, lastT = 0;
+  let swiped = +(ls((s) => s.getItem(SWIPED_KEY)) || 0);
+  const N = () => games.length || 1;
+  const mod = (i) => ((i % N()) + N()) % N();
+  // いまの番号 p から見た i 番のずれ（輪になっているので、近い方の向き）
+  const near = (i, p) => { const n = N(); let d = ((i - p) % n + n) % n; if (d > n / 2) d -= n; return d; };
   function renderIcons() {
-    const box = $('home-icons');
-    box.textContent = '';
+    const keep = games.length ? games[mod(Math.round(target))].id : ls((s) => s.getItem(CARD_KEY));
     games = opts.games();
-    let slot = 0;
+    cardsEl.textContent = '';
+    dotsEl.textContent = '';
     games.forEach((g, i) => {
-      const at = g.id === 'pet' ? MAIN : SLOTS[slot++];
-      if (!at) return;
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'h-gi' + (g.id === 'pet' ? ' main' : '') + (g.state === 'soon' ? ' soon' : '') + (g.isNew ? ' new' : '');
-      b.style.left = at.x / 720 * 100 + '%';
-      b.style.top = at.y / 900 * 100 + '%';
-      b.style.setProperty('--i', i);
-      b.setAttribute('aria-label', g.name);
+      const c = document.createElement('div');
+      c.className = 'h-card' + (g.state === 'soon' ? ' soon' : '') + (g.id === 'pet' ? ' main' : '');
+      c.setAttribute('aria-hidden', 'true');
       const inner = g.img ? '<img src="' + g.img + '" alt="" draggable="false">' : '<span>' + g.icon + '</span>';
       const badge = g.badge != null ? g.badge : (g.state === 'soon' ? '🔒' : '');
-      b.innerHTML = '<i>' + inner + (badge ? '<u>' + badge + '</u>' : '') + '</i>';
-      b.addEventListener('click', (e) => { e.stopPropagation(); pick(Object.assign({}, g, at), b); });
-      box.appendChild(b);
+      c.innerHTML = '<i>' + inner + (badge ? '<u>' + badge + '</u>' : '') + (g.isNew ? '<em>NEW</em>' : '') + '</i><b></b>';
+      c.querySelector('b').textContent = g.title || g.name;
+      cardsEl.appendChild(c);
+      const d = document.createElement('button');
+      d.type = 'button';
+      d.setAttribute('aria-label', g.name);
+      d.addEventListener('click', (e) => { e.stopPropagation(); go(target + Math.round(near(i, target))); });
+      dotsEl.appendChild(d);
     });
+    let at = games.findIndex((g) => g.id === keep);
+    if (at < 0) at = 0;
+    pos = target = at; vel = 0;
+    layoutCards();
+    renderCards();
   }
+  // カード・‹ ›・白い丸・チュートリアルの位置（ズームしたときの画面の位置）
+  function layoutCards() {
+    if (!G.W) return;
+    const kz = G.k * G.Z, fx = G.W / 2, fy = G.H * G.at;
+    const cy = fy - 84;
+    cardsEl.style.left = fx + 'px';
+    cardsEl.style.top = cy + 'px';
+    const l = fx + (BELLY.x - BELLY.rx - T.focus.x) * kz + 6, r = fx + (BELLY.x + BELLY.rx - T.focus.x) * kz - 6;
+    Object.assign($('home-prev').style, { left: Math.max(28, l) + 'px', top: fy + 'px' });
+    Object.assign($('home-next').style, { left: Math.min(G.W - 28, r) + 'px', top: fy + 'px' });
+    // おなかが小さく映るとき（X アプリの中など）は、カードが ‹ › にかからないように縮める
+    const sc = Math.max(0.82, Math.min(1, (Math.min(G.W - 28, r) - Math.max(28, l) - 16) / 320));
+    cardsEl.style.transform = 'scale(' + sc + ')';
+    const c0 = cardsEl.firstElementChild;
+    dotsEl.style.top = cy + (c0 ? c0.offsetHeight : 92) * sc + 8 + 'px';
+    Object.assign($('home-tut').style, { left: fx + 'px', top: fy + 70 * kz + 'px' });
+    SPACING = Math.min(G.W * 0.62, 280);
+  }
+  function renderCards() {
+    [...cardsEl.children].forEach((c, i) => {
+      const d = near(i, pos), ad = Math.abs(d);
+      if (ad > 1.6) { c.style.opacity = 0; c.style.transform = 'translateX(' + d * SPACING + 'px)'; return; }
+      c.style.opacity = Math.max(0, 1 - ad * 1.1);
+      c.style.transform = 'translateX(' + d * SPACING + 'px) scale(' + (1 - Math.min(1, ad) * 0.25) + ') rotate(' + d * 8 + 'deg)';
+    });
+    // 白い丸：いまの所を横長に。7こより多いときは、はしを小さくして「まだ続く」を見せる（Instagram と同じ考え方）
+    const cur = mod(Math.round(pos)), n = games.length, MAXD = 7;
+    let from = 0, to = n - 1;
+    if (n > MAXD) { from = Math.max(0, Math.min(cur - 3, n - MAXD)); to = from + MAXD - 1; }
+    [...dotsEl.children].forEach((d, i) => {
+      d.hidden = i < from || i > to;
+      const edge = n > MAXD && ((i === from && from > 0) || (i === to && to < n - 1));
+      const edge2 = n > MAXD && ((i === from + 1 && from > 0) || (i === to - 1 && to < n - 1));
+      d.className = (i === cur ? 'on' : '') + (edge ? ' s2' : edge2 ? ' s1' : '');
+      d.setAttribute('aria-current', i === cur ? 'true' : 'false');
+    });
+    const g = games[cur];
+    if (g) cardsEl.setAttribute('aria-label', g.name);
+    root.classList.toggle('tut', swiped < 2 && !drag);
+  }
+  // めくる：おなかが、めくった向きと逆へ「ぷるん」＋音
+  function go(i) {
+    if (i === target || !games.length) return;
+    const dir = Math.sign(i - target);
+    target = i;
+    sound.flip(dir);
+    kick(-dir * 34);
+    loop();
+  }
+  // おなかを横に少し引っぱって、すぐはなす（ばねで ぷるんと戻る）
+  const toImg = () => (img.naturalWidth || 1080) / (G.w * G.Z || 1);
+  function kick(dx) {
+    if (!belly.ready()) return;
+    belly.drag('belly', dx, 0, toImg());
+    requestAnimationFrame(() => belly.release('belly', false));
+  }
+  // カードのめくりの動き（指をはなしたら、target へばねで。少しだけ行きすぎて止まる）
+  function step(now) {
+    raf = 0;
+    const dt = Math.min(0.05, ((now || performance.now()) - (lastT || now || 0)) / 1000);
+    lastT = now;
+    if (!drag) {
+      for (let s = 0; s < 4; s++) { const h = dt / 4; vel += (140 * (target - pos) - 19 * vel) * h; pos += vel * h; }
+      if (Math.abs(target - pos) < 0.001 && Math.abs(vel) < 0.001) { pos = target; vel = 0; }
+    }
+    renderCards();
+    if (drag || pos !== target || vel) loop();
+  }
+  function loop() { if (!raf) { lastT = performance.now(); raf = requestAnimationFrame(step); } }
+
+  // 指の操作（ズーム中だけ）：横にスワイプでめくる／タップで、おなかの上ならそのゲームへ、外ならズームを戻す
+  root.addEventListener('pointerdown', (e) => {
+    if (!zoomed || busy || e.target.closest('.h-bar, .h-nav, .h-dots')) return;
+    drag = { x: e.clientX, y: e.clientY, start: pos, lastX: e.clientX, lastT: performance.now(), vx: 0, moved: false, id: e.pointerId };
+    try { root.setPointerCapture(e.pointerId); } catch (err) {}
+    if (belly.ready()) belly.press('belly');
+    loop();
+  });
+  root.addEventListener('pointermove', (e) => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const dx = e.clientX - drag.x, now = performance.now();
+    if (Math.abs(dx) > 8) drag.moved = true;
+    drag.vx = 0.7 * drag.vx + 0.3 * ((e.clientX - drag.lastX) / Math.max(1, now - drag.lastT));
+    drag.lastX = e.clientX; drag.lastT = now;
+    if (!drag.moved) return;
+    pos = drag.start - dx / SPACING;
+    target = Math.round(pos);
+    if (belly.ready()) belly.drag('belly', dx * 0.3, 0, toImg());   // 指につられて、おなかが横に
+  });
+  function endDrag(e) {
+    if (!drag || e.pointerId !== drag.id) return;
+    const d = drag;
+    drag = null;
+    if (belly.ready()) belly.release('belly', !d.moved);
+    if (!d.moved && Math.abs(e.clientY - d.y) < 12) {
+      if (e.type === 'pointerup') tapAt(e.clientX, e.clientY);
+      loop();
+      return;
+    }
+    let i = Math.round(pos);
+    if (Math.abs(d.vx) > 0.35) i = Math.round(d.start) + (d.vx < 0 ? 1 : -1);   // すばやく払ったら、となりへ
+    const before = Math.round(d.start);
+    target = before;
+    if (i !== before) {
+      go(i);
+      swiped += 1;
+      ls((s) => s.setItem(SWIPED_KEY, String(swiped)));
+    }
+    loop();
+  }
+  root.addEventListener('pointerup', endDrag);
+  root.addEventListener('pointercancel', endDrag);
+  function tapAt(x, y) {
+    const rect = root.getBoundingClientRect();
+    x -= rect.left; y -= rect.top;
+    const c = cardsEl.children[mod(target)];
+    const cr = c && c.getBoundingClientRect();
+    const onCard = cr && x >= cr.left - rect.left && x <= cr.right - rect.left && y >= cr.top - rect.top && y <= cr.bottom - rect.top;
+    const b = toScreen(BELLY.x, BELLY.y), kz = G.k * G.Z;
+    const u = (x - b.x) / (BELLY.rx * kz * 1.1), v = (y - b.y) / (BELLY.ry * kz * 1.25);
+    if (onCard || u * u + v * v <= 1) pickCurrent();
+    else zoomOut();
+  }
+  function pickCurrent() {
+    const g = games[mod(target)];
+    if (!g) return;
+    pick(Object.assign({}, g, MAIN), cardsEl.children[mod(target)]);
+  }
+  $('home-prev').addEventListener('click', (e) => { e.stopPropagation(); go(target - 1); });
+  $('home-next').addEventListener('click', (e) => { e.stopPropagation(); go(target + 1); });
+  window.addEventListener('keydown', (e) => {
+    if (!zoomed || busy || (opts.blocked && opts.blocked())) return;
+    if (e.key === 'ArrowLeft') go(target - 1);
+    else if (e.key === 'ArrowRight') go(target + 1);
+    else if (e.key === 'Enter' && document.activeElement === document.body) pickCurrent();
+  });
 
   /* ---------- ズーム ---------- */
   let timer = 0;
@@ -144,6 +294,7 @@ window.TanuHome = function (opts) {
     $('home-back').hidden = !on;
     $('home-lang').hidden = on || !opts.langLabel;
     applyZoom();
+    if (on) { layoutCards(); renderCards(); }
     if (instant) { void root.offsetWidth; requestAnimationFrame(() => root.classList.remove('instant')); }
   }
   // text：ズームしたあとに、口から出すひとこと（なければ「なにしてあそぶ？」）
@@ -175,34 +326,32 @@ window.TanuHome = function (opts) {
     }, sec * 1000);
   }
 
-  // アイコンを選ぶ：そこがへこんで「ぽよん！」、アイコンもぷるん → それぞれへ
+  // ゲームを選ぶ：おなかがへこんで「ぽよん！」、カードもぷるん → それぞれへ
   let busy = false;
   function pick(g, el) {
     if (!zoomed || busy) return;
     busy = true;
     sound.boing();
+    if (g.state !== 'soon') ls((s) => s.setItem(CARD_KEY, g.id));
     if (belly.ready()) {
-      belly.press('belly', g.x, g.y);
+      const n = (img.naturalWidth || 1080) / 720;   // 絵の 720×900 → 絵のピクセル
+      belly.press('belly', g.x * n, g.y * n);
       setTimeout(() => belly.release('belly', true), 130);
     }
     body.classList.remove('boing'); void body.offsetWidth; body.classList.add('boing');
     el.classList.remove('wobble'); void el.offsetWidth; el.classList.add('wobble');
     setTimeout(() => { body.classList.remove('boing'); el.classList.remove('wobble'); }, 520);
-    const p = toScreen(g.x, g.y);
-    pop(p.x, p.y - 50, tr('ぽよん！'));
+    const r = el.getBoundingClientRect(), rr = root.getBoundingClientRect();
+    pop(r.left - rr.left + r.width / 2, r.top - rr.top - 16, tr('ぽよん！'));
     setTimeout(() => { busy = false; g.go(); }, 550);
   }
 
-  // タップ：ズーム前はタヌくんをタップでズーム（寝ているときは起こす）。ズーム中は、アイコンの外をタップで戻る
+  // タップ：ズーム前はタヌくんをタップでズーム（寝ているときは起こす）。ズーム中のタップ・スワイプは、上の「指の操作」で
   body.addEventListener('click', (e) => {
     if (zoomed) return;
     e.stopPropagation();
     if (sleeping) { wake(); return; }
     zoomIn();
-  });
-  root.addEventListener('click', (e) => {
-    if (e.target.closest('.h-bar, .h-gi')) return;
-    if (zoomed) zoomOut();
   });
   $('home-back').addEventListener('click', (e) => { e.stopPropagation(); zoomOut(); });
   root.querySelectorAll('[data-panel]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); opts.panel(b.dataset.panel); }));
@@ -286,6 +435,8 @@ window.TanuHome = function (opts) {
   }
   const sound = {
     zoom: () => tone('sine', 400, 900, 0.25, 0.12),
+    // カードをめくった「ぷるん」（右へは少し高く）
+    flip: (dir) => { const f = dir > 0 ? 300 : 260; tone('sine', f, f * 2, 0.08, 0.22); setTimeout(() => tone('sine', f * 2, f * 1.2, 0.18, 0.12), 80); },
     // おなかの「ぽよ〜ん」（ぽよんラリーと同じ）
     boing: () => {
       const a = audio();
@@ -362,6 +513,8 @@ window.TanuHome = function (opts) {
     sleep: sleep,
     // あいさつを飛ばして、ズームした画面から（ゲームやなでなでから戻ったとき）
     zoomNow: (text) => { clearTimeout(timer); sleeping = false; root.classList.remove('sleeping'); layout(); if (zoomed) sayMouth(text || tr('なにしてあそぶ？')); else zoomIn(text, true); },
+    // ズーム中に、いまのカードのゲームへ（テスト・キーボード用）
+    pickCurrent: pickCurrent,
     // いまの所でひとこと（ズーム中は口から、ズーム前は頭の上）
     say: (text, keep) => (zoomed ? sayMouth(text, keep) : sayHead(text, keep)),
     // ズームを待ってもらう（ハートの演出など）。返ってきた関数を呼ぶと、待つのをやめる

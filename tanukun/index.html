@@ -102,7 +102,7 @@
 </main>
 
 <!-- トップ画面（2026-10-31〜。試作 topmenu/ を組みこんだもの。home.js）
-     起動の幕 → 笑顔のあいさつ → 自動でおなかにズーム → おなかの上のアイコンで遊ぶものを選ぶ -->
+     起動の幕 → 笑顔のあいさつ → 自動でおなかにズーム → おなかを左右にスワイプして、遊ぶものを選ぶ（2026-11-02〜 スワイプ版） -->
 <section id="home" aria-label="トップ画面" data-i18n-attr="aria-label">
   <!-- 上のバー：ことば（ズーム前）か もどる（ズーム中）・なかよし○日目・実績・きせかえ・設定 -->
   <header class="h-bar">
@@ -118,7 +118,7 @@
   <!-- なかよし度のハート（と、今日の上限の「🌙 あと○時間○分」） -->
   <div class="h-status"><span id="home-hearts" class="hearts" aria-label="なかよし度" data-i18n-attr="aria-label"></span><span id="home-cap" class="h-cap" hidden></span></div>
 
-  <!-- タヌくん（ズームするのは #home-cam。アイコンも #home-cam の中で、おなかの上に並ぶ） -->
+  <!-- タヌくん（ズームするのは #home-cam） -->
   <div id="home-cam">
     <div id="home-ground" class="h-ground"></div>
     <div id="home-body">
@@ -128,9 +128,14 @@
       <canvas id="home-canvas" aria-hidden="true"></canvas>
       <!-- 寝ているとき（時間帯）：鼻ちょうちんと 💤 -->
       <div id="home-sleep" class="h-sleep" aria-hidden="true"><i class="snot"></i><b class="zz">z</b><b class="zz z2">Z</b></div>
-      <div id="home-icons"></div>
     </div>
   </div>
+  <!-- ゲームのカード（スワイプ版。ズームしたおなかの上に1枚ずつ。左右にスワイプか ‹ › でめくる） -->
+  <div id="home-cards" class="h-cards" role="group" aria-roledescription="carousel"></div>
+  <button id="home-prev" class="h-nav l" type="button" aria-label="前のゲーム" data-i18n-attr="aria-label"><span>‹</span></button>
+  <button id="home-next" class="h-nav r" type="button" aria-label="次のゲーム" data-i18n-attr="aria-label"><span>›</span></button>
+  <div id="home-dots" class="h-dots"></div>
+  <div id="home-tut" class="h-tut" aria-hidden="true"><i></i><b>👆</b></div>
   <div id="home-say" class="h-say" hidden></div>
   <div id="home-pops" aria-hidden="true"></div>
   <!-- 起動したときの幕（クリーム色。ふわっと薄くなって、トップ画面になる） -->

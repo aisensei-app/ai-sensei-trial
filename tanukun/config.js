@@ -174,17 +174,17 @@ window.TANU_CONFIG = {
      数えるのは hosts の場所で開いたときだけ（手元・確認用リンク・Preview では数えない）。on: false で止める */
   stats: { on: true, hosts: ['tanukun.pages.dev'] },
 
-  /* ---- トップ画面（home.js。あいさつ → おなかにズーム → おなかの上のアイコンで選ぶ） ----
+  /* ---- トップ画面（home.js。あいさつ → おなかにズーム → おなかを左右にスワイプして選ぶ。2026-11-02〜 スワイプ版） ----
      normal     … ズームするときの絵（立ち絵 normal.webp をちょうど1.5倍にした高画質の絵。並べ方は同じ）
-     pet        … まんなかの「タヌくん なでなで」のアイコンの絵（タヌくんの顔）
+     pet        … 「タヌくん なでなで」のカードのアイコンの絵（タヌくんの顔）
      background … 背景
-     soonSlots  … まわりの4つの場所のうち、ゲームが入らない所に出す「🔒 もうすぐ」の数（多くても、空いている所まで）
+     soonSlots  … カードの最後に出す「🔒 もうすぐ」の枚数（0 なら出さない）
      ゲーム（ぽんぽこ・ラリー）のアイコンは、下の公開スイッチで 'open'＝遊べる／'soon'＝🔒 付き／'hidden'＝出さない */
   home: {
     normal: 'images/topmenu/normal_hd.webp',
     pet: 'images/topmenu/pet.webp',
     background: 'images/bg/beach_day.webp',
-    soonSlots: 4
+    soonSlots: 1   // トップ画面のカードの最後に出す「🔒 もうすぐ」の枚数（2026-11-02 スワイプ版から 1。0 なら出さない）
   },
 
   /* ---- 新しい機能の公開スイッチ ----

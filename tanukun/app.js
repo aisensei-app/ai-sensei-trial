@@ -1781,11 +1781,12 @@
   // ゲームへ行くときに印を付けておき、戻ってきたら、あいさつを飛ばしてズームした画面から
   const BACK_KEY = 'tanukun.homeZoom';
   const store = (fn) => { try { return fn(window.sessionStorage); } catch (err) { return null; } };
-  // おなかの上に並べるもの（まんなか＝なでなで、まわり＝ゲーム。公開スイッチで 遊べる／🔒 もうすぐ／出さない）
+  // おなかの上のカード（スワイプでめくる。なでなで → ゲーム → 🔒 もうすぐ。公開スイッチで 遊べる／🔒 もうすぐ／出さない）
+  // title はカードの文字（name は読み上げ用で、もうすぐのときは「🔒 もうすぐ」が付く）
   function homeGames() {
     // なでなで：幕がかかってから遊ぶ画面へ（時間帯の背景の色の幕）→ 明ける
     const toPlay = () => veilIn().then(() => { enterPlay(true); veilOut(); });
-    const list = [{ id: 'pet', name: tr('タヌくん なでなで'), img: HC.pet, badge: '🤚', state: 'open', go: toPlay }];
+    const list = [{ id: 'pet', name: tr('タヌくん なでなで'), title: tr('タヌくん なでなで'), img: HC.pet, badge: '🤚', state: 'open', go: toPlay }];
     [
       { id: 'pon', name: tr('ぽんぽこリズム'), icon: '🥁', href: 'pon/', isNew: !SAVE.data.ponSeen,
         soon: tr('ぽんぽこリズムは、もうすぐ遊べるよ！\nおたのしみに 🥁') },
@@ -1798,6 +1799,7 @@
       if (f === 'hidden') return;
       list.push(Object.assign(g, {
         state: f === 'soon' ? 'soon' : 'open',
+        title: g.name,
         name: f === 'soon' ? g.name + ' ' + tr('🔒 もうすぐ') : g.name,
         isNew: f === 'open' && !!g.isNew,
         // ゲームへ：幕がかかってから、ゲームのページへ（ゲームのページは、同じ幕が明けるところから始まる）
@@ -1807,10 +1809,10 @@
         }
       }));
     });
-    // 空いている所に「🔒 もうすぐ」（まだ見ぬ新しい遊び）
-    const more = Math.min(HC.soonSlots == null ? 4 : HC.soonSlots, 5 - list.length);
+    // 最後に「🔒 もうすぐ」（まだ見ぬ新しい遊び。config.js の home.soonSlots 枚。0 なら出さない）
+    const more = HC.soonSlots == null ? 1 : HC.soonSlots;
     for (let i = 0; i < more; i++) {
-      list.push({ id: 'soon' + i, name: tr('🔒 もうすぐ'), icon: '🔒', badge: '', state: 'soon', go: () => toast(tr('🔒 もうすぐ 遊べるよ！\nおたのしみに')) });
+      list.push({ id: 'soon' + i, name: tr('🔒 もうすぐ'), title: tr('もうすぐ'), icon: '🔒', badge: '', state: 'soon', go: () => toast(tr('🔒 もうすぐ 遊べるよ！\nおたのしみに')) });
     }
     return list;
   }

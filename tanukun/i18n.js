@@ -52,6 +52,10 @@ window.TanuI18n = (function () {
       'タヌくん なでなで': 'Pet Tanu-kun',
       'おなかを タップしてね！': 'Tap my tummy!',
       'ぽよん！': 'Boing!',
+      // トップ画面のスワイプ版（2026-11-02）
+      '前のゲーム': 'Previous game',
+      '次のゲーム': 'Next game',
+      'もうすぐ': 'Coming soon',
       '🔒 もうすぐ 遊べるよ！\nおたのしみに': 'Coming soon!\nStay tuned',
       'ぽんぽこリズム': 'Ponpoko Rhythm',
       'ぽよんラリー': 'Poyon Rally',
