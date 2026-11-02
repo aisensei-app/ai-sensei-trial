@@ -14,6 +14,8 @@
 - ユーザーは Gemini・ChatGPT で絵を描く。**Claude は絵を作れない**。絵が届いたら：①背景の抜け・余白・15歳以上の線引きをレビュー（拡大して確認）→ ②tools/make_washing_art.py に足す → ③画面で確かめる → ④HANDOFF.md 更新・commit・push・確認用リンク更新
 
 **1. いまの状況**
+- **🥁 2026-11-02 夜：ぽんぽこリズムを解禁（v30）**。X のフォロワーが2000人を超えた（アプリ公開後に500人以上増えた）お祝いもかねて、ユーザーの判断で今夜解禁。config.js `pon: 'open'`・sw.js = **tanukun-v30**（v29 の変更もふくむ）。`app-dist.zip` を作ってユーザーに渡した（Cloudflare へのアップロードはユーザー。Preview → Production）。手元の確認：トップの 🥁 にロックなし・NEW あり、ステージ1が遊べる、エラーなし。
+  次：ユーザーが Web Analytics の数字（スクリーンショット）をくれるので、分析して今後の方針を相談する（見る所は下の「4」と、上の「アクセス数は Cloudflare の Web Analytics」の行）
 - **本編 v29（sw.js = tanukun-v29）**：💖5 のユーザーに、ひみつの思い出（クリア）まで「🌺 あと○日…」を実績の6枚目に出す＋💖5 になった直後のひとこと。`app-dist.zip` は作ってユーザーに渡した。**Cloudflare へのアップロードはユーザー作業（済んだかを最初に聞く）**。公開後：X に「6枚目のヒント」ポスト（モザイク画像＋案B。文面は下のログ参照）
 - **洗うゲーム（washing/。公開スイッチ hidden）**：機能はほぼそろった。ばんざい描き直し・ごほうび3種・洗い終わりのカットイン・落としもの図鑑（12種）・コンプの特別イラスト（box／レア）・図鑑リセット（○しゅうめ）。詳しくは下のログ
 - 洗うゲームは **本番にはまだ入れていない**（build_app.py に washing が無い。トップ画面のアイコンも未）
@@ -109,7 +111,7 @@ make_washing_art.py の ART は倍率 0.557・横 28・縦 -57（足もと優先
 **3. 本番（https://tanukun.pages.dev/）のいま**
 - 2026-11-01 公開：トップ画面（あいさつ → おなかにズーム → アイコンで選ぶ）＋日本語・英語・中国語（簡体字）＋遊び方の数え方（stats.js）＋取りこみもれの直し。sw.js はそのとき v27
 - その後このブランチで：丸太シーソー（seesaw/。hidden）・トップ画面スワイプ版の試作（topmenu/swipe.html）・洗うゲーム（hidden）。sw.js は v29 に上げて公開準備済み（上の「本編の更新 v29」）
-- 公開スイッチ：pon=soon、rally・timeOfDay・tailFlick・seesaw・washing=hidden、english・chinese=open
+- 公開スイッチ：pon=open（v30〜）、rally・timeOfDay・tailFlick・seesaw・washing=hidden、english・chinese=open
 - 公開のしかた：`python3 tools/build_app.py --base-url https://tanukun.pages.dev/` → app-dist.zip → Cloudflare の tanukun で Preview（ブランチ名 test → https://test.tanukun.pages.dev/）→ Production
 
 **4. 目標と優先順位（2026-11-01 ユーザーと決定）**
