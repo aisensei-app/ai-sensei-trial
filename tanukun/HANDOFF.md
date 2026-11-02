@@ -139,7 +139,7 @@ make_washing_art.py の ART は倍率 0.557・横 28・縦 -57（足もと優先
 - 2026-11-01 公開：トップ画面（あいさつ → おなかにズーム → アイコンで選ぶ）＋日本語・英語・中国語（簡体字）＋遊び方の数え方（stats.js）＋取りこみもれの直し。sw.js はそのとき v27
 - その後このブランチで：丸太シーソー（seesaw/。hidden）・トップ画面スワイプ版の試作（topmenu/swipe.html）・洗うゲーム（hidden）。sw.js は v29 に上げて公開準備済み（上の「本編の更新 v29」）
 - 公開スイッチ：pon=open（v30〜）、rally・timeOfDay・tailFlick・seesaw・washing=hidden、english・chinese=open
-- 公開のしかた：`python3 tools/build_app.py --base-url https://tanukun.pages.dev/` → app-dist.zip → Cloudflare の tanukun で Preview（ブランチ名 test → https://test.tanukun.pages.dev/）→ Production
+- 公開のしかた：**tanukun/PUBLISH.md**（ユーザー向けの手順。ユーザーが「いつも忘れる」ので、聞かれたらこれを見せる）。`python3 tools/build_app.py --base-url https://tanukun.pages.dev/` → app-dist.zip → Cloudflare の tanukun で Preview（ブランチ名 test → https://test.tanukun.pages.dev/）→ Production
 
 **4. 目標と優先順位（2026-11-01 ユーザーと決定）**
 - 1年後：毎日会いに来るファン 1,000人・収益まず月3万円。3か月後：7日後にも来る人 20%・毎日 300人
