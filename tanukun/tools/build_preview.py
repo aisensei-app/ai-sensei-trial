@@ -120,5 +120,6 @@ if __name__ == '__main__':
         build_pon(pon)
         # Artifact では、いっしょに載せるページは そのまま出るので、文字コードと画面の幅の宣言を先頭に付ける
         pon.write_text('<!doctype html>\n<html lang="ja"><head><meta charset="utf-8">'
-                       '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"></head><body>\n'
+                       '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">'
+                       '<meta name="color-scheme" content="light"><style>html{background:#EED8B2;color-scheme:light}</style></head><body>\n'
                        + pon.read_text(encoding='utf8') + '\n</body></html>\n', encoding='utf8')

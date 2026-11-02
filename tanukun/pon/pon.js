@@ -143,7 +143,8 @@
      ※ 吹き出しは、速さが変わるごと（2小節ごと）に、カットインの「間」の中で変わる
      ※ おなかは、食べるたびではなく、カットインのあとに、それまでに食べた分だけ「ぽよ〜ん！」と一気にふくらむ
         （たたいている最中は、おなかの変化に気づけないため）。最後は「ごちそうさまタイム」（feastSeconds 秒）のあとで結果 */
-  const FOOD = { foods: ['🍙', '🍉', '🍡', '🌽'], appear: 0.85, targetRate: 0.6, maxFat: 0.3, feastSeconds: 2.6 };
+  // wantAfterCutin … 2つ目からの速さで「たべたい！」を出す時（カットインが始まってから何秒後か）
+  const FOOD = { foods: ['🍙', '🍉', '🍡', '🌽'], appear: 0.85, wantAfterCutin: 0.25, targetRate: 0.6, maxFat: 0.3, feastSeconds: 2.6 };
   /* 速さが変わる前のカットイン（音ゲーの「スピードアップ！」）
      速さが変わる前に1小節分の「間」（◉ が出ない。シャカシャカは続く）を入れて、
      タヌくんのがんばる顔と文字の帯が、右から「シュッ！」と入って左へ抜ける
@@ -469,6 +470,7 @@
     t += SONG.countIn * 60 / first;
     SONG.sections.forEach((sec, si) => {
       const eighth = 30 / sec.bpm;
+      const gapStart = t;   // カットインの始まり（2つ目からの速さ）
       if (si === 0) {
         banners.push({ t: t, bpm: sec.bpm, first: true });
       } else {
@@ -483,7 +485,8 @@
       if (food) {
         // まんぷく：この速さの間の「たべたい！」（前と同じ食べものにはしない）
         want = pick(FOOD.foods.filter((f) => f !== want));
-        wants.push({ t: t - FOOD.appear - 0.05, food: want });
+        // 2つ目からの速さは、カットインが出た直後に出す（2026-11-02 ユーザー「出るのが遅い」。前は最初の ◉ の少し前だった）
+        wants.push({ t: si === 0 ? t - FOOD.appear - 0.05 : gapStart + FOOD.wantAfterCutin, food: want });
       }
       let firstInSec = true;
       for (let b = 0; b < sec.bars; b++) {

@@ -34,10 +34,15 @@ html, body {
   z-index: 5;
 }
 .back {
+  /* なでなで・ぽよんラリーの「‹ もどる」と同じ、白い角丸（2026-11-02） */
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .8);
   color: #8A5A2B;
   text-decoration: none;
-  font-weight: bold;
+  font-weight: 700;
   font-size: 15px;
+  white-space: nowrap;
 }
 .score {
   font-size: 26px;

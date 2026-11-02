@@ -142,6 +142,13 @@ window.TanuHome = function (opts) {
       d.addEventListener('click', (e) => { e.stopPropagation(); go(target + Math.round(near(i, target))); });
       dotsEl.appendChild(d);
     });
+    // 遊べるゲームのページを、前もって読みこんでおく（タップしてからの切りかえを速く。2026-11-02）
+    if (/^https?:$/.test(location.protocol)) {
+      games.forEach((g) => {
+        if (!g.href || g.state === 'soon' || document.querySelector('link[rel="prefetch"][href="' + g.href + '"]')) return;
+        document.head.appendChild(Object.assign(document.createElement('link'), { rel: 'prefetch', href: g.href }));
+      });
+    }
     let at = games.findIndex((g) => g.id === keep);
     if (at < 0) at = 0;
     pos = target = at; vel = 0;
@@ -224,6 +231,8 @@ window.TanuHome = function (opts) {
   // 指の操作（ズーム中だけ）：横にスワイプでめくる／タップで、おなかの上ならそのゲームへ、外ならズームを戻す
   root.addEventListener('pointerdown', (e) => {
     if (!zoomed || busy || e.target.closest('.h-bar, .h-nav, .h-dots')) return;
+    // 出そろう前のタップは受けつけず、待ち時間を延ばす（連打が続いている間は、ゲームへ進まない。指を止めて 0.5秒たてば選べる）
+    if (performance.now() < pickAfter) { pickAfter = Math.max(pickAfter, performance.now() + 500); return; }
     drag = { x: e.clientX, y: e.clientY, start: pos, lastX: e.clientX, lastT: performance.now(), vx: 0, moved: false, id: e.pointerId };
     try { root.setPointerCapture(e.pointerId); } catch (err) {}
     if (belly.ready()) belly.press('belly');
@@ -280,8 +289,8 @@ window.TanuHome = function (opts) {
     if (!g) return;
     pick(Object.assign({}, g, MAIN), cardsEl.children[mod(target)]);
   }
-  $('home-prev').addEventListener('click', (e) => { e.stopPropagation(); go(target - 1); });
-  $('home-next').addEventListener('click', (e) => { e.stopPropagation(); go(target + 1); });
+  $('home-prev').addEventListener('click', (e) => { e.stopPropagation(); if (performance.now() >= pickAfter) go(target - 1); });
+  $('home-next').addEventListener('click', (e) => { e.stopPropagation(); if (performance.now() >= pickAfter) go(target + 1); });
   window.addEventListener('keydown', (e) => {
     if (!zoomed || busy || (opts.blocked && opts.blocked())) return;
     if (e.key === 'ArrowLeft') go(target - 1);
@@ -291,7 +300,11 @@ window.TanuHome = function (opts) {
 
   /* ---------- ズーム ---------- */
   let timer = 0;
+  // ズームしてから、カードが出そろうまでは、タップ・スワイプを受けつけない（トップ画面で連打したとき、
+  // ズーム → そのままゲームへ、と一気に進まないように。2026-11-02 ユーザーの要望）
+  let pickAfter = 0;
   function setZoom(on, instant) {
+    if (on) pickAfter = performance.now() + (instant ? 400 : 950);
     if (instant) { root.classList.add('instant'); void root.offsetWidth; }
     zoomed = on;
     root.classList.toggle('zoomed', on);
@@ -333,7 +346,7 @@ window.TanuHome = function (opts) {
   // ゲームを選ぶ：おなかがへこんで「ぽよん！」、カードもぷるん → それぞれへ
   let busy = false;
   function pick(g, el) {
-    if (!zoomed || busy) return;
+    if (!zoomed || busy || performance.now() < pickAfter) return;
     busy = true;
     sound.boing();
     if (g.state !== 'soon') ls((s) => s.setItem(CARD_KEY, g.id));
