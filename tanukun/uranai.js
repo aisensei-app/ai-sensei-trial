@@ -157,23 +157,102 @@ window.TanuUranai = function (opts) {
     return totalDays >= 2 && !st.autoOff && !doneToday() && st.autoDay !== today();
   }
 
-  /* ---------- 画面 ---------- */
-  let root = null, hold = null, busy = false, auto = false;
+  /* ---------- 画面（2026-11-03 洞窟版：神秘的な洞窟・古代の石の台座に貝が3つ） ----------
+     ・台座が、タヌくんの太ももから下を隠す（絵の足が切れているため）
+     ・タヌくんのおなか・胸は、本編と同じしくみ（belly.js）で揺れる。タップでも ぷるん
+     ・貝を選ぶ → タヌくんがびっくり（ぴょん＋‼。胸は少し、おなかは ぷるん）→ ぱかっ → おなかが ぽよん
+     ・結果：運勢の名前が「ぽんっ」→ ラッキーカラー・アイテム・アクションが、右から1行ずつ すっ すっ すっ
+       → タヌくんのふきだし「また明日も、いっしょに占おうね！」 */
+  // 揺れる場所（絵の％）。U2（pick）と U3（result）で、おなか・胸の位置がちがう
+  const JIG = {
+    pick: { belly: { x: 50, y: 52, rx: 33, ry: 14 }, chestL: { x: 35, y: 35.5, rx: 11, ry: 5 }, chestR: { x: 64, y: 35.5, rx: 11, ry: 5 } },
+    result: { belly: { x: 48, y: 47, rx: 36, ry: 15 }, chestL: { x: 37, y: 31.5, rx: 11, ry: 5 }, chestR: { x: 63, y: 31, rx: 11, ry: 5 } }
+  };
+  const TAPS = [
+    { ja: 'えへへ、くすぐったい〜', en: 'Hehe, that tickles~', zh: '嘿嘿，好痒～' },
+    { ja: '貝は こっちだよ〜', en: 'The shells are over here~', zh: '贝壳在这边哦～' },
+    { ja: 'どれにするか、まよっちゃうね！', en: 'So hard to choose, right?', zh: '好难选呀！' }
+  ];
+  Object.assign(UI, {
+    again: { ja: '今日はもう占ったよ〜！ 結果はこれだったね♪', en: 'We already read your fortune today! Here it is again♪', zh: '今天已经占卜过啦～！结果是这个哦♪' },
+    bye: { ja: 'また明日も、いっしょに占おうね！', en: 'Let\'s read your fortune together again tomorrow!', zh: '明天也一起来占卜吧！' },
+    day: { ja: '🐚 {d}の運勢', en: '🐚 Fortune for {d}', zh: '🐚 {d}的运势' }
+  });
+
+  let root = null, hold = null, busy = false, auto = false, timers = [];
+  const later = (fn, ms) => { timers.push(setTimeout(fn, ms)); };
   const $ = (sel) => root.querySelector(sel);
+  const tanu = {};   // pick / result：{ wrap, img, belly }
+  function makeTanu(key) {
+    const wrap = document.createElement('div');
+    wrap.className = 'u-tw u-tw-' + key;
+    wrap.innerHTML = '<img alt="" draggable="false"><canvas aria-hidden="true"></canvas>';
+    const img = wrap.querySelector('img');
+    img.src = SRC[key];
+    const J = JIG[key];
+    let belly = null;
+    if (window.TanuBelly) {
+      belly = window.TanuBelly({
+        config: Object.assign({ strength: 1, spring: 450, damp: 7, tapDent: 0.1, pressDent: 0.06, reboundBoost: 0.6, pullMax: 8,
+          poke: { size: 0.4, depth: 0.3, shade: 0.1 } }, J.belly),
+        chest: { gain: 0.45, drag: false, bob: 1.2, left: J.chestL, right: J.chestR },
+        img: img, canvas: wrap.querySelector('canvas')
+      });
+      img.addEventListener('load', () => belly.warm([img.src]), { once: true });
+    }
+    // タップ：おなか・胸が ぷるん（選ぶ前は、ふきだしでひとこと）
+    wrap.addEventListener('pointerdown', (e) => {
+      if (!belly) return;
+      const r = img.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width * 100, y = (e.clientY - r.top) / r.height * 100;
+      const inE = (q) => Math.hypot((x - q.x) / q.rx, (y - q.y) / q.ry) <= 1.15;
+      const part = inE(J.chestL) ? 'chestL' : inE(J.chestR) ? 'chestR' : inE(J.belly) ? 'belly' : null;
+      if (!part) return;
+      belly.press(part, x / 100 * img.naturalWidth, y / 100 * img.naturalHeight);
+      const up = () => { belly.release(part, true); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up); };
+      window.addEventListener('pointerup', up);
+      window.addEventListener('pointercancel', up);
+      if (key === 'pick' && !busy) say(T(TAPS[(tapN++) % TAPS.length]));
+    });
+    tanu[key] = { wrap: wrap, img: img, belly: belly };
+    return wrap;
+  }
+  let tapN = 0;
+  function jiggle(key, belly, chest) {
+    const b = tanu[key] && tanu[key].belly;
+    if (!b || !b.ready()) return;
+    if (belly) b.bounce('belly', belly);
+    if (chest) { b.kick('chestL', chest); b.kick('chestR', chest); }
+  }
+  function say(text, cls) {
+    const el = $('.u-say');
+    el.textContent = text;
+    el.className = 'u-say' + (cls ? ' ' + cls : '');
+    el.hidden = !text;
+    el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
+  }
+
   function build() {
     root = document.createElement('section');
     root.id = 'uranai';
     root.hidden = true;
+    let dust = '';
+    for (let i = 0; i < 16; i++) {
+      dust += '<i style="left:' + (5 + (i * 37) % 90) + '%;top:' + (8 + (i * 53) % 70) + '%;animation-delay:-' + (i * 0.7).toFixed(1) + 's;animation-duration:' + (5 + (i % 5)) + 's"></i>';
+    }
     root.innerHTML =
-      '<div class="u-bg"></div><img class="u-gold" alt="" draggable="false">' +
-      '<div class="u-stage"><img class="u-tanu" alt="" draggable="false"><div class="u-say"></div>' +
-      '<div class="u-shells"></div></div>' +
+      '<div class="u-bg"><div class="u-beam"></div><div class="u-dust">' + dust + '</div></div>' +
+      '<img class="u-gold" alt="" draggable="false"><div class="u-dim"></div>' +
+      '<div class="u-stage"></div>' +
+      '<div class="u-altar"><div class="u-shells"></div></div>' +
+      '<div class="u-say" hidden></div><b class="u-wow" aria-hidden="true">‼</b>' +
+      '<div class="u-res" hidden></div>' +
+      '<div class="u-btns" hidden></div>' +
       '<button class="u-later" type="button"></button>' +
-      '<div class="u-card scroll-more" hidden></div>' +
       '<div class="u-flash"></div>';
     document.body.appendChild(root);
-    if (opts.scrollHint) opts.scrollHint($('.u-card'));
-    $('.u-bg').style.backgroundImage = 'url("' + opts.background + '")';
+    $('.u-stage').appendChild(makeTanu('pick'));
+    $('.u-stage').appendChild(makeTanu('result'));
     $('.u-later').addEventListener('click', () => {
       if (busy) return;
       if (auto) {
@@ -192,26 +271,29 @@ window.TanuUranai = function (opts) {
   function open(isAuto) {
     if (!root) build();
     if (!root.hidden) return;
+    timers.forEach(clearTimeout); timers = [];
     auto = !!isAuto;
     busy = false;
     hold = opts.hold ? opts.hold() : null;
     const day = today();
     if (auto) { st.autoDay = day; save(); opts.ping('u-show'); }
     root.className = '';
-    $('.u-card').hidden = true;
+    $('.u-res').hidden = true;
+    $('.u-btns').hidden = true;
     $('.u-gold').removeAttribute('src');
-    if (doneToday()) { reveal(true); }
-    else {
-      $('.u-tanu').src = SRC.pick;
-      $('.u-say').textContent = withName(T(UI.pick));
+    const box = $('.u-shells');
+    box.textContent = '';
+    if (doneToday()) {
+      box.innerHTML = '<span class="u-shell open chosen still"><img src="' + SRC['shell_' + (st.color || 'coral') + '_o'] + '" alt="" draggable="false"></span>';
+      reveal(true);
+    } else {
+      say(withName(T(UI.pick)));
       $('.u-later').textContent = T(UI.later);
-      const box = $('.u-shells');
-      box.textContent = '';
       lineup(day).forEach((color, pos) => {
         const b = document.createElement('button');
         b.type = 'button';
         b.className = 'u-shell' + (color === 'gold' ? ' gold' : '');
-        b.style.animationDelay = (0.25 + pos * 0.12) + 's';
+        b.style.animationDelay = (0.35 + pos * 0.14) + 's';
         b.setAttribute('aria-label', (pos + 1) + '');
         b.innerHTML = '<img src="' + SRC['shell_' + color + '_c'] + '" alt="" draggable="false">';
         b.addEventListener('click', () => pick(b, pos, color));
@@ -234,66 +316,73 @@ window.TanuUranai = function (opts) {
     opts.ping('u-pick');
     root.classList.add('picked');
     btn.classList.add('chosen');
+    say('');
+    // タヌくんがびっくり：ぴょん＋‼（胸は少し、おなかは ぷるん）
+    root.classList.add('wow');
+    jiggle('pick', -0.07, 7);
+    later(() => root.classList.remove('wow'), 700);
     chime(color === 'gold');
-    // ぷるぷる → ぱかっ
-    setTimeout(() => {
+    // ぷるぷる → ぱかっ（おなかが ぽよん）
+    later(() => {
       btn.querySelector('img').src = SRC['shell_' + color + '_o'];
       btn.classList.add('open');
-      if (color === 'gold') { $('.u-say').textContent = T(UI.gold); root.classList.add('flash'); }
-    }, 650);
-    setTimeout(() => reveal(false), color === 'gold' ? 1900 : 1500);
+      jiggle('pick', color === 'gold' ? -0.12 : -0.08, 4);
+      if (color === 'gold') { say(T(UI.gold), 'gold'); root.classList.add('flash'); }
+    }, 750);
+    later(() => reveal(false), color === 'gold' ? 2100 : 1650);
   }
 
   // 結果を出す（again … 今日すでに引いていて、カードから見返すとき）
   function reveal(again) {
     const r = st.res, gold = !!r.gold;
     $('.u-later').textContent = '';
-    if (gold) {
-      $('.u-gold').src = SRC.gold;
-      root.classList.add('gold');
-    } else {
-      $('.u-tanu').src = SRC.result;
-    }
-    if (again) {
-      const box = $('.u-shells');
-      box.innerHTML = '<span class="u-shell open chosen still"><img src="' + SRC['shell_' + (st.color || 'coral') + '_o'] + '" alt="" draggable="false"></span>';
-      root.classList.add('picked');
-    }
+    say('');
+    root.classList.add('picked', 'result');
+    if (gold) { $('.u-gold').src = SRC.gold; root.classList.add('gold'); }
     const F = FORTUNES[r.f], Cl = COLORS[r.c], It = ITEMS[r.i], Ac = ACTIONS[r.a];
-    $('.u-say').textContent = F.icon + ' ' + T(F);
     const p = (st.day || today()).split('-'), mo = +p[1], da = +p[2];
     const md = L() === 'en' ? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][mo - 1] + ' ' + da : mo + '月' + da + '日';
-    const card = $('.u-card');
-    card.innerHTML =
-      '<p class="u-date">' + T(UI.title) + '　' + md + '</p>' +
-      '<p class="u-fortune' + (gold ? ' big' : '') + '">' + F.icon + ' <span></span></p>' +
-      '<dl class="u-list"><dt>' + T(UI.color) + '</dt><dd><i class="u-sw"></i><span class="u-c"></span></dd>' +
-      '<dt>' + T(UI.item) + '</dt><dd class="u-i"></dd></dl>' +
-      '<div class="u-act"><b>' + T(UI.action) + '</b><p><span class="u-who"></span>' + (L() === 'en' ? ': "' : '「') + '<span class="u-a"></span>' + (L() === 'en' ? '"' : '」') + '</p></div>' +
-      opts.shareHtml() +
-      '<button class="btn btn-wide u-close" type="button"></button>' +
-      '<p class="u-next">' + T(UI.next) + '</p>';
-    card.querySelector('.u-fortune span').textContent = T(F);
-    card.querySelector('.u-sw').style.background = Cl.c;
-    card.querySelector('.u-c').textContent = T(Cl);
-    card.querySelector('.u-i').textContent = T(It);
-    card.querySelector('.u-who').textContent = tr('タヌくん');
-    card.querySelector('.u-a').textContent = T(Ac);
-    card.querySelector('.u-close').textContent = T(UI.close);
-    card.querySelector('.u-close').addEventListener('click', close);
+    const res = $('.u-res');
+    res.innerHTML =
+      '<p class="u-rdate"></p>' +
+      '<p class="u-rname' + (gold ? ' gold' : '') + '"><span class="u-ric"></span><span class="u-rnm"></span></p>' +
+      '<ul class="u-rows">' +
+      '<li style="--i:0"><b>' + T(UI.color) + '</b><span><i class="u-sw"></i><em class="u-c"></em></span></li>' +
+      '<li style="--i:1"><b>' + T(UI.item) + '</b><span><em class="u-i"></em></span></li>' +
+      '<li style="--i:2" class="u-ract"><b>' + T(UI.action) + '</b><span><em class="u-a"></em></span></li>' +
+      '</ul>';
+    res.querySelector('.u-rdate').textContent = fill(T(UI.day), { d: md });
+    res.querySelector('.u-ric').textContent = F.icon;
+    res.querySelector('.u-rnm').textContent = T(F);
+    res.querySelector('.u-sw').style.background = Cl.c;
+    res.querySelector('.u-c').textContent = T(Cl);
+    res.querySelector('.u-i').textContent = T(It);
+    res.querySelector('.u-a').textContent = T(Ac);
+    const btns = $('.u-btns');
+    btns.innerHTML = opts.shareHtml() + '<button class="btn u-close" type="button"></button>';
+    btns.querySelector('.u-close').textContent = T(UI.close);
+    btns.querySelector('.u-close').addEventListener('click', close);
     const text = fill(T(UI.post), { f: T(F), c: T(Cl).replace(/[（(].*[）)]/, ''), i: T(It), a: T(Ac) }) + '\n' + T(UI.tag) + ' ' + tr('#タヌくん');
-    opts.bindShare(card, text);
-    setTimeout(() => {
-      card.hidden = false;
-      void card.offsetWidth;
-      root.classList.add('result');
-      card.scrollTop = 0;
-      busy = false;
-    }, again ? 50 : 350);
+    opts.bindShare(btns, text);
+    res.hidden = false;
+    btns.hidden = false;
+    void res.offsetWidth;
+    root.classList.add('show');
+    // うれしくて、おなかが ぽよん（大吉はもっと）
+    later(() => jiggle('result', gold ? -0.12 : -0.08, 5), 450);
+    // 1行ずつ出たあとで、タヌくんのひとこと（見返すときは「今日はもう占ったよ」から）
+    if (again) {
+      say(T(UI.again), 'talk');
+      later(() => say(T(UI.bye), 'talk'), 3600);
+    } else {
+      later(() => say(T(UI.bye), 'talk'), gold ? 3800 : 2300);
+    }
+    busy = false;
   }
 
   function close() {
     if (!root || root.hidden) return;
+    timers.forEach(clearTimeout); timers = [];
     root.classList.remove('on');
     setTimeout(() => {
       root.hidden = true;
