@@ -540,7 +540,10 @@
 
   // 画面に使う「曲の何秒目か」：音の時計（rawSongTime）に、なめらかに合わせる。
   // スマホが重いときなどに音の時計が止まったり飛んだりしても（2026-11-02 実機で「カットインが遅れて、そのあと ◉ がすごい速さ」）、
-  // 画面の進み方は ふつうの 0.6〜1.4倍におさめて、少しずつ追いつく。ずれが2秒より大きいときだけ、一気に合わせる
+  // 画面の進み方は ふつうの 0.6〜1.4倍におさめて、少しずつ合わせる。
+  // ただし、画面が音より0.1秒以上おくれたとき（始めた直後などに、スマホが一瞬止まったとき）は、一気に追いつく
+  // （2026-11-03：少しずつ追いつくと、◉ が1〜2秒ほど 1.4倍の速さで流れて見えた＝「2回目の最初だけ ◉ が猛スピード」）。
+  // 音の時計が止まったとき（画面が先に進みすぎ）は、今までどおり ゆっくりにして待つ。ずれが2秒より大きいときは一気に合わせる
   const clock = { song: null, perf: 0 };
   function resetClock() { clock.song = null; }
   function songTime() {
@@ -549,7 +552,7 @@
     const dt = Math.max(0, Math.min(0.25, p - clock.perf));
     clock.perf = p;
     const pred = clock.song + dt, err = raw - pred;
-    if (Math.abs(err) < 0.004 || Math.abs(err) > 2) clock.song = raw;
+    if (Math.abs(err) < 0.004 || err > 0.1 || err < -2) clock.song = raw;
     else clock.song = pred + Math.max(-dt * 0.4, Math.min(dt * 0.4, err * 0.15));
     return clock.song;
   }
