@@ -5,15 +5,17 @@
 
 もとの絵（post/art/。ユーザーが描いたもの。どちらもマゼンタ背景）:
     mailbox_src.png … P2 木のポスト（左：旗が下りた／右：赤い旗が上がった）
-    receive_src.png … P1 お手紙を両手で抱えるタヌくん（全身）
+    receive_src.png … P1 お手紙を両手で抱えるタヌくん（全身・目をあけて にこにこ。2026-11-03 夜に描き直し版へ）
+    receive_smile_src.png … 同じポーズで目を閉じて にっこり（顔の所だけ receive に重ねて使う。体は描き直しで少しずれるため）
 つくるもの（images/post/）:
     mailbox_down.webp, mailbox_up.webp … ポスト（同じ倍率。ふだんは down、お返事が届いたら up）
     receive.webp … 背景を抜いたタヌくん（まわりの余白は切る）
+    receive_smile.webp … receive の顔だけ「目を閉じて にっこり」にした絵（receive と同じ大きさ・同じ位置。post.js で切りかえる）
 """
 from pathlib import Path
 import sys
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFilter
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / 'tools'))
@@ -50,7 +52,20 @@ def main():
     for name, (x0, x1) in [('mailbox_down.webp', (0, mid)), ('mailbox_up.webp', (mid, mb.width))]:
         cols = np.where(a[:, x0:x1].sum(0) > 0)[0]
         save(mb.crop((x0 + cols.min() - 6, top, x0 + cols.max() + 7, bot)), name, scale=0.6)
-    save(trim(key(SRC / 'receive_src.png')), 'receive.webp', scale=0.8)
+    # P1：目をあけた絵と、顔だけ「にっこり」にした絵。2枚とも同じ枠で切る（切りかえても動かないように）
+    rec = key(SRC / 'receive_src.png')
+    a = Image.open(SRC / 'receive_smile_src.png').convert('RGB')
+    b = Image.open(SRC / 'receive_src.png').convert('RGB')
+    m = Image.new('L', a.size, 0)
+    ImageDraw.Draw(m).ellipse((345, 130, 680, 345), fill=255)   # 顔（目・口）のまわり。元の絵 1024×1536 の座標
+    tmp = OUT / '_smile_tmp.png'
+    Image.composite(a, b, m.filter(ImageFilter.GaussianBlur(14))).save(tmp)
+    smile = key(tmp)
+    tmp.unlink()
+    l, t, r, bt = rec.getchannel('A').point(lambda v: 255 if v > 8 else 0).getbbox()
+    box = (max(0, l - 6), max(0, t - 6), min(rec.width, r + 6), min(rec.height, bt + 6))
+    save(rec.crop(box), 'receive.webp', scale=0.8)
+    save(smile.crop(box), 'receive_smile.webp', scale=0.8)
 
 
 if __name__ == '__main__':

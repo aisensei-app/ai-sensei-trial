@@ -20,7 +20,7 @@ const FILES = [
   './images/uranai/shell_coral_c.webp', './images/uranai/shell_pearl_c.webp', './images/uranai/shell_blue_c.webp', './images/uranai/shell_gold_c.webp',
   './images/uranai/shell_coral_o.webp', './images/uranai/shell_pearl_o.webp', './images/uranai/shell_blue_o.webp', './images/uranai/shell_gold_o.webp',
   // タヌくんのポスト（post.js）
-  './images/post/mailbox_down.webp', './images/post/mailbox_up.webp', './images/post/receive.webp',
+  './images/post/mailbox_down.webp', './images/post/mailbox_up.webp', './images/post/receive.webp', './images/post/receive_smile.webp',
   // 時間帯の立ち絵
   './images/time_morning.webp', './images/time_evening.webp', './images/time_night.webp', './images/time_sleep.webp',
   // ぽんぽこリズム（pon/）

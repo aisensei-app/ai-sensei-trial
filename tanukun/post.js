@@ -23,7 +23,8 @@ window.TanuPost = function (opts) {
   const SRC = {
     down: 'images/post/mailbox_down.webp',
     up: 'images/post/mailbox_up.webp',
-    receive: 'images/post/receive.webp'
+    receive: 'images/post/receive.webp',
+    smile: 'images/post/receive_smile.webp'   // receive の顔だけ「目を閉じて にっこり」（同じ大きさ・同じ位置）
   };
   const MAX = 200;   // お手紙の文字数の上限
 
@@ -224,7 +225,7 @@ window.TanuPost = function (opts) {
   function showMenu() {
     $('.p-back').textContent = T(UI.back);
     $('.p-sheet').hidden = true;
-    root.classList.remove('writing', 'sent');
+    root.classList.remove('writing', 'sent', 'smile');
     const n = unread();
     $('.p-box').src = n ? SRC.up : SRC.down;
     $('.p-box').classList.toggle('has', !!n);
@@ -293,8 +294,33 @@ window.TanuPost = function (opts) {
       say(T(UI.got));
       if (opts.chime) opts.chime();
     }, 1650);
+    // 受け取ってうれしくて、目を閉じて にっこり → ぴょんと はねて、ハートがふわっ
+    setTimeout(() => {
+      if (!root.classList.contains('sent')) return;
+      const t = $('.p-tanu');
+      t.src = SRC.smile;
+      root.classList.add('smile');
+      hearts(t);
+    }, 2500);
     setTimeout(() => { say(T(UI.tomorrow)); }, 3600);
     setTimeout(() => { if (!root.hidden) showMenu(); }, 6200);
+  }
+
+  // タヌくんの頭のまわりに、小さなハートを3つ（にっこりしたとき）
+  function hearts(t) {
+    const sc = $('.p-scene');
+    if (!sc || !t) return;
+    const r = t.getBoundingClientRect(), b = sc.getBoundingClientRect();
+    [[-0.32, 0.12, 0], [0.3, 0.08, 0.18], [0.04, 0.0, 0.36]].forEach(([dx, dy, delay]) => {
+      const h = document.createElement('i');
+      h.className = 'p-heart';
+      h.textContent = '💗';
+      h.style.left = (r.left - b.left + r.width * (0.5 + dx)) + 'px';
+      h.style.top = (r.top - b.top + r.height * dy) + 'px';
+      h.style.animationDelay = delay + 's';
+      sc.appendChild(h);
+      setTimeout(() => h.remove(), 2200);
+    });
   }
 
   // 📬 読む
