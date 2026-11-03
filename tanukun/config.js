@@ -188,7 +188,7 @@ window.TANU_CONFIG = {
                  それぞれに text・stamp・lang と打ってから「リンクを取得」→ そのリンクをここへ。
                  （打たなかったときは、質問の順番で text → stamp → lang と読む。app.js の readPrefill）
        action・entry … prefill の代わりに、自分で書くとき用（action は …/formResponse、entry は entry.123456 の形）。書いてあればこちらが優先 */
-  post: { form: { prefill: '', action: '', entry: { text: '', stamp: '', lang: '' } } },
+  post: { form: { prefill: 'https://docs.google.com/forms/d/e/1FAIpQLSei6e6ljKA9dj4GEmiCikIL4BeFPIad31RtsAYBA12m4nbGAA/viewform?usp=pp_url&entry.274900529=text&entry.17861801=stamp&entry.2113261458=lang', action: '', entry: { text: '', stamp: '', lang: '' } } },
 
   /* ---- ⓘ お約束と注意（設定の「このアプリ」、お手紙を書く画面の ⓘ から開く一覧。2026-11-03）----
      id … 開いたときに、その項目へ移るための名前（post など）
