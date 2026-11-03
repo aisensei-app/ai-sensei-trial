@@ -24,7 +24,7 @@ window.TanuPost = function (opts) {
     down: 'images/post/mailbox_down.webp',
     up: 'images/post/mailbox_up.webp',
     receive: 'images/post/receive.webp',
-    smile: 'images/post/receive_smile.webp'   // receive の顔だけ「目を閉じて にっこり」（同じ大きさ・同じ位置）
+    writing: 'images/post/writing.webp'   // お手紙を送ったあと、フェードで出す「机でお返事を書くタヌくん」
   };
   const MAX = 200;   // お手紙の文字数の上限
 
@@ -76,6 +76,7 @@ window.TanuPost = function (opts) {
     noteLocal: { ja: 'お手紙は、このスマホの中に しまわれます（どこにも送りません）', en: 'Your letter is kept on this phone only (it isn\'t sent anywhere)', zh: '信件只保存在这部手机里（不会发送到任何地方）' },
     got: { ja: 'よ、読むね…！', en: 'I-I\'ll read it…!', zh: '我、我会好好读的…！' },
     tomorrow: { ja: '明日、お返事を書くね 📮', en: 'I\'ll write back tomorrow 📮', zh: '明天给你回信哦 📮' },
+    writing: { ja: '明日までに、お返事 書いておくね ✍️', en: 'I\'ll have a reply ready by tomorrow ✍️', zh: '明天之前，我会写好回信的 ✍️' },
     oneDay: { ja: '今日は もう お手紙もらったよ！\nお返事 書くから、明日またね 📮', en: 'I already got your letter today!\nI\'ll write back — see you tomorrow 📮', zh: '今天已经收到你的信啦！\n我会回信的，明天见 📮' },
     from: { ja: 'タヌくんより 🐾', en: 'Love, Tanu-kun 🐾', zh: '狸君 🐾' },
     to: { ja: '{name}へ', en: 'Dear {name},', zh: '给{name}' },
@@ -167,6 +168,7 @@ window.TanuPost = function (opts) {
       '<div class="p-bg"></div>' +
       '<button class="p-back" type="button"></button>' +
       '<div class="p-scene"><img class="p-box" alt="" draggable="false"><img class="p-tanu" alt="" draggable="false"><div class="p-say"></div></div>' +
+      '<div class="p-desk" hidden><img class="p-desk-bg" alt="" draggable="false"><img class="p-desk-img" alt="" draggable="false"></div>' +
       '<div class="p-menu"></div>' +
       '<div class="p-sheet" hidden></div>';
     document.body.appendChild(root);
@@ -213,6 +215,8 @@ window.TanuPost = function (opts) {
       root.hidden = true;
       root.classList.remove('on');
       $('.p-sheet').hidden = true;
+      sendId++;
+      hideDesk();
       if (hold) { hold(); hold = null; }
       refreshBadge();
       if (opts.onClose) opts.onClose();
@@ -225,7 +229,8 @@ window.TanuPost = function (opts) {
   function showMenu() {
     $('.p-back').textContent = T(UI.back);
     $('.p-sheet').hidden = true;
-    root.classList.remove('writing', 'sent', 'smile');
+    root.classList.remove('writing', 'sent');
+    hideDesk();
     const n = unread();
     $('.p-box').src = n ? SRC.up : SRC.down;
     $('.p-box').classList.toggle('has', !!n);
@@ -287,23 +292,42 @@ window.TanuPost = function (opts) {
     sh.innerHTML = '<div class="p-env"><i class="p-env-flap"></i><b class="p-env-stamp">' + s.icon + '</b></div>';
     root.classList.remove('writing');
     setTimeout(() => sh.classList.add('fly'), 900);
+    const my = ++sendId;   // とちゅうで閉じたり、もう一度開いたりしたときに、古い続きが動かないように
+    const still = () => my === sendId && !root.hidden && root.classList.contains('sent');
     setTimeout(() => {
       sh.hidden = true;
       root.classList.add('sent');
       $('.p-tanu').src = SRC.receive;
       say(T(UI.got));
       if (opts.chime) opts.chime();
+      setTimeout(() => { if (still()) hearts($('.p-tanu')); }, 350);
     }, 1650);
-    // 受け取ってうれしくて、目を閉じて にっこり → ぴょんと はねて、ハートがふわっ
-    setTimeout(() => {
-      if (!root.classList.contains('sent')) return;
-      const t = $('.p-tanu');
-      t.src = SRC.smile;
-      root.classList.add('smile');
-      hearts(t);
-    }, 2500);
-    setTimeout(() => { say(T(UI.tomorrow)); }, 3600);
-    setTimeout(() => { if (!root.hidden) showMenu(); }, 6200);
+    // ふわっとフェードして、机でお返事を書くタヌくん（1枚の絵）→ タップか数秒で、ポストの画面へ
+    setTimeout(() => { if (still()) showDesk(my); }, 3700);
+  }
+  let sendId = 0;
+  function showDesk(my) {
+    const d = $('.p-desk');
+    d.querySelector('.p-desk-bg').src = d.querySelector('.p-desk-img').src = SRC.writing;
+    d.hidden = false;
+    void d.offsetWidth;
+    d.classList.add('on');
+    say('');
+    setTimeout(() => { if (my === sendId && !d.hidden) say(T(UI.writing)); }, 700);
+    let done = false;
+    const end = () => {
+      if (done) return;
+      done = true;
+      d.removeEventListener('click', end);
+      d.classList.remove('on');
+      setTimeout(() => { hideDesk(); if (my === sendId && !root.hidden) showMenu(); }, 600);
+    };
+    d.addEventListener('click', end);
+    setTimeout(() => { if (my === sendId) end(); }, 5200);
+  }
+  function hideDesk() {
+    const d = root && $('.p-desk');
+    if (d) { d.hidden = true; d.classList.remove('on'); }
   }
 
   // タヌくんの頭のまわりに、小さなハートを3つ（にっこりしたとき）
