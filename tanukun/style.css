@@ -1307,12 +1307,11 @@ body.in-x .mailbox { bottom: calc(var(--x-cover) + 8px); width: 64px; }
 #post .p-desk[hidden] { display: none; }
 #post .p-desk.on { opacity: 1; }
 #post .p-desk-bg { position: absolute; inset: -40px; width: calc(100% + 80px); height: calc(100% + 80px); object-fit: cover; filter: blur(22px) brightness(.7); }
-/* 縦長のスマホでは、タヌくん（絵の左から43%の所）を真ん中にして大きめに（左右のランプ・花は少し切れる）。横に広い画面では全体 */
-#post .p-desk-img { position: absolute; left: calc(50% - 160% * .43); top: 50%; width: 160%; height: auto; transform: translateY(-50%) scale(1.04);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, .35); transition: transform 5.5s ease-out; }
-#post .p-desk.on .p-desk-img { transform: translateY(-50%) scale(1); }
-@media (min-aspect-ratio: 3/4) { #post .p-desk-img { left: 0; width: 100%; } }
-body.in-x #post .p-desk-img { top: calc(50% - var(--x-cover) / 2); }
+/* 縦長の絵（2:3）：幅いっぱい。画面が横に広いときは高さに合わせる */
+#post .p-desk-img { position: absolute; inset: 0; margin: auto; width: min(100%, 66.7vh); height: auto; transform: scale(1.04);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .35); transition: transform 5.5s ease-out; }   /* 上下左右 0 ＋ margin auto で真ん中（絵の読みこみ前でもずれない） */
+#post .p-desk.on .p-desk-img { transform: scale(1); }
+body.in-x #post .p-desk-img { bottom: var(--x-cover); }
 #post .p-say { position: absolute; z-index: 4; left: 50%; top: calc(max(14px, env(safe-area-inset-top)) + 54px); transform: translateX(-50%);
   width: max-content; max-width: 86vw; padding: 10px 18px; border-radius: 18px; background: #fff; font-size: 17px; font-weight: 800;
   text-align: center; white-space: pre-line; box-shadow: 0 3px 12px rgba(74, 46, 22, .2); animation: h-sayIn .25s ease-out; }

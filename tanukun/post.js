@@ -292,6 +292,8 @@ window.TanuPost = function (opts) {
     sh.innerHTML = '<div class="p-env"><i class="p-env-flap"></i><b class="p-env-stamp">' + s.icon + '</b></div>';
     root.classList.remove('writing');
     setTimeout(() => sh.classList.add('fly'), 900);
+    const dk = $('.p-desk');   // 机の絵は先に読みこんでおく
+    dk.querySelector('.p-desk-bg').src = dk.querySelector('.p-desk-img').src = SRC.writing;
     const my = ++sendId;   // とちゅうで閉じたり、もう一度開いたりしたときに、古い続きが動かないように
     const still = () => my === sendId && !root.hidden && root.classList.contains('sent');
     setTimeout(() => {
@@ -308,7 +310,6 @@ window.TanuPost = function (opts) {
   let sendId = 0;
   function showDesk(my) {
     const d = $('.p-desk');
-    d.querySelector('.p-desk-bg').src = d.querySelector('.p-desk-img').src = SRC.writing;
     d.hidden = false;
     void d.offsetWidth;
     d.classList.add('on');
