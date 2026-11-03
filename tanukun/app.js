@@ -1271,11 +1271,34 @@
       if (pb.rally) msg.push(tr('ぽよんラリーの ごほうび 💗+{n}', { n: pb.rally }));
       setTimeout(() => toast(msg.join('\n')), 900);
     }
-    if (r.visit === 'again') return false;
+    // 今日2回目以降（画面に戻ってきたときなど）でも、ひみつの思い出をまだ見ていなければ流す（2026-11-03 夜）
+    if (r.visit === 'again') { if (!r.heartUp) maybeClear(2200); return false; }
     if (mode === 'home') homeGreet({ scene: 'home', visit: r.visit });
     autoUranai();
     // ひみつの思い出（クリア）の日なら、あいさつのあとに流す（トップ画面は、それまでズームを待つ）
-    if (!DEMO && SAVE.clearReady() && !r.heartUp) { holdHome(2600); setTimeout(playClear, 2200); }
+    if (!r.heartUp) maybeClear(2200, true);
+    return true;
+  }
+
+  /* ---- ひみつの思い出（クリア）を流せるときに流す（2026-11-03 夜）----
+     以前は「その日はじめて開いたとき」の1回だけで、あいさつの2秒の間に閉じたり、ほかの画面に移ったりすると、次の日まで見られなかった。
+     いまは、トップ画面に戻ってきたとき（なでなで・ゲーム・占い・ポストから）や、アプリに戻ってきたときにも、もう一度ためす。
+     条件（💖5 になってから2日）は変えない。見終わるまでは cleared にならないので、とちゅうで閉じても、次に戻ってきたときにまた流れる。
+     delay … 待つ時間（あいさつのあと）。hold … そのあいだトップ画面のズームを待ってもらう（その日はじめて開いたとき）
+     戻り値：流す予定にしたか（そのときは「おたより」を出さない） */
+  let clearWait = null;
+  function maybeClear(delay, hold) {
+    if (DEMO || !C.clear || !SAVE.clearReady()) return false;
+    if (clearWait) return true;
+    if (hold) holdHome(delay + 400);
+    const tryPlay = () => {
+      clearWait = null;
+      if (!SAVE.clearReady() || mode !== 'home' || document.visibilityState === 'hidden') return;   // 次にトップ画面・アプリに戻ってきたときに、またためす
+      // パネル（ホーム画面に追加の案内など）・思い出・占い・ポストが出ている間は、閉じるのを待つ
+      if (!sheet.hidden || !$('event').hidden || (URANAI && URANAI.isOpen()) || (POST && POST.isOpen())) { clearWait = setTimeout(tryPlay, 1500); return; }
+      playClear();
+    };
+    clearWait = setTimeout(tryPlay, delay);
     return true;
   }
 
@@ -1440,6 +1463,7 @@
   }
   // トップ画面に戻ってきたとき：条件がそろっていれば、1回だけ自動で
   function maybeFeedback() {
+    if (maybeClear(1400)) return;   // ひみつの思い出がまだなら、そちらが先（トップ画面に戻ってきたとき）
     if (!FB || DEMO || !FB.minDays || SAVE.data.feedbackAsked || mode !== 'home') return;
     if (SAVE.data.totalDays < FB.minDays && !SAVE.data.cleared) return;
     setTimeout(() => {
