@@ -3,7 +3,7 @@
    つながらないときだけ保存しておいたファイルを使います。 */
 const CACHE = 'tanukun-v31';
 const FILES = [
-  './', './index.html', './style.css', './config.js', './config.en.js', './config.zh.js', './lines.js', './lines.en.js', './lines.zh.js', './i18n.zh.js', './i18n.js', './stats.js', './save.js', './belly.js', './iris.js', './home.js', './uranai.js', './app.js',
+  './', './index.html', './style.css', './config.js', './config.en.js', './config.zh.js', './lines.js', './lines.en.js', './lines.zh.js', './i18n.zh.js', './i18n.js', './stats.js', './save.js', './belly.js', './iris.js', './home.js', './uranai.js', './post.js', './app.js',
   './manifest.webmanifest', './images/icon-192.png', './images/icon-512.png',
   './images/normal.webp', './images/shy.webp', './images/happy.webp',
   './images/muni.webp', './images/ponpoko1.webp', './images/ponpoko2.webp',
@@ -19,6 +19,8 @@ const FILES = [
   './images/uranai/pick.webp', './images/uranai/wow.webp', './images/uranai/result.webp', './images/uranai/gold.webp', './images/uranai/cave.webp', './images/uranai/altar.webp',
   './images/uranai/shell_coral_c.webp', './images/uranai/shell_pearl_c.webp', './images/uranai/shell_blue_c.webp', './images/uranai/shell_gold_c.webp',
   './images/uranai/shell_coral_o.webp', './images/uranai/shell_pearl_o.webp', './images/uranai/shell_blue_o.webp', './images/uranai/shell_gold_o.webp',
+  // タヌくんのポスト（post.js）
+  './images/post/mailbox_down.webp', './images/post/mailbox_up.webp', './images/post/receive.webp',
   // 時間帯の立ち絵
   './images/time_morning.webp', './images/time_evening.webp', './images/time_night.webp', './images/time_sleep.webp',
   // ぽんぽこリズム（pon/）

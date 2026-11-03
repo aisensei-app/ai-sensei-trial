@@ -99,6 +99,7 @@ window.TanuI18n = (function () {
       'タヌくんと、ずっと一緒の約束をしたよ🌺\n（なかよし{n}日目でクリア！）': 'I promised to stay with Tanu-kun forever🌺\n(Cleared on day {n}!)',
       '#タヌくん': '#Tanukun',
       // おたより（2026-11-03）
+      '📮 タヌくんにお手紙を書く': '📮 Write a letter to Tanu-kun',
       '💌 タヌくんからのおたより': '💌 A note from Tanu-kun',
       'ねえねえ、ちょっとだけ教えて？': 'Um… can you tell me a little something?',
       'タヌくんアプリが なくなったら…': 'If the Tanu-kun app disappeared…',

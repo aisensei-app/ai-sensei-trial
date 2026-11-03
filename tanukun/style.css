@@ -1260,3 +1260,96 @@ body.in-x #uranai { --u: .75vh; --b: var(--x-cover); }
 .fb-send:disabled { opacity: .45; box-shadow: none; }
 .fb-later { align-self: center; }
 .fb-more { text-decoration: none; text-align: center; }
+
+/* =========================================================
+   📮 タヌくんのポスト（post.js。2026-11-03）
+   ========================================================= */
+/* トップ画面の左下に、いつも立っているポスト（お返事が届いたら旗が上がって「1」、ゆらゆら） */
+.mailbox { position: absolute; z-index: 7; left: 6px; bottom: calc(max(10px, env(safe-area-inset-bottom)) + 4px);
+  width: 76px; padding: 0; border: 0; background: none; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  filter: drop-shadow(0 4px 4px rgba(74, 46, 22, .3)); transform-origin: 50% 100%; }
+.mailbox img { display: block; width: 100%; height: auto; pointer-events: none; }
+.mailbox b { position: absolute; top: 4px; right: 2px; min-width: 24px; height: 24px; padding: 0 6px; border-radius: 12px;
+  background: #E5322D; color: #fff; font-size: 14px; line-height: 24px; font-weight: 900; border: 2px solid #fff; }
+.mailbox b[hidden] { display: none; }
+.mailbox.has { animation: mb-sway 2.4s ease-in-out infinite; }
+.mailbox:active { transform: scale(.94); }
+@keyframes mb-sway { 0%, 60%, 100% { transform: rotate(0); } 70% { transform: rotate(-6deg); } 80% { transform: rotate(5deg); } 90% { transform: rotate(-3deg); } }
+body.in-x .mailbox { bottom: calc(var(--x-cover) + 8px); width: 64px; }
+@media (prefers-reduced-motion: reduce) { .mailbox.has { animation: none; } }
+
+/* ポストの画面 */
+#post { position: fixed; inset: 0; z-index: 8; max-width: 560px; margin: 0 auto; overflow: hidden; color: #4A2E16; }
+#post[hidden] { display: none; }
+#post .p-bg { position: absolute; inset: 0; background: center bottom / cover no-repeat; }
+#post .p-bg::after { content: ""; position: absolute; inset: 0;   /* 夕方のような、あたたかい色 */
+  background: linear-gradient(rgba(255, 170, 110, .35), rgba(255, 200, 140, .15) 50%, rgba(120, 60, 20, .25)); }
+#post .p-back { position: absolute; z-index: 5; left: 12px; top: calc(max(10px, env(safe-area-inset-top)) + 2px);
+  border: 0; border-radius: 999px; background: rgba(255, 255, 255, .85); color: inherit; font: inherit; font-size: 15px; font-weight: 700; padding: 8px 14px; cursor: pointer; }
+#post .p-scene { position: absolute; inset: 0; transition: filter .4s, opacity .4s; }
+#post.writing .p-scene { filter: blur(3px) brightness(.8); }
+#post .p-box { cursor: pointer; z-index: 2; position: absolute; left: 4%; bottom: calc(var(--pb, 0px) + 30vh); width: 34%; max-width: 190px; transform-origin: 50% 100%;
+  filter: drop-shadow(0 8px 8px rgba(74, 46, 22, .35)); }
+#post .p-box.has { animation: mb-sway 2.4s ease-in-out infinite; }
+#post .p-tanu { position: absolute; right: -4%; bottom: calc(var(--pb, 0px) + 26vh); height: 50vh; max-width: 70%; object-fit: contain;
+  -webkit-mask-image: linear-gradient(#000 85%, transparent 100%); mask-image: linear-gradient(#000 85%, transparent 100%);
+  animation: u-breath2 3.2s ease-in-out infinite; transform-origin: 50% 100%; }
+@keyframes u-breath2 { 50% { transform: scale(1.01, 1.018); } }
+#post.sent .p-tanu { animation: p-hug .6s cubic-bezier(.3, 1.6, .5, 1); }
+@keyframes p-hug { 30% { transform: translateY(-12px) scale(.98, 1.03); } }
+#post .p-say { position: absolute; z-index: 3; left: 50%; top: calc(max(14px, env(safe-area-inset-top)) + 54px); transform: translateX(-50%);
+  width: max-content; max-width: 86vw; padding: 10px 18px; border-radius: 18px; background: #fff; font-size: 17px; font-weight: 800;
+  text-align: center; white-space: pre-line; box-shadow: 0 3px 12px rgba(74, 46, 22, .2); animation: h-sayIn .25s ease-out; }
+#post .p-say[hidden] { display: none; }
+#post .p-menu { position: absolute; z-index: 3; left: 16px; right: 16px; bottom: calc(var(--pb, 0px) + max(14px, env(safe-area-inset-bottom)));
+  display: flex; flex-direction: column; gap: 8px; transition: opacity .3s; }
+#post.writing .p-menu, #post.sent .p-menu { opacity: 0; pointer-events: none; }
+#post .p-menu i { font-style: normal; display: inline-block; min-width: 22px; margin-left: 6px; padding: 0 6px; border-radius: 11px;
+  background: #fff; color: #E5322D; font-size: 14px; }
+body.in-x #post { --pb: var(--x-cover); }
+body.in-x #post .p-tanu { height: 38vh; }
+
+/* 便せん（書く・読む・お手紙箱） */
+#post .p-sheet { position: absolute; z-index: 4; left: 14px; right: 14px; top: calc(max(12px, env(safe-area-inset-top)) + 52px);
+  max-height: calc(100% - 80px - var(--pb, 0px)); overflow: auto; }
+#post .p-sheet[hidden] { display: none; }
+#post .p-paper { display: flex; flex-direction: column; gap: 8px; padding: 18px 18px 14px; border-radius: 16px;
+  background: repeating-linear-gradient(#FFFDF6 0 31px, #F1E2C7 31px 32px); box-shadow: 0 8px 24px rgba(74, 46, 22, .3);
+  border: 2px solid #EBD3A8; animation: p-in .35s ease-out; }
+#post .p-paper > * { flex-shrink: 0; margin: 0; }
+@keyframes p-in { from { opacity: 0; transform: translateY(16px) scale(.97); } }
+#post .p-stlabel { font-size: 14px; font-weight: 700; opacity: .75; }
+#post .p-stamps { display: flex; gap: 8px; }
+#post .p-stamp { width: 48px; height: 56px; padding: 0; border: 2px dashed #D9B98A; border-radius: 6px; background: #fff; font-size: 26px; cursor: pointer; }
+#post .p-stamp.on { border: 3px solid #F08A3C; background: #FFF0E0; transform: rotate(-6deg); }
+#post .p-dear { font-size: 17px; font-weight: 800; }
+#post .p-text { width: 100%; min-height: 9em; padding: 4px 2px; border: 0; background: transparent; resize: none; color: inherit;
+  font: inherit; font-size: 17px; line-height: 32px; -webkit-user-select: text; user-select: text; }
+#post .p-text:focus { outline: none; }
+#post .p-count { text-align: right; font-size: 12px; opacity: .6; }
+#post .p-note { font-size: 11px; opacity: .7; line-height: 1.5; }
+#post .p-row { display: flex; gap: 8px; }
+#post .p-row .btn { flex: 1; }
+#post .p-body { font-size: 17px; font-weight: 700; line-height: 32px; white-space: pre-line; }
+#post .p-sign { text-align: right; font-size: 16px; font-weight: 800; color: #C8641E; }
+#post .p-lstamp { align-self: flex-end; margin-bottom: -30px; font-size: 32px; transform: rotate(8deg); }
+#post .p-letter.opened { animation: p-open .7s cubic-bezier(.2, .9, .3, 1.1); transform-origin: 50% 0; }
+@keyframes p-open { from { opacity: 0; transform: scaleY(.2); } 60% { opacity: 1; } }
+#post .p-mine summary { font-size: 14px; font-weight: 700; color: #8A5A2B; cursor: pointer; }
+#post .p-mine p { margin: 6px 0 0; font-size: 15px; line-height: 1.6; white-space: pre-wrap; opacity: .85; }
+#post .p-boxlist ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+#post .p-boxlist li button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border: 0; border-radius: 12px;
+  background: #fff; box-shadow: 0 1px 0 rgba(74, 46, 22, .15); font: inherit; color: inherit; text-align: left; cursor: pointer; }
+#post .p-boxlist li b { font-size: 22px; }
+#post .p-boxlist li span { flex: 1; min-width: 0; font-size: 14px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#post .p-boxlist li em { font-style: normal; font-size: 12px; opacity: .6; white-space: nowrap; }
+/* おくる：便せん → 封筒 → タヌくんへ飛んでいく */
+#post .p-envelope { top: 34%; left: 50%; right: auto; width: 220px; margin-left: -110px; overflow: visible; transition: transform .7s cubic-bezier(.5, -0.2, .6, 1), opacity .7s; }
+#post .p-env { position: relative; width: 220px; height: 140px; border-radius: 8px; background: #FFF6E3; border: 2px solid #E3C48F;
+  box-shadow: 0 8px 18px rgba(74, 46, 22, .3); animation: p-fold .6s ease-out; }
+#post .p-env-flap { position: absolute; left: 0; right: 0; top: 0; height: 80px; background: #F7E7C6; clip-path: polygon(0 0, 100% 0, 50% 100%);
+  border-radius: 8px 8px 0 0; }
+#post .p-env-stamp { position: absolute; right: 12px; top: 10px; font-size: 30px; transform: rotate(8deg); }
+@keyframes p-fold { from { transform: scaleY(1.8) scaleX(1.3); opacity: .4; } }
+#post .p-envelope.fly { transform: translate(90px, 120px) scale(.35) rotate(12deg); opacity: 0; }
+@media (prefers-reduced-motion: reduce) { #post .p-tanu, #post .p-box.has { animation: none; } }

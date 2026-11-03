@@ -39,7 +39,7 @@ def build(demo, out):
     css = css.replace('height: 100vh;\n  height: 100dvh;', 'height: 100%;')
     page = (ROOT / 'index.html').read_text(encoding='utf8')
     body = page[page.index('<main id="app">'):page.index('<!-- 読み込む順番')]
-    names = ['config.js', 'config.en.js', 'config.zh.js', 'lines.js', 'lines.en.js', 'lines.zh.js', 'i18n.zh.js', 'i18n.js', 'save.js', 'belly.js', 'iris.js', 'home.js', 'uranai.js', 'app.js']
+    names = ['config.js', 'config.en.js', 'config.zh.js', 'lines.js', 'lines.en.js', 'lines.zh.js', 'i18n.zh.js', 'i18n.js', 'save.js', 'belly.js', 'iris.js', 'home.js', 'uranai.js', 'post.js', 'app.js']
     title = 'タヌくん'
     if demo:
         names.insert(1, 'demo.js')

@@ -181,6 +181,11 @@ window.TANU_CONFIG = {
      formUrl … 「✉️ もっと書く」で開く Google フォームなどの URL（言語ごと。空なら、そのボタンを出さない） */
   feedback: { minDays: 7, reward: 3, formUrl: { ja: '', en: '', zh: '' } },
 
+  /* ---- 📮 タヌくんのポスト（post.js）----
+     form … 書いたお手紙を送る Google フォーム。action はフォームの「formResponse」の URL、entry はそれぞれの質問の番号（entry.123456 の形）。
+             空なら、お手紙はスマホの中にしまうだけ（どこにも送らない） */
+  post: { form: { action: '', entry: { text: '', stamp: '', lang: '' } } },
+
   /* ---- トップ画面（home.js。あいさつ → おなかにズーム → おなかを左右にスワイプして選ぶ。2026-11-02〜 スワイプ版） ----
      normal     … ズームするときの絵（立ち絵 normal.webp をちょうど1.5倍にした高画質の絵。並べ方は同じ）
      pet        … 「タヌくん なでなで」のカードのアイコンの絵（タヌくんの顔）
@@ -203,7 +208,8 @@ window.TANU_CONFIG = {
      （確認用リンク tools/build_preview.py では、全部 'open' にして作ります） */
   features: {
     pon:       'open',     // ぽんぽこリズム（2026-11-02 夜に解禁）
-    uranai:    'open',     // 🐚 貝がら占い（uranai.js。その日はじめて開いたときに出る。2026-11-03 作成・v31 で公開予定）
+    uranai:    'open',
+    post:      'open',     // 📮 タヌくんのポスト（post.js。お手紙を書くと次の日にお返事。2026-11-03 作成・v31 で公開予定）     // 🐚 貝がら占い（uranai.js。その日はじめて開いたときに出る。2026-11-03 作成・v31 で公開予定）
     timeOfDay: 'hidden',   // 時間帯で変わる立ち絵と背景
     tailFlick: 'hidden',   // しっぽをはじく（引っぱって離す・ブワッ）
     rally:     'hidden',   // ぽよんラリー（rally/。ボールを投げて、おなかで返す）

@@ -15,6 +15,7 @@
      h1〜h5 clear … ハートが〇個になった・クリアした
      p-pet p-pon p-rally p-seesaw p-wash … その日に、なでなで・ぽんぽこ・ラリー・シーソー・洗うゲームで遊んだ
      u-show u-pick u-later … 貝がら占い：自動で出た・貝を選んだ・「あとで」を押した（2026-11-03）
+     m-open m-send m-read … 📮 ポスト：開いた・お手紙を書いた・お返事を読んだ
      f-〇〇 … おたより（感想）：出た・あとで・おくった・もっと書く／なくなったら（とても・少し・気にならない）／好きな所（おなか・タヌくん・絵・ゲーム・セリフ）
    ========================================================= */
 window.TanuStats = (function () {
@@ -27,7 +28,8 @@ window.TanuStats = (function () {
     'a-ja', 'a-en', 'a-zh', 'h1', 'h2', 'h3', 'h4', 'h5', 'clear', 'p-pet', 'p-pon', 'p-rally', 'p-seesaw', 'p-wash',
     'u-show', 'u-pick', 'u-later',
     'f-show', 'f-later', 'f-send', 'f-more', 'f-miss-big', 'f-miss-some', 'f-miss-no',
-    'f-like-belly', 'f-like-tanu', 'f-like-art', 'f-like-game', 'f-like-line'];
+    'f-like-belly', 'f-like-tanu', 'f-like-art', 'f-like-game', 'f-like-line',
+    'm-open', 'm-send', 'm-read'];
   const KEY = 'tanukun-stats';
   // 数える場所か（本番の URL のときだけ）
   const on = S.on !== false && /^https?:$/.test(location.protocol) && (S.hosts || []).indexOf(location.hostname) >= 0;

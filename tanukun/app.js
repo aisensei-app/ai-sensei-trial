@@ -76,6 +76,7 @@
     layers: (src) => wornLayers(faceOfSrc[absUrl(src)])
   });
   const bubble = $('bubble');
+  let POST = null;   // タヌくんのポスト（post.js。お手紙）
   let URANAI = null; // 貝がら占い（uranai.js。下の「トップ画面」で作る。お試し版では使わない）
   let HOME = null;   // トップ画面（home.js。下の「トップ画面」で作る。お試し版では使わない）
   const zonesEl = $('zones');
@@ -1249,6 +1250,8 @@
   function checkIn() {
     const r = SAVE.checkIn();
     STATS.checkIn({ lang: I18N.lang, total: SAVE.data.totalDays, firstDay: SAVE.data.firstDay, day: SAVE.today() });
+    // 📮 なかよし〇日目・クリアの日は、タヌくんから先にお手紙。日付が変わってお返事が届いたら、ポストの旗を上げる
+    if (POST) { POST.checkMilestones(SAVE.data.totalDays, !!SAVE.data.cleared); POST.refresh(); }
     // ぽんぽこリズムのごほうび（預けてあるなかよしポイント）を受け取る
     const pb = DEMO ? { added: 0, heartUp: false } : SAVE.claimPonPoints();
     if (pb.heartUp) r.heartUp = true;
@@ -1323,10 +1326,14 @@
   const FB_LIKE = [['belly', '🫧 おなかぽよん'], ['tanu', '🦝 タヌくん'], ['art', '🎨 絵'], ['game', '🎮 ミニゲーム'], ['line', '💬 セリフ']];
   const fbForm = () => { const u = FB && FB.formUrl; return (u && (u[I18N.lang] || u.ja)) || ''; };
   function fbMoreHtml() {
+    // 📮 ポストがあれば、そちらでお手紙を書いてもらう（タヌくんにとどいて、次の日にお返事）
+    if (POST) return '<button class="btn btn-wide fb-post" type="button">' + tr('📮 タヌくんにお手紙を書く') + '</button>';
     return fbForm() ? '<a class="btn btn-wide fb-more" target="_blank" rel="noopener">' + tr('✉️ もっと書く') + '</a>' +
       '<p class="note small center">' + tr('書いた内容は Google フォームに届きます。名前などは書かないでね') + '</p>' : '';
   }
   function bindFbMore(body) {
+    const pb = body.querySelector('.fb-post');
+    if (pb) pb.addEventListener('click', () => { STATS.ping('f-more'); closeSheet(); POST.write(); });
     const a = body.querySelector('.fb-more');
     if (!a) return;
     a.href = fbForm();
@@ -1383,7 +1390,7 @@
     if (!FB || DEMO || !FB.minDays || SAVE.data.feedbackAsked || mode !== 'home') return;
     if (SAVE.data.totalDays < FB.minDays && !SAVE.data.cleared) return;
     setTimeout(() => {
-      if (mode !== 'home' || !sheet.hidden || !$('event').hidden || (URANAI && URANAI.isOpen()) || SAVE.data.feedbackAsked) return;
+      if (mode !== 'home' || !sheet.hidden || !$('event').hidden || (URANAI && URANAI.isOpen()) || (POST && POST.isOpen()) || SAVE.data.feedbackAsked) return;
       showFeedback(true);
     }, 1600);
   }
@@ -1703,6 +1710,7 @@
         '<button id="btn-test-clear" class="btn btn-wide" type="button">🌺 ひみつの思い出とクリア画面を見る</button>' +
         (URANAI ? '<button id="btn-test-uranai" class="btn btn-wide" type="button">🐚 今日の占いをやり直す（確認用）</button>' : '') +
         (FB ? '<button id="btn-test-feedback" class="btn btn-wide" type="button">💌 おたよりを自動で出たときと同じに見る（確認用）</button>' : '') +
+        (POST ? '<button id="btn-test-post" class="btn btn-wide" type="button">📮 書いたお手紙のお返事を、今日とどける（確認用）</button>' : '') +
         (TB ? '<h3>確認用：時間帯を切りかえて試す</h3><div class="test-hearts test-time">' +
           [['', '時計'], ['morning', '🌅朝'], ['day', '☀️昼'], ['evening', '🌇夕'], ['night', '🌙夜'], ['late', '💤深夜']]
             .map((t) => '<button class="btn" type="button" data-t="' + t[0] + '">' + t[1] + '</button>').join('') + '</div>' : '') : ''));
@@ -1718,6 +1726,7 @@
     if ($('btn-about')) $('btn-about').addEventListener('click', () => showNotice(null));
     if ($('btn-feedback')) $('btn-feedback').addEventListener('click', () => showFeedback(false));
     if (C.testHearts && $('btn-test-feedback')) $('btn-test-feedback').addEventListener('click', () => showFeedback(true));
+    if (C.testHearts && POST && $('btn-test-post')) $('btn-test-post').addEventListener('click', () => { POST.testArrive(); closeSheet(); toast('📮 お返事が とどいたよ（確認用）'); });
     if ($('set-lang')) $('set-lang').addEventListener('change', (e) => I18N.set(e.target.value));
     if (C.testHearts && $('btn-test-clear')) {
       $('btn-test-clear').addEventListener('click', () => {
@@ -1762,6 +1771,7 @@
       if (!btn.dataset.sure) { btn.dataset.sure = '1'; btn.textContent = tr('本当に消す？（もう一度押す）'); return; }
       SAVE.reset();
       if (URANAI) { URANAI.resetAll(); if (HOME) HOME.refreshIcons(); }   // 貝がら占いの記録も消す（2026-11-03）
+      if (POST) POST.resetAll();   // お手紙の記録も消す
       belly.refresh();
       renderParts();
       closeSheet();
@@ -1980,7 +1990,9 @@
     const go = () => {
       const b = bandNow();
       if (sleeping() && b.image) { HOME.sleep(b.image, tr('すぴー… すぴー…')); return; }
-      const line = takeLine(base);
+      let line = takeLine(base);
+      // お手紙が届いている日は、あいさつを「お手紙、とどいてるよ！ 📮」に
+      if (POST && POST.unread() && base.visit !== 'again') line = { text: POST.hello() };
       const stand = timeStand();
       HOME.greet(line ? withName(line.text) : '', stand || C.images.happy || C.images.normal, stand ? standKey() : 'happy', base.visit === 'again');
     };
@@ -2000,6 +2012,33 @@
       onClose: () => { if (HOME) HOME.refreshIcons(); maybeFeedback(); }
     });
   }
+  // 📮 タヌくんのポスト（post.js）：トップ画面の左下にいつも立っている。お手紙を書くと、次の日にお返事
+  const PC = C.post || {};
+  const postForm = () => (PC.form && PC.form.action) || '';
+  if (!DEMO && window.TanuPost && feature('post') !== 'hidden' && $('home')) {
+    POST = window.TanuPost({
+      tr: tr, lang: () => I18N.lang, name: () => SAVE.data.name, today: SAVE.today,
+      background: HC.background || '', happy: C.images.happy || C.images.normal,
+      iris: window.TanuIris || null,
+      hold: () => (HOME ? HOME.hold() : null),
+      ping: (n) => STATS.ping(n),
+      form: postForm,
+      // 書いたお手紙を Google フォームへ（画面は切りかえずに、裏で送る。届いたかは確かめられない）
+      submit: (d) => {
+        const F = PC.form;
+        if (!F || !F.action || !F.entry) return;
+        try {
+          const body = new URLSearchParams();
+          if (F.entry.text) body.append(F.entry.text, d.text);
+          if (F.entry.stamp) body.append(F.entry.stamp, d.stamp);
+          if (F.entry.lang) body.append(F.entry.lang, d.lang);
+          fetch(F.action, { method: 'POST', mode: 'no-cors', body: body }).catch(() => {});
+        } catch (e) {}
+      },
+      onClose: () => { maybeFeedback(); }
+    });
+    POST.makeButton($('home'));
+  }
   // その日はじめて開いたとき：あいさつのあとに、貝がら占いを自動で出す（はじめて来た日・クリアの日はのぞく）。
   // ハートの演出・思い出・パネルが出ている間は待つ。出るまでは、ズームも待ってもらう
   function autoUranai() {
@@ -2008,7 +2047,7 @@
     const t0 = Date.now();
     let calm = 0;
     (function wait() {
-      const busy = mode !== 'home' || !sheet.hidden || !$('event').hidden || URANAI.isOpen();
+      const busy = mode !== 'home' || !sheet.hidden || !$('event').hidden || URANAI.isOpen() || (POST && POST.isOpen());
       calm = busy ? 0 : calm + 1;
       if (mode !== 'home' || Date.now() - t0 > 90000) { release(); return; }
       if (Date.now() - t0 >= 1800 && calm >= 2) { URANAI.open(true); release(); return; }
