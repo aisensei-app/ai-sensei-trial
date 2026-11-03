@@ -98,6 +98,12 @@ window.TanuI18n = (function () {
       // クリア・ホーム画面
       'タヌくんと、ずっと一緒の約束をしたよ🌺\n（なかよし{n}日目でクリア！）': 'I promised to stay with Tanu-kun forever🌺\n(Cleared on day {n}!)',
       '#タヌくん': '#Tanukun',
+      // 貝がら占い（2026-11-03）
+      '今日の貝がら占い': 'Today\'s Shell Fortune',
+      '🐚 貝がら占い': '🐚 Shell Fortune',
+      'その日はじめて開いたときに、占いを出すか（トップ画面のカードからは、いつでも引けます）': 'Show the fortune when you first open the app each day (you can always pick it from the card on the top screen)',
+      '自動で出す：オン': 'Show automatically: ON',
+      '自動で出す：オフ': 'Show automatically: OFF',
       '🌺 クリアおめでとう！': '🌺 Congratulations, you cleared it!',
       'ここまで遊んでくれて、ほんとうにありがとう！': 'Thank you so much for playing all this way!',
       'これからも、タヌくんに会いにきてね。<br>思い出は「実績」のアルバムで見返せるよ': 'Please keep coming to see Tanu-kun.<br>You can revisit memories in the album under "Records"',

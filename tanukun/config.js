@@ -196,6 +196,7 @@ window.TANU_CONFIG = {
      （確認用リンク tools/build_preview.py では、全部 'open' にして作ります） */
   features: {
     pon:       'open',     // ぽんぽこリズム（2026-11-02 夜に解禁）
+    uranai:    'open',     // 🐚 貝がら占い（uranai.js。その日はじめて開いたときに出る。2026-11-03 作成・v31 で公開予定）
     timeOfDay: 'hidden',   // 時間帯で変わる立ち絵と背景
     tailFlick: 'hidden',   // しっぽをはじく（引っぱって離す・ブワッ）
     rally:     'hidden',   // ぽよんラリー（rally/。ボールを投げて、おなかで返す）

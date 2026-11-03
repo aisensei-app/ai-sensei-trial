@@ -76,6 +76,7 @@
     layers: (src) => wornLayers(faceOfSrc[absUrl(src)])
   });
   const bubble = $('bubble');
+  let URANAI = null; // 貝がら占い（uranai.js。下の「トップ画面」で作る。お試し版では使わない）
   let HOME = null;   // トップ画面（home.js。下の「トップ画面」で作る。お試し版では使わない）
   const zonesEl = $('zones');
 
@@ -1268,6 +1269,7 @@
     }
     if (r.visit === 'again') return false;
     if (mode === 'home') homeGreet({ scene: 'home', visit: r.visit });
+    autoUranai();
     // ひみつの思い出（クリア）の日なら、あいさつのあとに流す（トップ画面は、それまでズームを待つ）
     if (!DEMO && SAVE.clearReady() && !r.heartUp) { holdHome(2600); setTimeout(playClear, 2200); }
     return true;
@@ -1606,6 +1608,8 @@
       '<div class="set-row"><input id="set-name" class="name-input" type="text" maxlength="' + SAVE.NAME_MAX + '" placeholder="' + tr('名前なし') + '">' +
       '<button id="set-name-ok" class="btn" type="button">' + tr('変更') + '</button></div>' +
       '<p class="note small">' + tr('空にすると、名前なしで話しかけます') + '</p>' +
+      (URANAI ? '<h3>' + tr('🐚 貝がら占い') + '</h3><button id="set-uranai" class="btn btn-wide" type="button"></button>' +
+        '<p class="note small">' + tr('その日はじめて開いたときに、占いを出すか（トップ画面のカードからは、いつでも引けます）') + '</p>' : '') +
       (C.notice ? '<h3>' + tr('このアプリ') + '</h3><button id="btn-about" class="btn btn-wide" type="button">' + tr('このアプリについて') + '</button>' : '') +
       '<h3>' + tr('記録') + '</h3>' +
       '<p class="note">' + tr('記録はこのスマホのブラウザの中だけに保存されます。') +
@@ -1619,9 +1623,19 @@
           (n === 'ふつう' ? n : '💖' + n) + '</button>').join('') + '</div>' +
         '<p class="note small">記録は変わりません。アプリを開き直すと「ふつう」に戻ります</p>' +
         '<button id="btn-test-clear" class="btn btn-wide" type="button">🌺 ひみつの思い出とクリア画面を見る</button>' +
+        (URANAI ? '<button id="btn-test-uranai" class="btn btn-wide" type="button">🐚 今日の占いをやり直す（確認用）</button>' : '') +
         (TB ? '<h3>確認用：時間帯を切りかえて試す</h3><div class="test-hearts test-time">' +
           [['', '時計'], ['morning', '🌅朝'], ['day', '☀️昼'], ['evening', '🌇夕'], ['night', '🌙夜'], ['late', '💤深夜']]
             .map((t) => '<button class="btn" type="button" data-t="' + t[0] + '">' + t[1] + '</button>').join('') + '</div>' : '') : ''));
+    if ($('set-uranai')) {
+      const b = $('set-uranai');
+      const label = () => { b.textContent = URANAI.autoOn ? tr('自動で出す：オン') : tr('自動で出す：オフ'); };
+      label();
+      b.addEventListener('click', () => { URANAI.setAuto(!URANAI.autoOn); label(); });
+    }
+    if (C.testHearts && URANAI && $('btn-test-uranai')) {
+      $('btn-test-uranai').addEventListener('click', () => { URANAI.resetToday(); closeSheet(); if (HOME) HOME.refreshIcons(); URANAI.open(true); });
+    }
     if ($('btn-about')) $('btn-about').addEventListener('click', () => showNotice(null));
     if ($('set-lang')) $('set-lang').addEventListener('change', (e) => I18N.set(e.target.value));
     if (C.testHearts && $('btn-test-clear')) {
@@ -1832,6 +1846,13 @@
     // なでなで：幕がかかってから遊ぶ画面へ（時間帯の背景の色の幕）→ 明ける
     const toPlay = () => veilIn().then(() => { enterPlay(true); veilOut(); });
     const list = [{ id: 'pet', name: tr('タヌくん なでなで'), title: tr('タヌくん なでなで'), img: HC.pet, badge: '🤚', state: 'open', go: toPlay }];
+    // 🐚 貝がら占い（今日まだなら NEW。引いたあとは、その日の結果を見返せる）
+    if (URANAI && feature('uranai') !== 'hidden') {
+      const soon = feature('uranai') === 'soon';
+      list.push({ id: 'uranai', name: tr('今日の貝がら占い') + (soon ? ' ' + tr('🔒 もうすぐ') : ''), title: tr('今日の貝がら占い'), icon: '🐚',
+        state: soon ? 'soon' : 'open', isNew: !soon && !URANAI.doneToday(),
+        go: soon ? () => toast(tr('🔒 もうすぐ 遊べるよ！\nおたのしみに')) : () => URANAI.open(false) });
+    }
     [
       { id: 'pon', name: tr('ぽんぽこリズム'), icon: '🥁', href: 'pon/', isNew: !SAVE.data.ponSeen,
         soon: tr('ぽんぽこリズムは、もうすぐ遊べるよ！\nおたのしみに 🥁') },
@@ -1882,6 +1903,34 @@
       HOME.greet(line ? withName(line.text) : '', stand || C.images.happy || C.images.normal, stand ? standKey() : 'happy', base.visit === 'again');
     };
     if (bootNext) { bootNext = false; HOME.boot(go); } else go();
+  }
+  if (!DEMO && window.TanuUranai && feature('uranai') !== 'hidden') {
+    URANAI = window.TanuUranai({
+      tr: tr, lang: () => I18N.lang, name: () => SAVE.data.name, today: SAVE.today,
+      background: HC.background || '',
+      testGold: !!C.testHearts && /[?&]gold\b/.test(location.search),   // 確認用：?gold でまんなかが金の貝
+      shareHtml: shareButtonsHtml,
+      bindShare: (el, text) => bindShare(el, text, C.report && C.report.url),
+      ping: (n) => STATS.ping(n),
+      scrollHint: scrollHint,
+      hold: () => (HOME ? HOME.hold() : null),
+      onClose: () => { if (HOME) HOME.refreshIcons(); }
+    });
+  }
+  // その日はじめて開いたとき：あいさつのあとに、貝がら占いを自動で出す（はじめて来た日・クリアの日はのぞく）。
+  // ハートの演出・思い出・パネルが出ている間は待つ。出るまでは、ズームも待ってもらう
+  function autoUranai() {
+    if (!URANAI || feature('uranai') !== 'open' || mode !== 'home' || !URANAI.shouldAuto(SAVE.data.totalDays) || SAVE.clearReady()) return;
+    const release = holdHome();
+    const t0 = Date.now();
+    let calm = 0;
+    (function wait() {
+      const busy = mode !== 'home' || !sheet.hidden || !$('event').hidden || URANAI.isOpen();
+      calm = busy ? 0 : calm + 1;
+      if (mode !== 'home' || Date.now() - t0 > 90000) { release(); return; }
+      if (Date.now() - t0 >= 1800 && calm >= 2) { URANAI.open(true); release(); return; }
+      setTimeout(wait, 400);
+    })();
   }
   if (!DEMO && HC.normal) {
     HOME = window.TanuHome({

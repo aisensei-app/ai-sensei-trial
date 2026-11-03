@@ -1099,3 +1099,84 @@ html[lang="zh"] body { font-family: -apple-system, BlinkMacSystemFont, "PingFang
 
 /* ゲームから戻ってきたとき：幕は こげ茶（ゲームを出るときの「丸く閉じる」と同じ色。iris.js が丸く開いて明ける） */
 html.arriving .veil { background: #3A2210 !important; }
+
+/* =========================================================
+   貝がら占い（uranai.js。2026-11-03）
+   トップ画面と同じ浜辺の上に、タヌくんと貝が3つ。選ぶと ぱかっ → 下から結果のカード
+   ========================================================= */
+#uranai { position: fixed; inset: 0; z-index: 8; max-width: 560px; margin: 0 auto; overflow: hidden;
+  opacity: 0; transition: opacity .32s ease; touch-action: manipulation; }
+#uranai[hidden] { display: none; }
+#uranai.on { opacity: 1; }
+#uranai .u-bg { position: absolute; inset: 0; background: #BFE6FF center bottom / cover no-repeat; }
+#uranai .u-gold { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%;
+  opacity: 0; transition: opacity .9s ease; pointer-events: none; }
+#uranai.gold .u-gold { opacity: 1; }
+#uranai .u-stage { position: absolute; inset: 0; transition: opacity .6s; }
+#uranai.gold .u-tanu { opacity: 0; }
+/* タヌくん：足の下は絵が切れているので、すそを砂の色へ ふんわり消す */
+#uranai .u-tanu { position: absolute; left: 50%; bottom: 23vh; height: 55vh; max-width: 96%; object-fit: contain;
+  transform: translateX(-50%); transform-origin: 50% 100%;
+  -webkit-mask-image: linear-gradient(#000 86%, transparent 100%); mask-image: linear-gradient(#000 86%, transparent 100%);
+  animation: u-breath 3.2s ease-in-out infinite; transition: bottom .5s ease, height .5s ease, opacity .5s; }
+@keyframes u-breath { 50% { transform: translateX(-50%) scale(1.012, 1.02); } }
+#uranai.result .u-tanu { bottom: 52vh; height: 36vh; }
+#uranai .u-card[hidden] { display: none; }
+#uranai .u-say { position: absolute; left: 50%; top: calc(max(14px, env(safe-area-inset-top)) + 10px); transform: translateX(-50%);
+  width: max-content; max-width: 88vw; padding: 10px 18px; border-radius: 18px; background: #fff; color: #4A2E16;
+  font-size: 18px; font-weight: 800; text-align: center; box-shadow: 0 3px 10px rgba(74, 46, 22, .18); animation: h-sayIn .25s ease-out; }
+#uranai.gold .u-say { color: #B07A00; }
+/* 貝：ぽよんと出て、ゆっくり上下 */
+#uranai .u-shells { position: absolute; left: 0; right: 0; bottom: calc(max(12px, env(safe-area-inset-bottom)) + 52px);
+  display: flex; justify-content: center; align-items: flex-end; gap: min(4vw, 22px); transition: opacity .4s; }
+#uranai .u-shell { width: min(27vw, 140px); padding: 0; border: 0; background: none; cursor: pointer;
+  animation: u-pop .55s cubic-bezier(.3, 1.6, .5, 1) both, u-bob 2.4s ease-in-out .9s infinite;
+  filter: drop-shadow(0 6px 6px rgba(74, 46, 22, .28)); -webkit-tap-highlight-color: transparent; }
+#uranai .u-shell img { display: block; width: 100%; height: auto; pointer-events: none; }
+#uranai .u-shell.gold { filter: drop-shadow(0 0 10px rgba(255, 214, 90, .9)) drop-shadow(0 6px 6px rgba(74, 46, 22, .28)); }
+#uranai .u-shell:nth-child(2) { margin-bottom: 18px; }
+@keyframes u-pop { from { transform: translateY(40px) scale(0); } }
+@keyframes u-bob { 50% { transform: translateY(-6px); } }
+#uranai.picked .u-shell:not(.chosen) { opacity: 0; transform: scale(.7); transition: opacity .35s, transform .35s; pointer-events: none; animation: none; }
+#uranai .u-shell.chosen { animation: u-shake .6s ease-in-out both; }
+/* 開いた貝は、閉じた貝と同じ幅のまま（大きくすると、タヌくんの腰のあたりにかかるため） */
+#uranai .u-shell.open { animation: u-open .5s cubic-bezier(.3, 1.6, .5, 1) both; }
+#uranai.picked .u-shell.chosen { margin-bottom: 0; }
+#uranai .u-shell.still { animation: none; }
+@keyframes u-shake { 20% { transform: rotate(-8deg); } 40% { transform: rotate(7deg); } 60% { transform: rotate(-5deg); } 80% { transform: rotate(3deg); } }
+@keyframes u-open { from { transform: scale(.8); } 60% { transform: scale(1.1); } }
+#uranai.result .u-shells { opacity: 0; pointer-events: none; }
+#uranai .u-later { position: absolute; left: 50%; bottom: calc(max(10px, env(safe-area-inset-bottom)) + 8px); transform: translateX(-50%);
+  padding: 8px 20px; border: 0; border-radius: 999px; background: rgba(255, 255, 255, .7); color: #8A5A2B;
+  font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+#uranai.picked .u-later, #uranai .u-later:empty { display: none; }
+#uranai .u-flash { position: absolute; inset: 0; background: #FFF6C8; opacity: 0; pointer-events: none; }
+#uranai.flash .u-flash { animation: u-flash 1s ease-out; }
+@keyframes u-flash { 15% { opacity: .85; } 100% { opacity: 0; } }
+/* 結果のカード */
+#uranai .u-card { position: absolute; left: 12px; right: 12px; bottom: calc(max(12px, env(safe-area-inset-bottom)));
+  max-height: 60vh; overflow: auto; display: flex; flex-direction: column; gap: 9px;
+  padding: 18px 18px 14px; border-radius: 22px; background: #FFF9EF; box-shadow: 0 8px 26px rgba(74, 46, 22, .3);
+  transform: translateY(115%); transition: transform .5s cubic-bezier(.2, .9, .3, 1.1); --fade: #FFF9EF; }
+#uranai .u-card > * { flex-shrink: 0; margin: 0; }
+#uranai.result .u-card { transform: none; }
+#uranai .u-date { text-align: center; font-size: 13px; font-weight: 700; opacity: .7; }
+#uranai .u-fortune { text-align: center; font-size: 27px; font-weight: 900; color: #C8641E; }
+#uranai .u-fortune.big { color: #C99300; text-shadow: 0 0 12px rgba(255, 214, 90, .8); }
+#uranai .u-list { display: grid; grid-template-columns: auto 1fr; gap: 6px 10px; font-size: 15px; }
+#uranai .u-list dt { font-weight: 700; white-space: nowrap; }
+#uranai .u-list dd { margin: 0; font-weight: 800; }
+#uranai .u-sw { display: inline-block; width: 15px; height: 15px; margin-right: 6px; vertical-align: -2px; border-radius: 50%;
+  border: 2px solid rgba(74, 46, 22, .25); }
+#uranai .u-act { padding: 10px 12px; border-radius: 14px; background: #fff; box-shadow: 0 1px 0 rgba(74, 46, 22, .12); }
+#uranai .u-act b { display: block; font-size: 14px; margin-bottom: 3px; }
+#uranai .u-act p { margin: 0; font-size: 16px; font-weight: 700; line-height: 1.5; }
+#uranai .u-next { text-align: center; font-size: 13px; opacity: .65; }
+#uranai .u-card .btn-main.btn-x { font-size: 18px; padding: 12px; }
+@media (prefers-reduced-motion: reduce) { #uranai .u-shell, #uranai .u-tanu { animation: none !important; } }
+/* X アプリの中：下の約4分の1が隠れる */
+body.in-x #uranai .u-card { bottom: calc(var(--x-cover) + 8px); max-height: 52vh; }
+body.in-x #uranai .u-shells { bottom: calc(var(--x-cover) + 44px); }
+body.in-x #uranai .u-later { bottom: calc(var(--x-cover) + 4px); }
+body.in-x #uranai .u-tanu { bottom: calc(var(--x-cover) + 19vh); height: 40vh; }
+body.in-x #uranai.result .u-tanu { bottom: calc(var(--x-cover) + 52vh); height: 20vh; }

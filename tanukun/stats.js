@@ -14,6 +14,7 @@
      a-ja a-en a-zh … その日に来た（言語ごと。1日に1人1回なので、毎日来る人のおおよその数）
      h1〜h5 clear … ハートが〇個になった・クリアした
      p-pet p-pon p-rally p-seesaw p-wash … その日に、なでなで・ぽんぽこ・ラリー・シーソー・洗うゲームで遊んだ
+     u-show u-pick u-later … 貝がら占い：自動で出た・貝を選んだ・「あとで」を押した（2026-11-03）
    ========================================================= */
 window.TanuStats = (function () {
   'use strict';
@@ -22,7 +23,8 @@ window.TanuStats = (function () {
   const S = C.stats || {};
   const NAMES = ['c1', 'c2', 'c3', 'c7', 'c14', 'c30',
     'd1', 'd2', 'd3', 'd4', 'd5', 'd6', 'd7', 'd8', 'd9', 'd10', 'd15', 'd20', 'd30', 'd50', 'd100',
-    'a-ja', 'a-en', 'a-zh', 'h1', 'h2', 'h3', 'h4', 'h5', 'clear', 'p-pet', 'p-pon', 'p-rally', 'p-seesaw', 'p-wash'];
+    'a-ja', 'a-en', 'a-zh', 'h1', 'h2', 'h3', 'h4', 'h5', 'clear', 'p-pet', 'p-pon', 'p-rally', 'p-seesaw', 'p-wash',
+    'u-show', 'u-pick', 'u-later'];
   const KEY = 'tanukun-stats';
   // 数える場所か（本番の URL のときだけ）
   const on = S.on !== false && /^https?:$/.test(location.protocol) && (S.hosts || []).indexOf(location.hostname) >= 0;
