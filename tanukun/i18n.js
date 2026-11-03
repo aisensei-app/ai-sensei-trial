@@ -174,6 +174,7 @@ window.TanuI18n = (function () {
       '空にすると、名前なしで話しかけます': 'If left empty, Tanu-kun won\'t use a name',
       'このアプリ': 'About',
       'このアプリについて': 'About this app',
+      'ⓘ お約束と注意': 'ⓘ Promises & notes',
       '記録': 'Progress',
       '記録はこのスマホのブラウザの中だけに保存されます。': 'Your progress is saved only in this browser on this device. ',
       '<b>ホーム画面に追加</b>して使うと、記録が消えにくくなります。': 'Adding the app to your <b>Home Screen</b> makes it less likely to be lost.',

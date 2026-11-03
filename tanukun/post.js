@@ -8,6 +8,7 @@
      書いた内容を読んだふりはしない（どの手紙にも合う、あたたかい文）
    ・ときどき、タヌくんから先にお手紙（なかよし10・30・50・100日目、クリアの日）
    ・書いたお手紙の届け先：config.js の post.form（Google フォーム）。空なら、お手紙はスマホの中にしまうだけ（どこにも送らない）
+   ・書く画面の注意書きのあとに「ⓘ お約束と注意」（opts.rules。app.js の showRules('post') を開く）
    ・記録はこのスマホの中（localStorage の tanukun.post）
    使い方：const p = window.TanuPost({ ...下の opts }) → p.open(pt) / p.unread() / p.write() / p.checkMilestones(totalDays, cleared)
    ========================================================= */
@@ -69,7 +70,8 @@ window.TanuPost = function (opts) {
     hint: { ja: 'ここに書いてね（{n}字まで）', en: 'Write here (up to {n} characters)', zh: '写在这里（最多{n}字）' },
     send: { ja: '📮 おくる', en: '📮 Send', zh: '📮 寄出' },
     cancel: { ja: 'やめる', en: 'Cancel', zh: '不写了' },
-    noteForm: { ja: 'お手紙は Google フォームを通じて、タヌくんを作っている人にも とどきます。名前や住所などは書かないでね', en: 'Your letter also reaches Tanu-kun\'s creator via Google Forms. Please don\'t write your name, address, or other personal info', zh: '信件会通过 Google 表单送到狸君的作者那里。请不要写名字、地址等个人信息' },
+    noteForm: { ja: 'お手紙は Google フォームを通じて作者に とどき、作者と、集計を手伝う AI が読みます。名前・住所・学校など、あなたがだれか分かることは書かないでね', en: 'Your letter reaches Tanu-kun\'s creator via Google Forms, and is read by the creator and an AI that helps sort the letters. Please don\'t write your name, address, school, or anything that could identify you', zh: '信件会通过 Google 表单送到作者那里，由作者和帮忙整理的 AI 阅读。请不要写名字、地址、学校等能认出你是谁的信息' },
+    rules: { ja: 'ⓘ お約束と注意', en: 'ⓘ Promises & notes', zh: 'ⓘ 约定与注意事项' },
     noteLocal: { ja: 'お手紙は、このスマホの中に しまわれます（どこにも送りません）', en: 'Your letter is kept on this phone only (it isn\'t sent anywhere)', zh: '信件只保存在这部手机里（不会发送到任何地方）' },
     got: { ja: 'よ、読むね…！', en: 'I-I\'ll read it…!', zh: '我、我会好好读的…！' },
     tomorrow: { ja: '明日、お返事を書くね 📮', en: 'I\'ll write back tomorrow 📮', zh: '明天给你回信哦 📮' },
@@ -252,7 +254,8 @@ window.TanuPost = function (opts) {
       '<p class="p-dear">' + T(UI.place) + '</p>' +
       '<textarea class="p-text" maxlength="' + MAX + '" rows="6"></textarea>' +
       '<p class="p-count">0 / ' + MAX + '</p>' +
-      '<p class="p-note">' + (opts.form && opts.form() ? T(UI.noteForm) : T(UI.noteLocal)) + '</p>' +
+      '<p class="p-note">' + (opts.form && opts.form() ? T(UI.noteForm) : T(UI.noteLocal)) +
+        (opts.rules ? ' <button type="button" class="p-info">' + T(UI.rules) + '</button>' : '') + '</p>' +
       '<div class="p-row"><button class="btn p-cancel" type="button">' + T(UI.cancel) + '</button>' +
       '<button class="btn btn-main p-send" type="button" disabled>' + T(UI.send) + '</button></div>';
     sh.hidden = false;
@@ -267,6 +270,7 @@ window.TanuPost = function (opts) {
       send.disabled = !ta.value.trim();
     });
     sh.querySelector('.p-cancel').addEventListener('click', showMenu);
+    if (sh.querySelector('.p-info')) sh.querySelector('.p-info').addEventListener('click', () => opts.rules());   // 書きかけの文はそのまま
     send.addEventListener('click', () => sendLetter(ta.value.trim().slice(0, MAX), stamp));
   }
   function sendLetter(text, stamp) {

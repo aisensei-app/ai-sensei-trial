@@ -70,6 +70,32 @@
                 tail: 'My tail\'s fluffy, right?', crotch: 'Th-the secret spot, again…!', even: 'You touched me all over~' }
   },
 
+  rules: [
+    { title: 'For ages 15 and up',
+      text: 'This app contains slightly mature content (flustered, teasing reactions). Recommended for ages 15 and up.' },
+    { title: 'About the illustrations',
+      text: 'Illustrations are made with AI.' },
+    { title: 'About your progress',
+      text: 'Your friendship level, album, fortunes, letters, and other progress are saved only in this phone\'s browser.\n' +
+            'Clearing the browser data also erases your progress (adding the app to your home screen makes this less likely).' },
+    { title: 'What we count',
+      text: 'To make the app better, we count things like how many days people play, which screens are opened, and which buttons are pressed in "A note from Tanu-kun", anonymously.\n' +
+            'Your name and progress are never sent.' },
+    { title: 'About letters',
+      text: 'Letters you write reach Tanu-kun\'s creator via Google Forms.\n' +
+            '<b>Letters are read by the creator and by an AI that helps sort them.</b> We summarize what people often say and use it to improve the app. Your letter is never published as is.\n' +
+            '<b>Please don\'t write your name, address, school, contact info, or anything that could identify you.</b>\n' +
+            'Letters arrive anonymously, so the creator can\'t reply to each person, and a letter can\'t be deleted after it\'s sent.',
+      textLocal: 'Right now, letters you write are only kept on this phone and are not sent anywhere.' },
+    { title: 'Tanu-kun\'s replies',
+      text: 'Tanu-kun\'s replies are chosen from words prepared in advance.\n' +
+            'If something is troubling you or you\'re having a hard time, please also talk to an adult you trust or a support service, not just in a letter.' },
+    { title: 'Google services',
+      text: 'Letters are sent using Google Forms, so Google\'s Privacy Policy also applies.' },
+    { title: 'About fortunes',
+      text: 'The seashell fortune is just for fun.' }
+  ],
+
   notice: {
     title: 'Welcome to Tanu-kun!',
     text: 'This app contains <b>slightly mature content</b> (flustered, teasing reactions).\n' +
@@ -77,6 +103,8 @@
           'Illustrations are made with AI.\n' +
           'Your progress is saved only on this device.\n' +
           'To make the app better, we count things like how many days people play, anonymously (your name and progress are never sent).',
+    post: '📮 Letters to Tanu-kun are read by the creator and an AI that helps sort them (please don\'t write your name or personal info).',
+    more: 'For details, see "ⓘ Promises & notes" in Settings anytime.',
     ok: 'Got it! Let\'s play'
   }
 };

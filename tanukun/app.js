@@ -1299,11 +1299,64 @@
     bindShare(body, text, C.report && C.report.url);
   }
 
+  /* ---- 📮 お手紙の届け先（config.js の post.form）----
+     prefill（Google フォームの「事前入力した URL」）から、送り先（…/formResponse）と質問の番号（entry.〇〇）を読む。
+     事前入力で text・stamp・lang と打ってあれば、その言葉で。なければ質問の順番（お手紙 → 切手 → 言語）で決める。
+     action・entry が書いてあれば、そちらが優先。どれもなければ null（お手紙はスマホの中にしまうだけ） */
+  let postFormCache;
+  function readPrefill(url) {
+    try {
+      const u = new URL(String(url).trim());
+      if (!/\/forms\//.test(u.pathname)) return null;
+      const action = u.origin + u.pathname.replace(/\/(viewform|formResponse)?\/?$/, '') + '/formResponse';
+      const ents = [];
+      u.searchParams.forEach((v, k) => { if (/^entry\.\d+$/.test(k)) ents.push([k, v.trim().toLowerCase()]); });
+      if (!ents.length) return null;
+      const entry = { text: '', stamp: '', lang: '' };
+      const WORDS = { text: ['text', 'お手紙', 'letter'], stamp: ['stamp', '切手'], lang: ['lang', '言語', 'language'] };
+      const rest = [];
+      ents.forEach(([k, v]) => {
+        const key = Object.keys(WORDS).find((w) => !entry[w] && WORDS[w].includes(v));
+        if (key) entry[key] = k; else rest.push(k);
+      });
+      ['text', 'stamp', 'lang'].forEach((w) => { if (!entry[w] && rest.length) entry[w] = rest.shift(); });
+      return entry.text ? { action: action, entry: entry } : null;
+    } catch (e) { return null; }
+  }
+  function postFormInfo() {
+    if (postFormCache !== undefined) return postFormCache;
+    const F = (C.post && C.post.form) || {};
+    let r = null;
+    if (F.action && F.entry && F.entry.text) r = { action: F.action, entry: F.entry };
+    else if (F.prefill) r = readPrefill(F.prefill);
+    return (postFormCache = r);
+  }
+
+  /* ---- ⓘ お約束と注意（config.js の rules）。focus … 開いたときに目立たせる項目の id（'post' など）----
+     お手紙を送らないとき（form が空）は、お手紙の項目を textLocal に、form: true の項目は出さない */
+  function showRules(focus) {
+    const sending = !!postFormInfo();
+    const list = (C.rules || []).filter((r) => !r.form || sending);
+    const esc = (t) => String(t).split('\n').join('<br>');
+    openSheet(tr('ⓘ お約束と注意'),
+      '<div class="rules">' + list.map((r) =>
+        '<section class="rule' + (r.id === focus ? ' on' : '') + '" data-id="' + (r.id || '') + '">' +
+        '<h3><span>' + (r.icon || '・') + '</span>' + r.title + '</h3>' +
+        '<p class="note">' + esc(!sending && r.textLocal ? r.textLocal : r.text) + '</p></section>').join('') + '</div>');
+    if (focus) {
+      const el = $('sheet-body').querySelector('.rule.on');
+      if (el) setTimeout(() => { try { el.scrollIntoView({ block: 'center' }); } catch (e) {} }, 30);
+    }
+  }
+
   /* ---- はじめてのお知らせ（config.js の notice）。done は閉じたあとにすること ---- */
   function showNotice(done) {
     const N = C.notice;
-    openSheet(N.title, '<p class="note notice">' + N.text.split('\n').join('<br>') + '</p>' +
+    const text = N.text + (N.post && postFormInfo() ? '\n' + N.post : '') + (N.more && C.rules ? '\n\n' + N.more : '');
+    openSheet(N.title, '<p class="note notice">' + text.split('\n').join('<br>') + '</p>' +
+      (!done && C.rules ? '<button id="notice-rules" class="btn btn-wide" type="button">' + tr('ⓘ お約束と注意') + '</button>' : '') +
       (done ? '<button id="notice-ok" class="btn btn-main" type="button"></button>' : ''));
+    if ($('notice-rules')) $('notice-rules').addEventListener('click', () => showRules());
     if (!done) return;
     $('sheet-close').hidden = $('sheet-x').hidden = true;   // OK を押すまで閉じない
     $('notice-ok').textContent = N.ok;
@@ -1695,6 +1748,7 @@
       (URANAI ? '<h3>' + tr('🐚 貝がら占い') + '</h3><button id="set-uranai" class="btn btn-wide" type="button"></button>' +
         '<p class="note small">' + tr('その日はじめて開いたときに、占いを出すか（トップ画面のカードからは、いつでも引けます）') + '</p>' : '') +
       (C.notice ? '<h3>' + tr('このアプリ') + '</h3><button id="btn-about" class="btn btn-wide" type="button">' + tr('このアプリについて') + '</button>' : '') +
+      (C.rules ? '<button id="btn-rules" class="btn btn-wide" type="button">' + tr('ⓘ お約束と注意') + '</button>' : '') +
       (FB ? '<button id="btn-feedback" class="btn btn-wide" type="button">' + tr('💬 タヌくんにおたより') + '</button>' : '') +
       '<h3>' + tr('記録') + '</h3>' +
       '<p class="note">' + tr('記録はこのスマホのブラウザの中だけに保存されます。') +
@@ -1724,6 +1778,7 @@
       $('btn-test-uranai').addEventListener('click', () => { URANAI.resetToday(); closeSheet(); if (HOME) HOME.refreshIcons(); URANAI.open(true); });
     }
     if ($('btn-about')) $('btn-about').addEventListener('click', () => showNotice(null));
+    if ($('btn-rules')) $('btn-rules').addEventListener('click', () => showRules());
     if ($('btn-feedback')) $('btn-feedback').addEventListener('click', () => showFeedback(false));
     if (C.testHearts && $('btn-test-feedback')) $('btn-test-feedback').addEventListener('click', () => showFeedback(true));
     if (C.testHearts && POST && $('btn-test-post')) $('btn-test-post').addEventListener('click', () => { POST.testArrive(); closeSheet(); toast('📮 お返事が とどいたよ（確認用）'); });
@@ -2013,8 +2068,6 @@
     });
   }
   // 📮 タヌくんのポスト（post.js）：トップ画面の左下にいつも立っている。お手紙を書くと、次の日にお返事
-  const PC = C.post || {};
-  const postForm = () => (PC.form && PC.form.action) || '';
   if (!DEMO && window.TanuPost && feature('post') !== 'hidden' && $('home')) {
     POST = window.TanuPost({
       tr: tr, lang: () => I18N.lang, name: () => SAVE.data.name, today: SAVE.today,
@@ -2022,11 +2075,12 @@
       iris: window.TanuIris || null,
       hold: () => (HOME ? HOME.hold() : null),
       ping: (n) => STATS.ping(n),
-      form: postForm,
+      form: () => !!postFormInfo(),
+      rules: C.rules ? () => showRules('post') : null,   // お手紙を書く画面の ⓘ
       // 書いたお手紙を Google フォームへ（画面は切りかえずに、裏で送る。届いたかは確かめられない）
       submit: (d) => {
-        const F = PC.form;
-        if (!F || !F.action || !F.entry) return;
+        const F = postFormInfo();
+        if (!F) return;
         try {
           const body = new URLSearchParams();
           if (F.entry.text) body.append(F.entry.text, d.text);

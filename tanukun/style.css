@@ -1327,7 +1327,15 @@ body.in-x #post .p-tanu { height: 38vh; }
   font: inherit; font-size: 17px; line-height: 32px; -webkit-user-select: text; user-select: text; }
 #post .p-text:focus { outline: none; }
 #post .p-count { text-align: right; font-size: 12px; opacity: .6; }
-#post .p-note { font-size: 11px; opacity: .7; line-height: 1.5; }
+#post .p-note { font-size: 11px; opacity: .85; line-height: 1.5; }
+#post .p-info { border: 0; padding: 2px 8px; margin-left: 2px; border-radius: 999px; background: #FFF0E0; color: #8A5A2B;
+  font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+/* ⓘ お約束と注意（app.js の showRules） */
+.rules { display: flex; flex-direction: column; gap: 10px; }
+.rule { padding: 10px 12px; border-radius: 12px; background: rgba(255, 255, 255, .6); }
+.rule.on { background: #FFF0E0; box-shadow: 0 0 0 2px #F0A060 inset; }
+.rule h3 { display: flex; gap: 6px; align-items: center; margin: 0 0 4px; font-size: 15px; }
+.rule .note { margin: 0; opacity: .9; }
 #post .p-row { display: flex; gap: 8px; }
 #post .p-row .btn { flex: 1; }
 #post .p-body { font-size: 17px; font-weight: 700; line-height: 32px; white-space: pre-line; }
