@@ -101,3 +101,9 @@ body.leaving::after { animation: tanu-veil-leave .42s cubic-bezier(.45, 0, .7, .
 
 /* 中国語のとき：中国語の字体を優先（本編の style.css と同じ） */
 html[lang="zh"] body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC","Noto Sans CJK SC",sans-serif}
+
+/* ---- X アプリの中（下 約4分の1 に X の投稿パネルがかぶさる。2026-11-03）----
+   「海へ ざぶーん！」と、特別イラストの「もどる」が、パネルに隠れないように上へ */
+body.in-x .bottom{padding-bottom:calc(25vh + 16px)}
+body.in-x .special{padding-bottom:calc(25vh + 12px)}
+body.in-x #spImg{max-height:42vh}

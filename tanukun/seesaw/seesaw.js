@@ -15,6 +15,8 @@
 'use strict';
 
 const C = window.TANU_CONFIG || {};
+// X アプリの中で開いたとき：画面の下 約4分の1 に X の投稿パネルがかぶさるので、ボタンなどを上に寄せる（?inx でも。2026-11-03。ラリーと同じ）
+if (/Twitter/i.test(navigator.userAgent) || /[?&]inx\b/.test(location.search)) document.body.classList.add('in-x');
 if (C.features && C.features.seesaw && C.features.seesaw !== 'open') { location.replace('../'); return; }
 // 本編のトップ画面の NEW を消す（一度でも開いたら）
 try { localStorage.setItem('tanukun.seesawSeen', '1'); } catch (e) {}
