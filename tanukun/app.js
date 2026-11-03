@@ -1851,7 +1851,7 @@
       const soon = feature('uranai') === 'soon';
       list.push({ id: 'uranai', name: tr('今日の貝がら占い') + (soon ? ' ' + tr('🔒 もうすぐ') : ''), title: tr('今日の貝がら占い'), icon: '🐚',
         state: soon ? 'soon' : 'open', isNew: !soon && !URANAI.doneToday(),
-        go: soon ? () => toast(tr('🔒 もうすぐ 遊べるよ！\nおたのしみに')) : () => URANAI.open(false) });
+        go: soon ? () => toast(tr('🔒 もうすぐ 遊べるよ！\nおたのしみに')) : (pt) => URANAI.open(false, pt) });
     }
     [
       { id: 'pon', name: tr('ぽんぽこリズム'), icon: '🥁', href: 'pon/', isNew: !SAVE.data.ponSeen,
@@ -1913,6 +1913,7 @@
       bindShare: (el, text) => bindShare(el, text, C.report && C.report.url),
       ping: (n) => STATS.ping(n),
       scrollHint: scrollHint,
+      iris: window.TanuIris || null,   // ゲームに入るときと同じ「丸く閉じて、丸く開く」
       hold: () => (HOME ? HOME.hold() : null),
       onClose: () => { if (HOME) HOME.refreshIcons(); }
     });

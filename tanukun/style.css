@@ -1113,6 +1113,7 @@ html.arriving .veil { background: #3A2210 !important; }
 body.in-x #uranai { --u: .75vh; --b: var(--x-cover); }
 #uranai[hidden] { display: none; }
 #uranai.on { opacity: 1; }
+#uranai.instant { transition: none; }
 /* 仮の洞窟：深い青緑、上からの光の柱、ただよう光の粒 */
 #uranai .u-bg { position: absolute; inset: 0; background-position: 50% 62%; background-size: cover; background-repeat: no-repeat; }
 #uranai .u-bg::before { content: ""; position: absolute; inset: 0;   /* 洞窟の絵の上に、うっすら光と暗がり */

@@ -273,9 +273,23 @@ window.TanuUranai = function (opts) {
   }
 
   // auto … あいさつのあとに自動で出したとき（「あとで」を数える）
-  function open(isAuto) {
+  // pt … タップした所（カードから開いたとき）。ゲームに入るときと同じく、こげ茶の丸で閉じてから、丸く開いて始まる（opts.iris）
+  function open(isAuto, pt) {
     if (!root) build();
-    if (!root.hidden) return;
+    if (!root.hidden || opening) return;
+    if (opts.iris) {
+      opening = true;
+      opts.iris.close(pt && pt.x, pt && pt.y).then(() => {
+        opening = false;
+        show(isAuto, true);
+        requestAnimationFrame(() => requestAnimationFrame(() => opts.iris.open()));
+      });
+      return;
+    }
+    show(isAuto, false);
+  }
+  let opening = false;
+  function show(isAuto, instant) {
     timers.forEach(clearTimeout); timers = [];
     auto = !!isAuto;
     busy = false;
@@ -307,8 +321,10 @@ window.TanuUranai = function (opts) {
       });
     }
     root.hidden = false;
+    if (instant) root.classList.add('instant');
     void root.offsetWidth;
     root.classList.add('on');
+    if (instant) requestAnimationFrame(() => root.classList.remove('instant'));
   }
   function withName(s) { const n = opts.name && opts.name(); return n && L() === 'ja' ? n + '、' + s : s; }
 
@@ -321,6 +337,8 @@ window.TanuUranai = function (opts) {
     save();
     opts.ping('u-pick');
     root.classList.add('picked');
+    // 出てくるときの時間差（animationDelay）が残っていると、ぷるぷる・ぱかっが遅れて、縮んだまま止まって見えた（2026-11-03）
+    btn.style.animationDelay = '0s';
     btn.classList.add('chosen');
     say('');
     // タヌくんがびっくり：ぴょん＋‼（胸は少し、おなかは ぷるん）
@@ -387,15 +405,27 @@ window.TanuUranai = function (opts) {
     busy = false;
   }
 
+  // とじる：丸く閉じて、トップ画面へ丸く開く（opts.iris がなければ、ふわっと消える）
   function close() {
-    if (!root || root.hidden) return;
+    if (!root || root.hidden || opening) return;
     timers.forEach(clearTimeout); timers = [];
-    root.classList.remove('on');
-    setTimeout(() => {
+    const done = () => {
       root.hidden = true;
+      root.classList.remove('on');
       if (hold) { hold(); hold = null; }
       if (opts.onClose) opts.onClose();
-    }, 320);
+    };
+    if (opts.iris) {
+      opening = true;
+      opts.iris.close().then(() => {
+        opening = false;
+        done();
+        requestAnimationFrame(() => requestAnimationFrame(() => opts.iris.open()));
+      });
+      return;
+    }
+    root.classList.remove('on');
+    setTimeout(done, 320);
   }
 
   // 「ちりん♪」（金の貝は2回）
