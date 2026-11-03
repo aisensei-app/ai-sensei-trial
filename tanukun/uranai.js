@@ -461,6 +461,8 @@ window.TanuUranai = function (opts) {
     get autoOn() { return !st.autoOff; },
     setAuto: (on) => { st.autoOff = !on; if (on) st.later = 0; save(); },
     // 確認用：今日の結果を消して、もう一度引けるようにする
-    resetToday: () => { delete st.res; delete st.day; delete st.autoDay; save(); }
+    resetToday: () => { delete st.res; delete st.day; delete st.autoDay; save(); },
+    // 記録をリセットしたとき：占いの記録もすべて消す（このスマホの番号も新しくする）
+    resetAll: () => { st = { seed: Math.floor(Math.random() * 1e9) + 1 }; save(); }
   };
 };

@@ -1680,6 +1680,7 @@
       // 2回押しで確定（うっかり消さないように）
       if (!btn.dataset.sure) { btn.dataset.sure = '1'; btn.textContent = tr('本当に消す？（もう一度押す）'); return; }
       SAVE.reset();
+      if (URANAI) { URANAI.resetAll(); if (HOME) HOME.refreshIcons(); }   // 貝がら占いの記録も消す（2026-11-03）
       belly.refresh();
       renderParts();
       closeSheet();
