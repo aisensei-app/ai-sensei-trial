@@ -120,6 +120,11 @@
       view: { cx: 270, cy: 410, w: 420, at: 0.48 },   // 横幅は、両腕が入るくらい
       mole: { area: { x: 255, y: 405, rx: 112, ry: 80 }, gap: 80 },
       fat: { x: 35.4, y: 46, rx: 27, ry: 18 },   // まんぷくで、ふくらむ範囲（おなかより少し大きく、少し下）
+      // たたける場所（絵のピクセル。2026-11-03）：胸（四角）とおなか（楕円）。ここの外（足・腕の外・背景）は「からぶり」＝音も揺れもなし
+      // skirt … 腰みのの前。たたくと少し揺れるだけ（点にもミスにもしない）。skirtSway は揺れの楕円（絵の％）
+      hit: { chest: { x0: 100, y0: 230, x1: 400, y1: 345 }, belly: { cx: 265, cy: 400, rx: 185, ry: 125 },
+             skirt: { cx: 240, cy: 595, rx: 90, ry: 80 } },
+      skirtSway: { x: 33.3, y: 67.5, rx: 15, ry: 10 },
       parts: {},
       fade: true
     },
@@ -303,7 +308,8 @@
   updateSave((d) => { d.ponSeen = true; });   // 本編のメニューの NEW を消す
   const belly = window.TanuBelly({ config: JIGGLE, img: img, canvas: $('belly-canvas'),
     overlay: partsLayer, layers: () => wornLayers(),
-    extra: { armL: REACT.armL, armR: REACT.armR, fat: Object.assign({ type: 'swell' }, ART.fat) } });
+    extra: Object.assign({ armL: REACT.armL, armR: REACT.armR, fat: Object.assign({ type: 'swell' }, ART.fat) },
+      ART.skirtSway ? { skirt: ART.skirtSway } : {}) });
   renderParts();
   let armSide = 0;
   function react(big) {
@@ -819,11 +825,32 @@
     if (playing) hit(nearest(p.now, ['purun'], p), p.now);
   }
 
+  // たたいた所（絵のピクセル）が、どこか：'body'（胸・おなか）／'skirt'（腰みの）／null（それ以外＝からぶり）
+  function areaAt(ix, iy) {
+    const H = ART.hit;
+    if (!H) return 'body';
+    const c = H.chest, b = H.belly, k = H.skirt;
+    if (ix >= c.x0 && ix <= c.x1 && iy >= c.y0 && iy <= c.y1) return 'body';
+    if (Math.hypot((ix - b.cx) / b.rx, (iy - b.cy) / b.ry) <= 1) return 'body';
+    if (k && Math.hypot((ix - k.cx) / k.rx, (iy - k.cy) / k.ry) <= 1) return 'skirt';
+    return null;
+  }
+  let skirtSide = 0;
+
   stage.addEventListener('pointerdown', (e) => {
     e.preventDefault();
     const r = stage.getBoundingClientRect();
     const sx = e.clientX - r.left, sy = e.clientY - r.top;
     const ix = (sx - offX) / scale, iy = (sy - offY) / scale;
+    // 胸・おなかの外は、点にも音にもしない（2026-11-03。ステージ1で、足や背景をたたいても判定されていたため）。
+    // おなかモードで ◉ のすぐ近く（hitR 以内）をたたいたときは、おなかの外にはみ出していても今までどおり
+    let area = areaAt(ix, iy);
+    if (area !== 'body' && playing && ac && onBelly()) {
+      const late = Math.min(0.1, Math.max(0, (performance.now() - e.timeStamp) / 1000));
+      if (nearest(songTime() - late, ['pon', 'poko', 'purun'], { sx: sx, sy: sy })) area = 'body';
+    }
+    if (area === 'skirt') { belly.nudge('skirt', (skirtSide++ % 2 ? 1 : -1) * 5, 2); return; }   // 腰みのが少し揺れるだけ
+    if (!area) return;   // からぶり
     const p = pointers[e.pointerId] = { sx: sx, sy: sy, x0: e.clientX, y0: e.clientY, now: 0, wait: false, purun: false, pull: false };
     if (belly.ready()) belly.press('belly', ix, iy);
     else { body.classList.remove('bounce'); void body.offsetWidth; body.classList.add('bounce'); }

@@ -475,6 +475,15 @@ window.TanuBelly = function (opts) {
       start();
     },
 
+    // 横・縦に「ふわっ」：dx, dy ピクセルの勢いで動いて、ばねで揺れて戻る（ぽんぽこリズムの腰みの。2026-11-03）
+    nudge: function (part, dx, dy) {
+      const r = parts[part];
+      if (!r || !ready()) return;
+      r.pvx += (dx || 0) / peak;
+      r.pvy += (dy || 0) / peak;
+      start();
+    },
+
     // ふくらんだまま保つ：amount（0.1 で1割）までふくらんで、そのまま（0 で元にもどる）。extra の type: 'swell'
     setBase: function (part, amount) {
       const r = parts[part];
