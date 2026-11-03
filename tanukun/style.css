@@ -1252,3 +1252,11 @@ body.in-x #uranai { --u: .75vh; --b: var(--x-cover); }
 #uranai.gold.show .u-rname { animation-delay: 1.6s; }
 #uranai.gold.show .u-rows li { animation-delay: calc(2.9s + var(--i) * 1.05s); }
 #uranai.gold.show .u-btns { animation-delay: 6.1s; }
+
+/* ---- タヌくんからの「おたより」（感想。app.js の showFeedback）---- */
+.fb-opts { display: flex; flex-wrap: wrap; gap: 6px; }
+.fb-opt { flex: 1 1 auto; font-size: 14px; padding: 9px 10px; border: 2px solid transparent; }
+.fb-opt.on { border-color: #F08A3C; background: #FFF0E0; }
+.fb-send:disabled { opacity: .45; box-shadow: none; }
+.fb-later { align-self: center; }
+.fb-more { text-decoration: none; text-align: center; }

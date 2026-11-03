@@ -965,6 +965,7 @@
     const line = takeLine({ scene: 'home', visit: 'again' });
     if (HOME) HOME.zoomNow(line ? withName(line.text) : '');
     setTimeout(suggestHomeScreen, 1200);
+    maybeFeedback();
   }
 
   $('btn-play').addEventListener('click', () => enterPlay());
@@ -1311,6 +1312,82 @@
     });
   }
 
+  /* ---- タヌくんからの「おたより」（感想を聞く。2026-11-03。config.js の feedback）----
+     タヌくんが、胸の前で指をちょんちょんしながら「ねえねえ、ちょっとだけ教えて？」。
+     ① なくなったら（ひとつ）② 好きな所（いくつでも）をえらんで「おくる」→ 押された数だけを匿名の目印で数える（文は送らない）。
+     書きたい人だけ「✉️ もっと書く」で外のフォーム（formUrl）。
+     自動で出すのは、なかよし minDays 日目以降かクリアしたあとに、トップ画面に戻ってきたとき1回だけ（「あとで」でも、もう自動では出さない）。
+     設定の「💬 タヌくんにおたより」からは、いつでも */
+  const FB = C.feedback || null;
+  const FB_MISS = [['big', '😭 とても残念'], ['some', '😢 少し残念'], ['no', '🙂 気にならない']];
+  const FB_LIKE = [['belly', '🫧 おなかぽよん'], ['tanu', '🦝 タヌくん'], ['art', '🎨 絵'], ['game', '🎮 ミニゲーム'], ['line', '💬 セリフ']];
+  const fbForm = () => { const u = FB && FB.formUrl; return (u && (u[I18N.lang] || u.ja)) || ''; };
+  function fbMoreHtml() {
+    return fbForm() ? '<a class="btn btn-wide fb-more" target="_blank" rel="noopener">' + tr('✉️ もっと書く') + '</a>' +
+      '<p class="note small center">' + tr('書いた内容は Google フォームに届きます。名前などは書かないでね') + '</p>' : '';
+  }
+  function bindFbMore(body) {
+    const a = body.querySelector('.fb-more');
+    if (!a) return;
+    a.href = fbForm();
+    a.addEventListener('click', () => STATS.ping('f-more'));
+  }
+  function showFeedback(isAuto) {
+    if (!FB) return;
+    if (isAuto) { SAVE.setFlag('feedbackAsked'); STATS.ping('f-show'); }
+    openSheet(tr('💌 タヌくんからのおたより'),
+      '<img class="res-img fb-img" alt="">' +
+      '<p class="res-comment">' + tr('ねえねえ、ちょっとだけ教えて？') + '</p>' +
+      '<h3>' + tr('タヌくんアプリが なくなったら…') + '</h3>' +
+      '<div class="fb-opts fb-miss">' + FB_MISS.map((o) => '<button class="btn fb-opt" type="button" data-v="' + o[0] + '">' + tr(o[1]) + '</button>').join('') + '</div>' +
+      '<h3>' + tr('タヌくんの どこが好き？（いくつでも）') + '</h3>' +
+      '<div class="fb-opts fb-like">' + FB_LIKE.map((o) => '<button class="btn fb-opt" type="button" data-v="' + o[0] + '">' + tr(o[1]) + '</button>').join('') + '</div>' +
+      '<button class="btn btn-main fb-send" type="button" disabled>' + tr('おくる') + '</button>' +
+      fbMoreHtml() +
+      '<button class="link fb-later" type="button">' + tr('あとで') + '</button>');
+    const body = $('sheet-body');
+    body.querySelector('.fb-img').src = C.images.dere || C.images.shy || C.images.normal;
+    const send = body.querySelector('.fb-send');
+    const picked = () => body.querySelectorAll('.fb-opt.on').length > 0;
+    body.querySelectorAll('.fb-miss .fb-opt').forEach((b) => b.addEventListener('click', () => {
+      body.querySelectorAll('.fb-miss .fb-opt').forEach((x) => x.classList.toggle('on', x === b));
+      send.disabled = !picked();
+    }));
+    body.querySelectorAll('.fb-like .fb-opt').forEach((b) => b.addEventListener('click', () => {
+      b.classList.toggle('on');
+      send.disabled = !picked();
+    }));
+    bindFbMore(body);
+    body.querySelector('.fb-later').addEventListener('click', () => { if (isAuto) STATS.ping('f-later'); closeSheet(); });
+    send.addEventListener('click', () => {
+      STATS.ping('f-send');
+      body.querySelectorAll('.fb-miss .fb-opt.on').forEach((b) => STATS.ping('f-miss-' + b.dataset.v));
+      body.querySelectorAll('.fb-like .fb-opt.on').forEach((b) => STATS.ping('f-like-' + b.dataset.v));
+      // お礼のなかよしポイントは、はじめて答えてくれたときだけ
+      const first = !SAVE.data.feedbackSent;
+      SAVE.setFlag('feedbackSent');
+      const up = first && FB.reward ? SAVE.addPoints(FB.reward) : false;
+      renderStatus();
+      openSheet(tr('💌 タヌくんからのおたより'),
+        '<img class="res-img fb-img" alt="">' +
+        '<p class="res-comment">' + tr('ありがとう！ すっごく うれしい〜！') + '</p>' +
+        (first && FB.reward ? '<p class="note center">' + tr('💗 なかよしポイント +{n}', { n: FB.reward }) + '</p>' : '') +
+        fbMoreHtml());
+      $('sheet-body').querySelector('.fb-img').src = C.images.happy || C.images.normal;
+      bindFbMore($('sheet-body'));
+      if (up) setTimeout(heartUp, 600);
+    });
+  }
+  // トップ画面に戻ってきたとき：条件がそろっていれば、1回だけ自動で
+  function maybeFeedback() {
+    if (!FB || DEMO || !FB.minDays || SAVE.data.feedbackAsked || mode !== 'home') return;
+    if (SAVE.data.totalDays < FB.minDays && !SAVE.data.cleared) return;
+    setTimeout(() => {
+      if (mode !== 'home' || !sheet.hidden || !$('event').hidden || (URANAI && URANAI.isOpen()) || SAVE.data.feedbackAsked) return;
+      showFeedback(true);
+    }, 1600);
+  }
+
   // 2日目以降、メニューに戻ったときに一度だけ「ホーム画面に追加」をすすめる（記録を消えにくくするため）
   const standalone = () => (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone;
   function suggestHomeScreen() {
@@ -1611,6 +1688,7 @@
       (URANAI ? '<h3>' + tr('🐚 貝がら占い') + '</h3><button id="set-uranai" class="btn btn-wide" type="button"></button>' +
         '<p class="note small">' + tr('その日はじめて開いたときに、占いを出すか（トップ画面のカードからは、いつでも引けます）') + '</p>' : '') +
       (C.notice ? '<h3>' + tr('このアプリ') + '</h3><button id="btn-about" class="btn btn-wide" type="button">' + tr('このアプリについて') + '</button>' : '') +
+      (FB ? '<button id="btn-feedback" class="btn btn-wide" type="button">' + tr('💬 タヌくんにおたより') + '</button>' : '') +
       '<h3>' + tr('記録') + '</h3>' +
       '<p class="note">' + tr('記録はこのスマホのブラウザの中だけに保存されます。') +
       tr('<b>ホーム画面に追加</b>して使うと、記録が消えにくくなります。') + '</p>' +
@@ -1624,6 +1702,7 @@
         '<p class="note small">記録は変わりません。アプリを開き直すと「ふつう」に戻ります</p>' +
         '<button id="btn-test-clear" class="btn btn-wide" type="button">🌺 ひみつの思い出とクリア画面を見る</button>' +
         (URANAI ? '<button id="btn-test-uranai" class="btn btn-wide" type="button">🐚 今日の占いをやり直す（確認用）</button>' : '') +
+        (FB ? '<button id="btn-test-feedback" class="btn btn-wide" type="button">💌 おたよりを自動で出たときと同じに見る（確認用）</button>' : '') +
         (TB ? '<h3>確認用：時間帯を切りかえて試す</h3><div class="test-hearts test-time">' +
           [['', '時計'], ['morning', '🌅朝'], ['day', '☀️昼'], ['evening', '🌇夕'], ['night', '🌙夜'], ['late', '💤深夜']]
             .map((t) => '<button class="btn" type="button" data-t="' + t[0] + '">' + t[1] + '</button>').join('') + '</div>' : '') : ''));
@@ -1637,6 +1716,8 @@
       $('btn-test-uranai').addEventListener('click', () => { URANAI.resetToday(); closeSheet(); if (HOME) HOME.refreshIcons(); URANAI.open(true); });
     }
     if ($('btn-about')) $('btn-about').addEventListener('click', () => showNotice(null));
+    if ($('btn-feedback')) $('btn-feedback').addEventListener('click', () => showFeedback(false));
+    if (C.testHearts && $('btn-test-feedback')) $('btn-test-feedback').addEventListener('click', () => showFeedback(true));
     if ($('set-lang')) $('set-lang').addEventListener('change', (e) => I18N.set(e.target.value));
     if (C.testHearts && $('btn-test-clear')) {
       $('btn-test-clear').addEventListener('click', () => {
@@ -1916,7 +1997,7 @@
       scrollHint: scrollHint,
       iris: window.TanuIris || null,   // ゲームに入るときと同じ「丸く閉じて、丸く開く」
       hold: () => (HOME ? HOME.hold() : null),
-      onClose: () => { if (HOME) HOME.refreshIcons(); }
+      onClose: () => { if (HOME) HOME.refreshIcons(); maybeFeedback(); }
     });
   }
   // その日はじめて開いたとき：あいさつのあとに、貝がら占いを自動で出す（はじめて来た日・クリアの日はのぞく）。
@@ -1971,6 +2052,7 @@
         const line = takeLine({ scene: 'home', visit: 'again' });
         HOME.zoomNow(line ? withName(line.text) : '');
         checkIn();
+        maybeFeedback();
         return;
       }
       bootNext = true;   // 起動の幕から

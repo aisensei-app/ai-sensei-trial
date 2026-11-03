@@ -48,7 +48,9 @@ window.TanuSave = (function () {
       ponBonusDay: null,     // ぽんぽこリズムのごほうびをもらった日（1日1回）
       rallyPoints: 0,        // ぽよんラリーのごほうび（まだ受け取っていないなかよしポイント）
       rallyBonusDay: null,   // ぽよんラリーのごほうびをもらった日（1日1回。あとで多い段に届いたら、差だけ足す）
-      rallyBonusGot: 0       // その日にもらったぽよんラリーのごほうび
+      rallyBonusGot: 0,      // その日にもらったぽよんラリーのごほうび
+      feedbackAsked: false,  // おたより（感想）を自動で出した
+      feedbackSent: false    // おたよりに答えてくれた（お礼のポイントは1回だけ）
     };
   }
 
@@ -175,6 +177,14 @@ window.TanuSave = (function () {
     if (!data.cleared) { data.cleared = true; data.clearDay = data.totalDays; save(); }
   }
   function setFlag(key) { data[key] = true; save(); }
+  // なかよしポイントを足す（おたよりのお礼など）。戻り値：ハートが増えたか
+  function addPoints(n) {
+    const before = hearts();
+    data.points += n;
+    markMax();
+    save();
+    return hearts() > before;
+  }
 
   // 今日のタップのポイントが上限に達したか
   function tapCapped() {
@@ -253,6 +263,7 @@ window.TanuSave = (function () {
     clearRemain: clearRemain,
     setCleared: setCleared,
     setFlag: setFlag,
+    addPoints: addPoints,
     heartProgress: heartProgress,
     hearts: hearts,
     count: count,
