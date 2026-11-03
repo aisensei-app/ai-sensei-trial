@@ -615,3 +615,6 @@ html[lang="zh"] body { font-family: -apple-system, BlinkMacSystemFont, "PingFang
 @keyframes scroll-chev { 50% { background-position: 50% calc(100% - 2px), 0 0; } }
 @media (prefers-reduced-motion: reduce) { .scroll-more.more::after { animation: none; } }
 .result.scroll-more { --fade: #fff; }   /* 下のカード（.r-card）が白いので、白へぼかす */
+/* X アプリの中：画面の下 約4分の1 は X の投稿パネルに隠れるので、︾ とぼかしを、その上（下から 25vh）に出す（2026-11-03）。
+   結果のカードの下には 25vh の余白があるので、いちばん下までスクロールすると、カードの最後がちょうどパネルの上に来て ︾ が消える */
+body.in-x .result.scroll-more::after { bottom: 25vh; }
