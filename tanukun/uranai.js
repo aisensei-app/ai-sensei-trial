@@ -17,6 +17,9 @@ window.TanuUranai = function (opts) {
   // 絵（tools/make_uranai_art.py でつくる）。確認用リンクで文字データに置きかえられるように、場所はそのまま書く
   const SRC = {
     pick: 'images/uranai/pick.webp',
+    wow: 'images/uranai/wow.webp',
+    cave: 'images/uranai/cave.webp',
+    altar: 'images/uranai/altar.webp',
     result: 'images/uranai/result.webp',
     gold: 'images/uranai/gold.webp',
     shell_coral_c: 'images/uranai/shell_coral_c.webp',
@@ -198,7 +201,7 @@ window.TanuUranai = function (opts) {
         chest: { gain: 0.45, drag: false, bob: 1.2, left: J.chestL, right: J.chestR },
         img: img, canvas: wrap.querySelector('canvas')
       });
-      img.addEventListener('load', () => belly.warm([img.src]), { once: true });
+      img.addEventListener('load', () => belly.warm(key === 'pick' ? [SRC.pick, SRC.wow] : [img.src]), { once: true });
     }
     // タップ：おなか・胸が ぷるん（選ぶ前は、ふきだしでひとこと）
     wrap.addEventListener('pointerdown', (e) => {
@@ -244,13 +247,15 @@ window.TanuUranai = function (opts) {
       '<div class="u-bg"><div class="u-beam"></div><div class="u-dust">' + dust + '</div></div>' +
       '<img class="u-gold" alt="" draggable="false"><div class="u-dim"></div>' +
       '<div class="u-stage"></div>' +
-      '<div class="u-altar"><div class="u-shells"></div></div>' +
+      '<div class="u-altar"><img class="u-altar-img" alt="" draggable="false"><div class="u-shells"></div></div>' +
       '<div class="u-say" hidden></div><b class="u-wow" aria-hidden="true">‼</b>' +
       '<div class="u-res" hidden></div>' +
       '<div class="u-btns" hidden></div>' +
       '<button class="u-later" type="button"></button>' +
       '<div class="u-flash"></div>';
     document.body.appendChild(root);
+    $('.u-bg').style.backgroundImage = 'url("' + SRC.cave + '")';
+    $('.u-altar-img').src = SRC.altar;
     $('.u-stage').appendChild(makeTanu('pick'));
     $('.u-stage').appendChild(makeTanu('result'));
     $('.u-later').addEventListener('click', () => {
@@ -278,6 +283,7 @@ window.TanuUranai = function (opts) {
     const day = today();
     if (auto) { st.autoDay = day; save(); opts.ping('u-show'); }
     root.className = '';
+    if (tanu.pick) tanu.pick.img.src = SRC.pick;
     $('.u-res').hidden = true;
     $('.u-btns').hidden = true;
     $('.u-gold').removeAttribute('src');
@@ -319,6 +325,7 @@ window.TanuUranai = function (opts) {
     say('');
     // タヌくんがびっくり：ぴょん＋‼（胸は少し、おなかは ぷるん）
     root.classList.add('wow');
+    tanu.pick.img.src = SRC.wow;   // びっくり顔（C3。pick と同じ位置に合わせてある）
     jiggle('pick', -0.07, 7);
     later(() => root.classList.remove('wow'), 700);
     chime(color === 'gold');

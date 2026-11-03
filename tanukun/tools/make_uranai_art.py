@@ -8,9 +8,14 @@
     pick_src.png    … U2 タヌくん「どれにする？」（マゼンタ背景）
     result_src.png  … U3 タヌくん「結果発表！」（マゼンタ背景）
     gold_src.png    … U4 金の貝がらのタヌくん（背景あり。大吉のとき）
+    wow_src.png     … C3 タヌくん「びっくり！」（マゼンタ背景・全身。pick と同じ位置に合わせる）
+    cave_src.png    … C1 洞窟の背景（横長 3:2。cave2_src.png は使わなかった方）
+    altar_src.png   … C2 古代の石の台座（マゼンタ背景）
 つくるもの（images/uranai/）:
     shell_{coral,pearl,blue,gold}_{c,o}.webp … 閉じた貝(c)・開いた貝(o)。背景は透明
     pick.webp, result.webp … 背景を抜いたタヌくん（まわりの余白は切る）
+    wow.webp … びっくり顔。pick.webp と同じ大きさで、頭のてっぺんとおへそが同じ所に来るように置く
+    cave.webp, altar.webp … 背景・台座
     gold.webp … 大吉の絵（縦 2:3）
 """
 from pathlib import Path
@@ -63,6 +68,25 @@ def main():
             save(trim(cell), f'shell_{color}_{kind}.webp', scale=0.8)
     save(trim(key(SRC / 'pick_src.png')), 'pick.webp', maxh=1100)
     save(trim(key(SRC / 'result_src.png')), 'result.webp', maxh=1100)
+    # びっくり顔：pick と頭のてっぺん・おへそを合わせる（元の絵で測った位置）
+    #   pick_src：頭 y=144、おへそ (535, 885)。trim の余白 6px のあと、1100/1227 倍（pick.webp）
+    #   wow_src ：頭 y=21、おへそ (553, 887)
+    pick = Image.open(OUT / 'pick.webp')
+    pk = key(SRC / 'pick_src.png').getchannel('A').point(lambda v: 255 if v > 8 else 0).getbbox()
+    ox, oy = pk[0] - 6, pk[1] - 6
+    ps = pick.height / (pk[3] + 6 - oy)
+    s = (885 - 144) / (887 - 21)
+    wow = key(SRC / 'wow_src.png')
+    k = s * ps
+    w2 = wow.resize((round(wow.width * k), round(wow.height * k)), Image.LANCZOS)
+    canvas = Image.new('RGBA', pick.size, (0, 0, 0, 0))
+    # wow の (x, y) → pick.webp の ((535 + (x-553)s - ox) ps, (144 + (y-21)s - oy) ps)
+    dx = round((535 - 553 * s - ox) * ps)
+    dy = round((144 - 21 * s - oy) * ps)
+    canvas.alpha_composite(w2, (dx, dy)) if dx >= 0 and dy >= 0 else canvas.paste(w2, (dx, dy), w2)
+    save(canvas, 'wow.webp')
+    save(Image.open(SRC / 'cave_src.png').convert('RGB'), 'cave.webp', q=80)
+    save(trim(key(SRC / 'altar_src.png'), pad=2), 'altar.webp', maxw=1200)
     g = Image.open(SRC / 'gold_src.png').convert('RGB')
     save(g, 'gold.webp', maxw=768, q=82)
 

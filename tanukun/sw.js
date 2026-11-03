@@ -16,7 +16,7 @@ const FILES = [
   './images/memories/4.webp', './images/memories/5.webp', './images/memories/5b.webp',
   './images/memories/6.webp', './images/memories/6b.webp', './images/memories/6d.webp',
   // 貝がら占い（uranai.js）
-  './images/uranai/pick.webp', './images/uranai/result.webp', './images/uranai/gold.webp',
+  './images/uranai/pick.webp', './images/uranai/wow.webp', './images/uranai/result.webp', './images/uranai/gold.webp', './images/uranai/cave.webp', './images/uranai/altar.webp',
   './images/uranai/shell_coral_c.webp', './images/uranai/shell_pearl_c.webp', './images/uranai/shell_blue_c.webp', './images/uranai/shell_gold_c.webp',
   './images/uranai/shell_coral_o.webp', './images/uranai/shell_pearl_o.webp', './images/uranai/shell_blue_o.webp', './images/uranai/shell_gold_o.webp',
   // 時間帯の立ち絵
