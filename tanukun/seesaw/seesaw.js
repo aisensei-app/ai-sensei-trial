@@ -26,8 +26,25 @@ document.addEventListener('click', (e) => {
   e.preventDefault();
   try { sessionStorage.setItem('tanukun.homeZoom', '1'); } catch (err) {}
   document.body.classList.add('leaving');
+  // 「もどる」に向かって丸く閉じてから戻る（iris.js。ぽんぽこ・ラリーと同じ。本編は、こげ茶から丸く開いて始まる）
+  if (window.TanuIris) {
+    const r = a.getBoundingClientRect();
+    window.TanuIris.close(r.left + r.width / 2, r.top + r.height / 2).then(() => { location.href = a.href; });
+    return;
+  }
   setTimeout(() => { location.href = a.href; }, 430);
 });
+// 幕を明ける：絵の読みこみが終わって、2回描いたあと（おそくても 2.5秒）。こげ茶の幕から丸く開く（2026-11-03。ラリーと同じ）
+let unveiled = false;
+function unveil() {
+  if (unveiled) return;
+  unveiled = true;
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    if (window.TanuIris) { window.TanuIris.cover(); document.body.classList.add('ready', 'iris'); window.TanuIris.open(); }
+    else document.body.classList.add('ready');
+  }));
+}
+setTimeout(unveil, 2500);
 
 /* ---- ことば：本編と同じ i18n.js（シーソーの訳は seesaw.i18n.js）。tr('日本語の文', { n: 3 }) でいまの言語の文 ---- */
 const I18N = window.TanuI18n || { lang: 'ja', tr: (s) => s, apply: () => {} };
@@ -723,6 +740,7 @@ Promise.all(KEYS.map((k) => load(SRC[k])).concat(load(SRC.beach))).then((imgs) =
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
+  unveil();
   setTimeout(() => say('start', true), 700);
-}).catch(() => { document.getElementById('loading').textContent = tr('絵を読みこめませんでした。ページを開き直してください'); });
+}).catch(() => { document.getElementById('loading').textContent = tr('絵を読みこめませんでした。ページを開き直してください'); unveil(); });
 })();

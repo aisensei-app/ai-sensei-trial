@@ -76,15 +76,28 @@ body{margin:0;background:#bfe3f7;color:var(--ink);font-family:var(--font);overfl
 #loading{position:fixed;inset:0;display:grid;place-items:center;font-weight:900;font-size:18px;color:var(--wood)}
 @media (prefers-reduced-motion: reduce){#dive{animation:none}.pop{animation-duration:1.4s}}
 
-/* ---- 画面を切りかえるときの幕（ぽよんラリーと同じ、落ち着いたクリーム色）----
+/* 2026-11-03：ぽよんラリーと同じ「こげ茶の幕 → 丸く開く」に（iris.js） */
+/* ---- 画面を切りかえるときの幕（本編のトップ画面と同じ、落ち着いたクリーム色）----
    ページを開くと、幕がかかった所から、ふわっと明ける。タヌくんのところへ戻るときは、幕がかかってから戻る（body.leaving） */
-body::after{content:"";position:fixed;inset:0;z-index:999;pointer-events:none;
-  background:radial-gradient(circle at 50% 45%,#F6E4C4,#E9CFA4);
-  animation:tanu-veil-arrive .7s cubic-bezier(.5,0,.75,.45) both}
-@keyframes tanu-veil-arrive{0%,10%{opacity:1}100%{opacity:0;visibility:hidden}}
-body.leaving::after{animation:tanu-veil-leave .42s cubic-bezier(.45,0,.7,.6) both}
-@keyframes tanu-veil-leave{from{opacity:0}to{opacity:1}}
-@media (prefers-reduced-motion: reduce){body::after,body.leaving::after{animation-duration:.01s}}
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  pointer-events: none;
+  background: #3A2210;   /* こげ茶（iris.js と同じ色。本編のカードから丸く閉じて来たので、同じ色で待つ） */
+  /* 準備ができるまで（JS が body に ready を付けるまで）幕をかけたまま。万一 ready が付かなくても、3秒たったら明ける */
+  animation: tanu-veil-arrive .7s cubic-bezier(.5, 0, .75, .45) 3s both;
+}
+@keyframes tanu-veil-arrive { 0%, 10% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
+body.ready::after { animation: tanu-veil-ready .6s cubic-bezier(.5, 0, .75, .45) both; }
+body.ready.iris::after { animation: none; opacity: 0; visibility: hidden; }   /* iris.js が引きついだので、すぐ消す */
+/* もどるときは iris.js が丸く閉じる（leaving の幕は使わない） */
+body.leaving.iris::after { animation: none; opacity: 0; }
+@keyframes tanu-veil-ready { 0% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
+body.leaving::after { animation: tanu-veil-leave .42s cubic-bezier(.45, 0, .7, .6) both; }
+@keyframes tanu-veil-leave { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { body::after, body.leaving::after { animation-duration: .01s; } }
 
 /* 中国語のとき：中国語の字体を優先（本編の style.css と同じ） */
 html[lang="zh"] body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC","Noto Sans CJK SC",sans-serif}
