@@ -389,18 +389,32 @@ window.TanuUranai = function (opts) {
     btns.querySelector('.u-close').addEventListener('click', close);
     const text = fill(T(UI.post), { f: T(F), c: T(Cl).replace(/[（(].*[）)]/, ''), i: T(It), a: T(Ac) }) + '\n' + T(UI.tag) + ' ' + tr('#タヌくん');
     opts.bindShare(btns, text);
+    // ボタンは1列に（台座の上の貝とかぶらないように、低く・文字を短く。2026-11-03）
+    const row = document.createElement('div');
+    row.className = 'u-brow';
+    const bx = btns.querySelector('.btn-x'), bs = btns.querySelector('.btn-share'), bc = btns.querySelector('.btn-copy'), bz = btns.querySelector('.u-close');
+    bx.textContent = T({ ja: '𝕏 でポスト', en: 'Post on 𝕏', zh: '发到 𝕏' });
+    if (bs) bs.textContent = T({ ja: '📤 シェア', en: '📤 Share', zh: '📤 分享' });
+    if (bc) bc.textContent = T({ ja: '📋 コピー', en: '📋 Copy', zh: '📋 复制' });
+    [bx, bs, bc, bz].forEach((el) => { if (el) row.appendChild(el); });
+    const sr = btns.querySelector('.share-row');
+    if (sr) sr.remove();
+    btns.insertBefore(row, btns.firstChild);
     res.hidden = false;
     btns.hidden = false;
     void res.offsetWidth;
     root.classList.add('show');
     // うれしくて、おなかが ぽよん（大吉はもっと）
     later(() => jiggle('result', gold ? -0.12 : -0.08, 5), 450);
+    // 1行ずつ出るのに合わせて「しゃらん♪」（CSS の .u-rows li の時間と合わせる：はじめ ROW0 秒、ROWGAP 秒ごと）
+    const t0 = gold ? ROW0 + GOLD_WAIT : ROW0;
+    [0, 1, 2].forEach((i) => later(() => sparkle(i), (t0 + i * ROWGAP) * 1000 + 150));
     // 1行ずつ出たあとで、タヌくんのひとこと（見返すときは「今日はもう占ったよ」から）
     if (again) {
       say(T(UI.again), 'talk');
       later(() => say(T(UI.bye), 'talk'), 3600);
     } else {
-      later(() => say(T(UI.bye), 'talk'), gold ? 3800 : 2300);
+      later(() => say(T(UI.bye), 'talk'), (t0 + 2 * ROWGAP + 1.3) * 1000);
     }
     busy = false;
   }
@@ -426,6 +440,28 @@ window.TanuUranai = function (opts) {
     }
     root.classList.remove('on');
     setTimeout(done, 320);
+  }
+
+  // 結果の1行ずつの時間（style.css の #uranai.show .u-rows li と同じ数にする）
+  const ROW0 = 1.4, ROWGAP = 1.05, GOLD_WAIT = 1.5;
+  // 1行出るたびの「しゃらん♪」（行ごとに少し高く）
+  function sparkle(i) {
+    try {
+      const ac = chime.ac;
+      if (!ac) return;
+      const t0 = ac.currentTime + 0.01;
+      [0, 0.07, 0.14].forEach((dt, k) => {
+        const o = ac.createOscillator(), g = ac.createGain();
+        o.type = 'triangle';
+        o.frequency.value = [1046, 1318, 1568][k] * (1 + i * 0.12);
+        const t = t0 + dt;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.06, t + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
+        o.connect(g).connect(ac.destination);
+        o.start(t); o.stop(t + 0.5);
+      });
+    } catch (e) {}
   }
 
   // 「ちりん♪」（金の貝は2回）

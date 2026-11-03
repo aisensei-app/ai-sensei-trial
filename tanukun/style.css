@@ -1203,8 +1203,8 @@ body.in-x #uranai { --u: .75vh; --b: var(--x-cover); }
   color: #FFE9A8; -webkit-text-stroke: 1px rgba(122, 61, 0, .5); text-shadow: 0 0 14px rgba(255, 214, 120, .7), 0 3px 0 rgba(90, 40, 0, .5); opacity: 0; }
 #uranai .u-rname.gold { color: #FFF1A8; text-shadow: 0 0 22px rgba(255, 220, 80, 1), 0 3px 0 rgba(90, 40, 0, .6); }
 #uranai .u-ric { margin-right: 6px; }
-#uranai.show .u-rdate { animation: u-fade .5s ease-out .1s both; }
-#uranai.show .u-rname { animation: u-name .7s cubic-bezier(.3, 1.6, .5, 1) .25s both; }
+#uranai.show .u-rdate { animation: u-fade .6s ease-out .2s both; }
+#uranai.show .u-rname { animation: u-name 1s cubic-bezier(.3, 1.5, .5, 1) .4s both; }
 @keyframes u-fade { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
 @keyframes u-name { 0% { opacity: 0; transform: scale(.3); } 100% { opacity: 1; transform: none; } }
 #uranai .u-rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
@@ -1215,18 +1215,22 @@ body.in-x #uranai { --u: .75vh; --b: var(--x-cover); }
 #uranai .u-rows li span { font-size: 18px; font-weight: 800; color: #FFF6E3; line-height: 1.4; }
 #uranai .u-rows li em { font-style: normal; }
 #uranai .u-rows li.u-ract span { font-size: 16px; }
-#uranai.show .u-rows li { animation: u-wipe .55s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(.8s + var(--i) * .42s); }
-@keyframes u-wipe { from { opacity: 1; transform: translateX(48px); clip-path: inset(0 0 0 100%); } to { opacity: 1; transform: none; clip-path: inset(0 0 0 0); } }
+/* 1行ずつ：はじめ 1.4秒、1.05秒ごと（uranai.js の ROW0・ROWGAP と同じ） */
+#uranai.show .u-rows li { animation: u-wipe .9s cubic-bezier(.16, .9, .25, 1) both; animation-delay: calc(1.4s + var(--i) * 1.05s); }
+@keyframes u-wipe { 0% { opacity: 1; transform: translateX(70px); clip-path: inset(0 0 0 100%); filter: brightness(1.8); }
+  70% { filter: brightness(1.25); } 100% { opacity: 1; transform: none; clip-path: inset(0 0 0 0); filter: none; } }
 #uranai .u-sw { display: inline-block; width: 16px; height: 16px; margin-right: 8px; vertical-align: -2px; border-radius: 50%;
   border: 2px solid rgba(255, 255, 255, .7); box-shadow: 0 0 8px rgba(255, 255, 255, .4); }
 /* ボタン（台座の前に） */
 #uranai .u-btns { position: absolute; z-index: 3; left: 16px; right: 16px; bottom: calc(var(--b) + max(12px, env(safe-area-inset-bottom)));
-  display: flex; flex-direction: column; gap: 7px; opacity: 0; }
+  display: flex; flex-direction: column; gap: 4px; opacity: 0; }
 #uranai .u-btns[hidden] { display: none; }
-#uranai.show .u-btns { animation: u-fade .5s ease-out 2.2s both; }
-#uranai .u-btns .btn-main.btn-x { font-size: 17px; padding: 11px; }
-#uranai .u-btns .share-row .btn, #uranai .u-btns .u-close { font-size: 14px; padding: 9px 8px; }
-#uranai .u-btns .note { margin: 0; font-size: 11px; color: #EAF6F4; text-shadow: 0 1px 3px #000, 0 0 6px #000; }
+#uranai.show .u-btns { animation: u-fade .6s ease-out 4.6s both; }
+/* ボタンは1列（𝕏 を少し広く）。その下に小さな案内 */
+#uranai .u-brow { display: flex; gap: 6px; }
+#uranai .u-brow .btn { flex: 1; min-width: 0; margin: 0; padding: 10px 4px; font-size: 14px; white-space: nowrap; text-align: center; }
+#uranai .u-brow .btn-main.btn-x { flex: 1.5; font-size: 15px; padding: 10px 6px; }
+#uranai .u-btns .note { margin: 0; font-size: 10px; color: #EAF6F4; text-shadow: 0 1px 3px #000, 0 0 6px #000; }
 #uranai .u-btns .btn:not(.btn-x) { color: #4A2E16; }
 #uranai .u-btns .u-close { background: rgba(255, 255, 255, .85); }
 #uranai .u-later { position: absolute; z-index: 3; left: 50%; bottom: calc(var(--b) + max(10px, env(safe-area-inset-bottom)) + 6px); transform: translateX(-50%);
@@ -1246,5 +1250,5 @@ body.in-x #uranai { --u: .75vh; --b: var(--x-cover); }
 #uranai.gold .u-dim { background: linear-gradient(rgba(5, 20, 28, .7) 0%, rgba(5, 20, 28, .35) 40%, transparent 60%, rgba(5, 20, 28, .55) 100%); }
 #uranai.gold.show .u-rdate { animation-delay: 1.5s; }
 #uranai.gold.show .u-rname { animation-delay: 1.6s; }
-#uranai.gold.show .u-rows li { animation-delay: calc(2.3s + var(--i) * .42s); }
-#uranai.gold.show .u-btns { animation-delay: 3.7s; }
+#uranai.gold.show .u-rows li { animation-delay: calc(2.9s + var(--i) * 1.05s); }
+#uranai.gold.show .u-btns { animation-delay: 6.1s; }
