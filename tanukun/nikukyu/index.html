@@ -2,6 +2,8 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap">
+<!-- 「ぷにっ」の文字だけ、ころんと太い丸文字（使う字だけ読みこむ） -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&display=swap&text=%E3%81%B7%E3%81%AB%E3%81%A3%E3%82%85%E3%80%9C">
 <!--
   タヌくん：あしのうら ぷにぷに（お試し版。2026-11-04）
   ・絵：img/sit_soles.webp（ユーザーが描いた、切り株に座って足の裏を見せるタヌくん。腰みのの葉っぱがお股をしっかり隠している版）
@@ -9,6 +11,7 @@
   ・肉球を押すと：押した所がくぼむ（左上から光が当たっている影＝くぼみの左上の内側が暗く、右下の内側が明るい・まわりの土手が明るい）
                   ＋中身が逃げるように、ふちが外へ押し出される。長押しで深く、なでるとくぼみが指についてくる
   ・エフェクト：押すと「ぷにっ」「ぷにゅ」「ぷにゅ〜」の文字／照れ笑いのときは、ときどきハート・大笑いのときは、ハートがいっぱい
+  ・体の揺れ：照れ笑いのときは押すたびにおなかが少し「たぷん」／大笑いのときは笑うリズムで胸とおなかが「ゆさゆさ」
   ・表情3種類：ふつう／さわっている間は照れ笑い（img/sit_soles_smile.webp）／連打でくすぐったいときは大笑い（img/sit_soles_laugh.webp）
   ・はなすと、控えめに「ぷるん」と戻る。かたさは3種類（やわらか・ふつう・ハリあり）
   ・本編にはまだつないでいない（build_app.py にも入れていない）
@@ -18,6 +21,7 @@
 :root{
   --sand:#EFD7AE; --ink:#4A2C1A; --cream:#FFF6E6; --accent:#D9536A;
   --display:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",sans-serif;
+  --puni:"Mochiy Pop One","Zen Maru Gothic","Hiragino Maru Gothic ProN",sans-serif;
   color-scheme:light;
 }
 html,body{height:100%}
@@ -47,8 +51,9 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 #loading{position:fixed;inset:0;display:grid;place-items:center;font-weight:900}
 /* 押したときの「ぷにっ」（本編のおなかの「ぽん！」と同じ見た目） */
 #fx{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden}
-.pop-word{position:absolute;transform:translate(-50%,-50%);font-family:var(--display);font-size:clamp(22px,6.4vw,30px);font-weight:900;
-  color:#fff;-webkit-text-stroke:1px #C8641E;text-shadow:0 2px 0 #C8641E,0 0 6px rgba(200,100,30,.5);white-space:nowrap}
+.pop-word{position:absolute;transform:translate(-50%,-50%);font-family:var(--puni);font-size:clamp(28px,8.4vw,38px);font-weight:400;
+  color:#fff;-webkit-text-stroke:7px #C8641E;paint-order:stroke fill;text-shadow:0 3px 0 #9E4A12,0 0 10px rgba(255,170,120,.6);
+  white-space:nowrap;opacity:0;will-change:transform,opacity}
 </style>
 
 <canvas id="stage" aria-label="切り株に座って、足の裏を見せるタヌくん。肉球を押すと、ぷにっとくぼむ"></canvas>
@@ -101,6 +106,17 @@ let feel = 1;
 let img = null, src = null, mask = null, bg = null, smileImg = null, laughImg = null;
 let smile = 0, smileUntil = 0;   // 照れ笑いの濃さ（0〜1）と、照れ笑いでいる時刻
 let laugh = 0, laughUntil = 0;   // 大笑いの濃さと、大笑いでいる時刻（連打のあと 1.6 秒）
+let smileSrc = null, laughSrc = null;   // 表情の絵の色（体の揺れを描くときに、いまの表情と同じ色にする）
+/* 体の揺れ（2026-11-04）：照れ笑い＝押すたびにおなかが少し「たぷん」／大笑い＝笑うリズムで、胸とおなかが「ゆさゆさ」
+   位置は元の絵の座標。y はばねの上下の動き（ピクセル） */
+const BODY = {
+  belly: { cx: 610, cy: 590, rx: 300, ry: 150, y: 0, v: 0 },
+  chestL: { cx: 470, cy: 400, rx: 135, ry: 72, y: 0, v: 0 },
+  chestR: { cx: 760, cy: 400, rx: 135, ry: 72, y: 0, v: 0 }
+};
+const BX0 = 300, BY0 = 325, BW = 620, BH = 430;   // 揺らす範囲（おなか・胸をかこむ四角）
+let bodyPatch = null, bodyCtx = null, bodyData = null, bodyW = null;
+let laughBeat = 0;
 function load(u) { return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = u; }); }
 function pixels(im) {
   const c = document.createElement('canvas'); c.width = IW; c.height = IH;
@@ -187,12 +203,14 @@ function popWord(x, y) {
   el.textContent = PUNI[puniIdx];
   el.style.left = x + 'px'; el.style.top = y + 'px';
   fx.appendChild(el);
-  const dx = (Math.random() - 0.5) * 40;
+  // ゆっくり ふわ〜っと出て、上へただよいながら消える（連打で重なってもよい）
+  const dx = (Math.random() - 0.5) * 36, rot = (Math.random() - 0.5) * 12;
   el.animate([
-    { transform: 'translate(-50%, -50%) scale(.6)', opacity: 0 },
-    { transform: 'translate(-50%, -110%) scale(1.15)', opacity: 1, offset: 0.25 },
-    { transform: 'translate(calc(-50% + ' + dx + 'px), -220%) scale(1)', opacity: 0 }
-  ], { duration: 750, easing: 'ease-out' }).finished.then(() => el.remove(), () => el.remove());
+    { transform: 'translate(-50%, -40%) scale(.82) rotate(' + rot + 'deg)', opacity: 0 },
+    { transform: 'translate(-50%, -85%) scale(1.04) rotate(' + rot * 0.6 + 'deg)', opacity: 1, offset: 0.3 },
+    { transform: 'translate(calc(-50% + ' + dx * 0.5 + 'px), -125%) scale(1) rotate(' + rot * 0.3 + 'deg)', opacity: 0.95, offset: 0.6 },
+    { transform: 'translate(calc(-50% + ' + dx + 'px), -190%) scale(.98) rotate(0deg)', opacity: 0 }
+  ], { duration: 1600, easing: 'cubic-bezier(.25,.6,.35,1)' }).finished.then(() => el.remove(), () => el.remove());
 }
 
 /* ---------- ハート（表情に合わせて。顔のまわりから、ぽわぽわ） ---------- */
@@ -248,6 +266,7 @@ cv.addEventListener('pointerdown', (e) => {
   count++; document.getElementById('count').textContent = '🐾 ' + count;
   const now = performance.now();
   taps.push(now); while (taps.length && now - taps[0] > 2000) taps.shift();
+  if (taps.length < 6) BODY.belly.v += 55;   // 照れ笑い：押すたびに、おなかが少し「たぷん」
   if (taps.length >= 6) { say('tickle', taps.length === 6); laughUntil = now + 1600; }
   else if (count === 100) say('hundred', true);
   else say('tap');
@@ -294,6 +313,19 @@ function step(dt) {
   const want = !wl && (fingers.size || now < smileUntil) ? 1 : 0;
   smile += (want - smile) * Math.min(1, dt * (want ? 12 : 3));
   laugh += (wl - laugh) * Math.min(1, dt * (wl ? 14 : 3));
+  // 大笑い：「あはは」のリズム（0.2 秒ごと）で、胸とおなかをはずませる。胸は少しおくれて
+  if (laugh > 0.4) {
+    laughBeat -= dt;
+    if (laughBeat <= 0) {
+      laughBeat = 0.2 + Math.random() * 0.04;
+      BODY.belly.v += 95 * laugh;
+      setTimeout(() => { BODY.chestL.v += 110 * laugh; BODY.chestR.v += 100 * laugh; }, 40);
+    }
+  }
+  Object.values(BODY).forEach((b) => {
+    b.v += (-240 * b.y - 6.5 * b.v) * dt; b.y += b.v * dt;
+    if (b.y > 14) { b.y = 14; b.v *= 0.5; } else if (b.y < -14) { b.y = -14; b.v *= 0.5; }
+  });
   pads.forEach((p) => {
     let target = 0;
     if (p.press) {
@@ -387,6 +419,44 @@ function renderPad(p) {
   ctx.drawImage(p.patch, OX + p.x0 * S, OY + p.y0 * S, p.w * S, p.h * S);
 }
 
+/* ---------- 体（おなか・胸）を揺らして描く ----------
+   ふちほど動かない重み（だ円の中心が 1、ふちで 0）をつけて、上下にずらした絵を描く。表情の絵とも同じように重ねる */
+function bodyWeights() {
+  bodyW = { b: new Float32Array(BW * BH), c: new Float32Array(BW * BH), cl: new Uint8Array(BW * BH) };
+  const sm = (d) => { const t = Math.max(0, 1 - d); return t * t * (3 - 2 * t); };
+  for (let y = 0; y < BH; y++) for (let x = 0; x < BW; x++) {
+    const ix = BX0 + x, iy = BY0 + y, k = y * BW + x, B = BODY;
+    bodyW.b[k] = sm(Math.hypot((ix - B.belly.cx) / B.belly.rx, (iy - B.belly.cy) / B.belly.ry));
+    const l = sm(Math.hypot((ix - B.chestL.cx) / B.chestL.rx, (iy - B.chestL.cy) / B.chestL.ry));
+    const r = sm(Math.hypot((ix - B.chestR.cx) / B.chestR.rx, (iy - B.chestR.cy) / B.chestR.ry));
+    bodyW.c[k] = Math.max(l, r); bodyW.cl[k] = l >= r ? 1 : 0;
+  }
+}
+function renderBody() {
+  const B = BODY, yb = B.belly.y, yl = B.chestL.y, yr = B.chestR.y;
+  if (Math.abs(yb) < 0.15 && Math.abs(yl) < 0.15 && Math.abs(yr) < 0.15) return;
+  if (!bodyPatch) {
+    bodyPatch = document.createElement('canvas'); bodyPatch.width = BW; bodyPatch.height = BH;
+    bodyCtx = bodyPatch.getContext('2d'); bodyData = bodyCtx.createImageData(BW, BH); bodyWeights();
+  }
+  const out = bodyData.data, ws = smileSrc ? smile : 0, wl = laughSrc ? laugh : 0;
+  for (let y = 0; y < BH; y++) {
+    for (let x = 0; x < BW; x++) {
+      const k = y * BW + x, o = k * 4;
+      // 胸とおなかの、上下のずれ（下に揺れたときは、上の絵を持ってくる）
+      const dy = yb * bodyW.b[k] + (bodyW.cl[k] ? yl : yr) * bodyW.c[k];
+      let iy = (BY0 + y - dy + 0.5) | 0; if (iy < 0) iy = 0; else if (iy >= IH) iy = IH - 1;
+      const si = (iy * IW + BX0 + x) * 4;
+      let r = src[si], g = src[si + 1], b = src[si + 2];
+      if (ws > 0.01) { r += (smileSrc[si] - r) * ws; g += (smileSrc[si + 1] - g) * ws; b += (smileSrc[si + 2] - b) * ws; }
+      if (wl > 0.01) { r += (laughSrc[si] - r) * wl; g += (laughSrc[si + 1] - g) * wl; b += (laughSrc[si + 2] - b) * wl; }
+      out[o] = r; out[o + 1] = g; out[o + 2] = b; out[o + 3] = 255;
+    }
+  }
+  bodyCtx.putImageData(bodyData, 0, 0);
+  ctx.drawImage(bodyPatch, OX + BX0 * S, OY + BY0 * S, BW * S, BH * S);
+}
+
 /* ---------- 描く ---------- */
 function draw() {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
@@ -396,6 +466,7 @@ function draw() {
   // 笑顔：顔だけちがう絵を、ふわっと重ねる（足・肉球は同じなので、絵全体を重ねてもずれない）
   if (smileImg && smile > 0.01) { ctx.globalAlpha = smile; ctx.drawImage(smileImg, OX, OY, IW * S, IH * S); ctx.globalAlpha = 1; }
   if (laughImg && laugh > 0.01) { ctx.globalAlpha = laugh; ctx.drawImage(laughImg, OX, OY, IW * S, IH * S); ctx.globalAlpha = 1; }
+  renderBody();
   pads.forEach((p) => { if (Math.abs(p.dent) > 0.004 || Math.abs(p.dentV) > 0.02) renderPad(p); });
   // ハート（顔のまわりから、ぽわぽわ上がる）
   hearts.forEach((q) => {
@@ -420,8 +491,8 @@ addEventListener('resize', resize);
 resize();
 Promise.all([load(SRC_IMG), load(SRC_MASK)]).then(([a, b]) => {
   img = a; src = pixels(a); mask = pixels(b); makeBg();
-  load(SRC_SMILE).then((c) => { smileImg = c; }).catch(() => {});   // 表情の絵はあとから（なくても遊べる）
-  load(SRC_LAUGH).then((c) => { laughImg = c; }).catch(() => {});
+  load(SRC_SMILE).then((c) => { smileImg = c; smileSrc = pixels(c); }).catch(() => {});   // 表情の絵はあとから（なくても遊べる）
+  load(SRC_LAUGH).then((c) => { laughImg = c; laughSrc = pixels(c); }).catch(() => {});
   document.getElementById('loading').remove();
   requestAnimationFrame(frame);
 }).catch(() => { document.getElementById('loading').textContent = '絵を読みこめませんでした。開き直してください'; });
