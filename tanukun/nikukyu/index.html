@@ -266,7 +266,7 @@ cv.addEventListener('pointerdown', (e) => {
   count++; document.getElementById('count').textContent = '🐾 ' + count;
   const now = performance.now();
   taps.push(now); while (taps.length && now - taps[0] > 2000) taps.shift();
-  if (taps.length < 6) BODY.belly.v += 55;   // 照れ笑い：押すたびに、おなかが少し「たぷん」
+  if (taps.length < 6) BODY.belly.v += 90;   // 照れ笑い：押すたびに、おなかが「たぷん」（2026-11-04 大きくした 55 → 90）
   if (taps.length >= 6) { say('tickle', taps.length === 6); laughUntil = now + 1600; }
   else if (count === 100) say('hundred', true);
   else say('tap');
@@ -318,13 +318,13 @@ function step(dt) {
     laughBeat -= dt;
     if (laughBeat <= 0) {
       laughBeat = 0.2 + Math.random() * 0.04;
-      BODY.belly.v += 95 * laugh;
-      setTimeout(() => { BODY.chestL.v += 110 * laugh; BODY.chestR.v += 100 * laugh; }, 40);
+      BODY.belly.v += 155 * laugh;   // 2026-11-04 大きくした（95 → 155。胸も約1.6倍）
+      setTimeout(() => { BODY.chestL.v += 175 * laugh; BODY.chestR.v += 160 * laugh; }, 40);
     }
   }
   Object.values(BODY).forEach((b) => {
     b.v += (-240 * b.y - 6.5 * b.v) * dt; b.y += b.v * dt;
-    if (b.y > 14) { b.y = 14; b.v *= 0.5; } else if (b.y < -14) { b.y = -14; b.v *= 0.5; }
+    if (b.y > 22) { b.y = 22; b.v *= 0.5; } else if (b.y < -22) { b.y = -22; b.v *= 0.5; }   // 動きすぎないように（ピクセル）
   });
   pads.forEach((p) => {
     let target = 0;
