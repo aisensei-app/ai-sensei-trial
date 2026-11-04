@@ -1407,3 +1407,20 @@ body.in-x #post .p-tanu { height: 38vh; }
 .fr-back { position: fixed; z-index: 46; left: max(16px, env(safe-area-inset-left)); top: calc(env(safe-area-inset-top) + 12px); }
 body.fr-on .toast { z-index: 47; }
 body.fr-on #lang-btn, body.fr-on .lang-btn { visibility: hidden; }
+
+/* ---- 📖 交換日記（post.js の showBox。2026-11-04 夜）：日付ごとに「きみ」のお手紙と「タヌくん」のお返事を、ふきだしで並べる ---- */
+#post .p-diary .p-dstat { margin: -4px 0 2px; text-align: center; font-size: 13px; font-weight: 700; opacity: .7; }
+#post .p-dlist { display: flex; flex-direction: column; gap: 14px; }
+#post .p-dent { display: flex; flex-direction: column; gap: 6px; }
+#post .p-ddate { margin: 0; text-align: center; font-size: 12px; font-weight: 700; opacity: .55; }
+#post .p-dmsg { max-width: 86%; padding: 8px 12px; border-radius: 14px; box-shadow: 0 1px 0 rgba(74, 46, 22, .12); }
+#post .p-dmsg b { display: block; font-size: 11px; opacity: .6; margin-bottom: 2px; }
+#post .p-dmsg p { margin: 0; font-size: 14px; line-height: 1.55; white-space: pre-line; overflow-wrap: anywhere; }
+#post .p-dmsg.me { align-self: flex-end; background: #FFFFFF; border-bottom-right-radius: 4px; }
+#post .p-dmsg.tanu { align-self: flex-start; background: #FFE7EF; border-bottom-left-radius: 4px; }
+
+/* ---- 💡 作者へのご意見（app.js の showOpinion。2026-11-04 夜） ---- */
+.op-text { width: 100%; box-sizing: border-box; border: 2px solid #E9C89A; border-radius: 14px; padding: 10px 12px; font: inherit; font-size: 16px;
+  color: inherit; background: #fff; resize: vertical; -webkit-user-select: text; user-select: text; }
+.op-text:focus { outline: none; border-color: #F08A3C; }
+.op-count { text-align: right; margin-top: -4px !important; }

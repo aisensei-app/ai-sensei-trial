@@ -80,18 +80,17 @@
             'Clearing the browser data also erases your progress (adding the app to your home screen makes this less likely).' },
     { title: 'What we count',
       text: 'To make the app better, we count things like how many days people play, which screens are opened, and which buttons are pressed in "A note from Tanu-kun", anonymously.\n' +
-            'Your name and progress are never sent.' },
-    { title: 'About letters',
-      text: 'Letters you write reach Tanu-kun\'s creator via Google Forms.\n' +
-            '<b>Letters are read by the creator and by an AI that helps sort them.</b> We summarize what people often say and use it to improve the app. Your letter is never published as is.\n' +
-            '<b>Please don\'t write your name, address, school, contact info, or anything that could identify you.</b>\n' +
-            'Letters arrive anonymously, so the creator can\'t reply to each person, and a letter can\'t be deleted after it\'s sent.',
-      textLocal: 'Right now, letters you write are only kept on this phone and are not sent anywhere.' },
+            'Your name and progress are never sent. For letters to Tanu-kun, we only count how many you wrote and over how many days (never the text or what it\'s about).' },
+    { title: 'About letters & feedback',
+      text: '<b>Letters to Tanu-kun are kept only on this phone.</b> They\'re never sent to the creator or anyone else, so write freely.\n' +
+            'Only what you write in "💡 Feedback for the creator" (in Settings) reaches the creator via Google Forms. It\'s read by the creator and an AI that helps sort it, and used to improve the app (it\'s never published as is).\n' +
+            '<b>In feedback, please don\'t write your name, address, school, contact info, or anything that could identify you.</b> It arrives anonymously, so the creator can\'t reply to each person, and it can\'t be deleted after sending.',
+      textLocal: 'Letters to Tanu-kun are kept only on this phone. They\'re never sent to the creator or anyone else, so write freely.' },
     { title: 'Tanu-kun\'s replies',
-      text: 'Tanu-kun\'s replies are chosen from words prepared in advance.\n' +
+      text: 'Tanu-kun\'s replies are chosen from words prepared in advance, by looking at the words in your letter right on this phone (the text is never sent anywhere).\n' +
             'If something is troubling you or you\'re having a hard time, please also talk to an adult you trust or a support service, not just in a letter.' },
     { title: 'Google services',
-      text: 'Letters are sent using Google Forms, so Google\'s Privacy Policy also applies.' },
+      text: 'Feedback for the creator is sent using Google Forms, so Google\'s Privacy Policy also applies.' },
     { title: 'About fortunes',
       text: 'The seashell fortune is just for fun.' }
   ],
@@ -103,7 +102,7 @@
           'Illustrations are made with AI.\n' +
           'Your progress is saved only on this device.\n' +
           'To make the app better, we count things like how many days people play, anonymously (your name and progress are never sent).',
-    post: '📮 Letters to Tanu-kun are read by the creator and an AI that helps sort them (please don\'t write your name or personal info).',
+    post: '📮 Letters to Tanu-kun stay on this phone only (not even the creator can see them). You can send feedback to the creator from Settings.',
     more: 'For details, see "ⓘ Promises & notes" in Settings anytime.',
     ok: 'Got it! Let\'s play'
   }

@@ -87,6 +87,12 @@ window.TanuI18n = (function () {
       '見せたいものが あるんだ…♪\nハートのあわ、さわってみて？': 'I want to show you something…♪\nTry touching the heart bubble?',
       'おかえり！ 楽しかった？': 'Welcome back! Was it fun?', 'おかえり〜！': 'Welcome back~!',
       'ふれあいの ごほうび 💗+{n}': 'Cuddle reward 💗+{n}',
+      // 💡 作者へのご意見（2026-11-04 夜）
+      '💡 作者へのご意見・ご感想': '💡 Feedback for the creator',
+      'アプリをよくするための ご意見・ご感想・こまったことを、作者に送れます。': 'You can send the creator your thoughts, ideas, or problems to help make the app better.',
+      '作者と、集計を手伝う AI が読みます。名前・住所・学校など、あなたがだれか分かることは書かないでね。一人ひとりへのお返事はできず、送ったあとで消すこともできません。': 'It\'s read by the creator and an AI that helps sort feedback. Please don\'t write your name, address, school, or anything that could identify you. The creator can\'t reply to each person, and it can\'t be deleted after sending.',
+      '🦝 タヌくんへのお手紙は、ポストからどうぞ（作者にも見えません）': '🦝 For letters to Tanu-kun, use the mailbox (not even the creator can see those)',
+      '📨 作者に送る': '📨 Send to the creator', 'ここに書いてね': 'Write here', '作者に とどけました。ありがとう！': 'Sent to the creator. Thank you!',
       '{p}をさわる': 'Touch {p}',
       // ハート・日付
       '{h}時間': '{h}h ', '{m}分': '{m}m',

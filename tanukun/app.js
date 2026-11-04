@@ -1378,6 +1378,50 @@
     });
   }
 
+  /* ---- 💡 作者へのご意見・ご感想（2026-11-04 夜）----
+     タヌくんへのお手紙（ポスト）とは分けた。ここに書いたものだけが、Google フォーム（config.js の post.form）で作者に とどく。
+     フォームの「切手」の欄には 'opinion' と入れて、お手紙（前の形）と見分けられるようにする */
+  const OPINION_MAX = 400;
+  function sendToForm(d) {
+    const F = postFormInfo();
+    if (!F) return false;
+    try {
+      const body = new URLSearchParams();
+      if (F.entry.text) body.append(F.entry.text, d.text);
+      if (F.entry.stamp) body.append(F.entry.stamp, d.stamp);
+      if (F.entry.lang) body.append(F.entry.lang, d.lang);
+      fetch(F.action, { method: 'POST', mode: 'no-cors', body: body }).catch(() => {});
+      return true;
+    } catch (e) { return false; }
+  }
+  function showOpinion() {
+    if (!postFormInfo()) return;
+    STATS.ping('o-open');
+    openSheet(tr('💡 作者へのご意見・ご感想'),
+      '<p class="note">' + tr('アプリをよくするための ご意見・ご感想・こまったことを、作者に送れます。') + '</p>' +
+      '<textarea id="op-text" class="op-text" rows="6" maxlength="' + OPINION_MAX + '"></textarea>' +
+      '<p class="note small op-count">0 / ' + OPINION_MAX + '</p>' +
+      '<p class="note small">' + tr('作者と、集計を手伝う AI が読みます。名前・住所・学校など、あなたがだれか分かることは書かないでね。一人ひとりへのお返事はできず、送ったあとで消すこともできません。') +
+      (C.rules ? ' <button id="op-rules" class="link" type="button">' + tr('ⓘ お約束と注意') + '</button>' : '') + '</p>' +
+      '<p class="note small">' + tr('🦝 タヌくんへのお手紙は、ポストからどうぞ（作者にも見えません）') + '</p>' +
+      '<button id="op-send" class="btn btn-main" type="button" disabled>' + tr('📨 作者に送る') + '</button>');
+    const ta = $('op-text'), send = $('op-send');
+    ta.placeholder = tr('ここに書いてね');
+    ta.addEventListener('input', () => {
+      $('sheet-body').querySelector('.op-count').textContent = ta.value.length + ' / ' + OPINION_MAX;
+      send.disabled = !ta.value.trim();
+    });
+    if ($('op-rules')) $('op-rules').addEventListener('click', () => showRules('post'));
+    send.addEventListener('click', () => {
+      const text = ta.value.trim().slice(0, OPINION_MAX);
+      if (!text) return;
+      sendToForm({ text: text, stamp: 'opinion', lang: I18N.lang });
+      STATS.ping('o-send');
+      closeSheet();
+      toast(tr('作者に とどけました。ありがとう！'), 2600);
+    });
+  }
+
   /* ---- タヌくんからの「おたより」（感想を聞く。2026-11-03。config.js の feedback）----
      タヌくんが、胸の前で指をちょんちょんしながら「ねえねえ、ちょっとだけ教えて？」。
      ① なくなったら（ひとつ）② 好きな所（いくつでも）をえらんで「おくる」→ 押された数だけを匿名の目印で数える（文は送らない）。
@@ -1390,13 +1434,16 @@
   const fbForm = () => { const u = FB && FB.formUrl; return (u && (u[I18N.lang] || u.ja)) || ''; };
   function fbMoreHtml() {
     // 📮 ポストがあれば、そちらでお手紙を書いてもらう（タヌくんにとどいて、次の日にお返事）
-    if (POST) return '<button class="btn btn-wide fb-post" type="button">' + tr('📮 タヌくんにお手紙を書く') + '</button>';
+    if (POST) return '<button class="btn btn-wide fb-post" type="button">' + tr('📮 タヌくんにお手紙を書く') + '</button>' +
+      (postFormInfo() ? '<button class="btn btn-wide fb-opinion" type="button">' + tr('💡 作者へのご意見・ご感想') + '</button>' : '');
     return fbForm() ? '<a class="btn btn-wide fb-more" target="_blank" rel="noopener">' + tr('✉️ もっと書く') + '</a>' +
       '<p class="note small center">' + tr('書いた内容は Google フォームに届きます。名前などは書かないでね') + '</p>' : '';
   }
   function bindFbMore(body) {
     const pb = body.querySelector('.fb-post');
     if (pb) pb.addEventListener('click', () => { STATS.ping('f-more'); closeSheet(); POST.write(); });
+    const po = body.querySelector('.fb-opinion');
+    if (po) po.addEventListener('click', () => { STATS.ping('f-more'); showOpinion(); });
     const a = body.querySelector('.fb-more');
     if (!a) return;
     a.href = fbForm();
@@ -1890,6 +1937,7 @@
       (C.notice ? '<h3>' + tr('このアプリ') + '</h3><button id="btn-about" class="btn btn-wide" type="button">' + tr('このアプリについて') + '</button>' : '') +
       (C.rules ? '<button id="btn-rules" class="btn btn-wide" type="button">' + tr('ⓘ お約束と注意') + '</button>' : '') +
       (FB ? '<button id="btn-feedback" class="btn btn-wide" type="button">' + tr('💬 タヌくんにおたより') + '</button>' : '') +
+      (postFormInfo() ? '<button id="btn-opinion" class="btn btn-wide" type="button">' + tr('💡 作者へのご意見・ご感想') + '</button>' : '') +
       '<h3>' + tr('記録') + '</h3>' +
       '<p class="note">' + tr('記録はこのスマホのブラウザの中だけに保存されます。') +
       tr('<b>ホーム画面に追加</b>して使うと、記録が消えにくくなります。') + '</p>' +
@@ -1920,6 +1968,7 @@
     if ($('btn-about')) $('btn-about').addEventListener('click', () => showNotice(null));
     if ($('btn-rules')) $('btn-rules').addEventListener('click', () => showRules());
     if ($('btn-feedback')) $('btn-feedback').addEventListener('click', () => showFeedback(false));
+    if ($('btn-opinion')) $('btn-opinion').addEventListener('click', showOpinion);
     if (C.testHearts && $('btn-test-feedback')) $('btn-test-feedback').addEventListener('click', () => showFeedback(true));
     if (C.testHearts && POST && $('btn-test-post')) $('btn-test-post').addEventListener('click', () => { POST.testArrive(); closeSheet(); toast('📮 お返事が とどいたよ（確認用）'); });
     if ($('set-lang')) $('set-lang').addEventListener('change', (e) => I18N.set(e.target.value));
@@ -2231,20 +2280,9 @@
       iris: window.TanuIris || null,
       hold: () => (HOME ? HOME.hold() : null),
       ping: (n) => STATS.ping(n),
-      form: () => !!postFormInfo(),
+      once: (n) => STATS.once(n),   // お手紙の回数・日数（m-n〇・m-s〇。このスマホで1回だけ）
       rules: C.rules ? () => showRules('post') : null,   // お手紙を書く画面の ⓘ
-      // 書いたお手紙を Google フォームへ（画面は切りかえずに、裏で送る。届いたかは確かめられない）
-      submit: (d) => {
-        const F = postFormInfo();
-        if (!F) return;
-        try {
-          const body = new URLSearchParams();
-          if (F.entry.text) body.append(F.entry.text, d.text);
-          if (F.entry.stamp) body.append(F.entry.stamp, d.stamp);
-          if (F.entry.lang) body.append(F.entry.lang, d.lang);
-          fetch(F.action, { method: 'POST', mode: 'no-cors', body: body }).catch(() => {});
-        } catch (e) {}
-      },
+      // 2026-11-04 夜〜：タヌくんへのお手紙は、どこにも送らない（submit なし）。作者へは showOpinion から
       onClose: () => { maybeFeedback(); }
     });
     POST.makeButton($('home'));

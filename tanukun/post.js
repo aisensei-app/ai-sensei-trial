@@ -5,9 +5,13 @@
    ・書く：切手を選んで、200字まで → おくる → 便せんが封筒になって、タヌくんが両手で抱えて「よ、読むね…！」
      → 次の日（日付が変わったら）お返事が届く。お手紙は1日1通まで
    ・お返事は、前もって用意した短くてかわいい文から選ぶ（選んだ切手・呼び名で変わる）。
-     書いた内容を読んだふりはしない（どの手紙にも合う、あたたかい文）
+     2026-11-04 夜〜：お手紙の言葉を、このスマホの中で見分けて、内容に合わせたお返事にする（TOPICS。好き・ありがとう・質問・つかれた など）。
+     見分けられないときは、どの手紙にも合う、あたたかい文
+   ・2026-11-04 夜〜：タヌくんへのお手紙は、どこにも送らない（作者にも見えない。ユーザーと決めた。「タヌくんだけに書いたのに作者に読まれた」と
+     恥ずかしい思いをさせないため）。作者へのご意見は、別の入口（app.js の「💡 作者へのご意見」）から Google フォームへ
+   ・数えるのは、だれのものかわからない形の「回数・日数」だけ（m-send・m-n〇・m-s〇。文や話題は送らない）
+   ・📖 交換日記：書いたお手紙とお返事を、日付ごとに並べて見られる
    ・ときどき、タヌくんから先にお手紙（なかよし10・30・50・100日目、クリアの日）
-   ・書いたお手紙の届け先：config.js の post.form（Google フォーム）。空なら、お手紙はスマホの中にしまうだけ（どこにも送らない）
    ・書く画面の注意書きのあとに「ⓘ お約束と注意」（opts.rules。app.js の showRules('post') を開く）
    ・記録はこのスマホの中（localStorage の tanukun.post）
    使い方：const p = window.TanuPost({ ...下の opts }) → p.open(pt) / p.unread() / p.write() / p.checkMilestones(totalDays, cleared)
@@ -49,6 +53,69 @@ window.TanuPost = function (opts) {
     moon: [{ ja: 'お月さまの きって、きれいだね。\nこんやは いっしょに 月を みようね。\nおやすみ 🌙', en: 'What a pretty moon stamp.\nLet\'s look at the moon together tonight.\nGood night 🌙', zh: '月亮邮票好漂亮。\n今晚一起看月亮吧。\n晚安 🌙' }],
     star: [{ ja: 'お星さまの きって、キラキラだ！\nきみの ねがいごと、かないますように。\nありがとう ⭐', en: 'A star stamp, so sparkly!\nI hope your wish comes true.\nThank you ⭐', zh: '星星邮票亮晶晶的！\n希望你的愿望能实现。\n谢谢你 ⭐' }]
   };
+  /* お手紙の話題（2026-11-04 夜）：上から順に見て、最初に当てはまった話題のお返事にする。文はこのスマホの中で見るだけで、どこにも送らない
+     words … 小文字にした文に、どれか1つでも入っていれば当てはまる（日本語・英語・中国語・韓国語の、よく使う言葉）
+     ask   … true なら「？」もいっしょにあるときだけ（質問） */
+  const TOPICS = [
+    { id: 'help', words: ['死にたい', 'しにたい', '消えたい', 'きえたい', '自殺', 'じさつ', 'suicide', 'kill myself', 'want to die', '想死', '自杀', '不想活', '죽고 싶'] },
+    { id: 'adult', words: ['えっち', 'エッチ', 'えろ', 'エロ', 'セックス', 'はだか', '裸', 'おちんちん', 'ちんこ', 'sex', 'fuck', 'naked', 'nude', 'nsfw', 'horny', 'dick', 'cock', '色色', '做爱', '肉棒', '鸡巴', '야한', '섹스'] },
+    { id: 'sad', words: ['疲れ', 'つかれ', 'しんど', 'つらい', '辛い', 'かなしい', '悲しい', 'さみしい', '寂しい', 'さびしい', '泣', '眠れ', 'ねむれ', '落ち込', 'tired', 'sad', 'lonely', ' cry', 'stress', 'depress', 'exhausted', '累', '难过', '難過', '伤心', '傷心', '孤独', '寂寞', '哭', '压力', '힘들', '슬퍼', '외로'] },
+    { id: 'ask', ask: true, words: ['好き', 'すき', 'なに', '何', 'どこ', 'どんな', 'what', 'favorite', 'favourite', 'do you like', 'like', '喜欢', '什么', '吗', '嗎', '뭐', '좋아'] },
+    { id: 'together', words: ['ずっと', 'いっしょ', '一緒', 'そばに', 'always', 'together', 'forever', 'by your side', 'soulmate', '一直', '一起', '永远', '永遠', '陪', '함께', '같이'] },
+    { id: 'love', words: ['好き', 'すき', '大好き', '愛', 'あいして', 'love', '❤', '💕', '💗', '💖', '♡', '♥', '爱', '愛你', '喜欢', '사랑', '좋아'] },
+    { id: 'thanks', words: ['ありがと', '癒', 'いやさ', 'いやし', 'たのし', '楽し', 'うれし', '嬉し', 'thank', 'thx', 'comfort', 'heal', 'happy', 'fun', '谢谢', '謝謝', '治愈', '感谢', '开心', '開心', '고마', '감사', '행복'] },
+    { id: 'food', words: ['ごはん', 'ご飯', 'たべ', '食べ', 'おいし', '美味', 'ラーメン', 'おにぎり', 'おやつ', 'ケーキ', ' eat', 'food', 'yummy', 'delicious', 'snack', '吃', '好吃', '饭', '美食', '먹'] },
+    { id: 'play', words: ['ぽんぽこ', 'ぽんぽん', 'ラリー', 'おなか', 'お腹', 'しっぽ', '尻尾', '肉球', 'なでなで', 'belly', 'tummy', 'tail', 'paw', 'pat ', 'pats', 'pet ', '肚子', '尾巴', '摸', '배'] },
+    { id: 'hello', words: ['はじめまして', 'こんにちは', 'こんばんは', 'おはよう', 'hello', 'hi ', 'hey', '你好', '初次见面', '안녕'] }
+  ];
+  function topicOf(text) {
+    const t = ' ' + String(text || '').toLowerCase() + ' ';
+    const q = /[?？]/.test(t);
+    const hit = TOPICS.find((x) => (!x.ask || q) && x.words.some((w) => t.indexOf(w.toLowerCase()) >= 0));
+    return hit ? hit.id : '';
+  }
+  // 話題ごとのお返事（短くてかわいい。2つずつ。help は、身近な大人や窓口にも話してね、をやさしく）
+  Object.assign(REPLIES, {
+    help: [
+      { ja: 'お手紙、ありがとう。\nつらい気持ち、ここに書いてくれたんだね。\nぼく、ずっと そばに いるよ。\nでも、身近な大人や 相談できる窓口にも\nお話してみてね。きみは ひとりじゃないよ 🐾', en: 'Thank you for your letter.\nYou wrote down how much it hurts.\nI\'ll always be right here.\nBut please also talk to a grown-up you trust,\nor a helpline. You\'re not alone 🐾', zh: '谢谢你的信。\n你把难过的心情写给我了呢。\n我会一直在你身边。\n也请和身边的大人\n或可以倾诉的热线聊一聊。你不是一个人 🐾' }
+    ],
+    adult: [
+      { ja: 'そ、そういうのは…ないしょ！🙈\nぼくは なでなで が いちばん すきなの。\nまた おなか ぽんぽん してね', en: 'Th-that kind of thing is… a secret! 🙈\nI like head pats the most.\nCome drum my belly again', zh: '那、那种事…是秘密！🙈\n我最喜欢被摸摸头了。\n再来拍拍我的肚子吧' },
+      { ja: 'も、もう〜！ はずかしいよ〜！\nそれより いっしょに 海を みよ？\nなかよしで いようね 🌊', en: 'G-geez~! That\'s embarrassing~!\nLet\'s look at the sea together instead?\nLet\'s stay good friends 🌊', zh: '真、真是的～！好害羞～！\n我们一起去看海吧？\n要一直做好朋友哦 🌊' }
+    ],
+    sad: [
+      { ja: 'お手紙 よんだよ。\nがんばってるんだね。えらいよ。\nきょうは ぼくの おなかで、ひとやすみ してね 🫧', en: 'I read your letter.\nYou\'re working so hard. I\'m proud of you.\nCome rest on my belly today 🫧', zh: '我读了你的信。\n你一直很努力呢，真了不起。\n今天就靠在我的肚子上休息一下吧 🫧' },
+      { ja: 'つかれた日は、むり しないでね。\nあったかい のみもの のんで、\nはやめに ねよう。ぼくも いっしょに ねるね 🌙', en: 'On tiring days, don\'t push yourself.\nHave something warm to drink,\nand go to bed early. I\'ll sleep too 🌙', zh: '累的时候，不要勉强自己哦。\n喝点热乎乎的东西，\n早点睡吧。我也陪你一起睡 🌙' }
+    ],
+    ask: [
+      { ja: 'しつもん、ありがとう！\nぼくの 好きなものはね…\nおにぎり、ハイビスカス、おひるね！\nきみの 好きなものも おしえてね 🍙', en: 'Thanks for asking!\nMy favorite things are…\nrice balls, hibiscus, and naps!\nTell me yours too 🍙', zh: '谢谢你问我！\n我喜欢的东西是…\n饭团、扶桑花、还有午睡！\n也告诉我你喜欢什么吧 🍙' },
+      { ja: 'えへへ、ひみつ…って いいたいけど、\nとくべつに おしえるね。\nぼく、なみの おとを きくのが 大好きなんだ 🌊', en: 'Hehe, I want to say it\'s a secret…\nbut I\'ll tell you, just you.\nI love listening to the waves 🌊', zh: '嘿嘿，本来想说是秘密…\n但特别告诉你吧。\n我最喜欢听海浪的声音了 🌊' }
+    ],
+    together: [
+      { ja: 'ずっと いっしょ…うれしい！\nぼくは いつでも ここに いるよ。\nきみが きてくれるの、まってるね 🐾', en: 'Always together… that makes me so happy!\nI\'ll always be right here.\nI\'ll be waiting for you to come 🐾', zh: '一直在一起…好开心！\n我会一直在这里。\n等你来找我哦 🐾' },
+      { ja: 'きみと すごす じかん、\nぼくの たからもの なんだ。\nこれからも よろしくね 💗', en: 'The time I spend with you\nis my treasure.\nLet\'s keep being together 💗', zh: '和你在一起的时光，\n是我的宝物。\n以后也请多多关照 💗' }
+    ],
+    love: [
+      { ja: '好きって いってくれて…\nえへへ、てれちゃう。\nぼくも きみのこと、大好きだよ 💗', en: 'You said you love me…\nhehe, I\'m blushing.\nI love you lots too 💗', zh: '你说喜欢我…\n嘿嘿，好害羞。\n我也最喜欢你了 💗' },
+      { ja: 'その ことば、なんかいも よんじゃった。\nむねが ぽかぽか してるよ。\nありがとう、大好き！🌺', en: 'I read those words again and again.\nMy chest feels all warm.\nThank you, I love you too! 🌺', zh: '那句话，我读了好多遍。\n心里暖洋洋的。\n谢谢你，最喜欢你了！🌺' }
+    ],
+    thanks: [
+      { ja: 'ありがとう って いわれると、\nぼくの ほうが うれしく なっちゃう。\nきみが いやされたなら、よかった〜 🫧', en: 'When you say thank you,\nI end up even happier.\nI\'m so glad I could cheer you up 🫧', zh: '听到你说谢谢，\n我反而更开心了。\n能让你开心，真是太好了 🫧' },
+      { ja: 'こちらこそ、いつも ありがとう！\nきみが くると、ぼくも げんきに なるんだ 🐾', en: 'Thank YOU, always!\nWhen you come, I get energized too 🐾', zh: '我才要谢谢你！\n你一来，我也变得有精神了 🐾' }
+    ],
+    food: [
+      { ja: 'おいしそうな お話…！\nよんでたら、おなかが ぐぅ〜って なったよ。\nこんど いっしょに たべようね 🍙', en: 'That sounds so yummy…!\nMy tummy rumbled while reading.\nLet\'s eat together sometime 🍙', zh: '听起来好好吃…！\n读着读着肚子就咕咕叫了。\n下次一起吃吧 🍙' },
+      { ja: 'たべるの、ぼくも 大好き！\nいちばんは おにぎり かな。\nきみの おすすめも おしえてね 🍙', en: 'I love eating too!\nRice balls are my number one.\nTell me your favorite food too 🍙', zh: '我也最喜欢吃东西了！\n第一名大概是饭团吧。\n也告诉我你推荐的美食吧 🍙' }
+    ],
+    play: [
+      { ja: 'おなか ぽんぽん、たのしいよね！\nぼくも きみに さわってもらうと、\nぽかぽか するんだ 🫧', en: 'Belly drumming is fun, right?\nWhen you pat me,\nI feel all warm 🫧', zh: '拍肚子很好玩吧！\n被你摸摸的时候，\n我也会暖洋洋的 🫧' },
+      { ja: 'また いっしょに あそぼうね！\nしっぽも、おなかも、\nいつでも まってるよ 🐾', en: 'Let\'s play together again!\nMy tail and my belly\nare always waiting for you 🐾', zh: '我们再一起玩吧！\n尾巴和肚子，\n随时都在等你哦 🐾' }
+    ],
+    hello: [
+      { ja: 'はじめまして…じゃなくても、こんにちは！\nお手紙、とっても うれしいよ。\nなかよく してね 🌺', en: 'Hello there!\nI\'m so happy to get your letter.\nLet\'s be good friends 🌺', zh: '你好呀！\n收到你的信好开心。\n我们做好朋友吧 🌺' }
+    ]
+  });
+
   // タヌくんから先に届くお手紙（なかよし〇日目・クリア）
   const MILESTONES = [
     { id: 'd10', days: 10, text: { ja: 'なかよし10日目だね！\nいつも 会いに きてくれて、ありがとう。\nこれからも よろしくね 🐾', en: 'It\'s our 10th day together!\nThanks for always coming to see me.\nLet\'s keep being friends 🐾', zh: '我们亲密第10天啦！\n谢谢你总是来看我。\n以后也请多多关照 🐾' } },
@@ -61,7 +128,11 @@ window.TanuPost = function (opts) {
     title: { ja: '📮 タヌくんのポスト', en: '📮 Tanu-kun\'s Mailbox', zh: '📮 狸君的信箱' },
     write: { ja: '✏️ お手紙を書く', en: '✏️ Write a letter', zh: '✏️ 写信' },
     read: { ja: '📬 お返事を読む', en: '📬 Read the reply', zh: '📬 读回信' },
-    box: { ja: '📚 お手紙箱', en: '📚 Letter box', zh: '📚 信件盒' },
+    box: { ja: '📖 交換日記', en: '📖 Exchange diary', zh: '📖 交换日记' },
+    diaryStat: { ja: 'やりとり {n}回・{d}日間', en: 'Letters: {n} · Days: {d}', zh: '往来 {n} 次 · {d} 天' },
+    diaryWait: { ja: '（お返事は 明日 とどくよ）', en: '(The reply arrives tomorrow)', zh: '（回信明天到哦）' },
+    me: { ja: 'きみ', en: 'You', zh: '你' },
+    tanuName: { ja: 'タヌくん', en: 'Tanu-kun', zh: '狸君' },
     back: { ja: '‹ もどる', en: '‹ Back', zh: '‹ 返回' },
     hiUnread: { ja: 'お手紙、とどいてるよ！ 📮', en: 'A letter has arrived for you! 📮', zh: '有你的信哦！📮' },
     hiWait: { ja: '明日、お返事を書くね…！', en: 'I\'ll write you back tomorrow…!', zh: '明天给你回信哦…！' },
@@ -71,9 +142,8 @@ window.TanuPost = function (opts) {
     hint: { ja: 'ここに書いてね（{n}字まで）', en: 'Write here (up to {n} characters)', zh: '写在这里（最多{n}字）' },
     send: { ja: '📮 おくる', en: '📮 Send', zh: '📮 寄出' },
     cancel: { ja: 'やめる', en: 'Cancel', zh: '不写了' },
-    noteForm: { ja: 'お手紙は Google フォームを通じて作者に とどき、作者と、集計を手伝う AI が読みます。名前・住所・学校など、あなたがだれか分かることは書かないでね', en: 'Your letter reaches Tanu-kun\'s creator via Google Forms, and is read by the creator and an AI that helps sort the letters. Please don\'t write your name, address, school, or anything that could identify you', zh: '信件会通过 Google 表单送到作者那里，由作者和帮忙整理的 AI 阅读。请不要写名字、地址、学校等能认出你是谁的信息' },
     rules: { ja: 'ⓘ お約束と注意', en: 'ⓘ Promises & notes', zh: 'ⓘ 约定与注意事项' },
-    noteLocal: { ja: 'お手紙は、このスマホの中に しまわれます（どこにも送りません）', en: 'Your letter is kept on this phone only (it isn\'t sent anywhere)', zh: '信件只保存在这部手机里（不会发送到任何地方）' },
+    noteLocal: { ja: '🔒 このお手紙は、タヌくんにだけ とどくよ。作者にも、だれにも 見られないから 安心してね（このスマホの中だけ）', en: '🔒 This letter goes only to Tanu-kun. Not even the creator can see it, so don\'t worry (it stays on this phone)', zh: '🔒 这封信只会送到狸君手里。作者和其他任何人都看不到，请放心（只保存在这部手机里）' },
     got: { ja: 'よ、読むね…！', en: 'I-I\'ll read it…!', zh: '我、我会好好读的…！' },
     tomorrow: { ja: '明日、お返事を書くね 📮', en: 'I\'ll write back tomorrow 📮', zh: '明天给你回信哦 📮' },
     writing: { ja: '明日までに、お返事 書いておくね ✍️', en: 'I\'ll have a reply ready by tomorrow ✍️', zh: '明天之前，我会写好回信的 ✍️' },
@@ -98,9 +168,22 @@ window.TanuPost = function (opts) {
   const arrived = (l) => l.tanu || l.day < today();
   const unread = () => st.letters.filter((l) => arrived(l) && !l.read).length;
   const wroteToday = () => st.letters.some((l) => !l.tanu && l.day === today());
-  function pickReply(stamp) {
-    // 切手のお返事（3回に1回）か、ふつうのお返事。前と同じにならないように
+  // 日付（'2026-11-04'）の間の日数
+  function daysBetween(a, b) {
+    const d = (x) => { const p = String(x).split('-'); return Date.UTC(+p[0], +p[1] - 1, +p[2]); };
+    return Math.max(0, Math.round((d(b) - d(a)) / 864e5));
+  }
+  function pickReply(stamp, text) {
     const last = st.letters.length ? st.letters[st.letters.length - 1].reply : '';
+    // お手紙の話題が分かれば、その話題のお返事（前と同じにならないように）
+    const tp = topicOf(text);
+    if (tp && REPLIES[tp]) {
+      const n = REPLIES[tp].length;
+      let i = Math.floor(Math.random() * n);
+      if (tp + ':' + i === last && n > 1) i = (i + 1) % n;
+      return tp + ':' + i;
+    }
+    // 切手のお返事（3回に1回）か、ふつうのお返事。前と同じにならないように
     for (let k = 0; k < 6; k++) {
       const useStamp = REPLIES[stamp] && Math.random() < 0.34;
       const list = useStamp ? stamp : 'any';
@@ -236,7 +319,7 @@ window.TanuPost = function (opts) {
     $('.p-box').classList.toggle('has', !!n);
     $('.p-tanu').src = opts.happy;
     say(n ? T(UI.hiUnread) : wroteToday() ? T(UI.hiWait) : T(UI.hiIdle));
-    const replies = st.letters.filter(arrived);
+    const replies = st.letters.filter((l) => !l.tanu || arrived(l));
     const m = $('.p-menu');
     m.innerHTML =
       (n ? '<button class="btn btn-main p-read" type="button">' + T(UI.read) + ' <i>' + n + '</i></button>' : '') +
@@ -260,7 +343,7 @@ window.TanuPost = function (opts) {
       '<p class="p-dear">' + T(UI.place) + '</p>' +
       '<textarea class="p-text" maxlength="' + MAX + '" rows="6"></textarea>' +
       '<p class="p-count">0 / ' + MAX + '</p>' +
-      '<p class="p-note">' + (opts.form && opts.form() ? T(UI.noteForm) : T(UI.noteLocal)) +
+      '<p class="p-note">' + T(UI.noteLocal) +
         (opts.rules ? ' <button type="button" class="p-info">' + T(UI.rules) + '</button>' : '') + '</p>' +
       '<div class="p-row"><button class="btn p-cancel" type="button">' + T(UI.cancel) + '</button>' +
       '<button class="btn btn-main p-send" type="button" disabled>' + T(UI.send) + '</button></div>';
@@ -281,10 +364,16 @@ window.TanuPost = function (opts) {
   }
   function sendLetter(text, stamp) {
     if (!text || wroteToday()) return;
-    st.letters.push({ day: today(), stamp: stamp, text: text, reply: pickReply(stamp), read: false });
+    st.letters.push({ day: today(), stamp: stamp, text: text, reply: pickReply(stamp, text), read: false });
     save();
+    // 数えるのは、回数と日数だけ（文・話題は、どこにも送らない）
     opts.ping && opts.ping('m-send');
-    if (opts.submit) opts.submit({ text: text, stamp: stamp, lang: L() });
+    if (opts.once) {
+      const mine = st.letters.filter((l) => !l.tanu);
+      const span = daysBetween(mine[0].day, today()) + 1;   // はじめて書いた日から、何日間つづいているか
+      [1, 3, 7, 15, 30].forEach((n) => { if (mine.length >= n) opts.once('m-n' + n); });
+      [3, 7, 14, 30].forEach((n) => { if (span >= n) opts.once('m-s' + n); });
+    }
     // 便せんが封筒になって、タヌくんへ
     const sh = $('.p-sheet');
     const s = STAMPS.find((x) => x.id === stamp) || STAMPS[0];
@@ -371,25 +460,34 @@ window.TanuPost = function (opts) {
     refreshBadge();
   }
 
-  // 📚 お手紙箱
+  // 📖 交換日記（2026-11-04 夜。前の「お手紙箱」）：書いたお手紙と、タヌくんのお返事を、新しい順に並べる
   function showBox() {
-    const list = st.letters.filter(arrived).slice().reverse();
+    opts.ping && opts.ping('m-diary');
+    const list = st.letters.slice().reverse();
+    const mine = st.letters.filter((l) => !l.tanu);
     const sh = $('.p-sheet');
-    sh.className = 'p-sheet p-paper p-boxlist';
+    sh.className = 'p-sheet p-paper p-boxlist p-diary';
     sh.innerHTML = '<p class="p-stlabel">' + T(UI.box) + '</p>' +
-      (list.length ? '<ul></ul>' : '<p class="p-body"></p>') +
+      (mine.length ? '<p class="p-dstat"></p>' : '') +
+      (list.length ? '<div class="p-dlist"></div>' : '<p class="p-body"></p>') +
       '<div class="p-row"><button class="btn p-close" type="button">' + T(UI.close) + '</button></div>';
+    if (mine.length) sh.querySelector('.p-dstat').textContent = fill(T(UI.diaryStat), { n: mine.length, d: daysBetween(mine[0].day, today()) + 1 });
     if (!list.length) sh.querySelector('.p-body').textContent = T(UI.empty);
-    const ul = sh.querySelector('ul');
+    const box = sh.querySelector('.p-dlist');
     list.forEach((l) => {
-      const li = document.createElement('li');
       const s = STAMPS.find((x) => x.id === l.stamp);
       const d = l.day.split('-');
-      li.innerHTML = '<button type="button"><b>' + (l.tanu ? '🐾' : (s ? s.icon : '🌺')) + '</b><span></span><em></em></button>';
-      li.querySelector('span').textContent = replyText(l).split('\n')[0];
-      li.querySelector('em').textContent = (l.tanu ? T(UI.fromTanu) + ' · ' : '') + (+d[1]) + '/' + (+d[2]);
-      li.querySelector('button').addEventListener('click', () => readLetter(l));
-      ul.appendChild(li);
+      const ent = document.createElement('section');
+      ent.className = 'p-dent';
+      ent.innerHTML = '<p class="p-ddate"></p>' +
+        (l.text ? '<div class="p-dmsg me"><b></b><p></p></div>' : '') +
+        '<div class="p-dmsg tanu"><b></b><p></p></div>';
+      ent.querySelector('.p-ddate').textContent = (+d[1]) + '/' + (+d[2]) + ' ' + (l.tanu ? '🐾' : (s ? s.icon : '🌺'));
+      if (l.text) { ent.querySelector('.me b').textContent = T(UI.me); ent.querySelector('.me p').textContent = l.text; }
+      ent.querySelector('.tanu b').textContent = T(UI.tanuName);
+      ent.querySelector('.tanu p').textContent = arrived(l) ? replyText(l) : T(UI.diaryWait);
+      if (arrived(l) && !l.read) { l.read = true; save(); refreshBadge(); }
+      box && box.appendChild(ent);
     });
     sh.querySelector('.p-close').addEventListener('click', showMenu);
     sh.hidden = false;
@@ -405,6 +503,7 @@ window.TanuPost = function (opts) {
     refresh: refreshBadge,
     checkMilestones: checkMilestones,
     hello: () => T(UI.hiUnread),
+    topicOf: topicOf,   // 確認用（話題の見分けを試す）
     resetAll: () => { st = { letters: [] }; save(); refreshBadge(); },
     // 確認用：書いたお手紙を「昨日」にして、お返事が届いた状態にする
     testArrive: () => { st.letters.forEach((l) => { if (!l.tanu && l.day === today()) l.day = '2000-01-01'; }); save(); refreshBadge(); }

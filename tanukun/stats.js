@@ -17,6 +17,10 @@
      p-sole p-tail … その日に、ふれあいの 🐾 肉球・🦝 しっぽ で遊んだ（なでなでの画面の中で開く。2026-11-04 夜）
      u-show u-pick u-later … 貝がら占い：自動で出た・貝を選んだ・「あとで」を押した（2026-11-03）
      m-open m-send m-read … 📮 ポスト：開いた・お手紙を書いた・お返事を読んだ
+     m-diary … 📖 交換日記を開いた（2026-11-04 夜〜。お手紙はどこにも送らないので、数えるのは回数と日数だけ）
+     m-n1 m-n3 m-n7 m-n15 m-n30 … タヌくんへのお手紙を、これまでに〇通書いた（このスマホで1回だけ。once）
+     m-s3 m-s7 m-s14 m-s30 … はじめてお手紙を書いた日から〇日間、やりとりが続いている（once）
+     o-open o-send … 💡 作者へのご意見：開いた・送った
      n-open n-ok n-name n-skip n-tap1 n-tap10 … 初日の流れ（2026-11-04。どこで離脱しているかを見る）。はじめて来た日だけ・このスマホで1回だけ
        開いた → お知らせOK → 名前を決めた（n-name）か「あとで」（n-skip）→ 初めてさわった → 10回さわった。そのあとは h1（ハート1つ）
        割合は「n-ok ÷ n-open」のように、前の段階で割って見る（1日1回・1台ずつの数なので、だいたいの数）
@@ -33,7 +37,7 @@ window.TanuStats = (function () {
     'u-show', 'u-pick', 'u-later',
     'f-show', 'f-later', 'f-send', 'f-more', 'f-miss-big', 'f-miss-some', 'f-miss-no',
     'f-like-belly', 'f-like-tanu', 'f-like-art', 'f-like-game', 'f-like-line',
-    'm-open', 'm-send', 'm-read',
+    'm-open', 'm-send', 'm-read', 'm-diary', 'm-n1', 'm-n3', 'm-n7', 'm-n15', 'm-n30', 'm-s3', 'm-s7', 'm-s14', 'm-s30', 'o-open', 'o-send',
     'n-open', 'n-ok', 'n-name', 'n-skip', 'n-tap1', 'n-tap10'];
   const KEY = 'tanukun-stats';
   // 数える場所か（本番の URL のときだけ）
