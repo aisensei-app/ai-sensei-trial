@@ -3,13 +3,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap">
 <!-- 飛び出す文字だけ、ころんと太い丸文字（使う字だけ読みこむ） -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&display=swap&text=%E3%81%B5%E3%81%81%E3%81%95%E3%81%A3%E3%82%8A%E3%83%9C%E3%83%AF%EF%BC%81%E3%81%B7%E3%82%8B%E3%82%93%E3%80%9C%E2%99%AA">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&display=swap&text=%E2%99%AA%E3%81%81%E3%81%95%E3%81%9F%E3%81%A3%E3%81%AB%E3%81%B5%E3%81%B7%E3%81%BD%E3%82%80%E3%82%88%E3%82%8A%E3%82%8B%E3%82%93%E3%83%83%E3%83%9C%E3%83%AF%EF%BC%81">
 <!--
   タヌくん：しっぽ ふさふさ（お試し版。2026-11-04）
   ・絵：img/back.webp（うしろ姿でふり返って笑う。しっぽなし）・img/tail.webp（しっぽ）・img/tail_puff.webp（ボワッとしたしっぽ）
         元は art/*_src.png（ユーザーが描いた。マゼンタ背景）→ tools/make_shippo_art.py。背景は本編の images/bg/beach_day.webp
   ・しっぽ：タップで「ふりふり」／指でなでると、しっぽが指についてきて「ふさふさ」（毛がふわっと舞う）／たくさんなでると「ボワッ！」（ふくらんで、ぶるぶる）
-  ・おしり：タップで「ぷるん」（左右それぞれ。押した側が大きく）
+  ・揺れる所：おしり「ぷるん」・腰「むにっ」・ふともも「ぽよん」・二の腕「たぷん」（左右それぞれ。押した側が大きく、反対側も少し）
+  ・しっぽの位置は「🦝 しっぽの位置」で調整できる（ドラッグ・よこ・たて・向き・大きさ・葉っぱの下から出す）。値はこのスマホに覚える
   ・表情3種類：ふつう／さわっている間は照れ笑い（img/back_shy.webp）／2秒に6回さわる・ボワッのときは大笑い（img/back_laugh.webp。ハートがぽわぽわ）
   ・15歳以上の線引き：しっぽが、おしりのまんなかを隠す位置。宣伝（X）には使わない
   ・本編にはまだつないでいない（build_app.py にも入れていない）
@@ -53,6 +54,17 @@ button{font:inherit;font-weight:900;font-size:14px;color:var(--ink);background:v
 button:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink)}
 button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 #loading{position:fixed;inset:0;display:grid;place-items:center;font-weight:900}
+.btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.adj{position:fixed;z-index:3;left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));
+  bottom:calc(env(safe-area-inset-bottom,0px) + 12px);background:var(--cream);border:2.5px solid var(--ink);border-radius:16px;
+  box-shadow:0 3px 0 var(--ink);padding:10px 14px;display:flex;flex-direction:column;gap:6px;max-width:460px;margin:0 auto}
+.adj[hidden]{display:none}
+.adjt{margin:0;font-weight:900}.adjt small{font-weight:700;opacity:.7}
+.adj label{display:grid;grid-template-columns:4em 1fr 3.2em;align-items:center;gap:8px;font-weight:700;font-size:13px}
+.adj label.chk{display:flex;gap:6px}
+.adj input[type=range]{width:100%;accent-color:#D9536A}
+.adj output{font-variant-numeric:tabular-nums;text-align:right}
+.adjv{margin:0;font-size:12px;font-family:ui-monospace,Menlo,monospace;background:#F3E6D0;border-radius:8px;padding:4px 8px;overflow-wrap:anywhere}
 </style>
 
 <canvas id="stage" aria-label="浜辺で、うしろ姿のタヌくんがふり返っている。しっぽとおしりをさわれる"></canvas>
@@ -65,7 +77,21 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 <div class="tag">お試し版</div>
 <div class="bottom">
   <div class="hint">しっぽをタップ・なでてね。おしりも…？</div>
-  <button id="snd" type="button" aria-pressed="true">音 ON</button>
+  <div class="btns">
+    <button id="adj" type="button">🦝 しっぽの位置</button>
+    <button id="snd" type="button" aria-pressed="true">音 ON</button>
+  </div>
+</div>
+<!-- しっぽの位置の調整（2026-11-04）：画面をドラッグで付け根が動く。決めた値は、このスマホに覚える -->
+<div class="adj" id="adjPanel" hidden>
+  <p class="adjt">しっぽの位置 <small>（画面をドラッグでも動きます）</small></p>
+  <label>よこ <input id="aX" type="range" min="200" max="600" step="1"><output id="oX"></output></label>
+  <label>たて <input id="aY" type="range" min="380" max="760" step="1"><output id="oY"></output></label>
+  <label>向き <input id="aD" type="range" min="-30" max="120" step="1"><output id="oD"></output></label>
+  <label>大きさ <input id="aS" type="range" min="0.35" max="0.9" step="0.01"><output id="oS"></output></label>
+  <label class="chk"><input id="aB" type="checkbox"> 腰みのの葉っぱの下から出す</label>
+  <p class="adjv" id="adjVal"></p>
+  <div class="btns"><button id="aReset" type="button">はじめの位置</button><button id="aCopy" type="button">数字をコピー</button><button id="aOk" type="button">決定</button></div>
 </div>
 
 <script>
@@ -84,12 +110,25 @@ function faceLayer(im) {
 }
 const BW0 = 768, BH0 = 1152;        // うしろ姿の絵の大きさ
 const TW0 = 768, TH0 = 512;         // しっぽの絵の大きさ（2枚とも）
-const ROOT = { x: 390, y: 582 };    // しっぽの付け根（うしろ姿の絵の座標。腰みののひもの所）
 const TROOT = { x: 200, y: 90 };    // しっぽの絵の中の付け根（毛のうずの所）
-const TSCALE = 0.62, TBASE = 20 * Math.PI / 180;   // しっぽの大きさ・ふだんの向き
-// おしり（左右。うしろ姿の絵の座標）
-const CHEEK = [{ cx: 300, cy: 700, rx: 125, ry: 92, y: 0, v: 0 }, { cx: 486, cy: 700, rx: 125, ry: 92, y: 0, v: 0 }];
-const PX0 = 160, PY0 = 595, PW = 470, PH = 210;   // おしりを揺らす範囲（四角）
+/* しっぽの付け方（2026-11-04：画面の「🦝 しっぽの位置」で動かして決められる。決めた値は、このスマホに覚える）
+   x, y … 付け根（うしろ姿の絵の座標）、deg … 向き（0 で絵のまま。プラスで時計まわり）、scale … 大きさ、back … true なら腰みのの葉っぱの下から出す */
+const TP_DEFAULT = { x: 395, y: 515, deg: 44, scale: 0.6, back: false };   // ふつうのタヌキは、背骨の先（おしりの割れ目の上）から下へたれる
+const TP = Object.assign({}, TP_DEFAULT);
+try { Object.assign(TP, JSON.parse(localStorage.getItem('tanu-shippo-tail') || '{}')); } catch (e) {}
+/* 揺れる所（2026-11-04：おなかと同じしくみ。うしろ姿の絵の座標のだ円。まんなかほど大きく動く）
+   kick … タップしたときの勢い、pair … 同じ場所の反対側（少しだけいっしょに揺れる）、word・talk … 飛び出す文字とセリフ */
+const REGIONS = [
+  { id: 'buttL', kind: 'butt',  cx: 318, cy: 728, rx: 118, ry: 88, kick: 210, pair: 'buttR', word: 'ぷるん' },
+  { id: 'buttR', kind: 'butt',  cx: 482, cy: 728, rx: 118, ry: 88, kick: 210, pair: 'buttL', word: 'ぷるん' },
+  { id: 'waistL', kind: 'waist', cx: 250, cy: 505, rx: 115, ry: 68, kick: 170, pair: 'waistR', word: 'むにっ' },
+  { id: 'waistR', kind: 'waist', cx: 545, cy: 505, rx: 115, ry: 68, kick: 170, pair: 'waistL', word: 'むにっ' },
+  { id: 'thighL', kind: 'thigh', cx: 285, cy: 885, rx: 108, ry: 82, kick: 170, pair: 'thighR', word: 'ぽよん' },
+  { id: 'thighR', kind: 'thigh', cx: 502, cy: 885, rx: 108, ry: 82, kick: 170, pair: 'thighL', word: 'ぽよん' },
+  { id: 'armL', kind: 'arm',   cx: 110, cy: 480, rx: 62, ry: 112, kick: 190, word: 'たぷん' },
+  { id: 'armR', kind: 'arm',   cx: 672, cy: 480, rx: 62, ry: 112, kick: 190, word: 'たぷん' }
+].map((r) => Object.assign(r, { y: 0, v: 0 }));
+const REG = Object.fromEntries(REGIONS.map((r) => [r.id, r]));
 
 const cv = document.getElementById('stage'), ctx = cv.getContext('2d');
 let W = 0, H = 0, DPR = 1, S = 1, OX = 0, OY = 0;
@@ -147,6 +186,9 @@ const LINES = {
   rub:   ['ふさふさ…きもちいい〜', 'ブラッシングみたい♪', 'もっと なでて〜'],
   puff:  ['ひゃっ！？ しっぽが ボワッて なった！', 'び、びっくりした〜…！', 'もう〜！ 毛が さかだっちゃったよ'],
   butt:  ['ひゃっ、おしり〜！？', 'もう〜、どこ さわってるの〜', 'ぷるんって した…はずかしい…'],
+  waist: ['こ、腰は くすぐったい〜', 'むにむに しないで〜', 'ちょっと つまめちゃう…？'],
+  thigh: ['ふともも、むちむちでしょ？', 'ひゃっ、くすぐったい〜', 'いっぱい歩いて、きたえてるんだ〜'],
+  arm:   ['二の腕、たぷたぷ…', 'ちからこぶ…ないけど〜', 'ぎゅってしたら、やわらかいよ〜'],
   body:  ['せなか、ひろいでしょ？', 'しっぽは こっちだよ〜']
 };
 const bubble = document.getElementById('bubble');
@@ -181,9 +223,9 @@ function popWord(text, x, y, big) {
 const tail = { a: 0, va: 0, follow: null, puff: 0, pv: 0, puffUntil: 0, sq: 0, sqv: 0 };
 let meter = 0;   // ふさふさゲージ（たまると ボワッ）
 const meterEl = document.getElementById('meter');
-function tailAngle() { return TBASE + tail.a + (tail.puff > 0.05 ? Math.sin(performance.now() / 1000 * 42) * 0.035 * tail.puff : 0); }
-function tailScale() { return TSCALE * (1 + 0.16 * tail.puff); }
-function rootScreen() { return [OX + ROOT.x * S, OY + ROOT.y * S]; }
+function tailAngle() { return TP.deg * Math.PI / 180 + tail.a + (tail.puff > 0.05 ? Math.sin(performance.now() / 1000 * 42) * 0.035 * tail.puff : 0); }
+function tailScale() { return TP.scale * (1 + 0.16 * tail.puff); }
+function rootScreen() { return [OX + TP.x * S, OY + TP.y * S]; }
 // 画面の点が、しっぽの絵の上か（絵の透明でない所）
 function onTail(x, y) {
   if (!tailPx) return false;
@@ -248,6 +290,7 @@ cv.addEventListener('pointerdown', (e) => {
   audio();
   const x = e.clientX, y = e.clientY;
   try { cv.setPointerCapture(e.pointerId); } catch (err) {}
+  if (adjOpen) { fingers.set(e.pointerId, { kind: 'adj', x, y, tx: TP.x, ty: TP.y }); return; }
   if (onTail(x, y)) {
     const [rx, ry] = rootScreen();
     fingers.set(e.pointerId, { kind: 'tail', x, y, x0: x, y0: y, moved: 0, a0: tail.a, ang0: Math.atan2(y - ry, x - rx) });
@@ -255,17 +298,27 @@ cv.addEventListener('pointerdown', (e) => {
     return;
   }
   const [bx, by] = toBody(x, y);
-  const c = CHEEK.find((k) => Math.hypot((bx - k.cx) / k.rx, (by - k.cy) / k.ry) < 1);
-  if (c && bodyPx && bodyPx[((by | 0) * BW0 + (bx | 0)) * 4 + 3] > 60) {
-    // おしり：押した側が大きく、反対側も少し「ぷるん」
-    c.v += 210; CHEEK.forEach((k) => { if (k !== c) k.v += 90; });
+  const onBody = bodyPx && bx >= 0 && by >= 0 && bx < BW0 && by < BH0 && bodyPx[((by | 0) * BW0 + (bx | 0)) * 4 + 3] > 60;
+  // いちばん中心に近い「揺れる所」（だ円の中）
+  let c = null, cd = 1;
+  REGIONS.forEach((r) => { const d = Math.hypot((bx - r.cx) / r.rx, (by - r.cy) / r.ry); if (d < cd) { cd = d; c = r; } });
+  if (c && onBody) {
+    // 押した所が大きく、反対側も少し揺れる
+    c.v += c.kick; if (c.pair) REG[c.pair].v += c.kick * 0.4;
     touched();
-    popWord('ぷるん', x, y - 10); say('butt'); boing(170, 0.55, 0.9); buzz(14);
+    popWord(c.word, x, y - 10); say(c.kind);
+    boing(c.kind === 'arm' ? 230 : c.kind === 'butt' ? 170 : 200, 0.55, 0.85); buzz(14);
     return;
   }
-  if (bodyPx && bx >= 0 && by >= 0 && bx < BW0 && by < BH0 && bodyPx[((by | 0) * BW0 + (bx | 0)) * 4 + 3] > 60) say('body');
+  if (onBody) say('body');
 });
 cv.addEventListener('pointermove', (e) => {
+  const f0 = fingers.get(e.pointerId);
+  if (f0 && f0.kind === 'adj') {
+    TP.x = Math.round(Math.max(200, Math.min(600, f0.tx + (e.clientX - f0.x) / S)));
+    TP.y = Math.round(Math.max(380, Math.min(760, f0.ty + (e.clientY - f0.y) / S)));
+    adjSave(); return;
+  }
   const f = fingers.get(e.pointerId); if (!f || f.kind !== 'tail') return;
   const x = e.clientX, y = e.clientY, d = Math.hypot(x - f.x, y - f.y);
   f.moved += d; f.x = x; f.y = y;
@@ -301,6 +354,28 @@ function release(e) {
 }
 cv.addEventListener('pointerup', release);
 cv.addEventListener('pointercancel', release);
+/* ---------- しっぽの位置の調整 ---------- */
+let adjOpen = false;
+const $ = (id) => document.getElementById(id);
+const adjInputs = { aX: 'x', aY: 'y', aD: 'deg', aS: 'scale' };
+function adjShow() {
+  Object.entries(adjInputs).forEach(([id, k]) => { $(id).value = TP[k]; $('o' + id.slice(1)).textContent = k === 'scale' ? Number(TP[k]).toFixed(2) : Math.round(TP[k]); });
+  $('aB').checked = !!TP.back;
+  $('adjVal').textContent = adjText();
+}
+function adjText() { return 'しっぽ x=' + Math.round(TP.x) + ' y=' + Math.round(TP.y) + ' 向き=' + Math.round(TP.deg) + ' 大きさ=' + Number(TP.scale).toFixed(2) + ' 葉っぱの下=' + (TP.back ? 'はい' : 'いいえ'); }
+function adjSave() { try { localStorage.setItem('tanu-shippo-tail', JSON.stringify(TP)); } catch (e) {} adjShow(); }
+Object.entries(adjInputs).forEach(([id, k]) => $(id).addEventListener('input', (e) => { TP[k] = Number(e.target.value); adjSave(); }));
+$('aB').addEventListener('change', (e) => { TP.back = e.target.checked; adjSave(); });
+$('adj').addEventListener('click', () => { adjOpen = !adjOpen; $('adjPanel').hidden = !adjOpen; adjShow(); });
+$('aOk').addEventListener('click', () => { adjOpen = false; $('adjPanel').hidden = true; say('tail', true); });
+$('aReset').addEventListener('click', () => { Object.assign(TP, TP_DEFAULT); adjSave(); });
+$('aCopy').addEventListener('click', () => {
+  const t = adjText();
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(() => { $('adjVal').textContent = t + '（コピーしました）'; }, () => selectVal());
+  else selectVal();
+});
+function selectVal() { const r = document.createRange(); r.selectNodeContents($('adjVal')); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); }
 document.getElementById('snd').addEventListener('click', (e) => {
   soundOn = !soundOn;
   e.currentTarget.textContent = soundOn ? '音 ON' : '音 OFF';
@@ -328,41 +403,62 @@ function step(dt) {
   heartAcc += dt * (laugh > 0.5 ? 10 * laugh : 0);
   while (heartAcc >= 1) { heartAcc -= 1; addHeart(); }
   meterEl.style.width = (now < tail.puffUntil ? 100 : meter * 100) + '%';
-  // おしり
-  CHEEK.forEach((k) => { k.v += (-260 * k.y - 6 * k.v) * dt; k.y += k.v * dt; if (k.y > 26) { k.y = 26; k.v *= 0.5; } else if (k.y < -26) { k.y = -26; k.v *= 0.5; } });
+  // 揺れる所（ばね）
+  REGIONS.forEach((k) => { k.v += (-260 * k.y - 6 * k.v) * dt; k.y += k.v * dt; if (k.y > 26) { k.y = 26; k.v *= 0.5; } else if (k.y < -26) { k.y = -26; k.v *= 0.5; } });
   for (let i = fluffs.length - 1; i >= 0; i--) { const q = fluffs[i]; q.t += dt; q.x += q.vx * dt; q.y += q.vy * dt; q.vy += 30 * dt; q.vx *= 1 - dt; q.rot += q.vr * dt; if (q.t > q.life) fluffs.splice(i, 1); }
   for (let i = hearts.length - 1; i >= 0; i--) { const q = hearts[i]; q.t += dt; q.x += q.vx * dt; q.y += q.vy * dt; q.vy *= 1 - 0.4 * dt; if (q.t > q.life) hearts.splice(i, 1); }
 }
 
-/* ---------- おしりを揺らして描く ---------- */
-let pPatch = null, pCtx = null, pData = null, pWt = null;
-function cheekWeights() {
-  pWt = { w: new Float32Array(PW * PH), side: new Uint8Array(PW * PH) };
-  for (let y = 0; y < PH; y++) for (let x = 0; x < PW; x++) {
-    const ix = PX0 + x, iy = PY0 + y, k = y * PW + x;
-    const ws = CHEEK.map((c) => { const r2 = ((ix - c.cx) / c.rx) ** 2 + ((iy - c.cy) / c.ry) ** 2; return r2 < 1 ? (1 - r2) * (1 - r2) : 0; });
-    pWt.side[k] = ws[1] > ws[0] ? 1 : 0; pWt.w[k] = Math.max(ws[0], ws[1]);
-  }
+/* ---------- 揺れている所を描く ----------
+   揺れている所（だ円）をぜんぶかこむ四角を、毎回つくり直して、その中だけ1ピクセルずつ描く。
+   重み (1 - r²)²（ぽんぽこリズムと同じ形）で上下にずらし、沈むと少し横に広がる */
+let mv = null;   // いま揺れている四角 { x0, y0, w, h }
+function movingBox() {
+  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9, any = false;
+  REGIONS.forEach((r) => { if (Math.abs(r.y) > 0.15) { any = true; x0 = Math.min(x0, r.cx - r.rx); x1 = Math.max(x1, r.cx + r.rx); y0 = Math.min(y0, r.cy - r.ry - 30); y1 = Math.max(y1, r.cy + r.ry + 30); } });
+  if (!any) return null;
+  x0 = Math.max(0, Math.floor(x0)); y0 = Math.max(0, Math.floor(y0)); x1 = Math.min(BW0, Math.ceil(x1)); y1 = Math.min(BH0, Math.ceil(y1));
+  return { x0, y0, w: x1 - x0, h: y1 - y0 };
 }
-function cheeksMoving() { return CHEEK.some((c) => Math.abs(c.y) > 0.15); }
-function drawCheeks() {
-  if (!pPatch) { pPatch = document.createElement('canvas'); pPatch.width = PW; pPatch.height = PH; pCtx = pPatch.getContext('2d'); pData = pCtx.createImageData(PW, PH); cheekWeights(); }
-  const out = pData.data;
-  for (let y = 0; y < PH; y++) for (let x = 0; x < PW; x++) {
-    const k = y * PW + x, o = k * 4, w = pWt.w[k];
-    let si;
-    if (w < 0.004) si = ((PY0 + y) * BW0 + PX0 + x) * 4;
-    else {
-      const c = CHEEK[pWt.side[k]], dy = c.y * w;
-      const sx = PX0 + x - (PX0 + x - c.cx) * 0.003 * c.y * w;   // 沈むと少し横に広がる
-      let iy = (PY0 + y - dy + 0.5) | 0, ix = (sx + 0.5) | 0;
+let wPatch = null, wCtx = null;
+function drawMoving(b) {
+  if (!wPatch) { wPatch = document.createElement('canvas'); wCtx = wPatch.getContext('2d'); }
+  if (wPatch.width !== b.w || wPatch.height !== b.h) { wPatch.width = b.w; wPatch.height = b.h; }
+  const data = wCtx.createImageData(b.w, b.h), out = data.data;
+  const act = REGIONS.filter((r) => Math.abs(r.y) > 0.15);
+  for (let y = 0; y < b.h; y++) {
+    const iy0 = b.y0 + y;
+    for (let x = 0; x < b.w; x++) {
+      const ix0 = b.x0 + x, o = (y * b.w + x) * 4;
+      let dy = 0, dx = 0;
+      for (let n = 0; n < act.length; n++) {
+        const r = act[n], u = (ix0 - r.cx) / r.rx, v = (iy0 - r.cy) / r.ry, r2 = u * u + v * v;
+        if (r2 >= 1) continue;
+        const w = (1 - r2) * (1 - r2);
+        dy += r.y * w; dx += (ix0 - r.cx) * 0.003 * r.y * w;
+      }
+      let iy = (iy0 - dy + 0.5) | 0, ix = (ix0 - dx + 0.5) | 0;
       if (iy < 0) iy = 0; else if (iy >= BH0) iy = BH0 - 1; if (ix < 0) ix = 0; else if (ix >= BW0) ix = BW0 - 1;
-      si = (iy * BW0 + ix) * 4;
+      const si = (iy * BW0 + ix) * 4;
+      out[o] = bodyPx[si]; out[o + 1] = bodyPx[si + 1]; out[o + 2] = bodyPx[si + 2]; out[o + 3] = bodyPx[si + 3];
     }
-    out[o] = bodyPx[si]; out[o + 1] = bodyPx[si + 1]; out[o + 2] = bodyPx[si + 2]; out[o + 3] = bodyPx[si + 3];
   }
-  pCtx.putImageData(pData, 0, 0);
-  ctx.drawImage(pPatch, OX + PX0 * S, OY + PY0 * S, PW * S, PH * S);
+  wCtx.putImageData(data, 0, 0);
+  ctx.drawImage(wPatch, OX + b.x0 * S, OY + b.y0 * S, b.w * S, b.h * S);
+}
+
+/* ---------- 腰みのの葉っぱ（しっぽを「葉っぱの下から出す」ときに、しっぽの上に重ねる） ---------- */
+let leaves = null;
+function makeLeaves() {
+  const c = document.createElement('canvas'); c.width = BW0; c.height = BH0;
+  const x = c.getContext('2d'), d = x.createImageData(BW0, BH0), o = d.data;
+  for (let y = 520; y < 800; y++) for (let xx = 0; xx < BW0; xx++) {
+    const i = (y * BW0 + xx) * 4, r = bodyPx[i], g = bodyPx[i + 1], b = bodyPx[i + 2], a = bodyPx[i + 3];
+    // 葉っぱ（緑）と、ひも（黄土色で、茶色の毛より緑が強い）
+    const leaf = g > r * 0.92 && g > b * 1.25, rope = y < 610 && g > r * 0.78 && r > 150 && b < 120 && g > b * 1.4;
+    if (a > 60 && (leaf || rope)) { o[i] = r; o[i + 1] = g; o[i + 2] = b; o[i + 3] = a; }
+  }
+  x.putImageData(d, 0, 0); leaves = c;
 }
 
 /* ---------- 描く ---------- */
@@ -373,11 +469,12 @@ function draw() {
   ctx.drawImage(b, (W - b.width * bs) / 2, (H - b.height * bs) / 2, b.width * bs, b.height * bs);
   // 足もとの かげ
   ctx.fillStyle = 'rgba(90,60,30,.18)'; ctx.beginPath(); ctx.ellipse(OX + 380 * S, OY + 1118 * S, 260 * S, 30 * S, 0, 0, 7); ctx.fill();
-  // からだ（おしりが揺れている間は、その四角だけ、揺らした絵にさしかえる）
-  if (cheeksMoving()) {
-    ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.rect(OX + PX0 * S, OY + PY0 * S, PW * S, PH * S); ctx.clip('evenodd');
+  // からだ（揺れている間は、その四角だけ、揺らした絵にさしかえる）
+  mv = movingBox();
+  if (mv) {
+    ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.rect(OX + mv.x0 * S, OY + mv.y0 * S, mv.w * S, mv.h * S); ctx.clip('evenodd');
     ctx.drawImage(I.body, OX, OY, BW0 * S, BH0 * S); ctx.restore();
-    drawCheeks();
+    drawMoving(mv);
   } else ctx.drawImage(I.body, OX, OY, BW0 * S, BH0 * S);
   // 表情：顔の所だけ、照れ笑い・大笑いの絵をふわっと重ねる
   [[I.shy, shy], [I.laugh, laugh]].forEach(([im, a]) => {
@@ -391,6 +488,10 @@ function draw() {
   if (pf < 0.99) ctx.drawImage(I.tail, -TROOT.x, -TROOT.y, TW0, TH0);
   if (pf > 0.01) { ctx.globalAlpha = pf; ctx.drawImage(I.puff, -TROOT.x, -TROOT.y, TW0, TH0); ctx.globalAlpha = 1; }
   ctx.restore();
+  // 「葉っぱの下から出す」とき：しっぽの上に、葉っぱとひもを重ねる
+  if (TP.back && leaves) ctx.drawImage(leaves, OX, OY, BW0 * S, BH0 * S);
+  // 位置を調整している間は、付け根に印
+  if (adjOpen) { ctx.strokeStyle = '#D9536A'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(rx, ry, 9, 0, 7); ctx.moveTo(rx - 14, ry); ctx.lineTo(rx + 14, ry); ctx.moveTo(rx, ry - 14); ctx.lineTo(rx, ry + 14); ctx.stroke(); }
   // 毛のかけら
   fluffs.forEach((q) => {
     const a = 1 - q.t / q.life;
@@ -420,7 +521,7 @@ addEventListener('resize', resize);
 resize();
 Promise.all([load(SRC.bg), load(SRC.body), load(SRC.tail), load(SRC.puff)]).then(([bg, body, t, p]) => {
   I = { bg, body, tail: t, puff: p };
-  bodyPx = pixels(body, BW0, BH0); tailPx = pixels(t, TW0, TH0);
+  bodyPx = pixels(body, BW0, BH0); tailPx = pixels(t, TW0, TH0); makeLeaves();
   document.getElementById('loading').remove();
   load(SRC.shy).then((im) => { I.shy = faceLayer(im); }).catch(() => {});   // 表情の絵はあとから（なくても遊べる）
   load(SRC.laugh).then((im) => { I.laugh = faceLayer(im); }).catch(() => {});
