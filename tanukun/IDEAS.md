@@ -29,7 +29,7 @@
 
 ## 🛠️ 作りかけ
 - 🛁 洗うゲーム（washing）：**2026-11-04 本番に組みこみ済み**（トップのカード・メニューのボタン・iris.js・X アプリの in-x・build_app.py・sw.js・英中の訳。公開スイッチは hidden）。残り：
-  - 実機で通して遊ぶ（Cloudflare の Preview に washing=open の確認用 zip を上げて）
+  - 実機で通して遊ぶ（Cloudflare の Preview に washing=open の確認用 zip を上げて）→ **2026-11-04 ユーザー「今すぐできないので保留」**。zip は build_app.py で作り、config.js の washing を open にした版を作り直して渡す
   - ごほうびの言葉の見直し（washing.js の REWARDS・ZK_SP。英中は washing.i18n.js）
   - **2026-11-04 ユーザーと決めて作った**：①ピカピカにすると 1日1回 💗+5（ぽんぽこと同じ。本編の記録の washPoints に預け、本編を開いたら save.js の claimPonPoints で受け取る。お知らせ「タヌくんを洗おうの ごほうび 💗+5」。washBonusDay）②設定の「記録をリセット」で、洗うゲーム（ずかん・特別イラスト・NEW の印）と丸太シーソー（特別イラスト・さいこう記録・NEW の印。はやさの設定は残す）の記録も消す（app.js）。playwright で確認済み
   - 宿題：丸太シーソーには 💗 のごほうびがまだない（そろえるなら相談）
