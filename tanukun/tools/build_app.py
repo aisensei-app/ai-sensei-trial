@@ -15,6 +15,7 @@
   （pon/art の元の絵・プロンプト集、使っていない「おなかのアップ」の絵 images/pon/belly*.webp は入れない）
 ・ぽよんラリー（rally/ → 公開先の /rally/）も入れます。カードの絵は本編と同じ og/main.jpg
 ・丸太シーソー（seesaw/ → 公開先の /seesaw/）も入れます。絵は seesaw/img の使うものだけ（seesaw/art の元の絵は入れない）。カードの絵は og/main.jpg
+・タヌくんを洗おう（washing/ → 公開先の /washing/）も入れます。絵は washing/img の使うものだけ（ドライヤーの絵・washing/art の元の絵・プロンプト集は入れない）。カードの絵は og/main.jpg
 ・お試し版の設定（demo.js）、メモ、道具、確認用ファイル、元の絵などは入れません
 """
 import argparse
@@ -34,6 +35,18 @@ RALLY_FILES = ['index.html', 'rally.css', 'rally.js', 'rally.i18n.js']
 SEESAW_FILES = ['index.html', 'seesaw.css', 'seesaw.js', 'seesaw.i18n.js']
 SEESAW_IMAGES = ['sit_normal', 'sit_happy', 'sit_wow', 'sit_ehehe', 'jump_banzai', 'sp_wet', 'sp_octo', 'sp_skirt']
 SEESAW_TITLE = '丸太シーソー｜タヌくん'
+WASHING_FILES = ['index.html', 'washing.css', 'washing.js', 'washing.i18n.js']
+# washing.js・index.html が使う絵（ドライヤー item_dryer は保留中なので入れない）。絵を足したら、ここと sw.js にも足す
+WASHING_IMAGES = [
+    'back', 'banzai', 'cut_face', 'item_bamboo', 'item_brush', 'item_clam',
+    'item_conch', 'item_coral', 'item_glass', 'item_goldstar', 'item_hermit', 'item_kelp1',
+    'item_kelp2', 'item_mud1', 'item_mud2', 'item_pearl', 'item_petal', 'item_sand1',
+    'item_sand2', 'item_sand3', 'item_showerhead', 'item_star', 'item_urchin', 'lookback',
+    'mojimoji', 'room', 'shake', 'sp_splash', 'sp_stumble', 'sp_towel',
+    'sp_zukan', 'sp_zukan_rare', 'stand',
+]
+WASHING_TITLE = 'タヌくんを洗おう｜タヌくん'
+WASHING_DESCRIPTION = '南国のシャワールームで、タヌくんをゴシゴシ。泡でアワアワ、シャワーでピカピカ！ 落としものの ずかん集めも。／ Scrub Tanu-kun clean in a tropical shower, rinse off the bubbles, and collect seaside treasures.'
 SEESAW_DESCRIPTION = '南国の波打ち際で、タヌくんと丸太のシーソー。指でゆらすと、おなかがたぷん♪ 海へざぶーんで特別イラストも。／ Ride a log seesaw with Tanu-kun by the sea and watch his belly jiggle.'
 RALLY_TITLE = 'ぽよんラリー｜タヌくん'
 RALLY_DESCRIPTION = 'ビーチボールを投げると、タヌくんがおなかで「ぽよん！」と返してくれる。何回つづくかな？／ Toss a beach ball and Tanu-kun bounces it back with his belly. How long can you keep it going?'
@@ -104,6 +117,18 @@ def build(base, out):
         raise SystemExit('seesaw/index.html の <title> が見つかりませんでした')
     page = page.replace(tag, tag + '\n' + og_tags(base + 'seesaw/', base + 'og/main.jpg', SEESAW_TITLE, SEESAW_DESCRIPTION), 1)
     (out / 'seesaw' / 'index.html').write_text(page, encoding='utf8')
+    # タヌくんを洗おう（washing/）：ページと、使う絵だけ。カードは本編と同じ絵（専用の絵はまだない）
+    (out / 'washing' / 'img').mkdir(parents=True)
+    for f in WASHING_FILES:
+        shutil.copy(ROOT / 'washing' / f, out / 'washing' / f)
+    for n in WASHING_IMAGES:
+        shutil.copy(ROOT / 'washing' / 'img' / (n + '.webp'), out / 'washing' / 'img' / (n + '.webp'))
+    page = (out / 'washing' / 'index.html').read_text(encoding='utf8')
+    tag = '<title>' + WASHING_TITLE + '</title>'
+    if tag not in page:
+        raise SystemExit('washing/index.html の <title> が見つかりませんでした')
+    page = page.replace(tag, tag + '\n' + og_tags(base + 'washing/', base + 'og/main.jpg', WASHING_TITLE, WASHING_DESCRIPTION), 1)
+    (out / 'washing' / 'index.html').write_text(page, encoding='utf8')
 
     # index.html：カード（OGP）の設定を入れる
     page = (out / 'index.html').read_text(encoding='utf8')

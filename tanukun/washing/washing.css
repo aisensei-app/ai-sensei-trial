@@ -124,11 +124,16 @@ body{margin:0;background:#bfe3f7;color:var(--ink);font-family:var(--font);overfl
 
 @media (prefers-reduced-motion: reduce){.pop{animation-duration:1.4s}}
 
-/* ---- 画面を切りかえるときの幕（丸太シーソーと同じ）---- */
-body::after{content:"";position:fixed;inset:0;z-index:999;pointer-events:none;
-  background:radial-gradient(circle at 50% 45%,#F6E4C4,#E9CFA4);
-  animation:tanu-veil-arrive .7s cubic-bezier(.5,0,.75,.45) both}
+/* ---- 画面を切りかえるときの幕（2026-11-04：丸太シーソーと同じ「こげ茶の幕 → 丸く開く」に。iris.js）----
+   本編のカードから丸く閉じて来たので、同じこげ茶で待つ。絵の読みこみが終わったら JS が body に ready（と iris）を付けて、丸く開く。
+   万一 ready が付かなくても、3秒たったら明ける。もどるときは iris.js が丸く閉じる */
+body::after{content:"";position:fixed;inset:0;z-index:999;pointer-events:none;background:#3A2210;
+  animation:tanu-veil-arrive .7s cubic-bezier(.5,0,.75,.45) 3s both}
 @keyframes tanu-veil-arrive{0%,10%{opacity:1}100%{opacity:0;visibility:hidden}}
+body.ready::after{animation:tanu-veil-ready .6s cubic-bezier(.5,0,.75,.45) both}
+body.ready.iris::after{animation:none;opacity:0;visibility:hidden}
+body.leaving.iris::after{animation:none;opacity:0}
+@keyframes tanu-veil-ready{0%{opacity:1}100%{opacity:0;visibility:hidden}}
 body.leaving::after{animation:tanu-veil-leave .42s cubic-bezier(.45,0,.7,.6) both}
 @keyframes tanu-veil-leave{from{opacity:0}to{opacity:1}}
 @media (prefers-reduced-motion: reduce){body::after,body.leaving::after{animation-duration:.01s}}
@@ -159,3 +164,8 @@ html[lang="zh"] body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",
   border:2.5px solid var(--wood);border-left:none;border-bottom:none;transform:rotate(45deg)}
 @keyframes tipin{from{opacity:0;transform:translate(8px,-50%)}to{opacity:1;transform:translate(0,-50%)}}
 @media (prefers-reduced-motion: reduce){.tool.blink{animation:none;outline:3px solid var(--sea)}.tip.on{animation:none;opacity:1}}
+
+/* X アプリの中（body.in-x）：画面の下 約25% に投稿パネルがかぶるので、下のボタン・カードを上へ（2026-11-04。シーソーと同じ） */
+body.in-x .turn{bottom:calc(25vh + 12px)}
+body.in-x .clear,body.in-x .zukan{padding-bottom:calc(25vh + 12px)}
+body.in-x #rwImg,body.in-x .artimg{max-height:36vh}

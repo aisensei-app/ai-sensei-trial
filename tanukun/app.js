@@ -121,6 +121,8 @@
   function feature(name) { return (C.features && C.features[name]) || 'open'; }
   // 丸太シーソーを一度でも開いたか（seesaw.js が覚える。トップ画面の NEW を消す）
   function seesawSeen() { try { return localStorage.getItem('tanukun.seesawSeen') === '1'; } catch (e) { return false; } }
+  // タヌくんを洗おうを一度でも開いたか（washing.js が覚える。トップ画面の NEW を消す）
+  function washingSeen() { try { return localStorage.getItem('tanukun.washingSeen') === '1'; } catch (e) { return false; } }
 
   /* =========================================================
      時間帯（config.js の timeOfDay）：メニュー画面の立ち絵と、背景が変わる
@@ -1501,8 +1503,9 @@
   gateButton('pon', $('btn-pon'), tr('ぽんぽこリズムは、もうすぐ遊べるよ！\nおたのしみに 🥁'));
   gateButton('rally', $('btn-rally'), tr('ぽよんラリーは、もうすぐ遊べるよ！\nおたのしみに 🏐'));
   gateButton('seesaw', $('btn-seesaw'), tr('丸太シーソーは、もうすぐ遊べるよ！\nおたのしみに 🌴'));
+  gateButton('washing', $('btn-washing'), tr('タヌくんを洗おうは、もうすぐ遊べるよ！\nおたのしみに 🛁'));
   // ミニゲームが2つ以上出るときは、横に並べる
-  $('btn-pon').parentNode.classList.toggle('two', ['btn-pon', 'btn-rally', 'btn-seesaw'].filter((id) => !$(id).hidden).length >= 2);
+  $('btn-pon').parentNode.classList.toggle('two', ['btn-pon', 'btn-rally', 'btn-seesaw', 'btn-washing'].filter((id) => !$(id).hidden).length >= 2);
   // ぽんぽこリズムから「戻る」で帰ってきたとき、ブラウザが前の画面をそのまま出すことがある（記録が古いまま）。
   // そのときは読み直して、ぽんぽこリズムで変わった記録（ごほうび・きせかえ）を取りこむ
   window.addEventListener('pageshow', (e) => { if (e.persisted) location.reload(); });
@@ -2030,7 +2033,9 @@
       { id: 'rally', name: tr('ぽよんラリー'), icon: '🏐', href: 'rally/',
         soon: tr('ぽよんラリーは、もうすぐ遊べるよ！\nおたのしみに 🏐') },
       { id: 'seesaw', name: tr('丸太シーソー'), icon: '🌴', href: 'seesaw/', isNew: !seesawSeen(),
-        soon: tr('丸太シーソーは、もうすぐ遊べるよ！\nおたのしみに 🌴') }
+        soon: tr('丸太シーソーは、もうすぐ遊べるよ！\nおたのしみに 🌴') },
+      { id: 'washing', name: tr('タヌくんを洗おう'), icon: '🛁', href: 'washing/', isNew: !washingSeen(),
+        soon: tr('タヌくんを洗おうは、もうすぐ遊べるよ！\nおたのしみに 🛁') }
     ].forEach((g) => {
       const f = feature(g.id);
       if (f === 'hidden') return;

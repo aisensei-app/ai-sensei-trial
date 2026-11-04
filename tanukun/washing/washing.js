@@ -35,8 +35,27 @@ document.addEventListener('click', (e) => {
   e.preventDefault();
   try { sessionStorage.setItem('tanukun.homeZoom', '1'); } catch (err) {}
   document.body.classList.add('leaving');
+  // 「もどる」に向かって丸く閉じてから戻る（iris.js。ぽんぽこ・ラリー・シーソーと同じ。本編は、こげ茶から丸く開いて始まる）
+  if (window.TanuIris) {
+    const r = a.getBoundingClientRect();
+    window.TanuIris.close(r.left + r.width / 2, r.top + r.height / 2).then(() => { location.href = a.href; });
+    return;
+  }
   setTimeout(() => { location.href = a.href; }, 430);
 });
+// 幕を明ける：絵の読みこみが終わって、2回描いたあと（おそくても 2.5秒）。こげ茶の幕から丸く開く（2026-11-04。シーソーと同じ）
+let unveiled = false;
+function unveil() {
+  if (unveiled) return;
+  unveiled = true;
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    if (window.TanuIris) { window.TanuIris.cover(); document.body.classList.add('ready', 'iris'); window.TanuIris.open(); }
+    else document.body.classList.add('ready');
+  }));
+}
+setTimeout(unveil, 2500);
+// X アプリの中では、画面の下に投稿パネルがかぶるので、ボタンを上へ（in-x。シーソーと同じ）
+if (/Twitter/i.test(navigator.userAgent) || /[?&]inx\b/.test(location.search)) document.body.classList.add('in-x');
 
 /* ---- ことば：本編と同じ i18n.js（洗うゲームの訳は washing.i18n.js） ---- */
 const I18N = window.TanuI18n || { lang: 'ja', tr: (s) => s, apply: () => {} };
@@ -1332,5 +1351,6 @@ Promise.all(KEYS.map((k) => load(SRC[k]))).then((imgs) => {
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
-}).catch(() => { document.getElementById('loading').textContent = tr('絵を読みこめませんでした。ページを開き直してください'); });
+  unveil();
+}).catch(() => { document.getElementById('loading').textContent = tr('絵を読みこめませんでした。ページを開き直してください'); unveil(); });
 })();

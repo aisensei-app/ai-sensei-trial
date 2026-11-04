@@ -34,7 +34,16 @@ const FILES = [
   // 丸太シーソー（seesaw/）
   './seesaw/', './seesaw/index.html', './seesaw/seesaw.css', './seesaw/seesaw.js', './seesaw/seesaw.i18n.js',
   './seesaw/img/sit_normal.webp', './seesaw/img/sit_happy.webp', './seesaw/img/sit_wow.webp', './seesaw/img/sit_ehehe.webp',
-  './seesaw/img/jump_banzai.webp', './seesaw/img/sp_wet.webp', './seesaw/img/sp_octo.webp', './seesaw/img/sp_skirt.webp'
+  './seesaw/img/jump_banzai.webp', './seesaw/img/sp_wet.webp', './seesaw/img/sp_octo.webp', './seesaw/img/sp_skirt.webp',
+  // タヌくんを洗おう（washing/）。表情は本編の images/happy・melt・shy・troubled（上にある）
+  './washing/', './washing/index.html', './washing/washing.css', './washing/washing.js', './washing/washing.i18n.js',
+  './washing/img/back.webp', './washing/img/banzai.webp', './washing/img/cut_face.webp', './washing/img/item_bamboo.webp', './washing/img/item_brush.webp',
+  './washing/img/item_clam.webp', './washing/img/item_conch.webp', './washing/img/item_coral.webp', './washing/img/item_glass.webp', './washing/img/item_goldstar.webp',
+  './washing/img/item_hermit.webp', './washing/img/item_kelp1.webp', './washing/img/item_kelp2.webp', './washing/img/item_mud1.webp', './washing/img/item_mud2.webp',
+  './washing/img/item_pearl.webp', './washing/img/item_petal.webp', './washing/img/item_sand1.webp', './washing/img/item_sand2.webp', './washing/img/item_sand3.webp',
+  './washing/img/item_showerhead.webp', './washing/img/item_star.webp', './washing/img/item_urchin.webp', './washing/img/lookback.webp', './washing/img/mojimoji.webp',
+  './washing/img/room.webp', './washing/img/shake.webp', './washing/img/sp_splash.webp', './washing/img/sp_stumble.webp', './washing/img/sp_towel.webp',
+  './washing/img/sp_zukan.webp', './washing/img/sp_zukan_rare.webp', './washing/img/stand.webp'
 ];
 
 self.addEventListener('install', (e) => {

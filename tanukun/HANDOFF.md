@@ -1,6 +1,6 @@
 # タヌくん スマホ版（Webアプリ）引き継ぎメモ
 
-最終更新：2026-11-04（v31 を公開）
+最終更新：2026-11-04（v31 を公開／洗うゲームを本番に組みこみ）
 
 ## 📂 メモは3つに分けています（2026-11-03〜）
 | ファイル | 中身 | いつ読む |
@@ -19,7 +19,7 @@
 ## 0. 新しいチャットはここから
 
 **0. 最初にやること**
-- ブランチ：**`claude/tanukun-washing-game-illustrations-4aa1g5`**（始める前に `git fetch` → `git pull`。セッションごとに別名のブランチを指定されたら、そこにも同じ内容を push）。**PR はまだ作っていない**（頼まれたら作る）
+- ブランチ：**`claude/tanukun-washing-game-illustrations-4aa1g5`**（2026-11-04 の洗うゲーム組みこみは `claude/tanukun-washing-game-production-mquk2i` にも push 済み）（始める前に `git fetch` → `git pull`。セッションごとに別名のブランチを指定されたら、そこにも同じ内容を push）。**PR はまだ作っていない**（頼まれたら作る）
 - ユーザーへの回答は日本語・専門用語は短く説明。ユーザーは Android でスマホの Claude アプリから確認することが多い
 - **公開のしかたを聞かれたら `tanukun/PUBLISH.md` を見せる**（ユーザー「いつも忘れる」。Cloudflare の画面で zip をアップロード：Preview（ブランチ名 test）→ Production）
 - **本編の確認用リンク（チャットの中で試せる）**：https://claude.ai/artifact/XApM945UdUziQMRXG8AQfH
@@ -34,6 +34,8 @@
 - **Google フォームはつないだ（2026-11-03 夜・v31 に入る）**：タヌくん用アカウントで作成（題名「タヌくんへのお手紙」、回答シート「タヌくんへのお手紙（回答）」。**シートの URL はリポジトリに書かない**）。config.js の `post.form.prefill` に事前入力 URL を貼った（app.js の readPrefill）。playwright で送り先・entry の対応を確認済み。**本物のフォームへの送信は、Cloudflare の Preview でユーザーが1通テスト → シートに入るか確認 → テストの行を消す**（この環境からは docs.google.com に出られない）。作り方は FORM.md
 - ラリーは最終チェック済み（スイッチを open にするだけ）。シーソーは実機で通して遊ぶ確認がまだ
 - 計測は今のままでよい（ユーザー決定）。収益化の調査の結論は IDEAS.md の「保留」
+
+- **🛁 洗うゲームを本番に組みこんだ（2026-11-04。公開スイッチは hidden のまま）**：トップのカード（🛁・NEW＝localStorage tanukun.washingSeen）・メニューのボタン btn-washing・「丸く閉じて開く」（iris.js）・X アプリの中で「うしろ」・結果・ずかんをパネルの上へ（in-x）・build_app.py（WASHING_IMAGES。ドライヤーの絵は入れない）・sw.js・英中の訳。playwright でカード → 丸く閉じる → 洗うゲーム → もどる、X アプリ版も確認（エラーなし）。**出すときは config.js の washing を open にするだけ**。残り＝実機で通して遊ぶ・ごほうびの言葉・相談2点（IDEAS.md）
 
 **2. 次にやること（まずユーザーと相談）**
 1. 公開直後の様子を見る：お手紙がシートに届いているか・いたずらの大量送信がないか／占い・ポストの目印（u-show・m-send など）を Web Analytics で

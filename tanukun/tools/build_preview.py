@@ -73,7 +73,7 @@ def build_pon(out, folder='pon', title='ぽんぽこリズム'):
         game = re.sub(r"'((?:\.\./)?(?:img|images)/[^']+\.webp)'",
                       lambda m: "'data:image/webp;base64," + base64.b64encode((ROOT / folder / m.group(1)).resolve().read_bytes()).decode() + "'", game)
     scripts = ''.join('<script>\n' + text + '\n</script>\n' for text in
-                      [js('config.js')] + words + ([] if folder in ('seesaw', 'washing') else [js('belly.js')]) + ([js('iris.js')] if folder in ('pon', 'rally', 'seesaw') else []) + [game])
+                      [js('config.js')] + words + ([] if folder in ('seesaw', 'washing') else [js('belly.js')]) + ([js('iris.js')] if folder in ('pon', 'rally', 'seesaw', 'washing') else []) + [game])
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text('<title>' + title + '</title>\n'
                    '<meta name="claude:viewport-fit-sides" content="cover">\n'
