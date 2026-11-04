@@ -4,16 +4,17 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap">
 <!--
   タヌくん：あしのうら ぷにぷに（お試し版。2026-11-04）
-  ・足の裏だけのアップ（体は出さない＝15歳以上の線引きで安全）。絵はまだないので、足と肉球はプログラムで描く
-  ・肉球：押した所が沈み、指をはなすと「ぷるん」と揺れて戻る。長押しでもっと沈む。なでると、へこみが指についてくる
-  ・つづけて押すと、指がもぞもぞして「くすぐったい」。Android は、ほんの一瞬ぶるっと震える
-  ・本編にはまだつないでいない（tanukun/nikukyu/。build_app.py にも入れていない）
+  ・絵：img/sit_soles.webp（ユーザーが描いた、切り株に座って足の裏を見せるタヌくん。腰みのの葉っぱがお股をしっかり隠している版）
+        img/pads_mask.png（肉球の所だけ白い絵。tools/make_nikukyu_mask.py）
+  ・肉球を押すと：押した所がくぼむ（左上から光が当たっている影＝くぼみの左上の内側が暗く、右下の内側が明るい・まわりの土手が明るい）
+                  ＋中身が逃げるように、ふちが外へ押し出される。長押しで深く、なでるとくぼみが指についてくる
+  ・はなすと、控えめに「ぷるん」と戻る。かたさは3種類（やわらか・ふつう・ハリあり）
+  ・本編にはまだつないでいない（build_app.py にも入れていない）
 -->
 <style>
-/* 一枚の画面：砂浜の上に、足の裏のアップ。上にタヌくんの顔とふきだし、下にボタン */
+/* 一枚の画面：タヌくんの絵を幅いっぱいに。上にふきだし、下にボタン */
 :root{
-  --sand:#F2D9AE; --sand2:#E4BF86; --ink:#4A2C1A; --fur:#5B3A28; --fur2:#3E2618;
-  --cream:#FFF6E6; --pink:#F4A6AE; --accent:#D9536A;
+  --sand:#EFD7AE; --ink:#4A2C1A; --cream:#FFF6E6; --accent:#D9536A;
   --display:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",sans-serif;
   color-scheme:light;
 }
@@ -24,31 +25,30 @@ body{margin:0;background:var(--sand);color:var(--ink);font-family:var(--display)
 .top{position:fixed;top:0;left:0;right:0;z-index:2;pointer-events:none;display:flex;gap:10px;align-items:flex-start;
   padding-top:calc(env(safe-area-inset-top,0px) + 12px);
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-.face{flex:none;width:64px;height:64px;border-radius:50%;border:3px solid var(--ink);background:var(--cream);overflow:hidden;transition:transform .2s}
-.face img{width:100%;height:100%;object-fit:cover;display:block}
-.face.bump{animation:bump .5s ease-out}
-@keyframes bump{30%{transform:scale(1.12) rotate(-6deg)}60%{transform:scale(.96)}}
-.bubble{position:relative;min-width:0;margin-top:6px;background:var(--cream);border:2.5px solid var(--ink);border-radius:16px 16px 16px 4px;
+.bubble{min-width:0;background:var(--cream);border:2.5px solid var(--ink);border-radius:16px;
   padding:8px 12px;font-weight:700;font-size:15px;line-height:1.4;box-shadow:0 3px 0 var(--ink)}
+.bubble.bump{animation:bump .45s ease-out}
+@keyframes bump{30%{transform:scale(1.06) rotate(-2deg)}60%{transform:scale(.98)}}
 .count{margin-left:auto;flex:none;background:var(--cream);border:2.5px solid var(--ink);border-radius:999px;padding:4px 12px;
   font-weight:900;font-size:14px;font-variant-numeric:tabular-nums;box-shadow:0 3px 0 var(--ink)}
+.tag{position:fixed;z-index:2;right:max(16px,env(safe-area-inset-right,0px));top:calc(env(safe-area-inset-top,0px) + 58px);
+  font-size:11px;font-weight:900;letter-spacing:.08em;background:var(--accent);color:var(--cream);border-radius:6px;padding:2px 8px;pointer-events:none}
 .bottom{position:fixed;left:0;right:0;bottom:0;z-index:2;display:flex;flex-direction:column;align-items:center;gap:10px;
   padding-bottom:calc(env(safe-area-inset-bottom,0px) + 16px);
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-.hint{font-size:13px;font-weight:700;opacity:.8;text-align:center}
+.hint{font-size:13px;font-weight:700;text-align:center;background:rgba(255,246,230,.85);border-radius:999px;padding:3px 12px}
 .btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
 button{font:inherit;font-weight:900;font-size:14px;color:var(--ink);background:var(--cream);border:2.5px solid var(--ink);border-radius:999px;
   padding:7px 16px;box-shadow:0 3px 0 var(--ink);cursor:pointer}
 button:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink)}
 button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-.tag{position:fixed;z-index:2;right:max(16px,env(safe-area-inset-right,0px));top:calc(env(safe-area-inset-top,0px) + 84px);
-  font-size:11px;font-weight:900;letter-spacing:.08em;background:var(--accent);color:var(--cream);border-radius:6px;padding:2px 8px;pointer-events:none}
+#loading{position:fixed;inset:0;display:grid;place-items:center;font-weight:900}
 </style>
 
-<canvas id="stage" aria-label="タヌくんの足の裏。肉球を押すと、ぷにっとへこむ"></canvas>
+<canvas id="stage" aria-label="切り株に座って、足の裏を見せるタヌくん。肉球を押すと、ぷにっとくぼむ"></canvas>
+<div id="loading">よみこみ中…</div>
 <div class="top">
-  <div class="face" id="face"><img id="faceImg" alt="タヌくん" src="../washing/img/cut_face.webp"></div>
-  <div class="bubble" id="bubble">ぷにぷにの肉球、さわってみる？</div>
+  <div class="bubble" id="bubble">ぼくの肉球、さわってみる？</div>
   <div class="count" id="count">🐾 0</div>
 </div>
 <div class="tag">お試し版</div>
@@ -56,7 +56,6 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
   <div class="hint">肉球を押してね。長押し・なでるのも OK</div>
   <div class="btns">
     <button id="feel" type="button">かたさ：ふつう</button>
-    <button id="color" type="button">肉球：ピンク</button>
     <button id="snd" type="button" aria-pressed="true">音 ON</button>
   </div>
 </div>
@@ -64,71 +63,60 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 <script>
 (() => {
 'use strict';
+const SRC_IMG = 'img/sit_soles.webp', SRC_MASK = 'img/pads_mask.png';
+const IW = 1199, IH = 1312;
 const cv = document.getElementById('stage'), ctx = cv.getContext('2d');
-let W = 0, H = 0, DPR = 1;
+let W = 0, H = 0, DPR = 1, S = 1, OX = 0, OY = 0;
+
+/* 肉球のだいたいの場所（元の絵の座標。tools/make_nikukyu_mask.py の PADS と同じ） */
+const PADS = [[322, 995, 35, 41], [370, 935, 37, 42], [439, 907, 33, 42], [512, 945, 34, 42], [443, 1047, 97, 73],
+              [760, 953, 36, 42], [837, 917, 37, 42], [910, 947, 37, 40], [940, 1012, 33, 40], [810, 1050, 95, 73]];
+const pads = PADS.map(([cx, cy, rx, ry], i) => ({
+  i, cx, cy, rx, ry, big: rx > 60,
+  dent: 0, dentV: 0,          // 沈み（0〜1.3 くらい）
+  qx: cx, qy: cy,             // 押している所（元の絵の座標）
+  press: null,                // { id, t0 }
+  patch: null, pctx: null, data: null, x0: 0, y0: 0, w: 0, h: 0
+}));
+
+/* かたさ（くらべて選べる）。k＝ばねの強さ、cPress/cFree＝押している間・はなしたあとの止まりやすさ
+   depth＝沈む深さ、bulge＝ふちが押し出される大きさ、snap＝はなしたときの反動（控えめに） */
+const FEEL = [
+  { name: 'やわらか', k: 230, cPress: 14, cFree: 10, depth: 1.25, bulge: 1.3, snap: 0.35 },
+  { name: 'ふつう',   k: 330, cPress: 18, cFree: 12, depth: 1.0,  bulge: 1.0, snap: 0.3 },
+  { name: 'ハリあり', k: 560, cPress: 24, cFree: 15, depth: 0.7,  bulge: 0.7, snap: 0.3 }
+];
+let feel = 1;
+
+/* ---------- 絵の読みこみ ---------- */
+let img = null, src = null, mask = null, bg = null;
+function load(u) { return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = u; }); }
+function pixels(im) {
+  const c = document.createElement('canvas'); c.width = IW; c.height = IH;
+  const x = c.getContext('2d'); x.drawImage(im, 0, 0, IW, IH);
+  return x.getImageData(0, 0, IW, IH).data;
+}
+
+/* ---------- 画面の大きさ ---------- */
 function resize() {
   DPR = Math.min(2, window.devicePixelRatio || 1);
   W = cv.clientWidth; H = cv.clientHeight;
   cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
-  layout();
+  // 足の裏（x 250〜1000）が幅に入る大きさ。縦長の画面では、絵の上下に余白（ぼかした絵）
+  S = Math.min(W / 800, H / 1250);
+  OX = W / 2 - 610 * S;
+  OY = Math.max(0, (H - IH * S) / 2 + 10);
+  if (img) makeBg();
 }
-
-/* ---------- 足と肉球の形 ----------
-   足の大きさの単位 U（画面に合わせる）。肉球は、ふちの点（N こ）をばねで動かす */
-const N = 48;
-let U = 1, FX = 0, FY = 0;
-const pads = [
-  // main：大きな肉球（下が3つにふくらむ）、toe：指の肉球（4つ、弧に並ぶ）
-  { kind: 'main', ox: 0, oy: 0.36, rx: 0.40, ry: 0.30, rot: 0 },
-  { kind: 'toe', ox: -0.47, oy: -0.16, rx: 0.135, ry: 0.165, rot: -0.35 },
-  { kind: 'toe', ox: -0.17, oy: -0.40, rx: 0.14, ry: 0.175, rot: -0.12 },
-  { kind: 'toe', ox: 0.17, oy: -0.40, rx: 0.14, ry: 0.175, rot: 0.12 },
-  { kind: 'toe', ox: 0.47, oy: -0.16, rx: 0.135, ry: 0.165, rot: 0.35 }
-];
-pads.forEach((p, i) => {
-  p.i = i;
-  p.dent = 0; p.dentV = 0;       // 沈み（0〜1.3）
-  p.px = 0; p.py = 0;            // 押している所（肉球の中の位置。-1〜1）
-  p.press = null;                // { id, t0 }
-  p.wig = 0; p.wigV = 0;         // 指のもぞもぞ（くすぐったい）
-  p.rip = 0; p.ripPh = 0;        // はなしたあと、ふちを一周する波
-  p.off = new Float32Array(N); p.offV = new Float32Array(N);   // ふちの点の出っぱり
-});
-function layout() {
-  U = Math.min(W * 0.50, H * 0.30);
-  FX = W / 2; FY = H * 0.55;
+function makeBg() {
+  bg = document.createElement('canvas'); bg.width = Math.max(1, Math.round(W / 4)); bg.height = Math.max(1, Math.round(H / 4));
+  const b = bg.getContext('2d'), s = Math.max(bg.width / IW, bg.height / IH);
+  b.drawImage(img, (bg.width - IW * s) / 2, (bg.height - IH * s) / 2, IW * s, IH * s);   // 小さく描いて引きのばす＝ぼかし
 }
-// 肉球のふちの形（単位円の上の点 → 肉球の形）。t は 0〜2π
-function shape(p, t) {
-  let x = Math.cos(t), y = Math.sin(t);
-  if (p.kind === 'main') {
-    // 下に3つのふくらみ・上は少し細い
-    const lobes = y > 0 ? 0.10 * Math.pow(Math.abs(Math.cos(t * 3)), 0.6) * y : 0;
-    x *= 1 + 0.12 * y;
-    y += lobes;
-  } else {
-    // 指：少したまご形（先が細い）
-    x *= 1 - 0.10 * (-y);
-  }
-  return [x * p.rx, y * p.ry];
-}
+const toImg = (x, y) => [(x - OX) / S, (y - OY) / S];
 
-/* ---------- 状態 ---------- */
-let count = 0, tickle = 0, lastTalk = 0, holdTalked = false, rubDist = 0;
-let pinkMode = true, soundOn = true;
-// かたさ（2026-11-04：くらべて選べるように）。k＝ばねの強さ、cPress/cFree＝押している間・はなしたあとの止まりやすさ
-//   depth＝沈む深さ、bulge＝ふちが押し出される大きさ、snap＝はなしたときの反動
-const FEEL = [
-  { name: 'やわらか', k: 190, cPress: 11, cFree: 4.5, depth: 1.3, bulge: 1.35, snap: 0.8 },
-  { name: 'ふつう',   k: 300, cPress: 15, cFree: 6.5, depth: 1.0, bulge: 1.0,  snap: 1.0 },
-  { name: 'ハリあり', k: 560, cPress: 22, cFree: 9,   depth: 0.65, bulge: 0.7, snap: 1.25 }
-];
-let feel = 1;
-const taps = [];
-const pops = [];   // 🐾 の小さなマーク
-
-/* ---------- 音（Web Audio でつくる） ---------- */
-let ac = null;
+/* ---------- 音・ふるえ ---------- */
+let ac = null, soundOn = true;
 function audio() {
   if (!soundOn) return null;
   if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; } }
@@ -138,14 +126,14 @@ function audio() {
 function puni(strength, up) {
   const a = audio(); if (!a) return;
   const t = a.currentTime, o = a.createOscillator(), g = a.createGain(), f = a.createBiquadFilter();
+  const base = up ? 400 : 240;
   o.type = 'sine';
-  const base = up ? 420 : 260;
-  o.frequency.setValueAtTime(base * (1 + 0.25 * Math.random()), t);
-  o.frequency.exponentialRampToValueAtTime(up ? base * 1.6 : base * 0.55, t + 0.12);
-  f.type = 'lowpass'; f.frequency.value = 1400;
+  o.frequency.setValueAtTime(base * (1 + 0.2 * Math.random()), t);
+  o.frequency.exponentialRampToValueAtTime(up ? base * 1.4 : base * 0.55, t + 0.12);
+  f.type = 'lowpass'; f.frequency.value = 1300;
   g.gain.setValueAtTime(0.0001, t);
-  g.gain.exponentialRampToValueAtTime(0.32 * strength, t + 0.012);
-  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+  g.gain.exponentialRampToValueAtTime(0.3 * strength, t + 0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.17);
   o.connect(f); f.connect(g); g.connect(a.destination);
   o.start(t); o.stop(t + 0.2);
 }
@@ -155,67 +143,62 @@ function buzz(ms) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch 
 const LINES = {
   tap:    ['ぷにっ♪', 'やわらかいでしょ〜', 'えへへ、肉球じまん♪', 'ぷにぷに〜', 'そこ、ぷにってするの'],
   tickle: ['あはは！ くすぐったいってば〜！', 'ひゃ〜っ、ゆびが かってに うごく〜', 'もう〜！ くすぐりすぎ〜！'],
-  hold:   ['ぎゅ〜って されてる…', '{x}の手、あったかいね', 'じっと されると、てれちゃう…'],
+  hold:   ['ぎゅ〜って されてる…', 'きみの手、あったかいね', 'じっと されると、てれちゃう…'],
   rub:    ['すりすり…きもちいい〜', 'あしのうら、マッサージ？ えへへ'],
+  sole:   ['そこは、肉球じゃないよ〜', 'こっちの ぷにぷにを さわって♪'],
   hundred:['100ぷに！ ぷにぷにマスターだね〜！']
 };
-const bubble = document.getElementById('bubble'), faceEl = document.getElementById('face');
+const bubble = document.getElementById('bubble');
+let lastTalk = 0;
 function say(kind, force) {
   const now = performance.now();
   if (!force && now - lastTalk < 1600) return;
   lastTalk = now;
   const list = LINES[kind];
-  bubble.textContent = list[Math.floor(Math.random() * list.length)].replace('{x}', 'きみ');
-  faceEl.classList.remove('bump'); void faceEl.offsetWidth; faceEl.classList.add('bump');
-}
-
-/* ---------- 当たり判定 ---------- */
-function padCenter(p) { return [FX + p.ox * U, FY + p.oy * U]; }
-// 画面の点 → その肉球の中の位置（-1〜1 のだ円座標）。中なら距離 < 1
-function local(p, x, y) {
-  const [cx, cy] = padCenter(p);
-  const dx = x - cx, dy = y - cy, c = Math.cos(-p.rot), s = Math.sin(-p.rot);
-  const lx = (dx * c - dy * s) / (p.rx * U), ly = (dx * s + dy * c) / (p.ry * U);
-  return [lx, ly, Math.hypot(lx, ly)];
-}
-function hitPad(x, y) {
-  let best = null, bd = 1.15;
-  pads.forEach((p) => { const d = local(p, x, y)[2]; if (d < bd) { bd = d; best = p; } });
-  return best;
+  bubble.textContent = list[Math.floor(Math.random() * list.length)];
+  bubble.classList.remove('bump'); void bubble.offsetWidth; bubble.classList.add('bump');
 }
 
 /* ---------- さわる ---------- */
-const fingers = new Map();   // pointerId → { pad, x, y }
+let count = 0, holdTalked = false, rubDist = 0;
+const taps = [], pops = [], fingers = new Map();
+function hitPad(ix, iy) {
+  let best = null, bd = 1.2;
+  pads.forEach((p) => { const d = Math.hypot((ix - p.cx) / p.rx, (iy - p.cy) / p.ry); if (d < bd) { bd = d; best = p; } });
+  return best;
+}
+function clampToPad(p, ix, iy) {
+  const u = (ix - p.cx) / p.rx, v = (iy - p.cy) / p.ry, d = Math.hypot(u, v), m = d > 0.85 ? 0.85 / d : 1;
+  p.qx = p.cx + u * m * p.rx; p.qy = p.cy + v * m * p.ry;
+}
 cv.addEventListener('pointerdown', (e) => {
   e.preventDefault();
+  if (!img) return;
   audio();
-  const p = hitPad(e.clientX, e.clientY);
-  if (!p) { footKick(); return; }
+  const [ix, iy] = toImg(e.clientX, e.clientY);
+  const p = hitPad(ix, iy);
+  if (!p) { say('sole'); return; }
   try { cv.setPointerCapture(e.pointerId); } catch (err) {}
   fingers.set(e.pointerId, { pad: p, x: e.clientX, y: e.clientY });
-  const [lx, ly] = local(p, e.clientX, e.clientY);
-  p.px = Math.max(-0.8, Math.min(0.8, lx)); p.py = Math.max(-0.8, Math.min(0.8, ly));
+  clampToPad(p, ix, iy);
   p.press = { id: e.pointerId, t0: performance.now() };
   holdTalked = false; rubDist = 0;
   puni(0.8, false); buzz(12);
-  count++; updateCount();
+  count++; document.getElementById('count').textContent = '🐾 ' + count;
   const now = performance.now();
   taps.push(now); while (taps.length && now - taps[0] > 2000) taps.shift();
-  if (taps.length >= 6) { tickle = Math.min(1.5, tickle + 0.35); say('tickle', taps.length === 6); }
+  if (taps.length >= 6) say('tickle', taps.length === 6);
   else if (count === 100) say('hundred', true);
   else say('tap');
-  const [cx, cy] = padCenter(p);
-  pops.push({ x: e.clientX, y: e.clientY - 10, t: 0, r: (Math.random() - 0.5) * 0.6, s: p.kind === 'main' ? 1.1 : 0.8 });
+  pops.push({ x: e.clientX, y: e.clientY - 14, t: 0, r: (Math.random() - 0.5) * 0.6, s: p.big ? 1.1 : 0.8 });
 });
 cv.addEventListener('pointermove', (e) => {
   const f = fingers.get(e.pointerId); if (!f) return;
-  const p = f.pad, [lx, ly] = local(p, e.clientX, e.clientY);
   rubDist += Math.hypot(e.clientX - f.x, e.clientY - f.y);
   f.x = e.clientX; f.y = e.clientY;
-  // へこみが指についてくる（肉球の外に出たら、ふちで止まる）
-  const d = Math.hypot(lx, ly), m = d > 0.8 ? 0.8 / d : 1;
-  p.px = lx * m; p.py = ly * m;
-  if (rubDist > 220) { rubDist = 0; say('rub'); puni(0.35, false); }
+  const [ix, iy] = toImg(e.clientX, e.clientY);
+  clampToPad(f.pad, ix, iy);   // くぼみが指についてくる（肉球の外に出たら、ふちで止まる）
+  if (rubDist > 200) { rubDist = 0; say('rub'); puni(0.3, false); }
 });
 function release(e) {
   const f = fingers.get(e.pointerId); if (!f) return;
@@ -224,25 +207,15 @@ function release(e) {
   if (p.press && p.press.id === e.pointerId) {
     const held = performance.now() - p.press.t0;
     p.press = null;
-    p.dentV -= (9 + Math.min(10, held / 80)) * FEEL[feel].snap;   // はなすと、反動で「ぷるん」
-    p.rip = Math.min(1.4, 0.6 + Math.max(0, p.dent) * 0.6) * FEEL[feel].snap; p.ripPh = Math.atan2(p.py, p.px);   // ふちに波
-    puni(0.6, true); buzz(8);
+    p.dentV -= (8 + Math.min(8, held / 90)) * FEEL[feel].snap;   // はなすと、控えめに「ぷるん」
+    puni(0.5, true); buzz(8);
   }
 }
 cv.addEventListener('pointerup', release);
 cv.addEventListener('pointercancel', release);
-// 肉球の外（毛の所）をさわったとき：足がぴくっ
-let kick = 0, kickV = 0;
-function footKick() { kickV += 6; puni(0.4, true); say('tap'); }
-
-function updateCount() { document.getElementById('count').textContent = '🐾 ' + count; }
 document.getElementById('feel').addEventListener('click', (e) => {
   feel = (feel + 1) % FEEL.length;
   e.currentTarget.textContent = 'かたさ：' + FEEL[feel].name;
-});
-document.getElementById('color').addEventListener('click', (e) => {
-  pinkMode = !pinkMode;
-  e.currentTarget.textContent = '肉球：' + (pinkMode ? 'ピンク' : 'こげ茶');
 });
 document.getElementById('snd').addEventListener('click', (e) => {
   soundOn = !soundOn;
@@ -251,147 +224,123 @@ document.getElementById('snd').addEventListener('click', (e) => {
 });
 
 /* ---------- 動き（ばね） ---------- */
-const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-let last = performance.now(), T = 0;
 function step(dt) {
-  T += dt;
-  tickle = Math.max(0, tickle - dt * 0.5);
-  kickV += (-260 * kick - 10 * kickV) * dt; kick += kickV * dt;
-  const now = performance.now();
+  const now = performance.now(), F = FEEL[feel];
   pads.forEach((p) => {
-    // 沈みの目標：押している間は 1、長押しで 1.3 まで
     let target = 0;
     if (p.press) {
       const h = (now - p.press.t0) / 1000;
-      target = 1 + Math.min(0.3, h * 0.25);
+      target = (1 + Math.min(0.3, h * 0.25)) * F.depth;   // 長押しで、もう少し沈む
       if (h > 1.4 && !holdTalked) { holdTalked = true; say('hold', true); }
     }
-    const F = FEEL[feel];
-    target *= F.depth;
-    const k = F.k, c = p.press ? F.cPress : F.cFree;   // はなしたあとは、ばねを弱くとめて「ぷるん」が続く
-    p.dentV += (k * (target - p.dent) - c * p.dentV) * dt;
+    p.dentV += (F.k * (target - p.dent) - (p.press ? F.cPress : F.cFree) * p.dentV) * dt;
     p.dent += p.dentV * dt;
-    // 指のもぞもぞ（くすぐったいほど大きく）
-    const wt = tickle > 0.2 ? Math.sin(T * 18 + p.i * 1.7) * 0.06 * tickle : 0;
-    p.wigV += (200 * (wt - p.wig) - 12 * p.wigV) * dt; p.wig += p.wigV * dt;
-    // ふちの点（風船のように、押された中身が逃げる）：
-    //   全体が少しふくらむ ＋ 指に近い側のふちが、ぐっと外へ押し出される（ふちの近くを押すほど大きい）
-    //   はなしたあとは、ふちに波が一周する（rip）
-    const len = Math.hypot(p.px, p.py), ax = len ? p.px / len : 0, ay = len ? p.py / len : 0;
-    const dn = Math.max(0, p.dent);
-    p.rip *= Math.exp(-3.2 * dt);
-    for (let j = 0; j < N; j++) {
-      const t = j / N * Math.PI * 2;
-      const dot = Math.cos(t) * ax + Math.sin(t) * ay;
-      const side = Math.max(0, dot);
-      let want = dn * F.bulge * (0.045 + 0.05 * (1 - Math.min(1, len * 1.3)) + 0.20 * side * side * Math.min(1, len * 1.5));
-      want += p.rip * 0.05 * Math.sin(3 * t + p.ripPh - T * 22);
-      p.offV[j] += (F.k * 1.3 * (want - p.off[j]) - 11 * p.offV[j]) * dt;
-      p.off[j] += p.offV[j] * dt;
-    }
   });
   for (let i = pops.length - 1; i >= 0; i--) { pops[i].t += dt; if (pops[i].t > 0.9) pops.splice(i, 1); }
 }
 
-/* ---------- 描く ---------- */
-function padColors() {
-  return pinkMode ? { base: '#F2A0A9', dark: '#D9707E', light: '#FFD5DA', line: '#B9566A' }
-                  : { base: '#4A2E25', dark: '#2C1914', light: '#8A6458', line: '#1E110D' };
-}
-function padPath(p) {
-  ctx.beginPath();
-  for (let j = 0; j <= N; j++) {
-    const jj = j % N, t = jj / N * Math.PI * 2;
-    const [x, y] = shape(p, t), s = 1 + p.off[jj];
-    j ? ctx.lineTo(x * s * U, y * s * U) : ctx.moveTo(x * s * U, y * s * U);
+/* ---------- 肉球のくぼみを描く（1ピクセルずつ） ----------
+   ① 押し出し：肉球のまわりを、中心から外へ少し広げる（指に近い側ほど大きい）
+   ② くぼみ：指の所の絵を少し縮める（奥にへこんだように見える）
+   ③ 影：くぼみの形（高さ）から、左上の光で明るさを決める。くぼみの左上の内側は暗く、右下の内側は明るい。まわりの土手は明るい
+   肉球の外（足の裏の毛）には ③ の影をつけない（pads_mask.png） */
+const LX = -0.55, LY = -0.83;   // 光の向き（左上から）
+function renderPad(p) {
+  const F = FEEL[feel], D = Math.max(-0.25, p.dent);
+  const m = 1.75;
+  const x0 = Math.floor(p.cx - p.rx * m), y0 = Math.floor(p.cy - p.ry * m);
+  const w = Math.ceil(p.rx * m * 2), h = Math.ceil(p.ry * m * 2);
+  if (!p.patch) {
+    p.patch = document.createElement('canvas'); p.patch.width = w; p.patch.height = h;
+    p.pctx = p.patch.getContext('2d'); p.data = p.pctx.createImageData(w, h);
+    p.x0 = x0; p.y0 = y0; p.w = w; p.h = h;
   }
-  ctx.closePath();
+  const out = p.data.data;
+  const R = Math.min(p.rx, p.ry) * (0.62 + 0.22 * Math.min(1.3, Math.abs(D)));
+  const R2 = R * R;
+  // 押した所の向き（肉球の中心から見て）
+  const pu = (p.qx - p.cx) / p.rx, pv = (p.qy - p.cy) / p.ry, plen = Math.hypot(pu, pv);
+  const pax = plen ? pu / plen : 0, pay = plen ? pv / plen : 0;
+  const bulgeAll = D * F.bulge * (0.035 + 0.04 * (1 - Math.min(1, plen * 1.2)));
+  const bulgeSide = D * F.bulge * 0.12 * Math.min(1, plen * 1.4);
+  const pinch = D * 0.22;
+  const shadeK = 1.15 * Math.max(0, D);
+  for (let yy = 0; yy < h; yy++) {
+    const y = y0 + yy;
+    for (let xx = 0; xx < w; xx++) {
+      const x = x0 + xx, o = (yy * w + xx) * 4;
+      // ① 押し出し（肉球のまわりで 0 に戻る）
+      const u = (x - p.cx) / p.rx, v = (y - p.cy) / p.ry, dn = Math.hypot(u, v);
+      let sx = x, sy = y;
+      if (dn < 1.7) {
+        const fall = dn < 1 ? 1 : 1 - (dn - 1) / 0.7, ff = fall * fall * (3 - 2 * fall);
+        const side = dn ? Math.max(0, (u * pax + v * pay) / dn) : 0;
+        const e = (bulgeAll + bulgeSide * side * side) * ff;
+        sx = p.cx + (x - p.cx) / (1 + e); sy = p.cy + (y - p.cy) / (1 + e);
+      }
+      // ② くぼみ：指のまわりの絵を縮める
+      const qx = sx - p.qx, qy = sy - p.qy, qq = qx * qx + qy * qy;
+      if (qq < R2 * 2.6) {
+        const r = Math.sqrt(qq) / (R * 1.6), t = r < 1 ? (1 - r) * (1 - r) : 0;
+        sx = p.qx + qx * (1 + pinch * t); sy = p.qy + qy * (1 + pinch * t);
+      }
+      let ix = sx | 0, iy = sy | 0;
+      if (ix < 0) ix = 0; else if (ix >= IW) ix = IW - 1;
+      if (iy < 0) iy = 0; else if (iy >= IH) iy = IH - 1;
+      const si = (iy * IW + ix) * 4;
+      let rr = src[si], gg = src[si + 1], bb = src[si + 2];
+      // ③ 影（肉球の所だけ）
+      const mk = mask[si] / 255;
+      if (mk > 0 && shadeK > 0.001) {
+        const dx = x - p.qx, dy = y - p.qy, dist = Math.hypot(dx, dy), rn = dist / R;
+        if (rn < 2.2) {
+          // 高さ：まんなかが沈み（-g）、ふちに土手（+rim）。その傾き × 光の向き で明るさ
+          const g = Math.exp(-rn * rn * 1.6);
+          const rz = (rn - 1.05) / 0.42, rim = Math.exp(-rz * rz);
+          const slope = g * 3.2 * rn - 0.45 * rim * 2 * (rn - 1.05) / (0.42 * 0.42);
+          const dl = dist > 0.001 ? (dx * LX + dy * LY) / dist : 0;
+          let sh = 1 - 0.30 * shadeK * slope * dl;   // 光と向かい合う面は明るく、背を向けた面は暗く
+          sh *= 1 - 0.30 * shadeK * g;               // 沈んだ底は、光がとどきにくくて少し暗い
+          if (sh < 1) { rr *= 1 - (1 - sh) * mk; gg *= 1 - (1 - sh) * mk; bb *= 1 - (1 - sh) * mk; }
+          else { const k = (sh - 1) * 0.9 * mk; rr += (255 - rr) * k * 0.55; gg += (255 - gg) * k * 0.5; bb += (255 - bb) * k * 0.5; }
+        }
+      }
+      out[o] = rr; out[o + 1] = gg; out[o + 2] = bb; out[o + 3] = 255;
+    }
+  }
+  p.pctx.putImageData(p.data, 0, 0);
+  ctx.drawImage(p.patch, OX + p.x0 * S, OY + p.y0 * S, p.w * S, p.h * S);
 }
+
+/* ---------- 描く ---------- */
 function draw() {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  // 砂浜
-  const g = ctx.createRadialGradient(W / 2, H * 0.5, 10, W / 2, H * 0.5, Math.max(W, H) * 0.75);
-  g.addColorStop(0, '#F6E2BD'); g.addColorStop(1, '#E2BC82');
-  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = 'rgba(160,110,60,.10)';
-  for (let i = 0; i < 70; i++) { const x = (i * 97.3) % W, y = (i * 53.7 + (i % 7) * 31) % H; ctx.beginPath(); ctx.arc(x, y, 1.2 + (i % 3), 0, 7); ctx.fill(); }
-
-  const squash = 1 - pads.reduce((a, p) => a + Math.max(0, p.dent), 0) * 0.006;
-  ctx.save();
-  ctx.translate(FX, FY);
-  ctx.rotate(kick * 0.02 + (tickle > 0.2 ? Math.sin(T * 9) * 0.015 * tickle : 0));
-  ctx.scale(1 / squash, squash);
-  // 足（毛）：かかと＋指のふくらみ。先に、少しずらした かげ を同じ形で
-  const fur = (dx, dy, rx, ry, rot) => { ctx.beginPath(); ctx.ellipse(dx, dy, rx, ry, rot, 0, 7); ctx.fill(); };
-  const foot = (sx, sy) => {
-    fur(sx, sy + U * 0.30, U * 0.78, U * 0.66, 0);
-    pads.forEach((p) => { if (p.kind === 'toe') fur(sx + (p.ox + p.wig * 0.3) * U, sy + (p.oy - 0.02) * U, p.rx * U * 1.6, p.ry * U * 1.5, p.rot + p.wig); });
-  };
-  ctx.fillStyle = 'rgba(110,70,30,.22)'; foot(6, 12);
-  ctx.fillStyle = '#5B3A28'; foot(0, 0);
-  // 毛のふさ（ふちの短い線）
-  ctx.strokeStyle = '#3E2618'; ctx.lineWidth = 2; ctx.lineCap = 'round';
-  for (let i = 0; i < 46; i++) {
-    const t = i / 46 * Math.PI * 2, rx = U * 0.78, ry = U * 0.66;
-    if (Math.sin(t) < -0.35) continue;   // 指の所はとばす
-    const x = Math.cos(t) * rx, y = U * 0.30 + Math.sin(t) * ry;
-    ctx.beginPath(); ctx.moveTo(x * 0.97, y * 0.97 + U * 0.01); ctx.lineTo(x * 1.03 + Math.cos(t) * 3, y * 1.02 + Math.sin(t) * 3); ctx.stroke();
-  }
-  // 肉球
-  const col = padColors();
-  pads.forEach((p) => {
-    ctx.save();
-    ctx.translate((p.ox + p.wig * 0.3) * U, p.oy * U);
-    ctx.rotate(p.rot + p.wig);
-    // ふち（少し暗い）
-    padPath(p);
-    const pg = ctx.createRadialGradient(-p.rx * U * 0.25, -p.ry * U * 0.35, 2, 0, 0, Math.max(p.rx, p.ry) * U * 1.15);
-    pg.addColorStop(0, col.light); pg.addColorStop(0.55, col.base); pg.addColorStop(1, col.dark);
-    ctx.fillStyle = pg; ctx.fill();
-    ctx.lineWidth = 2.5; ctx.strokeStyle = col.line; ctx.stroke();
-    // 押した所のへこみ（まんなかが暗く、まわりが少し明るい）
-    const d = Math.max(0, p.dent);
-    if (d > 0.02) {
-      ctx.save(); padPath(p); ctx.clip();
-      const dd = Math.min(1.4, d);
-      const qx = p.px * p.rx * U, qy = p.py * p.ry * U, R = Math.min(p.rx, p.ry) * U * (0.62 + 0.32 * dd);
-      // まんなか＝沈んだ所（暗い）→ まわり＝押し出されて盛り上がった「土手」（明るい輪）→ 外は元の色
-      const dg = ctx.createRadialGradient(qx, qy, 0, qx, qy, R);
-      dg.addColorStop(0, 'rgba(70,10,25,' + (0.34 * dd) + ')');
-      dg.addColorStop(0.42, 'rgba(70,10,25,' + (0.16 * dd) + ')');
-      dg.addColorStop(0.62, 'rgba(255,255,255,' + (0.05 * dd) + ')');
-      dg.addColorStop(0.78, 'rgba(255,255,255,' + ((pinkMode ? 0.42 : 0.22) * dd) + ')');
-      dg.addColorStop(1, 'rgba(255,255,255,0)');
-      ctx.fillStyle = dg; ctx.fillRect(-p.rx * U * 2, -p.ry * U * 2, p.rx * U * 4, p.ry * U * 4);
-      ctx.restore();
-    }
-    // ツヤ（押すと、指から逃げるように少し動いて小さくなる）
-    const hx = -p.rx * U * (0.32 + 0.12 * p.px * d), hy = -p.ry * U * (0.42 + 0.12 * p.py * d);
-    ctx.fillStyle = 'rgba(255,255,255,' + (pinkMode ? 0.55 : 0.28) * (1 - 0.35 * Math.min(1, d)) + ')';
-    ctx.beginPath(); ctx.ellipse(hx, hy, p.rx * U * 0.26 * (1 - 0.2 * Math.min(1, d)), p.ry * U * 0.14, -0.5, 0, 7); ctx.fill();
-    ctx.restore();
-  });
-  ctx.restore();
-  // 🐾
+  ctx.imageSmoothingEnabled = true;
+  if (bg) { ctx.drawImage(bg, 0, 0, W, H); ctx.fillStyle = 'rgba(239,215,174,.45)'; ctx.fillRect(0, 0, W, H); }
+  ctx.drawImage(img, OX, OY, IW * S, IH * S);
+  pads.forEach((p) => { if (Math.abs(p.dent) > 0.004 || Math.abs(p.dentV) > 0.02) renderPad(p); });
   pops.forEach((q) => {
-    const k = q.t / 0.9, a = 1 - k;
-    ctx.save(); ctx.globalAlpha = a; ctx.translate(q.x, q.y - k * 50); ctx.rotate(q.r); ctx.scale(q.s * (0.7 + 0.5 * Math.min(1, k * 4)), q.s * (0.7 + 0.5 * Math.min(1, k * 4)));
-    ctx.fillStyle = pinkMode ? '#D9536A' : '#4A2C1A';
+    const k = q.t / 0.9, sc = q.s * (0.7 + 0.5 * Math.min(1, k * 4));
+    ctx.save(); ctx.globalAlpha = 1 - k; ctx.translate(q.x, q.y - k * 50); ctx.rotate(q.r); ctx.scale(sc, sc);
+    ctx.fillStyle = '#5A3424';
     ctx.beginPath(); ctx.ellipse(0, 4, 9, 7, 0, 0, 7); ctx.fill();
     [[-9, -6], [-3, -11], [3, -11], [9, -6]].forEach(([x, y]) => { ctx.beginPath(); ctx.ellipse(x, y, 3.2, 4, 0, 0, 7); ctx.fill(); });
     ctx.restore();
   });
 }
+let last = performance.now();
 function frame(now) {
   const dt = Math.min(0.05, Math.max(0, (now - last) / 1000)); last = now;
-  const sub = 4;
-  for (let i = 0; i < sub; i++) step(dt / sub);
+  for (let i = 0; i < 4; i++) step(dt / 4);
   draw();
   requestAnimationFrame(frame);
 }
 addEventListener('resize', resize);
 resize();
-requestAnimationFrame(frame);
-if (reduce) { /* 動きを減らす設定でも、へこみは見せる（揺れは短く止まる） */ }
+Promise.all([load(SRC_IMG), load(SRC_MASK)]).then(([a, b]) => {
+  img = a; src = pixels(a); mask = pixels(b); makeBg();
+  document.getElementById('loading').remove();
+  requestAnimationFrame(frame);
+}).catch(() => { document.getElementById('loading').textContent = '絵を読みこめませんでした。開き直してください'; });
 })();
 </script>
