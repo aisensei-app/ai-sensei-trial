@@ -1544,7 +1544,7 @@
      さわるごとに葉っぱのゲージが1枚ずつ緑になり、たまるとレポート → X にポスト
      ========================================================= */
   const REP = C.report || null;
-  // 2026-11-04：0回の場所は、結果の画面にも X のポスト文にも出さない（すっきり・見つけた人だけ「？？？」や「ふともも」が出る。showReport の places）
+  // 2026-11-04：0回の場所は、結果の画面にも X のポスト文にも出さない（すっきり・見つけた人だけ「ふともも」などが出る）。ただし ？？？ は0回でも出す（showReport の places）
   const REP_PLACES = ['head', 'chest', 'belly', 'tail', 'thigh', 'crotch'];
   const repCount = {};
   let repTotal = 0, reportOpen = false;
@@ -1581,7 +1581,8 @@
   function showReport() {
     const days = Math.max(1, SAVE.data.totalDays);
     // いちばん多くさわった場所（同じ数がいくつもあるときは even）
-    const places = REP_PLACES.filter((p) => repCount[p] > 0);
+    // ？？？（おまた）だけは0回でも出す（「？？？って何？」と気になってもらう謎。2026-11-04 ユーザーと決めた）
+    const places = REP_PLACES.filter((p) => p === 'crotch' || repCount[p] > 0);
     const max = Math.max.apply(null, places.map((p) => repCount[p]));
     const tops = places.filter((p) => repCount[p] === max);
     const top = tops.length === 1 ? tops[0] : 'even';
