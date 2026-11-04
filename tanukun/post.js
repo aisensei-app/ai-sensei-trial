@@ -133,7 +133,6 @@ window.TanuPost = function (opts) {
     dearAuthor: { ja: '作者へ', en: 'To the creator,', zh: '给作者' },
     authorHint: { ja: 'ご意見・ご感想・こまったことを書いてね（{n}字まで）', en: 'Your thoughts, ideas, or problems (up to {n} characters)', zh: '写下意见、感想或遇到的问题（最多{n}字）' },
     authorNote: { ja: '📨 作者に とどきます（Google フォーム）。作者と、集計を手伝う AI が読みます。名前・住所・学校など、あなたがだれか分かることは書かないでね。お返事はできず、送ったあとで消すこともできません', en: '📨 This goes to the creator (via Google Forms) and is read by the creator and an AI that helps sort feedback. Please don\'t write your name, address, school, or anything that could identify you. There\'s no reply, and it can\'t be deleted after sending', zh: '📨 会通过 Google 表单送到作者那里，由作者和帮忙整理的 AI 阅读。请不要写名字、地址、学校等能认出你是谁的信息。不会回信，发送后也无法删除' },
-    authorSend: { ja: '📨 作者に送る', en: '📨 Send to the creator', zh: '📨 发送给作者' },
     authorDone: { ja: '作者に わたしておくね！\nありがとう 🐾', en: 'I\'ll hand it to the creator!\nThank you 🐾', zh: '我会转交给作者的！\n谢谢你 🐾' },
     box: { ja: '📖 交換日記', en: '📖 Exchange diary', zh: '📖 交换日记' },
     diaryStat: { ja: 'やりとり {n}回・{d}日間', en: 'Letters: {n} · Days: {d}', zh: '往来 {n} 次 · {d} 天' },
@@ -387,7 +386,7 @@ window.TanuPost = function (opts) {
       '<p class="p-note">' + T(UI.authorNote) +
         (opts.rules ? ' <button type="button" class="p-info">' + T(UI.rules) + '</button>' : '') + '</p>' +
       '<div class="p-row"><button class="btn p-cancel" type="button">' + T(UI.cancel) + '</button>' +
-      '<button class="btn btn-main p-send" type="button" disabled>' + T(UI.authorSend) + '</button></div>';
+      '<button class="btn btn-main p-send" type="button" disabled>' + T(UI.send) + '</button></div>';   // 送るボタンは、タヌくんへと同じ文言（2026-11-04 夜 ユーザー）
     sh.hidden = false;
     const ta = sh.querySelector('.p-text'), send = sh.querySelector('.p-send');
     ta.placeholder = fill(T(UI.authorHint), { n: AUTHOR_MAX });
