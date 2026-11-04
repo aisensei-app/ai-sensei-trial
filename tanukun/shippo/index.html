@@ -1,7 +1,6 @@
 <title>しっぽ ふさふさ</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap">
 <!-- 飛び出す文字だけ、ころんと太い丸文字（使う字だけ読みこむ） -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&display=swap&text=%E2%99%AA%E3%80%9C%E3%81%81%E3%81%8F%E3%81%95%E3%81%A3%E3%81%AB%E3%81%B3%E3%81%B5%E3%81%B7%E3%81%BC%E3%81%BD%E3%82%80%E3%82%88%E3%82%8A%E3%82%8B%E3%82%93%E3%83%83%E3%83%9C%E3%83%AF%EF%BC%81">
 <!--
@@ -19,8 +18,8 @@
 /* 一枚の画面：浜辺にうしろ姿のタヌくん。上にふきだし、下にボタン */
 :root{
   --sand:#EFD7AE; --ink:#4A2C1A; --cream:#FFF6E6; --accent:#D9536A;
-  --display:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",sans-serif;
-  --pop:"Mochiy Pop One","Zen Maru Gothic","Hiragino Maru Gothic ProN",sans-serif;
+  --display:-apple-system,BlinkMacSystemFont,"Hiragino Maru Gothic ProN","Noto Sans JP",sans-serif;   /* 字体は本編と同じ（2026-11-04 夜。Zen Maru Gothic をやめた） */
+  --pop:"Mochiy Pop One","Hiragino Maru Gothic ProN",sans-serif;
   color-scheme:light;
 }
 html,body{height:100%}
@@ -86,6 +85,11 @@ html[lang="zh-Hans"] .bubble{font-family:-apple-system,BlinkMacSystemFont,"PingF
 .count{padding:7px 12px!important;font-size:14px!important}
 /* 本編の中では、右上の札を「‹ もどる」と同じ行の右に（ふきだしが横幅をぜんぶ使えるように） */
 .embed .meter,.embed .count{position:fixed;right:max(16px,env(safe-area-inset-right,0px));top:calc(env(safe-area-inset-top,0px) + 14px);margin:0}
+/* ボタンは「3段階のルール」の ③ 道具（2026-11-04 夜）：白く半分すけた小さな丸・ふちなし（本編の「‹ もどる」と同じ）。
+   タヌくんが主役なので、ボタンは静かに。説明の札も同じ形 */
+button{font-weight:700;font-size:14px;color:#4A2E16;background:rgba(255,255,255,.7);border:0;box-shadow:none;padding:7px 14px}
+button:active{transform:translateY(1px);box-shadow:none;background:rgba(255,255,255,.85)}
+.hint{background:rgba(255,255,255,.7);color:#4A2E16;font-weight:700}
 </style>
 
 <canvas id="stage" aria-label="浜辺で、うしろ姿のタヌくんがふり返っている。しっぽとおしりをさわれる"></canvas>
