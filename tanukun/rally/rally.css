@@ -39,10 +39,11 @@ html, body {
   padding: max(10px, env(safe-area-inset-top)) 14px 0;
 }
 .back {
+  /* 「3段階のルール」の ③ 道具：白く半分すけた丸・ふちなし・濃いこげ茶の字（本編・ふれあいと同じ。2026-11-05） */
   padding: 7px 14px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, .8);
-  color: #8A5A2B;
+  background: rgba(255, 255, 255, .7);
+  color: #4A2E16;
   font-size: 15px;
   font-weight: 700;
   text-decoration: none;
@@ -60,7 +61,7 @@ html, body {
   box-shadow: 0 0 0 1.5px #fff, 0 1px 3px rgba(0, 0, 0, .25);
 }
 .lives i.lost { filter: grayscale(1) opacity(.35); }
-.count b { font-size: 30px; color: #E0671F; -webkit-text-stroke: 4px #fff; paint-order: stroke fill; }
+.count b { font-size: 30px; color: #C8641E; -webkit-text-stroke: 4px #fff; paint-order: stroke fill; }
 .count small { margin-left: 3px; font-size: 13px; }
 .best {
   padding: 4px 10px;
@@ -88,7 +89,7 @@ html, body {
   box-shadow: 0 2px 8px rgba(74, 46, 22, .15);
   font-size: 13px;
   font-weight: 900;
-  color: #E0671F;
+  color: #C8641E;
   white-space: nowrap;
 }
 .gauge i { display: flex; gap: 4px; }
@@ -259,7 +260,7 @@ body.in-x .special-btn { bottom: calc(25vh + 10px); }
   font-size: 16px;
   font-weight: 900;
   color: #fff;
-  -webkit-text-stroke: 5px #E0671F;
+  -webkit-text-stroke: 5px #F08A3C;
   paint-order: stroke fill;
   white-space: nowrap;
   opacity: 0;
@@ -358,7 +359,7 @@ body.in-x .special-btn { bottom: calc(25vh + 10px); }
   font-size: 26px;
   font-weight: 900;
   color: #fff;
-  -webkit-text-stroke: 6px #E0671F;
+  -webkit-text-stroke: 6px #F08A3C;
   paint-order: stroke fill;
   white-space: nowrap;
   animation: popUp .7s ease-out forwards;
@@ -474,15 +475,15 @@ body.in-x .special-btn { bottom: calc(25vh + 10px); }
   padding: 4px 10px;
   border: 0;
   border-radius: 999px;
-  background: #F3DDBF;
-  color: #5A3A1E;
+  background: rgba(255, 255, 255, .7);   /* ③ 道具 */
+  color: #4A2E16;
   font: inherit;
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
 }
 .sheet p { margin: 8px 0; line-height: 1.6; }
-.sheet b { color: #E0671F; }
+.sheet b { color: #C8641E; }
 .sheet .small { font-size: 13px; color: #8A6A4A; }
 .btn {
   display: block;
@@ -491,7 +492,8 @@ body.in-x .special-btn { bottom: calc(25vh + 10px); }
   padding: 14px;
   border: 0;
   border-radius: 999px;
-  background: #E0671F;
+  background: #F08A3C;
+  box-shadow: 0 4px 0 #C8641E;   /* 本編の「遊ぶ」と同じ、オレンジ1色＋こい影 */
   color: #fff;
   font: inherit;
   font-size: 18px;
@@ -499,8 +501,11 @@ body.in-x .special-btn { bottom: calc(25vh + 10px); }
   text-decoration: none;
   cursor: pointer;
 }
-.btn-x { background: #111; }
-.btn-sub { background: #F3DDBF; color: #5A3A1E; }
+.btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #C8641E; }
+.btn-x { background: #111; box-shadow: 0 4px 0 #444; }
+.btn-x:active { box-shadow: 0 2px 0 #444; }
+.btn-sub { background: #F3DDBF; color: #5A3A1E; box-shadow: 0 3px 0 rgba(74, 46, 22, .12); }
+.btn-sub:active { box-shadow: 0 1px 0 rgba(74, 46, 22, .12); }
 .r-count { font-size: 18px; font-weight: 700; }
 .r-count b { font-size: 44px; }
 .r-longest { font-size: 14px; font-weight: 700; margin-top: -4px; }
@@ -540,7 +545,7 @@ body.in-x .special-btn { bottom: calc(25vh + 10px); }
   font-size: 30px;
   font-weight: 900;
   color: #fff;
-  -webkit-text-stroke: 7px #E0671F;
+  -webkit-text-stroke: 7px #F08A3C;
   paint-order: stroke;
   text-shadow: 0 3px 8px rgba(90, 40, 10, .35);
   animation: rTitle .6s .2s cubic-bezier(.3, 1.6, .5, 1) both;
@@ -556,7 +561,7 @@ body.in-x .special-btn { bottom: calc(25vh + 10px); }
   text-align: center;
 }
 .r-card p { margin: 6px 0; line-height: 1.5; }
-.r-card b { color: #E0671F; }
+.r-card b { color: #C8641E; }
 .r-card .r-count { margin-top: 0; }
 body.in-x .r-card { padding-bottom: calc(25vh + 20px); }
 

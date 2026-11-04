@@ -108,3 +108,9 @@ html[lang="zh"] body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",
 body.in-x .bottom{padding-bottom:calc(25vh + 16px)}
 body.in-x .special{padding-bottom:calc(25vh + 12px)}
 body.in-x #spImg{max-height:39vh}   /* ごほうびの 💗 の行が入っても、もどるがパネルにかからないように */
+
+/* ---- 上のボタンは「3段階のルール」の ③ 道具（2026-11-05。本編・ふれあいと同じ）----
+   白く半分すけた丸・ふちなし・濃いこげ茶の字。木の看板は場面の中の「物」（説明の立て札・ざぶーん！）だけに残す */
+.hud .back,#spd,#snd{background:rgba(255,255,255,.7);border:0;box-shadow:none;border-radius:999px;
+  padding:7px 14px;color:#4A2E16;font-weight:700;font-size:14px;line-height:1.4}
+#spd:active,#snd:active{transform:translateY(1px);background:rgba(255,255,255,.85)}
