@@ -1544,7 +1544,8 @@
      さわるごとに葉っぱのゲージが1枚ずつ緑になり、たまるとレポート → X にポスト
      ========================================================= */
   const REP = C.report || null;
-  const REP_PLACES = ['head', 'chest', 'belly', 'tail', 'crotch'];
+  // thigh（太もも。2026-11-04）は、そのレポートでさわったときだけ行を出す（ふだんの見た目は今までと同じ。showReport の places）
+  const REP_PLACES = ['head', 'chest', 'belly', 'tail', 'thigh', 'crotch'];
   const repCount = {};
   let repTotal = 0, reportOpen = false;
   const gauge = $('gauge');
@@ -1575,15 +1576,17 @@
   function showReport() {
     const days = Math.max(1, SAVE.data.totalDays);
     // いちばん多くさわった場所（同じ数がいくつもあるときは even）
-    const max = Math.max.apply(null, REP_PLACES.map((p) => repCount[p]));
-    const tops = REP_PLACES.filter((p) => repCount[p] === max);
+    const places = REP_PLACES.filter((p) => p !== 'thigh' || repCount.thigh > 0);
+    const max = Math.max.apply(null, places.map((p) => repCount[p]));
+    const tops = places.filter((p) => repCount[p] === max);
     const top = tops.length === 1 ? tops[0] : 'even';
     const comment = REP.comments[top] || REP.comments.even;
     const L = REP.labels;
-    // 名前の幅をそろえる（日本語は全角で4文字分＋1文字あける。英語は「: 」）
-    const pad = (s) => (I18N.lang === 'ja' ? s + '　'.repeat(Math.max(0, 4 - s.length)) : I18N.lang === 'zh' ? s + '：' : s + ': ');
+    // 名前の幅をそろえる（日本語は全角で、いちばん長い名前＋1文字あける。ふだんは4文字分、ふとももの行があると5文字分。英語は「: 」）
+    const padW = Math.max.apply(null, places.map((p) => L[p].length)) + 1;
+    const pad = (s) => (I18N.lang === 'ja' ? s + '　'.repeat(Math.max(1, padW - s.length)) : I18N.lang === 'zh' ? s + '：' : s + ': ');
     // ポストの文章：？？？（ひみつの場所）も回数を出す（棒は紫）
-    const lines = REP_PLACES.map((p) => pad(L[p]) + (p === 'crotch' ? '🟪' : '🟧').repeat(repCount[p]) + ' ' + repCount[p]);
+    const lines = places.map((p) => pad(L[p]) + (p === 'crotch' ? '🟪' : '🟧').repeat(repCount[p]) + ' ' + repCount[p]);
     const postText = tr('タヌくんと遊んだよ！（なかよし{n}日目）', { n: days }) + '\n' + lines.join('\n') +
       '\n「' + comment + '」' + (REP.hashtag ? '\n#' + REP.hashtag : '');
 
@@ -1591,7 +1594,7 @@
     openSheet(tr('なでなでレポート'),
       '<p class="rep-day"></p>' +
       '<div class="rep-pic"><img class="res-img" alt=""></div>' +
-      '<table class="rep">' + REP_PLACES.map((p) => '<tr' + (p === 'crotch' ? ' class="secret"' : '') + '>' +
+      '<table class="rep">' + places.map((p) => '<tr' + (p === 'crotch' ? ' class="secret"' : '') + '>' +
         '<th></th><td class="bar"></td><td class="num"></td></tr>').join('') + '</table>' +
       '<p class="res-comment"></p>' +
       shareButtonsHtml());
@@ -1611,7 +1614,7 @@
     });
     body.querySelector('.res-comment').textContent = '「' + comment + '」';
     body.querySelectorAll('.rep tr').forEach((tr, i) => {
-      const p = REP_PLACES[i], n = repCount[p];
+      const p = places[i], n = repCount[p];
       tr.querySelector('th').textContent = L[p];
       if (p === 'crotch') {
         // ひみつの場所：名前は「？？？」のまま、回数は出す（棒は紫）

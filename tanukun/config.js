@@ -372,10 +372,10 @@ window.TANU_CONFIG = {
     taps: 10,
     url: '',
     hashtag: 'タヌくん',
-    labels:   { head: 'あたま', chest: 'むね', belly: 'おなか', tail: 'しっぽ', crotch: '？？？' },
+    labels:   { head: 'あたま', chest: 'むね', belly: 'おなか', tail: 'しっぽ', thigh: 'ふともも', crotch: '？？？' },   // ふとももは、さわったときだけ行が出る
     comments: { head: 'なでなで、ありがと〜♪', chest: 'むね、さわりすぎ…！', belly: 'おなかばっかり〜！',
-                tail: 'しっぽ、ふわふわでしょ？', crotch: 'ひ、ひみつの場所ばっかり…！', even: 'いろんな所をさわってくれた〜' },
-    faces:    { head: 'melt', chest: 'shy', belly: 'ponpoko1', tail: 'normal', crotch: 'troubled', even: 'happy' }
+                tail: 'しっぽ、ふわふわでしょ？', thigh: 'ふともも、くすぐったいってば〜！', crotch: 'ひ、ひみつの場所ばっかり…！', even: 'いろんな所をさわってくれた〜' },
+    faces:    { head: 'melt', chest: 'shy', belly: 'ponpoko1', tail: 'normal', thigh: 'shy', crotch: 'troubled', even: 'happy' }
   },
 
   /* 確認用：設定画面に「なかよし度を切りかえて試す」と「ひみつの思い出とクリア画面を見る」を出す。
