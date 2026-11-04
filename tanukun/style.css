@@ -1427,8 +1427,8 @@ body.fr-on #lang-btn, body.fr-on .lang-btn { visibility: hidden; }
 
 /* ---- ポストの「🦝 タヌくんへ」「💡 作者へ」（左右に2つ。2026-11-04 夜）：送り先を押す前に選べる。下に小さな説明 ---- */
 #post .p-two { display: flex; gap: 10px; }
-#post .p-two .btn { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; padding-top: 11px; padding-bottom: 9px; }
-#post .p-two .btn small { font-size: 12px; font-weight: 700; opacity: .8; }
-#post .p-two .btn { font-size: 17px; white-space: nowrap; }   /* 左右で同じ大きさ（btn-main の大きい字にしない）。英語でも1行に */
+#post .p-two .btn { white-space: nowrap; font-size: 18px; }
+#post .p-two .p-write { flex: 1; min-width: 0; }   /* タヌくんへ：横に大きく */
+#post .p-two .p-author { flex: none; padding-left: 16px; padding-right: 16px; }   /* 作者へ：文字が入る分だけ */
 #post .p-author-paper .p-send { font-size: 16px; white-space: nowrap; }
 #post .p-author-paper .p-dear { color: #3C6E9E; }

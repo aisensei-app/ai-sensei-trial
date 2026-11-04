@@ -129,9 +129,7 @@ window.TanuPost = function (opts) {
     write: { ja: '✏️ お手紙を書く', en: '✏️ Write a letter', zh: '✏️ 写信' },
     read: { ja: '📬 お返事を読む', en: '📬 Read the reply', zh: '📬 读回信' },
     toTanu: { ja: '🦝 タヌくんへ', en: '🦝 To Tanu-kun', zh: '🦝 写给狸君' },
-    toTanuSub: { ja: 'ないしょ・お返事つき', en: 'Private · he replies', zh: '悄悄话 · 有回信' },
     toAuthor: { ja: '💡 作者へ', en: '💡 To the creator', zh: '💡 写给作者' },
-    toAuthorSub: { ja: 'ご意見・ご感想', en: 'Feedback & ideas', zh: '意见 · 感想' },
     dearAuthor: { ja: '作者へ', en: 'To the creator,', zh: '给作者' },
     authorHint: { ja: 'ご意見・ご感想・こまったことを書いてね（{n}字まで）', en: 'Your thoughts, ideas, or problems (up to {n} characters)', zh: '写下意见、感想或遇到的问题（最多{n}字）' },
     authorNote: { ja: '📨 作者に とどきます（Google フォーム）。作者と、集計を手伝う AI が読みます。名前・住所・学校など、あなたがだれか分かることは書かないでね。お返事はできず、送ったあとで消すこともできません', en: '📨 This goes to the creator (via Google Forms) and is read by the creator and an AI that helps sort feedback. Please don\'t write your name, address, school, or anything that could identify you. There\'s no reply, and it can\'t be deleted after sending', zh: '📨 会通过 Google 表单送到作者那里，由作者和帮忙整理的 AI 阅读。请不要写名字、地址、学校等能认出你是谁的信息。不会回信，发送后也无法删除' },
@@ -332,10 +330,10 @@ window.TanuPost = function (opts) {
     const m = $('.p-menu');
     m.innerHTML =
       (n ? '<button class="btn btn-main p-read" type="button">' + T(UI.read) + ' <i>' + n + '</i></button>' : '') +
-      // 2026-11-04 夜：送り先を、押す前に選べるように（左＝タヌくんへ〔ないしょ・お返事つき〕、右＝作者へ〔ご意見〕）
+      // 2026-11-04 夜：送り先を、押す前に選べるように（左＝タヌくんへ〔横に大きく〕、右＝作者へ〔文字の分だけ〕。2026-11-04 夜 ユーザー「説明の文はなしでシンプルに」）
       '<div class="p-two">' +
-        '<button class="btn ' + (n ? '' : 'btn-main ') + 'p-write" type="button">' + T(UI.toTanu) + '<small>' + T(UI.toTanuSub) + '</small></button>' +
-        (opts.opinion ? '<button class="btn p-author" type="button">' + T(UI.toAuthor) + '<small>' + T(UI.toAuthorSub) + '</small></button>' : '') +
+        '<button class="btn ' + (n ? '' : 'btn-main ') + 'p-write" type="button">' + T(UI.toTanu) + '</button>' +
+        (opts.opinion ? '<button class="btn p-author" type="button">' + T(UI.toAuthor) + '</button>' : '') +
       '</div>' +
       '<button class="btn p-open-box" type="button">' + T(UI.box) + (replies.length ? ' (' + replies.length + ')' : '') + '</button>';
     if (n) m.querySelector('.p-read').addEventListener('click', () => readLetter(st.letters.find((l) => arrived(l) && !l.read)));
