@@ -36,6 +36,7 @@
 
   const C = window.TANU_CONFIG;
   if (C.features && C.features.rally && C.features.rally !== 'open') { location.replace('../'); return; }
+  try { localStorage.setItem('tanukun.rallySeen', '1'); } catch (e) {}   // トップ画面の NEW を消す（2026-11-04）
 
   /* ---- タヌくんのところへ戻るとき：幕がふわっとかかってから（本編のトップ画面は、同じ幕が明けるところから始まる） ---- */
   document.addEventListener('click', (e) => {

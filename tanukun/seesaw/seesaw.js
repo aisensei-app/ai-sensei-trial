@@ -676,7 +676,29 @@ function placeholder(sp) {
   x.fillText('特別イラスト「' + sp.id + '」（準備中）', 320, 762);
   return c.toDataURL('image/png');
 }
+/* ---------- 本編とのつながり：1日1回のごほうび（2026-11-04。ぽんぽこ・洗うゲームと同じ形） ----------
+   海へざぶーんして特別イラストが出たら、その日はじめての1回だけ、なかよしポイントを本編の記録（tanukun-save-v1）の seesawPoints に預ける。
+   本編を開いたときに save.js の claimPonPoints で受け取る */
+const SEESAW_BONUS = 5;
+function today() {   // 本編と同じ「きょう」（config.js の days.dayStartHour 時に切りかわる）
+  const d = new Date(Date.now() - ((C.days && C.days.dayStartHour) || 0) * 3600 * 1000);
+  const pad = (n) => (n < 10 ? '0' : '') + n;
+  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+}
+function giveBonus() {
+  try {
+    const d = JSON.parse(localStorage.getItem('tanukun-save-v1')) || {};
+    if (d.seesawBonusDay === today()) return false;
+    d.seesawBonusDay = today();
+    d.seesawPoints = (d.seesawPoints || 0) + SEESAW_BONUS;
+    localStorage.setItem('tanukun-save-v1', JSON.stringify(d));
+    return true;
+  } catch (e) { return false; }
+}
 function showSpecial() {
+  const got = giveBonus();
+  document.getElementById('spBonus').textContent = tr('💗 なかよしポイント +{n}（タヌくんのところで受け取れるよ）', { n: SEESAW_BONUS });
+  document.getElementById('spBonus').hidden = !got;
   let r = Math.random() * SPECIALS.reduce((a, s) => a + s.weight, 0), sp = SPECIALS[0];
   for (const s of SPECIALS) { if ((r -= s.weight) < 0) { sp = s; break; } }
   const isNew = !seen[sp.id];

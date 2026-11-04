@@ -44,6 +44,7 @@ body{margin:0;background:#bfe3f7;color:var(--ink);font-family:var(--font);overfl
 #spImg{width:100%;max-height:62vh;object-fit:contain;border-radius:16px;border:3px solid var(--wood);box-shadow:0 4px 0 var(--wood);background:#fff}
 .sptitle{margin:4px 0 0;font-size:22px;font-weight:900}
 .spline{margin:0;font-size:15px;font-weight:700}
+.spbonus{margin:0;font-size:13px;font-weight:700;color:#c2185b;text-align:center}
 #spBack{font-size:16px;padding:8px 26px;margin-top:6px}
 .hint{align-self:center;max-width:min(92%,360px);font-size:13px;font-weight:700;line-height:1.45;text-align:center;transition:opacity .6s,transform .6s}
 .hint b{color:#b0461b}
@@ -106,4 +107,4 @@ html[lang="zh"] body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",
    「海へ ざぶーん！」と、特別イラストの「もどる」が、パネルに隠れないように上へ */
 body.in-x .bottom{padding-bottom:calc(25vh + 16px)}
 body.in-x .special{padding-bottom:calc(25vh + 12px)}
-body.in-x #spImg{max-height:42vh}
+body.in-x #spImg{max-height:39vh}   /* ごほうびの 💗 の行が入っても、もどるがパネルにかからないように */

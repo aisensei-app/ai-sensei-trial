@@ -122,6 +122,8 @@
   function feature(name) { return (C.features && C.features[name]) || 'open'; }
   // 丸太シーソーを一度でも開いたか（seesaw.js が覚える。トップ画面の NEW を消す）
   function seesawSeen() { try { return localStorage.getItem('tanukun.seesawSeen') === '1'; } catch (e) { return false; } }
+  // ぽよんラリーを一度でも開いたか（rally.js が覚える。トップ画面の NEW を消す。2026-11-04）
+  function rallySeen() { try { return localStorage.getItem('tanukun.rallySeen') === '1'; } catch (e) { return false; } }
   // タヌくんを洗おうを一度でも開いたか（washing.js が覚える。トップ画面の NEW を消す）
   function washingSeen() { try { return localStorage.getItem('tanukun.washingSeen') === '1'; } catch (e) { return false; } }
 
@@ -1274,6 +1276,7 @@
       if (r.visit !== 'again') msg.push(tr('来てくれてありがとう！ 💗+{n}', { n: C.friendship.visitPoints }));
       if (pb.pon) msg.push(tr('ぽんぽこリズムの ごほうび 💗+{n}', { n: pb.pon }));
       if (pb.rally) msg.push(tr('ぽよんラリーの ごほうび 💗+{n}', { n: pb.rally }));
+      if (pb.seesaw) msg.push(tr('丸太シーソーの ごほうび 💗+{n}', { n: pb.seesaw }));
       if (pb.wash) msg.push(tr('タヌくんを洗おうの ごほうび 💗+{n}', { n: pb.wash }));
       setTimeout(() => toast(msg.join('\n')), 900);
     }
@@ -1862,7 +1865,7 @@
       if (URANAI) { URANAI.resetAll(); if (HOME) HOME.refreshIcons(); }   // 貝がら占いの記録も消す（2026-11-03）
       if (POST) POST.resetAll();   // お手紙の記録も消す
       // 丸太シーソー・タヌくんを洗おうの記録（特別イラスト・さいこう記録・ずかん・NEW の印）も消す（2026-11-04。はやさの設定は残す）
-      ['tanukun.seesawSeen', 'tanu-seesaw-best', 'tanu-seesaw-special',
+      ['tanukun.rallySeen', 'tanukun.seesawSeen', 'tanu-seesaw-best', 'tanu-seesaw-special',
         'tanukun.washingSeen', 'tanu-washing-special', 'tanu-washing-zukan', 'tanu-washing-zukan-meta', 'tanu-washing-zukan-done']
         .forEach((k) => { try { localStorage.removeItem(k); } catch (e) {} });
       if (HOME) HOME.refreshIcons();
@@ -2042,7 +2045,7 @@
     [
       { id: 'pon', name: tr('ぽんぽこリズム'), icon: '🥁', href: 'pon/', isNew: !SAVE.data.ponSeen,
         soon: tr('ぽんぽこリズムは、もうすぐ遊べるよ！\nおたのしみに 🥁') },
-      { id: 'rally', name: tr('ぽよんラリー'), icon: '🏐', href: 'rally/',
+      { id: 'rally', name: tr('ぽよんラリー'), icon: '🏐', href: 'rally/', isNew: !rallySeen(),
         soon: tr('ぽよんラリーは、もうすぐ遊べるよ！\nおたのしみに 🏐') },
       { id: 'seesaw', name: tr('丸太シーソー'), icon: '🌴', href: 'seesaw/', isNew: !seesawSeen(),
         soon: tr('丸太シーソーは、もうすぐ遊べるよ！\nおたのしみに 🌴') },

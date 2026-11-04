@@ -22,6 +22,7 @@ window.TANU_TEXT_I18N.en = Object.assign(window.TANU_TEXT_I18N.en || {}, {
   'はやい': 'Fast',
   'シーソーのはやさ：{s}': 'Seesaw speed: {s}',
   'あつめた {a} / {b}': 'Collected {a} / {b}',
+  '💗 なかよしポイント +{n}（タヌくんのところで受け取れるよ）': '💗 Friendship +{n} (collect it at Tanu-kun\'s place)',
   '絵を読みこめませんでした。ページを開き直してください': 'Couldn\'t load the pictures. Please reopen the page.',
   // タヌくんのひとこと
   'シーソー、いっしょにやろ〜！': 'Let\'s ride the seesaw together~!',
@@ -69,6 +70,7 @@ window.TANU_TEXT_I18N.zh = Object.assign(window.TANU_TEXT_I18N.zh || {}, {
   'はやい': '快',
   'シーソーのはやさ：{s}': '跷跷板速度：{s}',
   'あつめた {a} / {b}': '已收集 {a} / {b}',
+  '💗 なかよしポイント +{n}（タヌくんのところで受け取れるよ）': '💗 亲密度 +{n}（可以在狸君那里领取哦）',
   '絵を読みこめませんでした。ページを開き直してください': '图片加载失败。请重新打开页面。',
   // タヌくんのひとこと
   'シーソー、いっしょにやろ〜！': '一起玩跷跷板吧～！',
