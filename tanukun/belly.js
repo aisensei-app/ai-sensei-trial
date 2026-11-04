@@ -257,16 +257,22 @@ window.TanuBelly = function (opts) {
         }
       }
     }
+    // 下絵は「読みこみ終わった絵」から描く（表情を切りかえた直上は、表示中の img がまだ読みこみ中のことがあり、
+    // そのまま描くと体が一瞬消える。2026-11-04 夜「立ち絵がちらつく」というお手紙の不具合）
+    const src = baseImg.src, im = ok(baseImg) ? baseImg : images[src];
+    if (!im || !ok(im)) return false;
     ctx.clearRect(0, 0, W, H);
-    ctx.drawImage(baseImg, 0, 0, W, H);
-    drawLayers(ctx, layersFor(baseImg.src));
+    ctx.drawImage(im, 0, 0, W, H);
+    drawLayers(ctx, layersFor(src));
     ctx.putImageData(out, bx, by, ax0, ay0, ax1 - ax0, ay1 - ay0);
     return true;
   }
 
   /* ---------- 動かす ---------- */
-  let running = false, last = 0;
+  let running = false, last = 0, shown = false;
   function show(on) {
+    if (on === shown) return;
+    shown = on;
     canvas.style.visibility = on ? 'visible' : 'hidden';
     baseImg.style.visibility = on ? 'hidden' : 'visible';
     if (overlay) overlay.style.visibility = on ? 'hidden' : 'visible';
@@ -318,7 +324,9 @@ window.TanuBelly = function (opts) {
       show(regions.some((r) => r.base) ? render() : false);
       return;
     }
-    show(render());
+    // 揺れている途中で、新しい表情の絵がまだ読みこめていない（render が false）ときは、
+    // 前に描いた揺れの絵をそのまま出しておく（ふつうの絵と交互になって、ちらつかないように。2026-11-04 夜）
+    if (render()) show(true); else if (!shown) show(false);
     requestAnimationFrame(loop);
   }
 

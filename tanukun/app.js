@@ -118,7 +118,14 @@
      絵の切り替え
      ========================================================= */
   // 先に全部読み込んでおく（切り替え時のちらつき防止）
-  Object.values(C.images).forEach((src) => { new Image().src = src; });
+  // 2026-11-04 夜：読みこんだ絵を、ずっと持っておく（前は作ってすぐ手ばなしていたので、スマホではメモリから消えて、
+  // 表情を切りかえるたびに読み直し → 一瞬消える「立ち絵のちらつき」の原因になっていた）。decode で、表示できる形にもしておく
+  const PRELOAD = Object.values(C.images).filter(Boolean).map((src) => {
+    const im = new Image(); im.src = src;
+    if (im.decode) im.decode().catch(() => {});
+    return im;
+  });
+  window.__tanuPreload = PRELOAD;   // 手ばなされないように
 
   img.addEventListener('error', () => {
     showBubble('画像が見つかりません：' + img.getAttribute('src'));
