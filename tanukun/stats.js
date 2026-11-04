@@ -33,8 +33,9 @@ window.TanuStats = (function () {
   const KEY = 'tanukun-stats';
   // 数える場所か（本番の URL のときだけ）
   const on = S.on !== false && /^https?:$/.test(location.protocol) && (S.hosts || []).indexOf(location.hostname) >= 0;
-  // ページの場所から見た s/ の場所（本編は 's/'、ぽんぽこ・ラリーは '../s/'）
-  const base = /\/(pon|rally)\//.test(location.pathname) ? '../s/' : 's/';
+  // ページの場所から見た s/ の場所（本編は 's/'、ぽんぽこ・ラリー・シーソー・洗うゲームは '../s/'）
+  // 2026-11-04：シーソー・洗うゲームが抜けていて、p-seesaw・p-wash が /seesaw/s/… を開いて数えられていなかったのを直した
+  const base = /\/(pon|rally|seesaw|washing)\//.test(location.pathname) ? '../s/' : 's/';
 
   // 今日の日付（日付の切りかわりは、本編と同じ午前4時。save.js の today と同じ考え）
   function today() {
