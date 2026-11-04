@@ -111,11 +111,13 @@ let smileSrc = null, laughSrc = null;   // 表情の絵の色（体の揺れを�
    位置は元の絵の座標。y はばねの上下の動き（ピクセル） */
 const BODY = {
   belly: { cx: 610, cy: 590, rx: 300, ry: 150, y: 0, v: 0 },
+  // 大笑いのときの、おなかの広い範囲（2026-11-04：ぽんぽこリズムくらい。おなか全体＋腰みのの上まで）
+  bellyWide: { cx: 610, cy: 600, rx: 360, ry: 200 },
   // 胸は、揺れる所を少し下に（2026-11-04 cy 400 → 425。胸のふくらみの下のほうが、よく揺れる）
   chestL: { cx: 470, cy: 425, rx: 135, ry: 72, y: 0, v: 0 },
   chestR: { cx: 760, cy: 425, rx: 135, ry: 72, y: 0, v: 0 }
 };
-const BX0 = 300, BY0 = 325, BW = 620, BH = 430;   // 揺らす範囲（おなか・胸をかこむ四角）
+const BX0 = 245, BY0 = 325, BW = 730, BH = 480;   // 揺らす範囲（おなか・胸をかこむ四角）
 let bodyPatch = null, bodyCtx = null, bodyData = null, bodyW = null;
 let laughBeat = 0;
 function load(u) { return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = u; }); }
@@ -323,7 +325,7 @@ function step(dt) {
       setTimeout(() => { BODY.chestL.v += 175 * laugh; BODY.chestR.v += 160 * laugh; }, 40);
     }
   }
-  Object.values(BODY).forEach((b) => {
+  [BODY.belly, BODY.chestL, BODY.chestR].forEach((b) => {
     b.v += (-240 * b.y - 6.5 * b.v) * dt; b.y += b.v * dt;
     const lim = b === BODY.belly ? 30 : 22;   // 動きすぎないように（ピクセル。おなかは大きめ）
     if (b.y > lim) { b.y = lim; b.v *= 0.5; } else if (b.y < -lim) { b.y = -lim; b.v *= 0.5; }
@@ -424,11 +426,14 @@ function renderPad(p) {
 /* ---------- 体（おなか・胸）を揺らして描く ----------
    ふちほど動かない重み（だ円の中心が 1、ふちで 0）をつけて、上下にずらした絵を描く。表情の絵とも同じように重ねる */
 function bodyWeights() {
-  bodyW = { b: new Float32Array(BW * BH), c: new Float32Array(BW * BH), cl: new Uint8Array(BW * BH) };
+  bodyW = { b: new Float32Array(BW * BH), bw: new Float32Array(BW * BH), c: new Float32Array(BW * BH), cl: new Uint8Array(BW * BH) };
   const sm = (d) => { const t = Math.max(0, 1 - d); return t * t * (3 - 2 * t); };
   for (let y = 0; y < BH; y++) for (let x = 0; x < BW; x++) {
     const ix = BX0 + x, iy = BY0 + y, k = y * BW + x, B = BODY;
     bodyW.b[k] = sm(Math.hypot((ix - B.belly.cx) / B.belly.rx, (iy - B.belly.cy) / B.belly.ry));
+    // 広い範囲は、まんなかから広く動く形（ぽんぽこリズムの belly.js と同じ (1 - r²)²）
+    const r2 = ((ix - B.bellyWide.cx) / B.bellyWide.rx) ** 2 + ((iy - B.bellyWide.cy) / B.bellyWide.ry) ** 2;
+    bodyW.bw[k] = r2 < 1 ? (1 - r2) * (1 - r2) : 0;
     const l = sm(Math.hypot((ix - B.chestL.cx) / B.chestL.rx, (iy - B.chestL.cy) / B.chestL.ry));
     const r = sm(Math.hypot((ix - B.chestR.cx) / B.chestR.rx, (iy - B.chestR.cy) / B.chestR.ry));
     bodyW.c[k] = Math.max(l, r); bodyW.cl[k] = l >= r ? 1 : 0;
@@ -442,13 +447,22 @@ function renderBody() {
     bodyCtx = bodyPatch.getContext('2d'); bodyData = bodyCtx.createImageData(BW, BH); bodyWeights();
   }
   const out = bodyData.data, ws = smileSrc ? smile : 0, wl = laughSrc ? laugh : 0;
+  const wide = Math.min(1, laugh * 1.2), cxB = BODY.bellyWide.cx;   // 大笑いのときは、広い範囲に切りかえる
   for (let y = 0; y < BH; y++) {
     for (let x = 0; x < BW; x++) {
       const k = y * BW + x, o = k * 4;
       // 胸とおなかの、上下のずれ（下に揺れたときは、上の絵を持ってくる）
-      const dy = yb * bodyW.b[k] + (bodyW.cl[k] ? yl : yr) * bodyW.c[k];
-      let iy = (BY0 + y - dy + 0.5) | 0; if (iy < 0) iy = 0; else if (iy >= IH) iy = IH - 1;
-      const si = (iy * IW + BX0 + x) * 4;
+      const wb = bodyW.b[k] + (bodyW.bw[k] - bodyW.b[k]) * wide, wc = bodyW.c[k];
+      let si;
+      if (wb === 0 && wc === 0) si = ((BY0 + y) * IW + BX0 + x) * 4;   // 動かない所は、そのまま（速くするため）
+      else {
+        const dy = yb * wb + (bodyW.cl[k] ? yl : yr) * wc;
+        // 沈むと、おなかが少し横に広がる（上がると、少しすぼむ）
+        const sx = BX0 + x - (BX0 + x - cxB) * 0.0028 * yb * wb;
+        let iy = (BY0 + y - dy + 0.5) | 0; if (iy < 0) iy = 0; else if (iy >= IH) iy = IH - 1;
+        let ix = (sx + 0.5) | 0; if (ix < 0) ix = 0; else if (ix >= IW) ix = IW - 1;
+        si = (iy * IW + ix) * 4;
+      }
       let r = src[si], g = src[si + 1], b = src[si + 2];
       if (ws > 0.01) { r += (smileSrc[si] - r) * ws; g += (smileSrc[si + 1] - g) * ws; b += (smileSrc[si + 2] - b) * ws; }
       if (wl > 0.01) { r += (laughSrc[si] - r) * wl; g += (laughSrc[si + 1] - g) * wl; b += (laughSrc[si + 2] - b) * wl; }
