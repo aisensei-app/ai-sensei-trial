@@ -2281,6 +2281,8 @@
       hold: () => (HOME ? HOME.hold() : null),
       ping: (n) => STATS.ping(n),
       once: (n) => STATS.once(n),   // お手紙の回数・日数（m-n〇・m-s〇。このスマホで1回だけ）
+      // 💡 作者へ（ポストの右のボタン。Google フォームがあるときだけ）
+      opinion: postFormInfo() ? (text) => { sendToForm({ text: text, stamp: 'opinion', lang: I18N.lang }); STATS.ping('o-send'); } : null,
       rules: C.rules ? () => showRules('post') : null,   // お手紙を書く画面の ⓘ
       // 2026-11-04 夜〜：タヌくんへのお手紙は、どこにも送らない（submit なし）。作者へは showOpinion から
       onClose: () => { maybeFeedback(); }

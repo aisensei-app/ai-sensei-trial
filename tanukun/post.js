@@ -128,6 +128,15 @@ window.TanuPost = function (opts) {
     title: { ja: '📮 タヌくんのポスト', en: '📮 Tanu-kun\'s Mailbox', zh: '📮 狸君的信箱' },
     write: { ja: '✏️ お手紙を書く', en: '✏️ Write a letter', zh: '✏️ 写信' },
     read: { ja: '📬 お返事を読む', en: '📬 Read the reply', zh: '📬 读回信' },
+    toTanu: { ja: '🦝 タヌくんへ', en: '🦝 To Tanu-kun', zh: '🦝 写给狸君' },
+    toTanuSub: { ja: 'ないしょ・お返事つき', en: 'Private · he replies', zh: '悄悄话 · 有回信' },
+    toAuthor: { ja: '💡 作者へ', en: '💡 To the creator', zh: '💡 写给作者' },
+    toAuthorSub: { ja: 'ご意見・ご感想', en: 'Feedback & ideas', zh: '意见 · 感想' },
+    dearAuthor: { ja: '作者へ', en: 'To the creator,', zh: '给作者' },
+    authorHint: { ja: 'ご意見・ご感想・こまったことを書いてね（{n}字まで）', en: 'Your thoughts, ideas, or problems (up to {n} characters)', zh: '写下意见、感想或遇到的问题（最多{n}字）' },
+    authorNote: { ja: '📨 作者に とどきます（Google フォーム）。作者と、集計を手伝う AI が読みます。名前・住所・学校など、あなたがだれか分かることは書かないでね。お返事はできず、送ったあとで消すこともできません', en: '📨 This goes to the creator (via Google Forms) and is read by the creator and an AI that helps sort feedback. Please don\'t write your name, address, school, or anything that could identify you. There\'s no reply, and it can\'t be deleted after sending', zh: '📨 会通过 Google 表单送到作者那里，由作者和帮忙整理的 AI 阅读。请不要写名字、地址、学校等能认出你是谁的信息。不会回信，发送后也无法删除' },
+    authorSend: { ja: '📨 作者に送る', en: '📨 Send to the creator', zh: '📨 发送给作者' },
+    authorDone: { ja: '作者に わたしておくね！\nありがとう 🐾', en: 'I\'ll hand it to the creator!\nThank you 🐾', zh: '我会转交给作者的！\n谢谢你 🐾' },
     box: { ja: '📖 交換日記', en: '📖 Exchange diary', zh: '📖 交换日记' },
     diaryStat: { ja: 'やりとり {n}回・{d}日間', en: 'Letters: {n} · Days: {d}', zh: '往来 {n} 次 · {d} 天' },
     diaryWait: { ja: '（お返事は 明日 とどくよ）', en: '(The reply arrives tomorrow)', zh: '（回信明天到哦）' },
@@ -323,10 +332,15 @@ window.TanuPost = function (opts) {
     const m = $('.p-menu');
     m.innerHTML =
       (n ? '<button class="btn btn-main p-read" type="button">' + T(UI.read) + ' <i>' + n + '</i></button>' : '') +
-      '<button class="btn ' + (n ? '' : 'btn-main ') + 'p-write" type="button">' + T(UI.write) + '</button>' +
+      // 2026-11-04 夜：送り先を、押す前に選べるように（左＝タヌくんへ〔ないしょ・お返事つき〕、右＝作者へ〔ご意見〕）
+      '<div class="p-two">' +
+        '<button class="btn ' + (n ? '' : 'btn-main ') + 'p-write" type="button">' + T(UI.toTanu) + '<small>' + T(UI.toTanuSub) + '</small></button>' +
+        (opts.opinion ? '<button class="btn p-author" type="button">' + T(UI.toAuthor) + '<small>' + T(UI.toAuthorSub) + '</small></button>' : '') +
+      '</div>' +
       '<button class="btn p-open-box" type="button">' + T(UI.box) + (replies.length ? ' (' + replies.length + ')' : '') + '</button>';
     if (n) m.querySelector('.p-read').addEventListener('click', () => readLetter(st.letters.find((l) => arrived(l) && !l.read)));
     m.querySelector('.p-write').addEventListener('click', write);
+    if (m.querySelector('.p-author')) m.querySelector('.p-author').addEventListener('click', writeAuthor);
     m.querySelector('.p-open-box').addEventListener('click', showBox);
   }
 
@@ -361,6 +375,37 @@ window.TanuPost = function (opts) {
     sh.querySelector('.p-cancel').addEventListener('click', showMenu);
     if (sh.querySelector('.p-info')) sh.querySelector('.p-info').addEventListener('click', () => opts.rules());   // 書きかけの文はそのまま
     send.addEventListener('click', () => sendLetter(ta.value.trim().slice(0, MAX), stamp));
+  }
+  // 💡 作者へ（2026-11-04 夜）：同じ便せんで書く。切手はなし、上に「作者へ」。送ると Google フォームへ（opts.opinion）
+  const AUTHOR_MAX = 400;
+  function writeAuthor() {
+    const sh = $('.p-sheet');
+    root.classList.add('writing');
+    sh.className = 'p-sheet p-paper p-author-paper';
+    sh.innerHTML =
+      '<p class="p-dear">' + T(UI.dearAuthor) + '</p>' +
+      '<textarea class="p-text" maxlength="' + AUTHOR_MAX + '" rows="7"></textarea>' +
+      '<p class="p-count">0 / ' + AUTHOR_MAX + '</p>' +
+      '<p class="p-note">' + T(UI.authorNote) +
+        (opts.rules ? ' <button type="button" class="p-info">' + T(UI.rules) + '</button>' : '') + '</p>' +
+      '<div class="p-row"><button class="btn p-cancel" type="button">' + T(UI.cancel) + '</button>' +
+      '<button class="btn btn-main p-send" type="button" disabled>' + T(UI.authorSend) + '</button></div>';
+    sh.hidden = false;
+    const ta = sh.querySelector('.p-text'), send = sh.querySelector('.p-send');
+    ta.placeholder = fill(T(UI.authorHint), { n: AUTHOR_MAX });
+    ta.addEventListener('input', () => {
+      sh.querySelector('.p-count').textContent = ta.value.length + ' / ' + AUTHOR_MAX;
+      send.disabled = !ta.value.trim();
+    });
+    sh.querySelector('.p-cancel').addEventListener('click', showMenu);
+    if (sh.querySelector('.p-info')) sh.querySelector('.p-info').addEventListener('click', () => opts.rules());
+    send.addEventListener('click', () => {
+      const text = ta.value.trim().slice(0, AUTHOR_MAX);
+      if (!text) return;
+      opts.opinion(text);
+      showMenu();
+      say(T(UI.authorDone));
+    });
   }
   function sendLetter(text, stamp) {
     if (!text || wroteToday()) return;
