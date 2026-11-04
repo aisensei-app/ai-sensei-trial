@@ -114,22 +114,25 @@ const TROOT = { x: 200, y: 90 };    // しっぽの絵の中の付け根（毛�
 /* しっぽの付け方（2026-11-04：画面の「🦝 しっぽの位置」で動かして決められる。決めた値は、このスマホに覚える）
    x, y … 付け根（うしろ姿の絵の座標）、deg … 向き（0 で絵のまま。プラスで時計まわり）、scale … 大きさ、back … true なら腰みのの葉っぱの下から出す */
 // 2026-11-04 ユーザーのリファレンス（設定画のうしろ姿）に合わせた：まんなかより右、腰みのの葉っぱの下から出て、右下へたれる。大きめ
-const TP_DEFAULT = { x: 432, y: 600, deg: 18, scale: 0.82, back: true };
-const TP_KEY = 'tanu-shippo-tail-v2';   // 前の位置を覚えていても、新しいはじめの位置から始まるように、名前を変えた
+// 2026-11-04 ユーザーの印（うしろ姿の絵に黄色いバツ）に合わせた：おしりの割れ目より右、ひものすぐ下の葉っぱに隠れる所から出る
+const TP_DEFAULT = { x: 470, y: 600, deg: 18, scale: 0.82, back: true };
+const TP_KEY = 'tanu-shippo-tail-v3';   // 前の位置を覚えていても、新しいはじめの位置から始まるように、名前を変えた
 const TP = Object.assign({}, TP_DEFAULT);
 try { Object.assign(TP, JSON.parse(localStorage.getItem(TP_KEY) || '{}')); } catch (e) {}
 /* 揺れる所（2026-11-04：おなかと同じしくみ。うしろ姿の絵の座標のだ円。まんなかほど大きく動く）
-   kick … タップしたときの勢い、pair … 同じ場所の反対側（少しだけいっしょに揺れる）、word・talk … 飛び出す文字とセリフ */
+   kick … タップしたときの勢い、pair … 同じ場所の反対側（少しだけいっしょに揺れる）、word・talk … 飛び出す文字とセリフ
+   2026-11-04 ユーザーの印（黄色い丸）に合わせて置き直した：二の腕＝肩のすぐ下の腕の裏／腰＝ひものすぐ上のおしりの上のふくらみ（横長1つ。左右半分ずつ）
+   ／おしり＝葉っぱのすぐ下の丸み／ふともも＝おしりのすぐ下の付け根 */
 const REGIONS = [
-  { id: 'buttL', kind: 'butt',  cx: 318, cy: 728, rx: 118, ry: 88, kick: 210, pair: 'buttR', word: 'ぷるん' },
-  { id: 'buttR', kind: 'butt',  cx: 482, cy: 728, rx: 118, ry: 88, kick: 210, pair: 'buttL', word: 'ぷるん' },
-  { id: 'waistL', kind: 'waist', cx: 250, cy: 505, rx: 115, ry: 68, kick: 170, pair: 'waistR', word: 'むにっ' },
-  { id: 'waistR', kind: 'waist', cx: 545, cy: 505, rx: 115, ry: 68, kick: 170, pair: 'waistL', word: 'むにっ' },
-  { id: 'thighL', kind: 'thigh', cx: 285, cy: 885, rx: 108, ry: 82, kick: 170, pair: 'thighR', word: 'ぽよん' },
-  { id: 'thighR', kind: 'thigh', cx: 502, cy: 885, rx: 108, ry: 82, kick: 170, pair: 'thighL', word: 'ぽよん' },
+  { id: 'buttL', kind: 'butt',  cx: 335, cy: 705, rx: 70, ry: 57, kick: 210, pair: 'buttR', word: 'ぷるん' },
+  { id: 'buttR', kind: 'butt',  cx: 540, cy: 700, rx: 62, ry: 60, kick: 210, pair: 'buttL', word: 'ぷるん' },
+  { id: 'waistL', kind: 'waist', cx: 368, cy: 536, rx: 95, ry: 40, kick: 170, pair: 'waistR', word: 'むにっ' },
+  { id: 'waistR', kind: 'waist', cx: 528, cy: 536, rx: 95, ry: 40, kick: 170, pair: 'waistL', word: 'むにっ' },
+  { id: 'thighL', kind: 'thigh', cx: 275, cy: 805, rx: 66, ry: 50, kick: 170, pair: 'thighR', word: 'ぽよん' },
+  { id: 'thighR', kind: 'thigh', cx: 525, cy: 816, rx: 86, ry: 48, kick: 170, pair: 'thighL', word: 'ぽよん' },
   // 二の腕は「ぷにぷに」（poke）：押している間は指の所がくぼみ、なでるとくぼみがついてくる。はなすと「ぷるん」（肉球ぷにぷにと同じ考え）
-  { id: 'armL', kind: 'arm',   cx: 124, cy: 490, rx: 58, ry: 108, kick: 190, word: 'ぷにっ', poke: true },
-  { id: 'armR', kind: 'arm',   cx: 630, cy: 490, rx: 58, ry: 108, kick: 190, word: 'ぷにっ', poke: true }
+  { id: 'armL', kind: 'arm',   cx: 238, cy: 381, rx: 72, ry: 62, kick: 190, word: 'ぷにっ', poke: true },
+  { id: 'armR', kind: 'arm',   cx: 600, cy: 416, rx: 40, ry: 64, kick: 190, word: 'ぷにっ', poke: true }
 ].map((r) => Object.assign(r, { y: 0, v: 0, dent: 0, dentV: 0, px: r.cx, py: r.cy, press: null, t0: 0 }));
 const REG = Object.fromEntries(REGIONS.map((r) => [r.id, r]));
 
@@ -464,7 +467,7 @@ function drawMoving(b) {
         dy += r.y * w; dx += (ix0 - r.cx) * 0.003 * r.y * w;
         // 二の腕のくぼみ：指のまわりの絵を縮めて（奥にへこむ）、左上からの光で影をつける
         if (r.poke && r.dent > 0.01) {
-          const qx = ix0 - r.px, qy = iy0 - r.py, R = r.rx * 0.75, dist = Math.hypot(qx, qy), rn = dist / R;
+          const qx = ix0 - r.px, qy = iy0 - r.py, R = (r.rx + r.ry) / 2 * 0.75, dist = Math.hypot(qx, qy), rn = dist / R;
           if (rn < 1.6) {
             const t = (1 - rn / 1.6) * (1 - rn / 1.6), D = r.dent * w;
             dx -= qx * 0.28 * D * t; dy -= qy * 0.28 * D * t;
@@ -532,6 +535,9 @@ function draw() {
   // 「葉っぱの下から出す」とき：しっぽの上に、葉っぱとひもを重ねる
   if (TP.back && leaves) ctx.drawImage(leaves, OX, OY, BW0 * S, BH0 * S);
   // 位置を調整している間は、付け根に印
+  // 位置を調整している間は、揺れる所（だ円）も うすく見せる
+  if (adjOpen) { ctx.save(); ctx.fillStyle = 'rgba(80,200,120,.22)'; ctx.strokeStyle = 'rgba(30,140,70,.9)'; ctx.lineWidth = 1.5;
+    REGIONS.forEach((r) => { ctx.beginPath(); ctx.ellipse(OX + r.cx * S, OY + r.cy * S, r.rx * S, r.ry * S, 0, 0, 7); ctx.fill(); ctx.stroke(); }); ctx.restore(); }
   if (adjOpen) { ctx.strokeStyle = '#D9536A'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(rx, ry, 9, 0, 7); ctx.moveTo(rx - 14, ry); ctx.lineTo(rx + 14, ry); ctx.moveTo(rx, ry - 14); ctx.lineTo(rx, ry + 14); ctx.stroke(); }
   // 毛のかけら
   fluffs.forEach((q) => {
