@@ -92,6 +92,18 @@
   { text: '真是的～！',             when: { scene: 'tap', place: 'tail', mood: 'troubled' } },
   { text: '别扯我的尾巴啦～', when: { scene: 'tap', place: 'tail', mood: 'troubled' } },
 
+  /* ---------- 太もも（2026-11-04。隠し要素。公開スイッチ features.thigh。かわいい「くすぐったい」の方向で） ---------- */
+  { text: '呀，好痒～', when: { scene: 'tap', place: 'thigh', mood: 'normal' }, feature: 'thigh', face: 'shy' },
+  { text: '大腿，肉嘟嘟的吧？', when: { scene: 'tap', place: 'thigh', mood: 'normal' }, feature: 'thigh' },
+  { text: '刚才是不是“噗叽”了一下？', when: { scene: 'tap', place: 'thigh', mood: 'normal' }, feature: 'thigh' },
+  { text: '我每天都在沙滩上走路锻炼哦～', when: { scene: 'tap', place: 'thigh', mood: 'normal' }, feature: 'thigh' },
+  { text: '要不要枕在我腿上呀？', when: { scene: 'tap', place: 'thigh', mood: 'normal', friendship: { min: 3 } }, feature: 'thigh', face: 'shy', weight: 2 },
+  { text: '嘿嘿，{name}的手好暖和呀', when: { scene: 'tap', place: 'thigh', mood: 'normal', friendship: { min: 4 } }, feature: 'thigh', face: 'shy', weight: 2 },
+  { text: '那、那里好痒啦～', when: { scene: 'tap', place: 'thigh', mood: 'shy' }, feature: 'thigh', face: 'shy' },
+  { text: '啊哈哈，别闹啦～！', when: { scene: 'tap', place: 'thigh', mood: 'shy' }, feature: 'thigh' },
+  { text: '真是的～！挠太多啦！', when: { scene: 'tap', place: 'thigh', mood: 'troubled' }, feature: 'thigh' },
+  { text: '怎么老是摸大腿～！', when: { scene: 'tap', place: 'thigh', mood: 'troubled' }, feature: 'thigh' },
+
   /* ---------- おなかを引っぱって、はなしたとき ---------- */
   { text: '嘣～地一下，拉长啦～！',          when: { scene: 'pull', mood: 'normal' } },
   { text: '肚子像年糕一样吧？',        when: { scene: 'pull', mood: 'normal' } },

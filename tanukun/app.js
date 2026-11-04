@@ -70,6 +70,7 @@
   const partsLayer = $('parts-layer');
   const belly = window.TanuBelly({
     config: C.bellyJiggle, chest: C.chestJiggle, img: img, canvas: $('belly-canvas'),
+    thigh: feature('thigh') === 'open' ? C.thighJiggle : null,   // 太もも（公開スイッチ features.thigh）
     bulge: C.crotch && C.crotch.bulge,
     tail: C.crotch && C.crotch.tail,
     overlay: partsLayer,
@@ -81,11 +82,11 @@
   let HOME = null;   // トップ画面（home.js。下の「トップ画面」で作る。お試し版では使わない）
   const zonesEl = $('zones');
 
-  const PLACE_LABEL = { head: '頭', chestL: 'むね', chestR: 'むね', belly: 'おなか', tail: 'しっぽ', crotch: 'おまた' };
+  const PLACE_LABEL = { head: '頭', chestL: 'むね', chestR: 'むね', belly: 'おなか', tail: 'しっぽ', thighL: 'ふともも', thighR: 'ふともも', crotch: 'おまた' };
   // タップ範囲 → セリフや記録で使う場所の名前（左右の胸はどちらも chest）
-  const PLACE_OF = { chestL: 'chest', chestR: 'chest' };
+  const PLACE_OF = { chestL: 'chest', chestR: 'chest', thighL: 'thigh', thighR: 'thigh' };
   // ぷるんと揺れる場所（指をはなしたときにタップ。すべらせると引っぱれる）
-  const SOFT = { belly: true, chestL: true, chestR: true };
+  const SOFT = { belly: true, chestL: true, chestR: true, thighL: true, thighR: true };
 
   /* ---------- いまの状態 ---------- */
   const state = {
@@ -266,6 +267,7 @@
      ========================================================= */
   Object.keys(C.zones).forEach((place) => {
     const z = C.zones[place];
+    if (PLACE_OF[place] === 'thigh' && (feature('thigh') !== 'open' || !C.thighJiggle)) return;   // 太ももは公開スイッチ
     const el = document.createElement('button');
     el.className = 'zone';
     el.dataset.place = place;
@@ -414,6 +416,7 @@
     if (place === 'head')  scene = petHead(t);
     if (place === 'belly') { jiggleBelly(); popWord(ev, pulled ? C.bellyWords.pull : null); }
     if (place === 'tail' && !pulled) wiggleTail();
+    if (place === 'thigh') popWord(ev, tr('ぷにっ'));   // 太もも（2026-11-04）
     if (pulled) scene = 'pull';   // 引っぱったときのセリフ（lines.js の scene: 'pull'）
     // しっぽをはじいたとき（scene: 'flick'、大きくはじいて逆立ったら 'flickBig'）
     if (place === 'tail' && pulled) {
@@ -1622,7 +1625,7 @@
   const ZUKAN_GROUPS = [
     ['greet', { ja: 'あいさつ', en: 'Greetings', zh: '打招呼' }], ['head', { ja: '頭', en: 'Head', zh: '头' }],
     ['chest', { ja: 'むね', en: 'Chest', zh: '胸口' }], ['belly', { ja: 'おなか', en: 'Belly', zh: '肚子' }],
-    ['tail', { ja: 'しっぽ', en: 'Tail', zh: '尾巴' }], ['crotch', { ja: 'おまた', en: 'Secret spot', zh: '秘密部位' }],
+    ['tail', { ja: 'しっぽ', en: 'Tail', zh: '尾巴' }], ['thigh', { ja: 'ふともも', en: 'Thighs', zh: '大腿' }], ['crotch', { ja: 'おまた', en: 'Secret spot', zh: '秘密部位' }],
     ['melt', { ja: 'とろける', en: 'Melting', zh: '融化' }], ['angry', { ja: 'おこる・かくれる', en: 'Angry & hiding', zh: '生气・躲起来' }],
     ['heart', { ja: 'なかよし', en: 'Friendship', zh: '亲密' }], ['wear', { ja: 'きせかえ', en: 'Dress-up', zh: '换装' }]
   ];
@@ -1660,7 +1663,8 @@
       const list = all.filter((l) => l.group === key);
       if (!list.length) return;
       const seenList = list.filter((l) => got.indexOf(l.key) >= 0);
-      const name = key === 'crotch' && secret ? '？？？' : (label[I18N.lang] || label.en || label.ja);
+      // おまた・太もも（隠し要素）は、さわるまで「？？？」
+      const name = (key === 'crotch' && secret) || (key === 'thigh' && !SAVE.data.stats.tap.thigh) ? '？？？' : (label[I18N.lang] || label.en || label.ja);
       html += '<h3>' + name + '（' + seenList.length + ' ／ ' + list.length + '）</h3><div class="zukan">' +
         seenList.map((l, i) => '<p class="zukan-line" data-g="' + key + '" data-i="' + i + '"></p>').join('') +
         (list.length > seenList.length ? '<p class="zukan-rest">' + tr('まだ見ていないセリフが あと {n} こ', { n: list.length - seenList.length }) + '</p>' : '') +
@@ -1688,6 +1692,8 @@
       [tr('むねをさわった'), tr('{n} 回', { n: s.tap.chest || 0 })],
       [tr('おなかをさわった'), tr('{n} 回', { n: s.tap.belly })],
       [tr('しっぽをさわった'), tr('{n} 回', { n: s.tap.tail })],
+      // 太ももは隠し要素：さわったことがあるときだけ出す（2026-11-04）
+      ...(s.tap.thigh ? [[tr('ふとももをさわった'), tr('{n} 回', { n: s.tap.thigh })]] : []),
       // おまたは、さわるまでは「？？？」（ひみつ）
       [tr((s.tap.crotch ? 'おまた' : '？？？') + 'をさわった'), tr('{n} 回', { n: s.tap.crotch || 0 })],
       [tr('とろけさせた'), tr('{n} 回', { n: s.melt })],

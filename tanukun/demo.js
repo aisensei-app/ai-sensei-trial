@@ -48,6 +48,9 @@ window.TANU_DEMO = {
   delete C.zones.chestR;
   delete C.zones.tail;
   delete C.zones.crotch;
+  delete C.zones.thighL;   // 太もも（本編だけの隠し要素）
+  delete C.zones.thighR;
+  C.thighJiggle = null;
   C.crotch = null;   // おまたの反応（ふくらみ）も使わない
   if (C.chestJiggle) C.chestJiggle.gain = 0;
 })();

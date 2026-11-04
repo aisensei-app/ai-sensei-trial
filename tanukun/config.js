@@ -63,6 +63,17 @@ window.TANU_CONFIG = {
     right: { x: 47.2, y: 35.6, rx: 12.5, ry: 7 }    // 絵で見て右（中心 340, 320）
   },
 
+  /* ---- 太もも：さわると「ぷにっ」（2026-11-04。胸と同じ動き方で、もっと控えめ） ----
+     公開スイッチ features.thigh。隠し要素なので、ヒントの文・なでなでレポート（X へのポスト）には出さない
+     left / right … 絵で見て左・右の太ももの、揺らす楕円（％）。おまた（zones.crotch）は今までどおり、おまたの反応が優先 */
+  thighJiggle: {
+    gain: 0.35,
+    drag: false,
+    bob: 0.7,      // 上下に「ぷにっ」と沈む大きさ（絵の高さの％）
+    left:  { x: 19.4, y: 71.7, rx: 7.6, ry: 7.2 },   // 絵で見て左（720×900 の絵で中心 140, 645）
+    right: { x: 52.8, y: 71.7, rx: 9.0, ry: 7.2 }    // 絵で見て右（中心 380, 645）
+  },
+
   /* ---- きせかえパーツ（アバターのように、タヌくんに部品を付けられる） ----
      メニューの「きせかえ」から付けはずしできます。付けた部品は絵に重ねてから
      網目の変形をするので、おなかや胸の部品も「ぷるん」といっしょに揺れます。
@@ -110,6 +121,8 @@ window.TANU_CONFIG = {
     chestR: { left: 41, top: 30, width: 12, height: 8 },    // 右の胸
     belly:  { left: 10, top: 38, width: 52, height: 26 },
     tail:   { left: 62, top: 50, width: 38, height: 40 },
+    thighL: { left: 12, top: 64, width: 21, height: 15 },   // 左の太もも（2026-11-04。おまたと重なる所は、おまたが優先）
+    thighR: { left: 33, top: 64, width: 29, height: 15 },   // 右の太もも
     crotch: { left: 25, top: 61, width: 16, height: 14 }    // おまた（おなかと少し重なるが、こちらが優先）
   },
   showZones: false,   // URL の最後に ?zones を付けても表示されます
@@ -248,6 +261,7 @@ window.TANU_CONFIG = {
     tailFlick: 'hidden',   // しっぽをはじく（引っぱって離す・ブワッ）
     rally:     'hidden',   // ぽよんラリー（rally/。ボールを投げて、おなかで返す）
     seesaw:    'hidden',   // 丸太シーソー（seesaw/。指で上下になぞって、タヌくんとシーソー）
+    thigh:     'open',     // 太ももをさわると「ぷにっ」（2026-11-04。隠し要素。ヒント・レポートには出さない）
     washing:   'hidden',   // タヌくんを洗おう（washing/。こすって汚れを落とす → シャワー → ぶるぶる。試作中）
     english:   'open',     // 英語版（スマホが英語なら英語。設定の「ことば / Language」で切りかえ。i18n.js）
     chinese:   'open'      // 中国語版（簡体字。スマホが中国語なら中国語。i18n.zh.js・config.zh.js・lines.zh.js）

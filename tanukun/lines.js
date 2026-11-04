@@ -125,6 +125,18 @@ window.TANU_LINES = [
   { text: 'もう〜！',             when: { scene: 'tap', place: 'tail', mood: 'troubled' } },
   { text: 'しっぽ、引っぱらないで〜', when: { scene: 'tap', place: 'tail', mood: 'troubled' } },
 
+  /* ---------- 太もも（2026-11-04。隠し要素。公開スイッチ features.thigh。かわいい「くすぐったい」の方向で） ---------- */
+  { text: 'ひゃっ、くすぐったい〜', when: { scene: 'tap', place: 'thigh', mood: 'normal' }, feature: 'thigh', face: 'shy' },
+  { text: 'ふともも、むちむちでしょ？', when: { scene: 'tap', place: 'thigh', mood: 'normal' }, feature: 'thigh' },
+  { text: 'ぷにっ、てした？', when: { scene: 'tap', place: 'thigh', mood: 'normal' }, feature: 'thigh' },
+  { text: '毎日 砂浜を歩いて、きたえてるんだ〜', when: { scene: 'tap', place: 'thigh', mood: 'normal' }, feature: 'thigh' },
+  { text: 'ふとももまくら、してあげよっか？', when: { scene: 'tap', place: 'thigh', mood: 'normal', friendship: { min: 3 } }, feature: 'thigh', face: 'shy', weight: 2 },
+  { text: 'えへへ、{name}の手、あったかいね', when: { scene: 'tap', place: 'thigh', mood: 'normal', friendship: { min: 4 } }, feature: 'thigh', face: 'shy', weight: 2 },
+  { text: 'そ、そこは くすぐったいってば〜', when: { scene: 'tap', place: 'thigh', mood: 'shy' }, feature: 'thigh', face: 'shy' },
+  { text: 'あはは、やめて〜！', when: { scene: 'tap', place: 'thigh', mood: 'shy' }, feature: 'thigh' },
+  { text: 'もう〜！ くすぐりすぎ！', when: { scene: 'tap', place: 'thigh', mood: 'troubled' }, feature: 'thigh' },
+  { text: 'ふとももばっかり〜！', when: { scene: 'tap', place: 'thigh', mood: 'troubled' }, feature: 'thigh' },
+
   /* ---------- おなかを引っぱって、はなしたとき ---------- */
   { text: 'びよ〜んって、のびた〜！',          when: { scene: 'pull', mood: 'normal' } },
   { text: 'おなか、もちみたいでしょ？',        when: { scene: 'pull', mood: 'normal' } },

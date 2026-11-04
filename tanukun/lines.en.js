@@ -92,6 +92,18 @@
   { text: 'Geez~!',             when: { scene: 'tap', place: 'tail', mood: 'troubled' } },
   { text: 'Don\'t tug my tail~', when: { scene: 'tap', place: 'tail', mood: 'troubled' } },
 
+  /* ---------- 太もも（2026-11-04。隠し要素。公開スイッチ features.thigh。かわいい「くすぐったい」の方向で） ---------- */
+  { text: 'Eep, that tickles~', when: { scene: 'tap', place: 'thigh', mood: 'normal' }, feature: 'thigh', face: 'shy' },
+  { text: 'Pretty chunky thighs, huh?', when: { scene: 'tap', place: 'thigh', mood: 'normal' }, feature: 'thigh' },
+  { text: 'Did it go squish?', when: { scene: 'tap', place: 'thigh', mood: 'normal' }, feature: 'thigh' },
+  { text: 'I walk on the beach every day to stay strong~', when: { scene: 'tap', place: 'thigh', mood: 'normal' }, feature: 'thigh' },
+  { text: 'Want to use my lap as a pillow?', when: { scene: 'tap', place: 'thigh', mood: 'normal', friendship: { min: 3 } }, feature: 'thigh', face: 'shy', weight: 2 },
+  { text: 'Hehe, your hands are warm, {name}', when: { scene: 'tap', place: 'thigh', mood: 'normal', friendship: { min: 4 } }, feature: 'thigh', face: 'shy', weight: 2 },
+  { text: 'Th-that spot really tickles~', when: { scene: 'tap', place: 'thigh', mood: 'shy' }, feature: 'thigh', face: 'shy' },
+  { text: 'Ahaha, stop it~!', when: { scene: 'tap', place: 'thigh', mood: 'shy' }, feature: 'thigh' },
+  { text: 'Hey~! Too much tickling!', when: { scene: 'tap', place: 'thigh', mood: 'troubled' }, feature: 'thigh' },
+  { text: 'Why always my thighs~!', when: { scene: 'tap', place: 'thigh', mood: 'troubled' }, feature: 'thigh' },
+
   /* ---------- おなかを引っぱって、はなしたとき ---------- */
   { text: 'It stretched all the way out~!',          when: { scene: 'pull', mood: 'normal' } },
   { text: 'My belly\'s just like mochi, huh?',        when: { scene: 'pull', mood: 'normal' } },

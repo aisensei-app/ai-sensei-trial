@@ -2,7 +2,7 @@
    タヌくん おなか・胸の「ぷるん」（Windows版と同じ方式）
    絵を網目のように変形させて（メッシュ変形）、さわった場所だけを
    へこませたり、ふくらませたり、引っぱったりします。
-   揺れる場所は3か所：おなか（belly）・左の胸（chestL）・右の胸（chestR）
+   揺れる場所は：おなか（belly）・左の胸（chestL）・右の胸（chestR）・左右の太もも（thighL・thighR。2026-11-04）
    ・変形は楕円の中心ほど強く、ふちに向かってなめらかに 0 になる
      → 境目ができず、絵が二重に見えない
    ・動きは「ばね」の計算（ばねの強さ SPRING、止まりやすさ DAMP）
@@ -29,6 +29,7 @@ window.TanuBelly = function (opts) {
 
   const BJ = opts.config;            // おなか
   const CJ = opts.chest || null;     // 胸（なければ胸は揺らさない）
+  const TJ = opts.thigh || null;     // 太もも（なければ揺らさない。2026-11-04）
   const BG = opts.bulge || null;     // おまたのふくらみ（なければ、ふくらまない）
   const TT = opts.tail || null;      // しっぽの「ビクン」（なければ、動かさない）
   const baseImg = opts.img;          // ふだん表示している <img>
@@ -46,6 +47,10 @@ window.TanuBelly = function (opts) {
     const bob = CJ.bob || 0;   // 上下に揺れる大きさ（絵の高さの％）
     if (CJ.left)  parts.chestL = { def: CJ.left,  gain: CJ.gain, canDrag: cd, bob: bob };
     if (CJ.right) parts.chestR = { def: CJ.right, gain: CJ.gain, canDrag: cd, bob: bob };
+  }
+  if (TJ && TJ.gain > 0) {
+    if (TJ.left)  parts.thighL = { def: TJ.left,  gain: TJ.gain, canDrag: !!TJ.drag, bob: TJ.bob || 0 };
+    if (TJ.right) parts.thighR = { def: TJ.right, gain: TJ.gain, canDrag: !!TJ.drag, bob: TJ.bob || 0 };
   }
   if (BG && BG.amount > 0) parts.crotch = { def: BG, gain: 1, canDrag: false };
   if (TT && TT.angles) parts.tail = { def: TT, gain: 1, canDrag: false, twist: true };
