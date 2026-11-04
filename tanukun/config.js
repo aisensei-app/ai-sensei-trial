@@ -372,7 +372,7 @@ window.TANU_CONFIG = {
     taps: 10,
     url: '',
     hashtag: 'タヌくん',
-    labels:   { head: 'あたま', chest: 'むね', belly: 'おなか', tail: 'しっぽ', thigh: 'ふともも', crotch: '？？？' },   // ふとももは、さわったときだけ行が出る
+    labels:   { head: 'あたま', chest: 'むね', belly: 'おなか', tail: 'しっぽ', thigh: 'ふともも', crotch: '？？？' },   // 0回の場所は行を出さない（2026-11-04）
     comments: { head: 'なでなで、ありがと〜♪', chest: 'むね、さわりすぎ…！', belly: 'おなかばっかり〜！',
                 tail: 'しっぽ、ふわふわでしょ？', thigh: 'ふともも、くすぐったいってば〜！', crotch: 'ひ、ひみつの場所ばっかり…！', even: 'いろんな所をさわってくれた〜' },
     faces:    { head: 'melt', chest: 'shy', belly: 'ponpoko1', tail: 'normal', thigh: 'shy', crotch: 'troubled', even: 'happy' }

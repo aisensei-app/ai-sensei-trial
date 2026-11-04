@@ -81,7 +81,7 @@ window.TanuI18n = (function () {
       'ブワッ！': 'POOF!',
       'ぶるるん♪': 'Wobble♪',
       '頭': 'head', 'むね': 'chest', 'おなか': 'belly', 'しっぽ': 'tail', 'おまた': 'secret spot', 'ふともも': 'thighs',
-      'ぷにっ': 'Squish!', 'ふとももをさわった': 'Thigh touches',
+      'ぷにっ': 'Squish!', 'まだ さわったことのない場所が あるみたい…？': 'Seems there\'s a spot you haven\'t touched yet…?', 'ふとももをさわった': 'Thigh touches',
       '{p}をさわる': 'Touch {p}',
       // ハート・日付
       '{h}時間': '{h}h ', '{m}分': '{m}m',

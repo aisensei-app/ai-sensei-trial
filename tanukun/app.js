@@ -1544,7 +1544,7 @@
      さわるごとに葉っぱのゲージが1枚ずつ緑になり、たまるとレポート → X にポスト
      ========================================================= */
   const REP = C.report || null;
-  // thigh（太もも。2026-11-04）は、そのレポートでさわったときだけ行を出す（ふだんの見た目は今までと同じ。showReport の places）
+  // 2026-11-04：0回の場所は、結果の画面にも X のポスト文にも出さない（すっきり・見つけた人だけ「？？？」や「ふともも」が出る。showReport の places）
   const REP_PLACES = ['head', 'chest', 'belly', 'tail', 'thigh', 'crotch'];
   const repCount = {};
   let repTotal = 0, reportOpen = false;
@@ -1573,10 +1573,15 @@
     }
   }
 
+  // 探す楽しみ：これまでに一度もさわっていない場所があるか（太ももは公開スイッチが open のときだけ数える）
+  function unfound() {
+    const tap = SAVE.data.stats.tap || {};
+    return REP_PLACES.some((p) => (p !== 'thigh' || (feature('thigh') === 'open' && C.thighJiggle)) && !tap[p]);
+  }
   function showReport() {
     const days = Math.max(1, SAVE.data.totalDays);
     // いちばん多くさわった場所（同じ数がいくつもあるときは even）
-    const places = REP_PLACES.filter((p) => p !== 'thigh' || repCount.thigh > 0);
+    const places = REP_PLACES.filter((p) => repCount[p] > 0);
     const max = Math.max.apply(null, places.map((p) => repCount[p]));
     const tops = places.filter((p) => repCount[p] === max);
     const top = tops.length === 1 ? tops[0] : 'even';
@@ -1597,6 +1602,7 @@
       '<table class="rep">' + places.map((p) => '<tr' + (p === 'crotch' ? ' class="secret"' : '') + '>' +
         '<th></th><td class="bar"></td><td class="num"></td></tr>').join('') + '</table>' +
       '<p class="res-comment"></p>' +
+      (unfound() ? '<p class="rep-hint">' + tr('まだ さわったことのない場所が あるみたい…？') + '</p>' : '') +
       shareButtonsHtml());
     const body = $('sheet-body');
     body.querySelector('.rep-day').textContent = tr('なかよし {n} 日目　', { n: days }) + heartsText();
