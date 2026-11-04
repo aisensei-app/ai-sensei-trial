@@ -14,8 +14,6 @@
    ・きせかえパーツ（デベソなど）は、絵に重ねてから変形するので、いっしょに揺れます
    ・おまた（crotch）は、さわっても揺れず、swell で少しの間だけ「むくっ」とふくらむ
    ・しっぽ（tail）は、twitch で付け根を軸に「ビクン」と動く（付け根は動かず、先ほど大きく動く）
-   ・しっぽは、bend で指に合わせて曲げ、letGo ではなすと「ぶるるん」と揺れて戻る（しっぽをはじく）。
-     puff で「ブワッ」とふくらんで（逆立つ）、shiver でぶるぶるっとふるえる
    ・opts.extra で、ほかの場所も足せる（ぽんぽこリズムの腕・ネックレス）
        type: 'twist' … twitch で付け根を軸に回る（cutX がなければ、片側を止めない）
        type: 'bob'   … kick で上下に「ぷるん」と揺れる
@@ -430,46 +428,6 @@ window.TanuBelly = function (opts) {
       if (!r || !ready()) return;
       r.v -= angle * Math.PI / 180 / peak;
       start();
-    },
-
-    // しっぽを指に合わせて曲げる：angle（ラジアン。正で、画面の上で時計回り）まで曲げたまま
-    bend: function (part, angle) {
-      const r = parts[part];
-      if (!r || !r.twist || !ready()) return;
-      r.hold = clamp(angle, -0.6, 0.6);
-      start();
-    },
-
-    // 曲げていたしっぽをはなす：ばねで「ぶるるん」と何回か揺れて戻る
-    letGo: function (part) {
-      const r = parts[part];
-      if (!r || !r.twist) return;
-      r.hold = 0;
-      start();
-    },
-
-    // しっぽが「ブワッ」：amount（0.2 で2割）までふくらんで（逆立つ）、ms ミリ秒後に戻る
-    puff: function (part, amount, ms) {
-      const r = parts[part];
-      if (!r || !r.twist || !ready()) return;
-      r.pfHold = amount;
-      r.pfv += amount * 14;   // 一気にふくらむ勢い
-      clearTimeout(r.puffTimer);
-      r.puffTimer = setTimeout(() => { r.pfHold = 0; start(); }, ms);
-      start();
-    },
-
-    // ぶるぶるっ：angle 度の小さな「ビクン」を、times 回すばやく左右に
-    shiver: function (part, angle, times) {
-      const r = parts[part];
-      if (!r || !r.twist || !ready()) return;
-      let n = 0;
-      clearInterval(r.shiverTimer);
-      r.shiverTimer = setInterval(() => {
-        r.v += (n % 2 ? 1 : -1) * angle * Math.PI / 180 / peak;
-        start();
-        if (++n >= times) clearInterval(r.shiverTimer);
-      }, 70);
     },
 
     // 上下に「ぷるん」：px ピクセルだけ下に沈んでから、ばねで揺れて戻る（extra の type: 'bob'）

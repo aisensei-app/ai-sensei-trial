@@ -28,7 +28,7 @@
 - 公開用 zip：`python3 tools/build_app.py --base-url https://tanukun.pages.dev/` → `tanukun/app-dist.zip` を SendUserFile で渡す（「これまでの zip は使わないで」と添える）
 
 **1. いまの状況（2026-11-04 夜）**
-- **公開中は v31**（2026-11-04 公開）。公開スイッチ（config.js features）：pon・uranai・post・**rally・thigh**=open、seesaw・washing・timeOfDay・tailFlick=hidden
+- **公開中は v31**（2026-11-04 公開）。公開スイッチ（config.js features）：pon・uranai・post・**rally・thigh**=open、seesaw・washing・timeOfDay=hidden（tailFlick は 2026-11-04 夜に削除）
 - **📦 v32 は準備済み・まだ公開していない**（sw.js=`tanukun-v32`。最新の zip は渡し済み＝ファイル 202 こ）。ユーザーは「今すぐプレビューに上げられないので後で」。手順は PUBLISH.md（Preview の test → スマホで確認 → Production）。中身：
   - 🏐 ぽよんラリー解禁（トップのカードに NEW＝localStorage tanukun.rallySeen）
   - 🦵 太もものタップ（隠し要素。くわしくは IDEAS.md の不具合・要望の3）：なでなでレポートは**0回の場所を出さない／「？？？」だけは0回でも出す**／太ももは、さわったときだけ「ふともも」の行（画面と X のポスト文）／アプリの中だけ紫のヒント「まだ さわったことのない場所が あるみたい…？」
@@ -45,7 +45,7 @@
 - 🎉 **2026-11-04 夜：#タヌくん が X のトレンド入り**（ユーザーのスクリーンショット）。ファンから応援のコメントも。Web Analytics で、この日の訪問の増え方を見ておく（11/8 の表で印をつける）
 
 **2. 次にやること（まずユーザーと相談）**
-1. 💖 ふれあい（肉球・しっぽの入口）のお試し版の感想を聞いて直す → 本編へつなぐ準備（公開はシーソー・洗うゲームのあと）
+1. 💖 ふれあい（肉球・しっぽ）を本編のなでなでにつなぐ → **来週（11/9〜15 の週）リリース**（ユーザー決定）。v32（プレビュー済み・ラリー open）との順番を相談中
 2. v32 の公開（ユーザーがプレビューで確認できたら）→ ラリーのポスト
 3. 11/8ごろ：Web Analytics のスクリーンショットで D1・D7 と初日の流れ（n-〇〇）の表
 4. 11/29 シーソー（seesaw=open で v33）→ 12月 洗うゲーム → 肉球ぷにぷに・しっぽを本編へ（トップのカード。1回に1つずつ）

@@ -73,17 +73,6 @@
   { text: '肚子很重要的！',   when: { scene: 'tap', place: 'belly', mood: 'troubled' } },
 
   /* ---------- しっぽ ---------- */
-  /* ---------- しっぽをはじいたとき（公開スイッチ tailFlick が open のときだけ出る） ---------- */
-  { text: '尾巴抖了好几下～',      when: { scene: 'flick', mood: 'normal' }, feature: 'tailFlick' },
-  { text: '嘣～嘤♪',                        when: { scene: 'flick', mood: 'normal' }, feature: 'tailFlick' },
-  { text: '{name}，你在玩我的尾巴吗？',         when: { scene: 'flick', mood: 'normal' }, feature: 'tailFlick' },
-  { text: '尾巴可拉不长的哦～',           when: { scene: 'flick', mood: 'normal' }, feature: 'tailFlick', face: 'shy' },
-  { text: '不要拽我的尾巴啦～',           when: { scene: 'flick', mood: ['shy', 'troubled'] }, feature: 'tailFlick', face: 'troubled' },
-  { text: '晃呀晃…头好晕～',             when: { scene: 'flick', mood: ['shy', 'troubled'] }, feature: 'tailFlick', face: 'shy' },
-  { text: '呀！？ 尾巴一下子炸毛了！', when: { scene: 'flickBig' }, feature: 'tailFlick', face: 'troubled' },
-  { text: '吓、吓我一跳～…',               when: { scene: 'flickBig' }, feature: 'tailFlick', face: 'shy' },
-  { text: '真是的～！ 毛都竖起来啦',    when: { scene: 'flickBig' }, feature: 'tailFlick', face: 'troubled' },
-  { text: '{name}真是个小调皮～',             when: { scene: 'flickBig', friendship: { min: 3 } }, feature: 'tailFlick', face: 'shy', weight: 2 },
   { text: '尾巴毛茸茸的吧', when: { scene: 'tap', place: 'tail', mood: 'normal' } },
   { text: '摇呀摇♪',            when: { scene: 'tap', place: 'tail', mood: 'normal' } },
   { text: '只有{name}是特别的哦', when: { scene: 'tap', place: 'tail', mood: 'normal', friendship: { min: 4 } }, weight: 2 },

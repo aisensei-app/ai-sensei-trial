@@ -136,7 +136,6 @@
   /* =========================================================
      時間帯（config.js の timeOfDay）：メニュー画面の立ち絵と、背景が変わる
      ========================================================= */
-  const TF = (!DEMO && C.tailFlick && feature('tailFlick') === 'open') ? C.tailFlick : null;   // しっぽをはじく
   const TB = (!DEMO && C.timeOfDay && feature('timeOfDay') === 'open') ? C.timeOfDay : null;
   let testBand = null;   // 確認用：時間帯を切りかえて試す（設定の「確認用」）
   // 確認用：URL の ?time=morning（day・evening・night・late）でも切りかえられる
@@ -307,12 +306,6 @@
     const zone = e.target.closest('[data-place]');
     if (!zone) return;
     const part = zone.dataset.place;
-    // しっぽをはじく（公開スイッチ tailFlick）：押さえて指を動かすと曲がる。はなしたときに反応
-    if (part === 'tail' && TF && state.phase === 'active' && belly.ready()) {
-      press = { id: e.pointerId, part: part, x: e.clientX, y: e.clientY, pulling: false, tail: true, angle: 0 };
-      try { area.setPointerCapture(e.pointerId); } catch (err) {}
-      return;
-    }
     if (SOFT[part] && state.phase === 'active') {
       press = { id: e.pointerId, part: part, x: e.clientX, y: e.clientY, pulling: false };
       try { area.setPointerCapture(e.pointerId); } catch (err) {}
@@ -330,16 +323,6 @@
     const dx = e.clientX - press.x, dy = e.clientY - press.y;
     if (!press.pulling && Math.hypot(dx, dy) < DRAG_START) return;
     if (!belly.ready() || state.phase !== 'active') return;
-    if (press.tail) {
-      // 付け根を中心に、指が回った角度だけ曲げる
-      const r = area.getBoundingClientRect(), T = C.crotch.tail;
-      const ox = r.left + r.width * T.pivotX / 100, oy = r.top + r.height * T.pivotY / 100;
-      const ax = press.x - ox, ay = press.y - oy, bx = e.clientX - ox, by = e.clientY - oy;
-      press.pulling = true;
-      press.angle = Math.atan2(ax * by - ay * bx, ax * bx + ay * by) * (TF.bend || 1);
-      belly.bend('tail', press.angle);
-      return;
-    }
     if (!belly.canDrag(press.part)) return;   // 胸は引っぱらない（指をはなすと、ぷるん）
     press.pulling = true;
     belly.drag(press.part, dx, dy, toImg());
@@ -349,21 +332,6 @@
     if (!press || e.pointerId !== press.id) return;
     const p = press;
     press = null;
-    if (p.tail) {
-      belly.letGo('tail');
-      if (cancel) return;
-      if (!p.pulling) { onTap('tail', e); return; }
-      // はじいた：大きく曲げてはなしたら「ブワッ」（しっぽが逆立つ）
-      const big = Math.abs(p.angle) >= (TF.strong || 0.35);
-      if (big) {
-        setTimeout(() => {
-          belly.puff('tail', TF.puff || 0.2, TF.puffMs || 1400);
-          if (TF.shiver) belly.shiver('tail', TF.shiver[0], TF.shiver[1]);
-        }, 120);
-      }
-      onTap('tail', e, big ? 'big' : 'flick');
-      return;
-    }
     if (cancel) { belly.release(p.part, false); return; }
     if (p.pulling) {
       // 引っぱってはなした：ばねで「びよ〜ん」と戻る。さわった1回として数える（ハート・レポート・セリフ）
@@ -426,11 +394,6 @@
     if (place === 'tail' && !pulled) wiggleTail();
     if (place === 'thigh') popWord(ev, tr('ぷにっ'));   // 太もも（2026-11-04）
     if (pulled) scene = 'pull';   // 引っぱったときのセリフ（lines.js の scene: 'pull'）
-    // しっぽをはじいたとき（scene: 'flick'、大きくはじいて逆立ったら 'flickBig'）
-    if (place === 'tail' && pulled) {
-      scene = pulled === 'big' ? 'flickBig' : 'flick';
-      popWord(ev, tr(pulled === 'big' ? 'ブワッ！' : 'ぶるるん♪'));
-    }
 
     say({ scene: scene, place: place, mood: mood });
     if (place === 'belly') playFaces(C.bellyFaces && C.bellyFaces[mood]);

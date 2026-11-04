@@ -73,17 +73,6 @@
   { text: 'My belly is precious!',   when: { scene: 'tap', place: 'belly', mood: 'troubled' } },
 
   /* ---------- しっぽ ---------- */
-  /* ---------- しっぽをはじいたとき（公開スイッチ tailFlick が open のときだけ出る） ---------- */
-  { text: 'My tail went all wobbly~',      when: { scene: 'flick', mood: 'normal' }, feature: 'tailFlick' },
-  { text: 'Boiiing♪',                        when: { scene: 'flick', mood: 'normal' }, feature: 'tailFlick' },
-  { text: '{name}, are you playing with my tail?',         when: { scene: 'flick', mood: 'normal' }, feature: 'tailFlick' },
-  { text: 'My tail doesn\'t stretch, y\'know~',           when: { scene: 'flick', mood: 'normal' }, feature: 'tailFlick', face: 'shy' },
-  { text: 'Don\'t pull my tail~',           when: { scene: 'flick', mood: ['shy', 'troubled'] }, feature: 'tailFlick', face: 'troubled' },
-  { text: 'Swaying… I\'m getting dizzy~',             when: { scene: 'flick', mood: ['shy', 'troubled'] }, feature: 'tailFlick', face: 'shy' },
-  { text: 'Eek!? My tail just went all poofy!', when: { scene: 'flickBig' }, feature: 'tailFlick', face: 'troubled' },
-  { text: 'Y-you startled me~…',               when: { scene: 'flickBig' }, feature: 'tailFlick', face: 'shy' },
-  { text: 'Geez~! My fur\'s standing on end',    when: { scene: 'flickBig' }, feature: 'tailFlick', face: 'troubled' },
-  { text: '{name}, you little rascal~',             when: { scene: 'flickBig', friendship: { min: 3 } }, feature: 'tailFlick', face: 'shy', weight: 2 },
   { text: 'My tail\'s fluffy, right?', when: { scene: 'tap', place: 'tail', mood: 'normal' } },
   { text: 'Wag wag♪',            when: { scene: 'tap', place: 'tail', mood: 'normal' } },
   { text: 'Only {name} gets to, okay?', when: { scene: 'tap', place: 'tail', mood: 'normal', friendship: { min: 4 } }, weight: 2 },
