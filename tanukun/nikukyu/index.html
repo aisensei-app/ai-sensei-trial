@@ -54,6 +54,8 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .pop-word{position:absolute;transform:translate(-50%,-50%);font-family:var(--puni);font-size:clamp(28px,8.4vw,38px);font-weight:400;
   color:#fff;-webkit-text-stroke:7px #C8641E;paint-order:stroke fill;text-shadow:0 3px 0 #9E4A12,0 0 10px rgba(255,170,120,.6);
   white-space:nowrap;opacity:0;will-change:transform,opacity}
+.embed .top{padding-top:calc(env(safe-area-inset-top,0px) + 62px)}
+.embed .tag{display:none}
 </style>
 
 <canvas id="stage" aria-label="切り株に座って、足の裏を見せるタヌくん。肉球を押すと、ぷにっとくぼむ"></canvas>
@@ -75,6 +77,11 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 <script>
 (() => {
 'use strict';
+// ふれあい（../fureai/）の中で開かれたとき（?embed=1）：左上を「もどる」ボタン用にあけ、遊んだことを ふれあいの画面に知らせる
+const EMBED = /[?&]embed=1/.test(location.search) && window.parent !== window;
+if (EMBED) document.documentElement.classList.add('embed');
+const tellHub = (what) => { if (EMBED) try { window.parent.postMessage({ fureai: what }, '*'); } catch (e) {} };
+
 const SRC_IMG = 'img/sit_soles.webp', SRC_MASK = 'img/pads_mask.png';
 // 表情は3種類（同じ構図で顔だけちがう絵。2026-11-04 ユーザーが描いた）：ふつう（SRC_IMG）／照れ笑い＝さわっている間／大笑い＝連打でくすぐったいとき
 const SRC_SMILE = 'img/sit_soles_smile.webp', SRC_LAUGH = 'img/sit_soles_laugh.webp';
@@ -261,6 +268,7 @@ function clampToPad(p, ix, iy) {
   p.qx = p.cx + u * m * p.rx; p.qy = p.cy + v * m * p.ry;
 }
 cv.addEventListener('pointerdown', (e) => {
+  tellHub('touch');
   e.preventDefault();
   if (!img) return;
   audio();
@@ -274,6 +282,7 @@ cv.addEventListener('pointerdown', (e) => {
   holdTalked = false; rubDist = 0;
   puni(0.8, false); buzz(12);
   count++; document.getElementById('count').textContent = '🐾 ' + count;
+  tellHub(count === 30 ? 'goal' : 'touch');   // 30回ぷにで、ふれあいの 1日1回 💗+5
   const now = performance.now();
   taps.push(now); while (taps.length && now - taps[0] > 2000) taps.shift();
   if (taps.length < 6) BODY.belly.v += 125;   // 照れ笑い：押すたびに、おなかが「たぷん」（2026-11-04 大きくした 55 → 90 → 125）

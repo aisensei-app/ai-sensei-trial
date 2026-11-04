@@ -65,6 +65,8 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .adj input[type=range]{width:100%;accent-color:#D9536A}
 .adj output{font-variant-numeric:tabular-nums;text-align:right}
 .adjv{margin:0;font-size:12px;font-family:ui-monospace,Menlo,monospace;background:#F3E6D0;border-radius:8px;padding:4px 8px;overflow-wrap:anywhere}
+.embed .top{padding-top:calc(env(safe-area-inset-top,0px) + 62px)}
+.embed .tag{display:none}
 </style>
 
 <canvas id="stage" aria-label="浜辺で、うしろ姿のタヌくんがふり返っている。しっぽとおしりをさわれる"></canvas>
@@ -97,6 +99,11 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 <script>
 (() => {
 'use strict';
+// ふれあい（../fureai/）の中で開かれたとき（?embed=1）：左上を「もどる」ボタン用にあけ、遊んだことを ふれあいの画面に知らせる
+const EMBED = /[?&]embed=1/.test(location.search) && window.parent !== window;
+if (EMBED) document.documentElement.classList.add('embed');
+const tellHub = (what) => { if (EMBED) try { window.parent.postMessage({ fureai: what }, '*'); } catch (e) {} };
+
 const SRC = { bg: '../images/bg/beach_day.webp', body: 'img/back.webp', tail: 'img/tail.webp', puff: 'img/tail_puff.webp',
   shy: 'img/back_shy.webp', laugh: 'img/back_laugh.webp' };   // shy・laugh：同じ構図で顔だけちがう（照れ笑い・大笑い。2026-11-04 ユーザーが描いた）
 const FACE_H = 270, FACE_FADE = 70;   // 表情の絵を重ねる高さ（顔の所だけ。うしろ姿の絵の座標）。下の 70px は、だんだん消す（境目が見えないように）
@@ -265,6 +272,7 @@ function addMeter(n) {
   if (meter >= 1) puffUp();
 }
 function puffUp() {
+  tellHub('goal');   // ボワッで、ふれあいの 1日1回 💗+5
   const now = performance.now();
   meter = 0; tail.puffT0 = now; tail.puffUntil = now + PUFF_PERIOD * PUFF_TIMES; laughUntil = Math.max(laughUntil, tail.puffUntil);   // ボワッの間は大笑い
   const [rx, ry] = rootScreen();
@@ -310,6 +318,7 @@ function touched() {
   if (taps.length >= 6) { if (now >= laughUntil) heartBurst(8); laughUntil = Math.max(laughUntil, now + 1600); }
 }
 cv.addEventListener('pointerdown', (e) => {
+  tellHub('touch');
   e.preventDefault();
   if (!I.body) return;
   audio();

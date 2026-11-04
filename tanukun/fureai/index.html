@@ -1,0 +1,216 @@
+<title>タヌくんと ふれあい</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap">
+<!--
+  タヌくん：ふれあい（入口の画面。お試し版。2026-11-04）
+  ・トップのカード「ふれあい」から入る画面（C 案。本編・build_app.py にはまだつないでいない）
+  ・立ち絵（../images/normal.webp）の足もと・しっぽのそばに「ハートのあわ」：ゆっくりふくらんで、はじけてハートがぽわぽわ
+    → タップで 🐾 肉球ぷにぷに（../nikukyu/）・🦝 しっぽ ふさふさ（../shippo/）へ（丸く閉じて開く）。左上の「もどる」で戻る
+  ・体をさわっても画面は変わらない（まちがえて切りかわらないように。ユーザーの希望）。タヌくんが「あわを さわってみて？」と言うだけ
+  ・葉っぱ（なでなでレポートのゲージ）：しっぽ・肉球で遊んで戻ってくると 1枚（何もさわらずに戻ったときは増えない）
+    本編では、このゲージを本編のなでなでレポートと同じものにする予定（10枚でレポート）
+  ・ごほうび：1日1回 💗+5（しっぽの「ボワッ」1回、または 肉球を30回ぷに）。お試し版では、お知らせを出すだけ（記録は本編につないでから）
+  ・しっぽ・肉球のページは ?embed=1 で開く（左上を「もどる」用にあける・遊んだことをこの画面に知らせる postMessage）
+-->
+<style>
+:root{
+  --sand:#EFD7AE; --ink:#4A2C1A; --cream:#FFF6E6; --accent:#D9536A; --leaf:#6DAA3C; --leaf-off:rgba(74,44,26,.22);
+  --display:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",sans-serif;
+  color-scheme:light;
+}
+html,body{height:100%}
+body{margin:0;background:var(--sand);color:var(--ink);font-family:var(--display);overflow:hidden;overscroll-behavior:none;
+  -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+#bg{position:fixed;inset:0;background:var(--sand) center/cover no-repeat}
+/* タヌくん（立ち絵）。あわの位置は、この箱の中の % で置く */
+#tanu{position:fixed;left:50%;transform:translateX(-50%);aspect-ratio:720/900;touch-action:manipulation}
+#tanu img{width:100%;height:100%;display:block;pointer-events:none;transform-origin:50% 100%}
+#tanu img.boing{animation:boing .5s ease-out}
+@keyframes boing{30%{transform:scale(1.03,.97)}60%{transform:scale(.99,1.01)}}
+
+/* ハートのあわ：ゆっくりふくらんで（2.4秒）、ぱちんとはじけて、ハートがぽわぽわ */
+.bub{position:absolute;width:76px;height:76px;margin:-38px 0 0 -38px;padding:0;border:0;background:none;box-shadow:none;border-radius:50%;cursor:pointer}
+.bub:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.bub i{position:absolute;inset:6px;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle at 32% 28%,rgba(255,255,255,.95) 0 9%,rgba(255,255,255,0) 10%),
+             radial-gradient(circle at 50% 50%,rgba(255,200,220,.28) 0 50%,rgba(255,120,170,.55) 82%,rgba(255,255,255,.95) 96%);
+  border:2px solid rgba(255,255,255,.9);box-shadow:0 0 14px rgba(255,120,170,.75),inset 0 0 8px rgba(255,255,255,.6);transform:scale(.25);opacity:0;animation:grow 3.2s ease-in-out infinite}
+.bub i::after{content:"";position:absolute;left:50%;top:52%;width:44%;height:40%;transform:translate(-50%,-50%);
+  background:center/contain no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 22'%3E%3Cpath fill='%23FF5C8A' d='M12 21.5 10.3 20C4.2 14.5 0 10.8 0 6.3 0 2.7 2.8 0 6.4 0 8.4 0 10.4.9 12 2.4 13.6.9 15.6 0 17.6 0 21.2 0 24 2.7 24 6.3c0 4.5-4.2 8.2-10.3 13.7z'/%3E%3C/svg%3E")}
+@keyframes grow{0%{transform:scale(.25);opacity:0}12%{opacity:1}72%{transform:scale(1);opacity:1}78%{transform:scale(1.12);opacity:.9}84%{transform:scale(1.3);opacity:0}100%{transform:scale(1.3);opacity:0}}
+.bub.b2 i{animation-delay:1.6s}
+.bub small{position:absolute;left:50%;top:100%;transform:translateX(-50%);margin-top:-6px;font-size:11px;font-weight:900;white-space:nowrap;
+  background:rgba(255,246,230,.9);border-radius:99px;padding:1px 8px;pointer-events:none}
+.bub .new{position:absolute;right:-6px;top:-4px;font-size:10px;font-weight:900;background:var(--accent);color:var(--cream);border-radius:6px;padding:0 5px;pointer-events:none}
+.pop-heart{position:fixed;width:18px;height:17px;pointer-events:none;z-index:3;opacity:0;
+  background:center/contain no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 22'%3E%3Cpath fill='%23FF6F9C' d='M12 21.5 10.3 20C4.2 14.5 0 10.8 0 6.3 0 2.7 2.8 0 6.4 0 8.4 0 10.4.9 12 2.4 13.6.9 15.6 0 17.6 0 21.2 0 24 2.7 24 6.3c0 4.5-4.2 8.2-10.3 13.7z'/%3E%3C/svg%3E")}
+
+.top{position:fixed;top:0;left:0;right:0;z-index:2;pointer-events:none;display:flex;gap:10px;align-items:flex-start;
+  padding-top:calc(env(safe-area-inset-top,0px) + 12px);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.bubble{min-width:0;background:var(--cream);border:2.5px solid var(--ink);border-radius:16px;
+  padding:8px 12px;font-weight:700;font-size:15px;line-height:1.4;box-shadow:0 3px 0 var(--ink)}
+.bubble.bump{animation:bump .45s ease-out}
+@keyframes bump{30%{transform:scale(1.06) rotate(-2deg)}60%{transform:scale(.98)}}
+.tag{position:fixed;z-index:2;right:max(16px,env(safe-area-inset-right,0px));top:calc(env(safe-area-inset-top,0px) + 14px);
+  font-size:11px;font-weight:900;letter-spacing:.08em;background:var(--accent);color:var(--cream);border-radius:6px;padding:2px 8px;pointer-events:none}
+
+/* 葉っぱのゲージ（本編のなでなでレポートと同じ見た目） */
+#gauge{position:fixed;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);z-index:2;display:flex;justify-content:center;gap:4px;pointer-events:none}
+#gauge svg{width:22px;height:22px;fill:var(--leaf-off);transition:fill .3s}
+#gauge svg.on{fill:var(--leaf)}
+#gauge svg.just{animation:leafpop .7s ease-out}
+@keyframes leafpop{0%{transform:scale(.4) rotate(-40deg)}55%{transform:scale(1.7) rotate(12deg)}100%{transform:none}}
+
+/* 遊ぶ画面（しっぽ・肉球）は、この上に重ねて開く */
+#mode{position:fixed;inset:0;width:100%;height:100%;border:0;z-index:5;background:var(--sand)}
+#mode[hidden]{display:none}
+#back{position:fixed;z-index:6;left:max(12px,env(safe-area-inset-left,0px));top:calc(env(safe-area-inset-top,0px) + 12px);
+  font:inherit;font-weight:900;font-size:14px;color:var(--ink);background:var(--cream);border:2.5px solid var(--ink);border-radius:999px;
+  padding:7px 14px;box-shadow:0 3px 0 var(--ink);cursor:pointer}
+#back[hidden]{display:none}
+#back:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink)}
+/* 丸く閉じて開く（本編の iris.js と同じ考え：まわりを塗った円が小さくなって、また大きくなる） */
+#iris{position:fixed;z-index:8;width:0;height:0;border-radius:50%;pointer-events:none;box-shadow:0 0 0 300vmax var(--ink);opacity:0}
+.toast{position:fixed;z-index:9;left:50%;top:calc(env(safe-area-inset-top,0px) + 70px);transform:translateX(-50%);background:var(--cream);
+  border:2.5px solid var(--ink);border-radius:14px;box-shadow:0 3px 0 var(--ink);padding:8px 14px;font-weight:900;font-size:14px;white-space:nowrap;
+  animation:toast 2.6s ease-out forwards}
+@keyframes toast{0%{opacity:0;transform:translate(-50%,-10px)}12%,80%{opacity:1;transform:translate(-50%,0)}100%{opacity:0}}
+#loading{position:fixed;inset:0;display:grid;place-items:center;font-weight:900}
+@media (prefers-reduced-motion:reduce){.bub i{animation-duration:6s}}
+</style>
+
+<div id="bg"></div>
+<div id="tanu" aria-label="立っているタヌくん。足もとと、しっぽのそばに、ハートのあわが ふくらんでいる">
+  <img id="tanuImg" alt="">
+  <button class="bub" id="toNiku" type="button" style="left:16%;top:90%" aria-label="肉球ぷにぷにへ"><i></i><small>🐾 あしのうら</small></button>
+  <button class="bub b2" id="toShippo" type="button" style="left:80%;top:66%" aria-label="しっぽ ふさふさへ"><i></i><small>🦝 しっぽ</small></button>
+</div>
+<div id="loading">よみこみ中…</div>
+<div class="top"><div class="bubble" id="bubble">ハートのあわ、さわってみて？</div></div>
+<div class="tag">お試し版</div>
+<div id="gauge" aria-label="葉っぱのゲージ"></div>
+<iframe id="mode" title="ふれあい" hidden></iframe>
+<button id="back" type="button" hidden>← もどる</button>
+<div id="iris"></div>
+
+<script>
+(() => {
+'use strict';
+const SRC = { bg: '../images/bg/beach_day.webp', tanu: '../images/normal.webp' };
+const MODES = {
+  niku:   { url: '../nikukyu/index.html?embed=1', name: '肉球' },
+  shippo: { url: '../shippo/index.html?embed=1',  name: 'しっぽ' }
+};
+const $ = (id) => document.getElementById(id);
+const tanu = $('tanu'), img = $('tanuImg'), bubble = $('bubble'), frame = $('mode'), back = $('back'), iris = $('iris'), gauge = $('gauge');
+
+/* ---------- 絵の置き方：画面に入る大きさで、下の葉っぱのゲージの上に立たせる ---------- */
+function layout() {
+  const W = innerWidth, H = innerHeight, top = 70, bottom = 50;
+  const h = Math.min(H - top - bottom, (W - 8) * 900 / 720);
+  tanu.style.height = h + 'px'; tanu.style.width = (h * 720 / 900) + 'px';
+  tanu.style.top = Math.max(top, H - bottom - h) + 'px';
+}
+addEventListener('resize', layout);
+
+/* ---------- セリフ ---------- */
+const LINES = {
+  body:  ['えへへ、くすぐったい♪', 'ハートのあわ、見えるかな？', 'あわを さわると、いいこと あるかも…？'],
+  back:  ['おかえり！ 楽しかった？', 'えへへ、また あそぼ♪', 'おかえり〜！']
+};
+let lastLine = '';
+function say(kind) {
+  const list = LINES[kind]; let t; do { t = list[Math.floor(Math.random() * list.length)]; } while (list.length > 1 && t === lastLine);
+  lastLine = t; bubble.textContent = t; bubble.classList.remove('bump'); void bubble.offsetWidth; bubble.classList.add('bump');
+}
+// 体をさわっても画面は変わらない（まちがえて切りかわらないように）。少し ぽよんとして、あわを教えるだけ
+tanu.addEventListener('pointerdown', (e) => {
+  if (e.target.closest('.bub')) return;
+  img.classList.remove('boing'); void img.offsetWidth; img.classList.add('boing'); say('body');
+});
+
+/* ---------- あわが はじけたら、ハートが ぽわぽわ ---------- */
+function popHearts(btn) {
+  const r = btn.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  for (let i = 0; i < 4; i++) {
+    const h = document.createElement('div'); h.className = 'pop-heart';
+    h.style.left = (cx - 9) + 'px'; h.style.top = (cy - 8) + 'px'; document.body.appendChild(h);
+    const a = -Math.PI / 2 + (i - 1.5) * 0.55 + (Math.random() - 0.5) * 0.3, d = 34 + Math.random() * 18, s = 0.6 + Math.random() * 0.5;
+    h.animate([{ transform: 'translate(0,0) scale(' + s * 0.5 + ')', opacity: 0 }, { opacity: 1, offset: 0.2 },
+      { transform: 'translate(' + Math.cos(a) * d + 'px,' + (Math.sin(a) * d - 22) + 'px) scale(' + s + ')', opacity: 0 }],
+      { duration: 1500 + Math.random() * 500, easing: 'ease-out' }).onfinish = () => h.remove();
+  }
+}
+document.querySelectorAll('.bub').forEach((b) => b.querySelector('i').addEventListener('animationiteration', () => { if (frame.hidden) popHearts(b); }));
+// はじめの1回目も（animationiteration は 2回目から）
+document.querySelectorAll('.bub').forEach((b, k) => setTimeout(() => { if (frame.hidden) popHearts(b); }, 3200 * 0.8 + k * 1600));
+
+/* ---------- 葉っぱのゲージ ---------- */
+const LEAF = '<svg viewBox="0 0 24 24"><path d="M20 3C10 3 4 8 4 15c0 2 .6 3.8 1.6 5.2L3.5 22.3l1.4 1.4 2.2-2.2C8.4 22.5 10 23 12 23c7 0 10-8 8-20z"/></svg>';
+const TAPS = 10; let leaves = 0;
+gauge.innerHTML = LEAF.repeat(TAPS);
+function addLeaf() {
+  if (leaves >= TAPS) return;
+  const el = gauge.children[leaves++]; el.classList.add('on', 'just');
+  if (leaves === TAPS) setTimeout(() => toast('🍃 10まい！（本編では、ここで なでなでレポート）'), 900);
+}
+
+/* ---------- お知らせ・1日1回のごほうび ---------- */
+function toast(t) { const d = document.createElement('div'); d.className = 'toast'; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 2700); }
+const today = () => { const d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); };
+function bonus() {
+  let day = ''; try { day = localStorage.getItem('tanu-fureai-bonus') || ''; } catch (e) {}
+  if (day === today()) return;
+  try { localStorage.setItem('tanu-fureai-bonus', today()); } catch (e) {}
+  toast('💗+5 ふれあいの ごほうび（1日1回）');
+}
+
+/* ---------- しっぽ・肉球へ（丸く閉じて開く）／もどる ---------- */
+let cur = null, played = false, busy = false;
+function irisRun(x, y, mid) {
+  busy = true;
+  const R = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y)) * 2;
+  iris.style.left = x + 'px'; iris.style.top = y + 'px'; iris.style.opacity = 1;
+  const k = (s) => ({ width: s + 'px', height: s + 'px', marginLeft: -s / 2 + 'px', marginTop: -s / 2 + 'px' });
+  iris.animate([k(R), k(0)], { duration: 420, easing: 'ease-in', fill: 'forwards' }).onfinish = () => {
+    mid();
+    setTimeout(() => {
+      iris.animate([k(0), k(R)], { duration: 480, easing: 'ease-out', fill: 'forwards' }).onfinish = () => { iris.style.opacity = 0; busy = false; };
+    }, 220);
+  };
+}
+function open(key, btn) {
+  if (busy) return;
+  const r = btn.getBoundingClientRect();
+  irisRun(r.left + r.width / 2, r.top + r.height / 2, () => {
+    cur = key; played = false; frame.src = MODES[key].url; frame.hidden = false; back.hidden = false;
+  });
+}
+function close() {
+  if (busy || !cur) return;
+  const was = cur, got = played;
+  irisRun(innerWidth / 2, innerHeight / 2, () => {
+    frame.hidden = true; back.hidden = true; frame.src = 'about:blank'; cur = null;
+    say('back');
+    if (got) setTimeout(addLeaf, 500);   // 遊んで戻ってきたら、葉っぱ1枚
+  });
+}
+$('toNiku').addEventListener('click', (e) => open('niku', e.currentTarget));
+$('toShippo').addEventListener('click', (e) => open('shippo', e.currentTarget));
+back.addEventListener('click', close);
+// しっぽ・肉球のページからの知らせ：touch＝さわった／goal＝ごほうびの条件（ボワッ・30回ぷに）
+addEventListener('message', (e) => {
+  if (e.source !== frame.contentWindow || !e.data || typeof e.data !== 'object') return;
+  if (e.data.fureai === 'touch') played = true;
+  if (e.data.fureai === 'goal') { played = true; bonus(); }
+});
+
+/* ---------- 読みこみ ---------- */
+const bgImg = new Image(); bgImg.onload = () => { $('bg').style.backgroundImage = 'url("' + SRC.bg + '")'; }; bgImg.src = SRC.bg;
+img.onload = () => { $('loading').remove(); layout(); };
+img.src = SRC.tanu;
+layout();
+})();
+</script>
