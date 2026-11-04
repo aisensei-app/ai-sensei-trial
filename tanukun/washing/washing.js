@@ -943,8 +943,37 @@ function rewardPlaceholder(rw) {
   return c.toDataURL('image/png');
 }
 const ctitleEl = document.querySelector('#clear .ctitle'), cZkEl = document.getElementById('cZk');
+
+/* ---------- 本編とのつながり：1日1回のごほうび（2026-11-04。ぽんぽこリズムと同じ形） ----------
+   ピカピカにしたら、その日はじめての1回だけ、なかよしポイントを本編の記録（tanukun-save-v1）の washPoints に預ける。
+   本編を開いたときに save.js の claimPonPoints で受け取る（ハートが増えたときの演出が、いつもどおり流れるように） */
+const WASH_BONUS = 5;
+const SAVE_KEY = 'tanukun-save-v1';
+function today() {   // 本編と同じ「きょう」（config.js の days.dayStartHour 時に切りかわる）
+  const d = new Date(Date.now() - ((C.days && C.days.dayStartHour) || 0) * 3600 * 1000);
+  const pad = (n) => (n < 10 ? '0' : '') + n;
+  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+}
+function giveBonus() {
+  try {
+    const d = JSON.parse(localStorage.getItem(SAVE_KEY)) || {};
+    if (d.washBonusDay === today()) return false;
+    d.washBonusDay = today();
+    d.washPoints = (d.washPoints || 0) + WASH_BONUS;
+    localStorage.setItem(SAVE_KEY, JSON.stringify(d));
+    return true;
+  } catch (e) { return false; }   // 保存できない環境では、ごほうびなし
+}
+const cBonusEl = document.getElementById('cBonus');
+function showBonus() {
+  const got = giveBonus();
+  cBonusEl.textContent = tr('💗 なかよしポイント +{n}（タヌくんのところで受け取れるよ）', { n: WASH_BONUS });
+  cBonusEl.hidden = !got;
+}
+
 function showReward() {
   ctitleEl.textContent = tr('ピカピカ！'); ctitleEl.classList.remove('long'); cZkEl.hidden = true;
+  showBonus();
   if (zk.pending) {   // ずかんがそろった！ → ごほうびの代わりに、とくべつイラスト（2回目以降は、ときどきレア）
     const { key, isNew } = zkClaim(), sp = ZK_SPECIALS[key];
     ctitleEl.textContent = tr('ずかんコンプリート！'); ctitleEl.classList.add('long');

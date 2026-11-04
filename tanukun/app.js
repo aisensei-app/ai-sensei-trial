@@ -1271,6 +1271,7 @@
       if (r.visit !== 'again') msg.push(tr('来てくれてありがとう！ 💗+{n}', { n: C.friendship.visitPoints }));
       if (pb.pon) msg.push(tr('ぽんぽこリズムの ごほうび 💗+{n}', { n: pb.pon }));
       if (pb.rally) msg.push(tr('ぽよんラリーの ごほうび 💗+{n}', { n: pb.rally }));
+      if (pb.wash) msg.push(tr('タヌくんを洗おうの ごほうび 💗+{n}', { n: pb.wash }));
       setTimeout(() => toast(msg.join('\n')), 900);
     }
     // 今日2回目以降（画面に戻ってきたときなど）でも、ひみつの思い出をまだ見ていなければ流す（2026-11-03 夜）
@@ -1854,6 +1855,11 @@
       SAVE.reset();
       if (URANAI) { URANAI.resetAll(); if (HOME) HOME.refreshIcons(); }   // 貝がら占いの記録も消す（2026-11-03）
       if (POST) POST.resetAll();   // お手紙の記録も消す
+      // 丸太シーソー・タヌくんを洗おうの記録（特別イラスト・さいこう記録・ずかん・NEW の印）も消す（2026-11-04。はやさの設定は残す）
+      ['tanukun.seesawSeen', 'tanu-seesaw-best', 'tanu-seesaw-special',
+        'tanukun.washingSeen', 'tanu-washing-special', 'tanu-washing-zukan', 'tanu-washing-zukan-meta', 'tanu-washing-zukan-done']
+        .forEach((k) => { try { localStorage.removeItem(k); } catch (e) {} });
+      if (HOME) HOME.refreshIcons();
       belly.refresh();
       renderParts();
       closeSheet();

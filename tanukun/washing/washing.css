@@ -114,6 +114,7 @@ body{margin:0;background:#bfe3f7;color:var(--ink);font-family:var(--font);overfl
 .ctitle.long{font-size:clamp(28px,8.6vw,42px);-webkit-text-stroke-width:6px}
 .cline{margin:0;font-size:20px;font-weight:900}
 .cnote{margin:0;font-size:14px;font-weight:700;color:#6b4a2c}
+.cnote.bonus{color:#c2185b}
 /* ごほうびの特別イラスト（集める。シーソーと同じ形） */
 .cardtop{display:flex;justify-content:space-between;align-items:center;width:100%;font-size:12px;font-weight:700}
 .chip{font-size:11px;font-weight:700;background:var(--sun);border:1.5px solid var(--wood);border-radius:999px;padding:0 7px;letter-spacing:.05em}
@@ -168,4 +169,4 @@ html[lang="zh"] body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",
 /* X アプリの中（body.in-x）：画面の下 約25% に投稿パネルがかぶるので、下のボタン・カードを上へ（2026-11-04。シーソーと同じ） */
 body.in-x .turn{bottom:calc(25vh + 12px)}
 body.in-x .clear,body.in-x .zukan{padding-bottom:calc(25vh + 12px)}
-body.in-x #rwImg,body.in-x .artimg{max-height:36vh}
+body.in-x #rwImg,body.in-x .artimg{max-height:33vh}   /* ごほうびの 💗 の行が入っても、ボタンがパネルにかからないように */

@@ -93,6 +93,7 @@ window.TanuI18n = (function () {
       '来てくれてありがとう！ 💗+{n}': 'Thanks for coming! 💗+{n}',
       'ぽんぽこリズムの ごほうび 💗+{n}': 'Ponpoko Rhythm reward 💗+{n}',
       'ぽよんラリーの ごほうび 💗+{n}': 'Poyon Rally reward 💗+{n}',
+      'タヌくんを洗おうの ごほうび 💗+{n}': 'Bath Time reward 💗+{n}',
       // 思い出
       '📖 思い出アルバムに追加されました': '📖 Added to your Memory Album',
       'ハートが {n}こ たまった！': 'Heart #{n} unlocked!',
