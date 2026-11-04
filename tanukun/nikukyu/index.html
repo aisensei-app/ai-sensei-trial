@@ -111,8 +111,9 @@ let smileSrc = null, laughSrc = null;   // 表情の絵の色（体の揺れを�
    位置は元の絵の座標。y はばねの上下の動き（ピクセル） */
 const BODY = {
   belly: { cx: 610, cy: 590, rx: 300, ry: 150, y: 0, v: 0 },
-  chestL: { cx: 470, cy: 400, rx: 135, ry: 72, y: 0, v: 0 },
-  chestR: { cx: 760, cy: 400, rx: 135, ry: 72, y: 0, v: 0 }
+  // 胸は、揺れる所を少し下に（2026-11-04 cy 400 → 425。胸のふくらみの下のほうが、よく揺れる）
+  chestL: { cx: 470, cy: 425, rx: 135, ry: 72, y: 0, v: 0 },
+  chestR: { cx: 760, cy: 425, rx: 135, ry: 72, y: 0, v: 0 }
 };
 const BX0 = 300, BY0 = 325, BW = 620, BH = 430;   // 揺らす範囲（おなか・胸をかこむ四角）
 let bodyPatch = null, bodyCtx = null, bodyData = null, bodyW = null;
@@ -266,7 +267,7 @@ cv.addEventListener('pointerdown', (e) => {
   count++; document.getElementById('count').textContent = '🐾 ' + count;
   const now = performance.now();
   taps.push(now); while (taps.length && now - taps[0] > 2000) taps.shift();
-  if (taps.length < 6) BODY.belly.v += 90;   // 照れ笑い：押すたびに、おなかが「たぷん」（2026-11-04 大きくした 55 → 90）
+  if (taps.length < 6) BODY.belly.v += 125;   // 照れ笑い：押すたびに、おなかが「たぷん」（2026-11-04 大きくした 55 → 90 → 125）
   if (taps.length >= 6) { say('tickle', taps.length === 6); laughUntil = now + 1600; }
   else if (count === 100) say('hundred', true);
   else say('tap');
@@ -318,13 +319,14 @@ function step(dt) {
     laughBeat -= dt;
     if (laughBeat <= 0) {
       laughBeat = 0.2 + Math.random() * 0.04;
-      BODY.belly.v += 155 * laugh;   // 2026-11-04 大きくした（95 → 155。胸も約1.6倍）
+      BODY.belly.v += 215 * laugh;   // 2026-11-04 大きくした（95 → 155 → 215。胸は 175・160 のまま）
       setTimeout(() => { BODY.chestL.v += 175 * laugh; BODY.chestR.v += 160 * laugh; }, 40);
     }
   }
   Object.values(BODY).forEach((b) => {
     b.v += (-240 * b.y - 6.5 * b.v) * dt; b.y += b.v * dt;
-    if (b.y > 22) { b.y = 22; b.v *= 0.5; } else if (b.y < -22) { b.y = -22; b.v *= 0.5; }   // 動きすぎないように（ピクセル）
+    const lim = b === BODY.belly ? 30 : 22;   // 動きすぎないように（ピクセル。おなかは大きめ）
+    if (b.y > lim) { b.y = lim; b.v *= 0.5; } else if (b.y < -lim) { b.y = -lim; b.v *= 0.5; }
   });
   pads.forEach((p) => {
     let target = 0;
