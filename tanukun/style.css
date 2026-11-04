@@ -976,7 +976,7 @@ body.mode-home #app, body.mode-home .lang-btn { visibility: hidden; }
   border-radius: 18px;
   background: #fff;
   box-shadow: 0 3px 10px rgba(74, 46, 22, .18);
-  font-size: 17px;
+  font-size: clamp(17px, 4.8vw, 22px);   /* ふきだしの字は「お話」の大きさ（なでなでと同じ。2026-11-05） */
   font-weight: 700;
   text-align: center;
   white-space: pre-line;
@@ -1190,10 +1190,10 @@ body.in-x #uranai { --u: .75vh; --b: var(--x-cover); }
 /* ふきだし：選ぶ前は上に。結果では、タヌくんの左に（しっぽは右下） */
 #uranai .u-say { position: absolute; z-index: 4; left: 50%; top: calc(max(14px, env(safe-area-inset-top)) + 10px); transform: translateX(-50%);
   width: max-content; max-width: 88vw; padding: 10px 18px; border-radius: 18px; background: #FFF9EF; color: #4A2E16;
-  font-size: 18px; font-weight: 800; text-align: center; box-shadow: 0 3px 14px rgba(0, 0, 0, .3); animation: h-sayIn .25s ease-out; }
+  font-size: clamp(17px, 4.8vw, 22px); font-weight: 800; text-align: center; box-shadow: 0 3px 14px rgba(0, 0, 0, .3); animation: h-sayIn .25s ease-out; }
 #uranai .u-say[hidden] { display: none; }
 #uranai .u-say.gold { color: #B07A00; }
-#uranai .u-say.talk { top: auto; left: 5%; transform: none; bottom: calc(var(--alt) + 9 * var(--u)); max-width: 48%; font-size: 16px; text-align: left; }
+#uranai .u-say.talk { top: auto; left: 5%; transform: none; bottom: calc(var(--alt) + 9 * var(--u)); max-width: 48%; text-align: left; }
 #uranai .u-say.talk::after { content: ""; position: absolute; right: -9px; bottom: 12px; border: 7px solid transparent; border-left: 10px solid #FFF9EF; }
 
 /* 結果：運勢の名前が「ぽんっ」→ 1行ずつ、右から すっ と */
@@ -1314,7 +1314,7 @@ body.in-x .mailbox { bottom: calc(var(--x-cover) + 8px); width: 64px; }
 #post .p-desk.on .p-desk-img { transform: scale(1); }
 body.in-x #post .p-desk-img { bottom: var(--x-cover); }
 #post .p-say { position: absolute; z-index: 4; left: 50%; top: calc(max(14px, env(safe-area-inset-top)) + 54px); transform: translateX(-50%);
-  width: max-content; max-width: 86vw; padding: 10px 18px; border-radius: 18px; background: #fff; font-size: 17px; font-weight: 800;
+  width: max-content; max-width: 86vw; padding: 10px 18px; border-radius: 18px; background: #fff; font-size: clamp(17px, 4.8vw, 22px); font-weight: 800;
   text-align: center; white-space: pre-line; box-shadow: 0 3px 12px rgba(74, 46, 22, .2); animation: h-sayIn .25s ease-out; }
 #post .p-say[hidden] { display: none; }
 #post .p-menu { position: absolute; z-index: 3; left: 16px; right: 16px; bottom: calc(var(--pb, 0px) + max(14px, env(safe-area-inset-bottom)));
