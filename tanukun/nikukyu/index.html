@@ -110,7 +110,8 @@ let smileSrc = null, laughSrc = null;   // 表情の絵の色（体の揺れを�
 /* 体の揺れ（2026-11-04）：照れ笑い＝押すたびにおなかが少し「たぷん」／大笑い＝笑うリズムで、胸とおなかが「ゆさゆさ」
    位置は元の絵の座標。y はばねの上下の動き（ピクセル） */
 const BODY = {
-  belly: { cx: 610, cy: 590, rx: 300, ry: 150, y: 0, v: 0 },
+  // 照れ笑いのときの、おなかの範囲（2026-11-04 広げた：300×150 → 330×175。大笑いの bellyWide より少しせまい）
+  belly: { cx: 610, cy: 595, rx: 330, ry: 175, y: 0, v: 0 },
   // 大笑いのときの、おなかの広い範囲（2026-11-04：ぽんぽこリズムくらい。おなか全体＋腰みのの上まで）
   bellyWide: { cx: 610, cy: 600, rx: 360, ry: 200 },
   // 胸は、揺れる所を少し下に（2026-11-04 cy 400 → 425。胸のふくらみの下のほうが、よく揺れる）
@@ -430,7 +431,9 @@ function bodyWeights() {
   const sm = (d) => { const t = Math.max(0, 1 - d); return t * t * (3 - 2 * t); };
   for (let y = 0; y < BH; y++) for (let x = 0; x < BW; x++) {
     const ix = BX0 + x, iy = BY0 + y, k = y * BW + x, B = BODY;
-    bodyW.b[k] = sm(Math.hypot((ix - B.belly.cx) / B.belly.rx, (iy - B.belly.cy) / B.belly.ry));
+    // おなかも、まんなかから広く動く形（(1 - r²)²。大笑いの広い範囲と同じ形で、少しせまい）
+    const rb2 = ((ix - B.belly.cx) / B.belly.rx) ** 2 + ((iy - B.belly.cy) / B.belly.ry) ** 2;
+    bodyW.b[k] = rb2 < 1 ? (1 - rb2) * (1 - rb2) : 0;
     // 広い範囲は、まんなかから広く動く形（ぽんぽこリズムの belly.js と同じ (1 - r²)²）
     const r2 = ((ix - B.bellyWide.cx) / B.bellyWide.rx) ** 2 + ((iy - B.bellyWide.cy) / B.bellyWide.ry) ** 2;
     bodyW.bw[k] = r2 < 1 ? (1 - r2) * (1 - r2) : 0;
@@ -454,7 +457,7 @@ function renderBody() {
       // 胸とおなかの、上下のずれ（下に揺れたときは、上の絵を持ってくる）
       const wb = bodyW.b[k] + (bodyW.bw[k] - bodyW.b[k]) * wide, wc = bodyW.c[k];
       let si;
-      if (wb === 0 && wc === 0) si = ((BY0 + y) * IW + BX0 + x) * 4;   // 動かない所は、そのまま（速くするため）
+      if (wb < 0.004 && wc < 0.004) si = ((BY0 + y) * IW + BX0 + x) * 4;   // ほとんど動かない所は、そのまま（速くするため）
       else {
         const dy = yb * wb + (bodyW.cl[k] ? yl : yr) * wc;
         // 沈むと、おなかが少し横に広がる（上がると、少しすぼむ）
