@@ -299,8 +299,9 @@ function renderPad(p) {
           const rz = (rn - 1.05) / 0.42, rim = Math.exp(-rz * rz);
           const slope = g * 3.2 * rn - 0.45 * rim * 2 * (rn - 1.05) / (0.42 * 0.42);
           const dl = dist > 0.001 ? (dx * LX + dy * LY) / dist : 0;
-          let sh = 1 - 0.30 * shadeK * slope * dl;   // 光と向かい合う面は明るく、背を向けた面は暗く
-          sh *= 1 - 0.30 * shadeK * g;               // 沈んだ底は、光がとどきにくくて少し暗い
+          let sh = 1 - 0.46 * shadeK * slope * dl;   // 光と向かい合う面は明るく、背を向けた面は暗く（2026-11-04 濃くした 0.30 → 0.46）
+          sh *= 1 - 0.45 * shadeK * g;               // 沈んだ底は、光がとどきにくくて暗い（0.30 → 0.45）
+          if (sh < 0.25) sh = 0.25;
           if (sh < 1) { rr *= 1 - (1 - sh) * mk; gg *= 1 - (1 - sh) * mk; bb *= 1 - (1 - sh) * mk; }
           else { const k = (sh - 1) * 0.9 * mk; rr += (255 - rr) * k * 0.55; gg += (255 - gg) * k * 0.5; bb += (255 - bb) * k * 0.5; }
         }
