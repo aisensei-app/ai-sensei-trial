@@ -57,6 +57,24 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .embed .top{padding-top:calc(env(safe-area-inset-top,0px) + 62px)}
 .embed .tag{display:none}
 .embed #adj{display:none}
+/* ふきだしは、本編のなでなでの画面と同じ形に（2026-11-04 夜 ユーザーの指摘）：白・角の丸い形・やわらかい影・
+   下に、くるっと曲がった小さなしっぽ（タヌくんの口がある側。位置は JS の bubbleTail が --tail に入れる） */
+.bubble{position:relative;background:#fff;border:0;border-radius:22px;padding:12px 20px;box-shadow:0 4px 14px rgba(74,46,22,.15);
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Maru Gothic ProN","Noto Sans JP",sans-serif;
+  font-size:clamp(17px,4.8vw,22px);font-weight:700;line-height:1.4;color:#4A2E16;text-align:center;white-space:pre-line}
+.bubble::after{content:"";position:absolute;top:calc(100% - 1px);left:var(--tail,50%);width:14px;height:11px;margin-left:-4px;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 22'%3E%3Cpath d='M0 0H16C15 9 18 15 26 21C15 20 6 13 0 0Z' fill='%23fff'/%3E%3C/svg%3E") no-repeat;
+  background-size:100% 100%;filter:drop-shadow(0 3px 2px rgba(74,46,22,.1))}
+.bubble.tail-l::after{margin-left:-10px;transform:scaleX(-1)}
+html[lang="zh-Hans"] .bubble{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif}
+/* 右上の札（ふさふさゲージ・🐾 の回数）も、本編の「‹ もどる」と同じ見た目（白く半分すけた丸い札・ふちなし。2026-11-04 夜） */
+.meter,.count{border:0!important;box-shadow:none!important;background:rgba(255,255,255,.7)!important;color:#4A2E16;
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Maru Gothic ProN","Noto Sans JP",sans-serif;font-weight:700}
+.meter{padding:6px 10px!important;font-size:13px!important}
+.meter i{width:40px!important}
+.count{padding:7px 12px!important;font-size:14px!important}
+/* 本編の中では、右上の札を「‹ もどる」と同じ行の右に（ふきだしが横幅をぜんぶ使えるように） */
+.embed .meter,.embed .count{position:fixed;right:max(16px,env(safe-area-inset-right,0px));top:calc(env(safe-area-inset-top,0px) + 14px);margin:0}
 </style>
 
 <canvas id="stage" aria-label="切り株に座って、足の裏を見せるタヌくん。肉球を押すと、ぷにっとくぼむ"></canvas>
@@ -207,6 +225,16 @@ const LINES = {
   hundred:['100ぷに！ ぷにぷにマスターだね〜！']
 };
 const bubble = document.getElementById('bubble');
+const MOUTH = { x: 605, y: 200 };   // タヌくんの口（絵の座標）。ふきだしのしっぽの向き
+
+// ふきだしのしっぽを、タヌくんの口の方へ（本編の showBubble と同じ考え。口がふきだしのまんなかより右なら右下、左なら左下）
+function bubbleTail() {
+  const br = bubble.getBoundingClientRect(); if (!br.width) return;
+  const mouth = OX + MOUTH.x * S, mid = br.left + br.width / 2, w = bubble.offsetWidth;
+  bubble.style.setProperty('--tail', Math.max(22, Math.min(w - 22, mouth - br.left)) + 'px');
+  bubble.classList.toggle('tail-l', mouth < mid);
+  bubble.classList.toggle('tail-r', mouth >= mid);
+}
 let lastTalk = 0;
 function say(kind, force) {
   const now = performance.now();
@@ -214,6 +242,7 @@ function say(kind, force) {
   lastTalk = now;
   const list = LINES[kind];
   bubble.textContent = tx(list[Math.floor(Math.random() * list.length)]);
+  bubbleTail();
   bubble.classList.remove('bump'); void bubble.offsetWidth; bubble.classList.add('bump');
 }
 
@@ -537,13 +566,14 @@ function frame(now) {
   draw();
   requestAnimationFrame(frame);
 }
-addEventListener('resize', resize);
+addEventListener('resize', () => { resize(); bubbleTail(); });
 resize();
 Promise.all([load(SRC_IMG), load(SRC_MASK)]).then(([a, b]) => {
   img = a; src = pixels(a); mask = pixels(b); makeBg();
   load(SRC_SMILE).then((c) => { smileImg = c; smileSrc = pixels(c); }).catch(() => {});   // 表情の絵はあとから（なくても遊べる）
   load(SRC_LAUGH).then((c) => { laughImg = c; laughSrc = pixels(c); }).catch(() => {});
   document.getElementById('loading').remove();
+  requestAnimationFrame(bubbleTail);   // はじめのふきだしのしっぽも、口の方へ
   requestAnimationFrame(frame);
 }).catch(() => { document.getElementById('loading').textContent = tx('絵を読みこめませんでした。開き直してください'); });
 })();

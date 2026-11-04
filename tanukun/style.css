@@ -1403,7 +1403,7 @@ body.in-x #post .p-tanu { height: 38vh; }
 /* 肉球・しっぽの画面（この上に重ねる）と、左上の「もどる」 */
 .fr-frame { position: fixed; inset: 0; width: 100%; height: 100%; border: 0; z-index: 45; background: #EFD7AE; }
 .fr-frame[hidden], .fr-back[hidden] { display: none; }
-.fr-back { position: fixed; z-index: 46; left: max(12px, env(safe-area-inset-left)); top: calc(env(safe-area-inset-top) + 12px);
-  background: #FFF6E6; border: 2.5px solid #4A2C1A; box-shadow: 0 3px 0 #4A2C1A; color: #4A2C1A; }
+/* もどるは、なでなでの画面の「‹ もどる」（.back）と同じ見た目（白く半分すけた丸いボタン・ふちなし。2026-11-04 夜 ユーザーの指摘） */
+.fr-back { position: fixed; z-index: 46; left: max(16px, env(safe-area-inset-left)); top: calc(env(safe-area-inset-top) + 12px); }
 body.fr-on .toast { z-index: 47; }
 body.fr-on #lang-btn, body.fr-on .lang-btn { visibility: hidden; }
