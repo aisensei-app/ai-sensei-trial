@@ -116,8 +116,9 @@ const TROOT = { x: 200, y: 90 };    // しっぽの絵の中の付け根（毛�
 // 2026-11-04 ユーザーのリファレンス（設定画のうしろ姿）に合わせた：まんなかより右、腰みのの葉っぱの下から出て、右下へたれる。大きめ
 // 2026-11-04 ユーザーの印（うしろ姿の絵に黄色いバツ）：おしりの割れ目より右。
 // 同じ日にユーザー「しっぽは腰みのより上に」→ ひものすぐ上から出して、腰みのの前に重ねる（back=false）
-const TP_DEFAULT = { x: 470, y: 558, deg: 18, scale: 0.82, back: false };
-const TP_KEY = 'tanu-shippo-tail-v4';   // 前の位置を覚えていても、新しいはじめの位置から始まるように、名前を変えた
+// 同じ日の夜、ユーザーが画面の「しっぽの位置」で決めた値（x=462 y=574 向き=18 大きさ=0.70 葉っぱの下=いいえ）
+const TP_DEFAULT = { x: 462, y: 574, deg: 18, scale: 0.70, back: false };
+const TP_KEY = 'tanu-shippo-tail-v5';   // 前の位置を覚えていても、新しいはじめの位置から始まるように、名前を変えた
 const TP = Object.assign({}, TP_DEFAULT);
 try { Object.assign(TP, JSON.parse(localStorage.getItem(TP_KEY) || '{}')); } catch (e) {}
 /* 揺れる所（2026-11-04：おなかと同じしくみ。うしろ姿の絵の座標のだ円。まんなかほど大きく動く）
