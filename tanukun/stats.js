@@ -16,6 +16,9 @@
      p-pet p-pon p-rally p-seesaw p-wash … その日に、なでなで・ぽんぽこ・ラリー・シーソー・洗うゲームで遊んだ
      u-show u-pick u-later … 貝がら占い：自動で出た・貝を選んだ・「あとで」を押した（2026-11-03）
      m-open m-send m-read … 📮 ポスト：開いた・お手紙を書いた・お返事を読んだ
+     n-open n-ok n-name n-skip n-tap1 n-tap10 … 初日の流れ（2026-11-04。どこで離脱しているかを見る）。はじめて来た日だけ・このスマホで1回だけ
+       開いた → お知らせOK → 名前を決めた（n-name）か「あとで」（n-skip）→ 初めてさわった → 10回さわった。そのあとは h1（ハート1つ）
+       割合は「n-ok ÷ n-open」のように、前の段階で割って見る（1日1回・1台ずつの数なので、だいたいの数）
      f-〇〇 … おたより（感想）：出た・あとで・おくった・もっと書く／なくなったら（とても・少し・気にならない）／好きな所（おなか・タヌくん・絵・ゲーム・セリフ）
    ========================================================= */
 window.TanuStats = (function () {
@@ -29,7 +32,8 @@ window.TanuStats = (function () {
     'u-show', 'u-pick', 'u-later',
     'f-show', 'f-later', 'f-send', 'f-more', 'f-miss-big', 'f-miss-some', 'f-miss-no',
     'f-like-belly', 'f-like-tanu', 'f-like-art', 'f-like-game', 'f-like-line',
-    'm-open', 'm-send', 'm-read'];
+    'm-open', 'm-send', 'm-read',
+    'n-open', 'n-ok', 'n-name', 'n-skip', 'n-tap1', 'n-tap10'];
   const KEY = 'tanukun-stats';
   // 数える場所か（本番の URL のときだけ）
   const on = S.on !== false && /^https?:$/.test(location.protocol) && (S.hosts || []).indexOf(location.hostname) >= 0;
@@ -68,6 +72,17 @@ window.TanuStats = (function () {
     setTimeout(add, 1500 + Math.random() * 1500);
   }
 
+  // このスマホで1回だけ送る目印（初日の流れ n-〇〇。2026-11-04）。送ったものは tanukun-stats の once に覚える
+  function once(name) {
+    if (!on || NAMES.indexOf(name) < 0) return;
+    const m = load();
+    const done = m.once || [];
+    if (done.indexOf(name) >= 0) return;
+    m.once = done.concat(name);
+    try { localStorage.setItem(KEY, JSON.stringify(m)); } catch (e) { return; }
+    ping(name);
+  }
+
   // 本編で、その日はじめて開いたとき（app.js の checkIn のあと）：日数・言語の目印
   //   firstDay・day は 'YYYY-MM-DD'、total はなかよし〇日目（のべ日数）
   function checkIn(o) {
@@ -83,5 +98,5 @@ window.TanuStats = (function () {
     }
   }
 
-  return { ping: ping, checkIn: checkIn, NAMES: NAMES, get on() { return on; } };
+  return { ping: ping, once: once, checkIn: checkIn, NAMES: NAMES, get on() { return on; } };
 })();

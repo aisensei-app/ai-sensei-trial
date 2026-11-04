@@ -16,7 +16,13 @@
   const LINES = I18N.lines().filter((l) => !l.feature || feature(l.feature) === 'open');
   const SAVE = window.TanuSave;
   // 遊び方の数え方（stats.js。だれのものかわからない形で、数だけ。本番だけ）。お試し版では数えない
-  const STATS = (!window.TANU_DEMO && window.TanuStats) || { ping: () => {}, checkIn: () => {} };
+  const STATS = (!window.TANU_DEMO && window.TanuStats) || { ping: () => {}, once: () => {}, checkIn: () => {} };
+  // 初日の流れの目印（stats.js の n-〇〇。2026-11-04）：はじめて来た日（まだ日付の記録がない／はじめての日が今日）だけ、1回だけ
+  function funnel(name) {
+    const fd = SAVE.data.firstDay;
+    if (fd && fd !== SAVE.today()) return;
+    if (STATS.once) STATS.once(name);
+  }
   /* 見たセリフの記録（セリフ図鑑）は、言語に関係なく日本語の文で残す（言語を切りかえても数が合うように）。
      英語・中国語のセリフ集は lines.js と同じ順番なので、同じ番号の日本語の文に置きかえる */
   const JA_OF = new Map();
@@ -908,6 +914,7 @@
   }
 
   function finishName(name) {
+    funnel(String(name || '').trim() ? 'n-name' : 'n-skip');
     SAVE.setName(name);
     $('name-input').blur();
     setMode('home');
@@ -1394,6 +1401,7 @@
     $('notice-ok').textContent = N.ok;
     $('notice-ok').addEventListener('click', () => {
       SAVE.setFlag('noticeOk');
+      funnel('n-ok');
       $('sheet-close').hidden = $('sheet-x').hidden = false;
       closeSheet();
       done();
@@ -1884,7 +1892,16 @@
 
   // 遊んだ記録（本編は記録に保存、お試し版はその場だけ数える）
   function track(key) {
-    if (!DEMO) { SAVE.count(key); return; }
+    if (!DEMO) {
+      SAVE.count(key);
+      // 初日の流れ：初めてさわった・10回さわった
+      if (key.indexOf('tap.') === 0) {
+        const tap = SAVE.data.stats.tap, n = Object.keys(tap).reduce((a, k) => a + (tap[k] || 0), 0);
+        funnel('n-tap1');
+        if (n >= 10) funnel('n-tap10');
+      }
+      return;
+    }
     const k = key.indexOf('tap.') === 0 ? key.slice(4) : key;
     if (k in demoStats) demoStats[k] += 1;
     if (key.indexOf('tap.') === 0) {
@@ -2196,6 +2213,7 @@
       if (!checkIn()) homeGreet({ scene: 'home', visit: 'again' });
       bootNext = false;
     };
+    if (!DEMO) funnel('n-open');   // 初日の流れ：開いた（はじめての人だけ）
     if (C.notice && !SAVE.data.noticeOk) showNotice(start); else start();
 
     /* ---------- ホーム画面に追加して使うための準備（PWA） ----------
