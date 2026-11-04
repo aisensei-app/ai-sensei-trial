@@ -66,9 +66,9 @@
 
   report: {
     hashtag: 'Tanukun',
-    labels:   { head: '头', chest: '胸', belly: '肚子', tail: '尾巴', thigh: '大腿', crotch: '？？？' },
+    labels:   { head: '头', chest: '胸', belly: '肚子', tail: '尾巴', thigh: '大腿', sole: '脚底', crotch: '？？？' },
     comments: { head: '谢谢你摸摸我～♪', chest: '胸、摸太多啦…！', belly: '净摸肚子～！',
-                tail: '尾巴，毛茸茸的吧？', thigh: '大腿好痒啦～！', crotch: '秘、秘密部位摸太多啦…！', even: '到处都被你摸了一遍～' }
+                tail: '尾巴，毛茸茸的吧？', thigh: '大腿好痒啦～！', sole: '肉球软软的吧～♪', crotch: '秘、秘密部位摸太多啦…！', even: '到处都被你摸了一遍～' }
   },
 
   rules: [

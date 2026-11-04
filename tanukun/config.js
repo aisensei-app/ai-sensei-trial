@@ -258,9 +258,10 @@ window.TANU_CONFIG = {
     uranai:    'open',
     post:      'open',     // 📮 タヌくんのポスト（post.js。お手紙を書くと次の日にお返事。2026-11-03 作成・v31 で公開予定）     // 🐚 貝がら占い（uranai.js。その日はじめて開いたときに出る。2026-11-03 作成・v31 で公開予定）
     timeOfDay: 'hidden',   // 時間帯で変わる立ち絵と背景
-    rally:     'open',     // ぽよんラリー（rally/。ボールを投げて、おなかで返す）
+    rally:     'hidden',   // ぽよんラリー（rally/。ボールを投げて、おなかで返す）。2026-11-04 夜：11月中旬に open にする（v32 は隠して出す）
     seesaw:    'hidden',   // 丸太シーソー（seesaw/。指で上下になぞって、タヌくんとシーソー）
     thigh:     'open',     // 太ももをさわると「ぷにっ」（2026-11-04。隠し要素。ヒント・レポートには出さない）
+    fureai:    'open',     // 💖 ふれあい（なでなでの中のハートのあわ → 🐾 肉球ぷにぷに nikukyu/・🦝 しっぽ ふさふさ shippo/。2026-11-04 夜。来週公開）
     washing:   'hidden',   // タヌくんを洗おう（washing/。こすって汚れを落とす → シャワー → ぶるぶる。試作中）
     english:   'open',     // 英語版（スマホが英語なら英語。設定の「ことば / Language」で切りかえ。i18n.js）
     chinese:   'open'      // 中国語版（簡体字。スマホが中国語なら中国語。i18n.zh.js・config.zh.js・lines.zh.js）
@@ -359,14 +360,29 @@ window.TANU_CONFIG = {
      labels … レポートでの場所の名前（crotch は名前を「？？？」のまま、回数は出す。棒は紫）
      comments / faces … いちばん多くさわった場所ごとの、タヌくんのひとことと絵（同じ数なら even）
      url … 本編を公開したら、その URL を入れる（ポストに付く。空なら付けない） */
+  /* ---- 💖 ふれあい（features.fureai。2026-11-04 夜 ユーザーと決めた） ----
+     なでなでの画面に「ハートのあわ」を出し、タップすると 🐾 肉球ぷにぷに・🦝 しっぽ ふさふさ を重ねて開く（体をさわっても切りかわらない）
+     modes … day：開放する日（開いた日の数＝totalDays）、page：開くページ、place：レポートで数える場所、x・y：あわの位置（絵の％。しっぽのタップの範囲 zones.tail と重ねすぎない）
+     reward … 1日1回のごほうび（💗。しっぽの「ボワッ」1回、または肉球 soleGoal 回ぷに）
+     遊んで戻ってくると、なでなでの葉っぱ（レポートのゲージ）が1枚。何もさわらずに戻ったときは増えない
+     確認用：URL に ?fureai を付けると、日にちに関係なく両方出る */
+  fureai: {
+    modes: {
+      sole: { day: 2, page: 'nikukyu/', place: 'sole', x: 14, y: 92 },
+      tail: { day: 4, page: 'shippo/',  place: 'tail', x: 88, y: 46 }
+    },
+    reward: 5,
+    soleGoal: 30
+  },
+
   report: {
     taps: 10,
     url: '',
     hashtag: 'タヌくん',
-    labels:   { head: 'あたま', chest: 'むね', belly: 'おなか', tail: 'しっぽ', thigh: 'ふともも', crotch: '？？？' },   // 0回の場所は行を出さない（2026-11-04）
+    labels:   { head: 'あたま', chest: 'むね', belly: 'おなか', tail: 'しっぽ', thigh: 'ふともも', sole: 'あしのうら', crotch: '？？？' },   // 0回の場所は行を出さない（2026-11-04）
     comments: { head: 'なでなで、ありがと〜♪', chest: 'むね、さわりすぎ…！', belly: 'おなかばっかり〜！',
-                tail: 'しっぽ、ふわふわでしょ？', thigh: 'ふともも、くすぐったいってば〜！', crotch: 'ひ、ひみつの場所ばっかり…！', even: 'いろんな所をさわってくれた〜' },
-    faces:    { head: 'melt', chest: 'shy', belly: 'ponpoko1', tail: 'normal', thigh: 'shy', crotch: 'troubled', even: 'happy' }
+                tail: 'しっぽ、ふわふわでしょ？', thigh: 'ふともも、くすぐったいってば〜！', sole: 'あしのうら、ぷにぷにでしょ〜♪', crotch: 'ひ、ひみつの場所ばっかり…！', even: 'いろんな所をさわってくれた〜' },
+    faces:    { head: 'melt', chest: 'shy', belly: 'ponpoko1', tail: 'normal', thigh: 'shy', sole: 'happy', crotch: 'troubled', even: 'happy' }
   },
 
   /* 確認用：設定画面に「なかよし度を切りかえて試す」と「ひみつの思い出とクリア画面を見る」を出す。

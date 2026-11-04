@@ -82,6 +82,11 @@ window.TanuI18n = (function () {
       'ぶるるん♪': 'Wobble♪',
       '頭': 'head', 'むね': 'chest', 'おなか': 'belly', 'しっぽ': 'tail', 'おまた': 'secret spot', 'ふともも': 'thighs',
       'ぷにっ': 'Squish!', 'まだ さわったことのない場所が あるみたい…？': 'Seems there\'s a spot you haven\'t touched yet…?', 'ふとももをさわった': 'Thigh touches',
+      // 💖 ふれあい（2026-11-04 夜）
+      'あしのうらで あそぶ': 'Play with my paw pads', 'しっぽで あそぶ': 'Play with my tail', 'ふれあい': 'Cuddle time',
+      '見せたいものが あるんだ…♪\nハートのあわ、さわってみて？': 'I want to show you something…♪\nTry touching the heart bubble?',
+      'おかえり！ 楽しかった？': 'Welcome back! Was it fun?', 'おかえり〜！': 'Welcome back~!',
+      'ふれあいの ごほうび 💗+{n}': 'Cuddle reward 💗+{n}',
       '{p}をさわる': 'Touch {p}',
       // ハート・日付
       '{h}時間': '{h}h ', '{m}分': '{m}m',

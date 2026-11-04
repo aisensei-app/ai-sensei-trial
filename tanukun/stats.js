@@ -14,6 +14,7 @@
      a-ja a-en a-zh … その日に来た（言語ごと。1日に1人1回なので、毎日来る人のおおよその数）
      h1〜h5 clear … ハートが〇個になった・クリアした
      p-pet p-pon p-rally p-seesaw p-wash … その日に、なでなで・ぽんぽこ・ラリー・シーソー・洗うゲームで遊んだ
+     p-sole p-tail … その日に、ふれあいの 🐾 肉球・🦝 しっぽ で遊んだ（なでなでの画面の中で開く。2026-11-04 夜）
      u-show u-pick u-later … 貝がら占い：自動で出た・貝を選んだ・「あとで」を押した（2026-11-03）
      m-open m-send m-read … 📮 ポスト：開いた・お手紙を書いた・お返事を読んだ
      n-open n-ok n-name n-skip n-tap1 n-tap10 … 初日の流れ（2026-11-04。どこで離脱しているかを見る）。はじめて来た日だけ・このスマホで1回だけ
@@ -28,7 +29,7 @@ window.TanuStats = (function () {
   const S = C.stats || {};
   const NAMES = ['c1', 'c2', 'c3', 'c7', 'c14', 'c30',
     'd1', 'd2', 'd3', 'd4', 'd5', 'd6', 'd7', 'd8', 'd9', 'd10', 'd15', 'd20', 'd30', 'd50', 'd100',
-    'a-ja', 'a-en', 'a-zh', 'h1', 'h2', 'h3', 'h4', 'h5', 'clear', 'p-pet', 'p-pon', 'p-rally', 'p-seesaw', 'p-wash',
+    'a-ja', 'a-en', 'a-zh', 'h1', 'h2', 'h3', 'h4', 'h5', 'clear', 'p-pet', 'p-pon', 'p-rally', 'p-seesaw', 'p-wash', 'p-sole', 'p-tail',
     'u-show', 'u-pick', 'u-later',
     'f-show', 'f-later', 'f-send', 'f-more', 'f-miss-big', 'f-miss-some', 'f-miss-no',
     'f-like-belly', 'f-like-tanu', 'f-like-art', 'f-like-game', 'f-like-line',

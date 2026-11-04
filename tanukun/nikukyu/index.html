@@ -56,6 +56,7 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
   white-space:nowrap;opacity:0;will-change:transform,opacity}
 .embed .top{padding-top:calc(env(safe-area-inset-top,0px) + 62px)}
 .embed .tag{display:none}
+.embed #adj{display:none}
 </style>
 
 <canvas id="stage" aria-label="切り株に座って、足の裏を見せるタヌくん。肉球を押すと、ぷにっとくぼむ"></canvas>
@@ -81,6 +82,19 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 const EMBED = /[?&]embed=1/.test(location.search) && window.parent !== window;
 if (EMBED) document.documentElement.classList.add('embed');
 const tellHub = (what) => { if (EMBED) try { window.parent.postMessage({ fureai: what }, '*'); } catch (e) {} };
+// ことば（本編から ?lang=en・zh で開かれたとき。2026-11-04 夜）：日本語の文で引く。訳がなければ日本語のまま
+const LANG = ((location.search.match(/[?&]lang=(en|zh)\b/) || [])[1]) || 'ja';
+const TL = { en: {"よみこみ中…": "Loading…", "音 ON": "Sound ON", "音 OFF": "Sound OFF", "絵を読みこめませんでした。開き直してください": "Couldn't load the pictures. Please reopen.", "ぷにっ": "Squish!", "切り株に座って、足の裏を見せるタヌくん。肉球を押すと、ぷにっとくぼむ": "Tanu-kun sitting on a stump, showing his soles. Press his paw pads and they squish in.", "ぼくの肉球、さわってみる？": "Wanna touch my paw pads?", "肉球を押してね。長押し・なでるのも OK": "Press the paw pads. Holding and stroking work too", "かたさ：": "Firmness: ", "やわらか": "Soft", "ふつう": "Normal", "ハリあり": "Bouncy", "ぷにっ♪": "Squish♪", "やわらかいでしょ〜": "Soft, right~", "えへへ、肉球じまん♪": "Hehe, I'm proud of my paw pads♪", "ぷにぷに〜": "Squishy squishy~", "そこ、ぷにってするの": "That spot goes squish", "あはは！ くすぐったいってば〜！": "Ahaha! That tickles, I said~!", "ひゃ〜っ、ゆびが かってに うごく〜": "Hyaa~, my toes are moving on their own~", "もう〜！ くすぐりすぎ〜！": "Geez~! Too much tickling~!", "ぎゅ〜って されてる…": "You're pressing so hard…", "きみの手、あったかいね": "Your hand is warm", "じっと されると、てれちゃう…": "If you hold still like that, I get shy…", "すりすり…きもちいい〜": "Rub rub… feels nice~", "あしのうら、マッサージ？ えへへ": "A foot massage? Hehe", "そこは、肉球じゃないよ〜": "That's not a paw pad~", "こっちの ぷにぷにを さわって♪": "Touch the squishy ones here♪", "100ぷに！ ぷにぷにマスターだね〜！": "100 squishes! You're a squish master~!", "ぷにゅ": "Squishy", "ぷにゅ〜": "Squiiish~"},
+  zh: {"よみこみ中…": "加载中…", "音 ON": "声音 开", "音 OFF": "声音 关", "絵を読みこめませんでした。開き直してください": "图片加载失败，请重新打开。", "ぷにっ": "噗叽！", "切り株に座って、足の裏を見せるタヌくん。肉球を押すと、ぷにっとくぼむ": "坐在树桩上露出脚底的狸君。按一按肉球，会软软地陷下去。", "ぼくの肉球、さわってみる？": "要摸摸我的肉球吗？", "肉球を押してね。長押し・なでるのも OK": "按一按肉球吧。长按、抚摸也可以哦", "かたさ：": "软硬：", "やわらか": "软", "ふつう": "普通", "ハリあり": "弹", "ぷにっ♪": "噗叽♪", "やわらかいでしょ〜": "很软吧～", "えへへ、肉球じまん♪": "嘿嘿，这是我引以为傲的肉球♪", "ぷにぷに〜": "软软的～", "そこ、ぷにってするの": "那里会软软地陷下去哦", "あはは！ くすぐったいってば〜！": "啊哈哈！好痒啦～！", "ひゃ〜っ、ゆびが かってに うごく〜": "呀～，脚趾自己动起来了～", "もう〜！ くすぐりすぎ〜！": "真是的～！挠太多啦～！", "ぎゅ〜って されてる…": "被紧紧按住了…", "きみの手、あったかいね": "你的手好暖和", "じっと されると、てれちゃう…": "一直按着，好害羞…", "すりすり…きもちいい〜": "蹭蹭…好舒服～", "あしのうら、マッサージ？ えへへ": "脚底按摩？嘿嘿", "そこは、肉球じゃないよ〜": "那里不是肉球哦～", "こっちの ぷにぷにを さわって♪": "摸摸这边软软的吧♪", "100ぷに！ ぷにぷにマスターだね〜！": "100次！你是肉球大师呢～！", "ぷにゅ": "噗叽噗", "ぷにゅ〜": "噗叽～"} };
+const tx = (s) => (LANG !== 'ja' && TL[LANG] && TL[LANG][s]) || s;
+if (LANG !== 'ja') {
+  document.documentElement.lang = LANG === 'zh' ? 'zh-Hans' : 'en';
+  // 画面に書いてある文字（ふきだし・ボタン・説明）と aria-label を置きかえる
+  const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  for (let n; (n = walk.nextNode());) { const t = n.nodeValue.trim(); if (t && tx(t) !== t) n.nodeValue = n.nodeValue.replace(t, tx(t)); }
+  document.querySelectorAll('[aria-label]').forEach((el) => { const t = el.getAttribute('aria-label'); if (tx(t) !== t) el.setAttribute('aria-label', tx(t)); });
+  const fb = document.getElementById('feel'); if (fb) fb.textContent = tx('かたさ：') + tx('ふつう');
+}
 
 const SRC_IMG = 'img/sit_soles.webp', SRC_MASK = 'img/pads_mask.png';
 // 表情は3種類（同じ構図で顔だけちがう絵。2026-11-04 ユーザーが描いた）：ふつう（SRC_IMG）／照れ笑い＝さわっている間／大笑い＝連打でくすぐったいとき
@@ -199,7 +213,7 @@ function say(kind, force) {
   if (!force && now - lastTalk < 1600) return;
   lastTalk = now;
   const list = LINES[kind];
-  bubble.textContent = list[Math.floor(Math.random() * list.length)];
+  bubble.textContent = tx(list[Math.floor(Math.random() * list.length)]);
   bubble.classList.remove('bump'); void bubble.offsetWidth; bubble.classList.add('bump');
 }
 
@@ -217,7 +231,7 @@ function popWord(x, y) {
   puniAt = t;
   const el = document.createElement('span');
   el.className = 'pop-word';
-  el.textContent = PUNI[puniIdx];
+  el.textContent = tx(PUNI[puniIdx]);
   el.style.left = x + 'px'; el.style.top = y + 'px';
   fx.appendChild(el);
   // ゆっくり ふわ〜っと出て、上へただよいながら消える（連打で重なってもよい）
@@ -317,11 +331,11 @@ cv.addEventListener('pointerup', release);
 cv.addEventListener('pointercancel', release);
 document.getElementById('feel').addEventListener('click', (e) => {
   feel = (feel + 1) % FEEL.length;
-  e.currentTarget.textContent = 'かたさ：' + FEEL[feel].name;
+  e.currentTarget.textContent = tx('かたさ：') + tx(FEEL[feel].name);
 });
 document.getElementById('snd').addEventListener('click', (e) => {
   soundOn = !soundOn;
-  e.currentTarget.textContent = soundOn ? '音 ON' : '音 OFF';
+  e.currentTarget.textContent = tx(soundOn ? '音 ON' : '音 OFF');
   e.currentTarget.setAttribute('aria-pressed', String(soundOn));
 });
 
@@ -531,6 +545,6 @@ Promise.all([load(SRC_IMG), load(SRC_MASK)]).then(([a, b]) => {
   load(SRC_LAUGH).then((c) => { laughImg = c; laughSrc = pixels(c); }).catch(() => {});
   document.getElementById('loading').remove();
   requestAnimationFrame(frame);
-}).catch(() => { document.getElementById('loading').textContent = '絵を読みこめませんでした。開き直してください'; });
+}).catch(() => { document.getElementById('loading').textContent = tx('絵を読みこめませんでした。開き直してください'); });
 })();
 </script>

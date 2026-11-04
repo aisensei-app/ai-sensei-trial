@@ -125,3 +125,18 @@ if __name__ == '__main__':
                        '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">'
                        '<meta name="color-scheme" content="light"><style>html{background:#3A2210;color-scheme:light}</style></head><body>\n'
                        + pon.read_text(encoding='utf8') + '\n</body></html>\n', encoding='utf8')
+        # 💖 ふれあい（2026-11-04 夜）：なでなでの中で開く nikukyu/・shippo/ も、絵を文字データにした1ファイルで作る
+        text = out.read_text(encoding='utf8')
+        text = text.replace("page: 'nikukyu/'", "page: 'nikukyu/index.html'").replace("page: 'shippo/'", "page: 'shippo/index.html'")
+        # 確認用リンクでは日数が1日目から始まるので、あわは日にちに関係なく出す（本番は 2日目・4日目から）
+        text = text.replace("const FR_ALL = /[?&]fureai\\b/.test(location.search);", "const FR_ALL = true;")
+        out.write_text(text, encoding='utf8')
+        for d in ('nikukyu', 'shippo'):
+            src = (ROOT / d / 'index.html').read_text(encoding='utf8')
+            src = re.sub(r"'((?:\.\./)?(?:images|img)/[^']+\.(webp|png))'",
+                         lambda m: "'data:image/" + m.group(2) + ";base64," + base64.b64encode((ROOT / d / m.group(1)).resolve().read_bytes()).decode() + "'", src)
+            dst = out.parent / d / 'index.html'
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            dst.write_text('<!doctype html>\n<html lang="ja"><head><meta charset="utf-8">'
+                           '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"></head><body>\n'
+                           + src + '\n</body></html>\n', encoding='utf8')

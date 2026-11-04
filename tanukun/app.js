@@ -1508,7 +1508,7 @@
      ========================================================= */
   const REP = C.report || null;
   // 2026-11-04：0回の場所は、結果の画面にも X のポスト文にも出さない（すっきり・見つけた人だけ「ふともも」などが出る）。ただし ？？？ は0回でも出す（showReport の places）
-  const REP_PLACES = ['head', 'chest', 'belly', 'tail', 'thigh', 'crotch'];
+  const REP_PLACES = ['head', 'chest', 'belly', 'tail', 'thigh', 'sole', 'crotch'];   // sole＝あしのうら（ふれあいの肉球。2026-11-04 夜）
   const repCount = {};
   let repTotal = 0, reportOpen = false;
   const gauge = $('gauge');
@@ -1536,10 +1536,125 @@
     }
   }
 
+  /* =========================================================
+     💖 ふれあい（config.js の fureai・公開スイッチ features.fureai。2026-11-04 夜 ユーザーと決めた）
+     なでなでの画面に「ハートのあわ」（ゆっくりふくらんで、はじけてハートがぽわぽわ）。
+     あわをタップしたときだけ、🐾 肉球ぷにぷに（nikukyu/）・🦝 しっぽ ふさふさ（shippo/）を、この画面の上に重ねて開く
+     （ページを移らないので、なでなでの葉っぱ・セリフはそのまま。体をさわっても切りかわらない）
+     ・開放：肉球は 2日目、しっぽは 4日目から（開いた日の数）。開放した日は NEW と、タヌくんのひとこと
+     ・戻ってきたら：遊んでいれば葉っぱ1枚（レポートの場所 sole・tail）。1日1回 💗（ボワッ／肉球 soleGoal 回）
+     ・肉球・しっぽのページは ?embed=1&lang=〇〇 で開く。遊んだことは postMessage（fureai: touch／goal）で届く
+     ========================================================= */
+  const FR = (!DEMO && C.fureai && feature('fureai') === 'open') ? C.fureai : null;
+  const FR_ALL = /[?&]fureai\b/.test(location.search);   // 確認用：日にちに関係なく出す
+  const FR_SEEN = 'tanukun.fureaiSeen';
+  function frSeen() { try { return JSON.parse(localStorage.getItem(FR_SEEN)) || {}; } catch (e) { return {}; } }
+  function frMark(k, v) { const m = frSeen(); m[k] = v || 1; try { localStorage.setItem(FR_SEEN, JSON.stringify(m)); } catch (e) {} }
+  function frUnlocked(k) { return !!(FR && FR.modes[k] && (FR_ALL || Math.max(1, SAVE.data.totalDays) >= FR.modes[k].day)); }
+  const frBubs = {};
+  let frCur = null, frPlayed = false, frBusy = false, frPendingHeart = false;
+  const frFrame = document.createElement('iframe'), frBack = document.createElement('button');
+  if (FR) {
+    Object.keys(FR.modes).forEach((k) => {
+      const m = FR.modes[k], b = document.createElement('button');
+      b.type = 'button'; b.className = 'fr-bub'; b.hidden = true;
+      b.style.left = m.x + '%'; b.style.top = m.y + '%';
+      b.setAttribute('aria-label', tr(k === 'sole' ? 'あしのうらで あそぶ' : 'しっぽで あそぶ'));
+      b.innerHTML = '<i></i><span class="new-badge fr-new" hidden>NEW</span>';
+      b.addEventListener('pointerdown', (e) => e.stopPropagation());   // なでなでのタップにしない
+      b.addEventListener('click', (e) => { e.stopPropagation(); frOpen(k, b); });
+      // あわがはじけたら、ハートがぽわぽわ
+      b.querySelector('i').addEventListener('animationiteration', () => frPop(b));
+      area.appendChild(b); frBubs[k] = b;
+    });
+    frFrame.className = 'fr-frame'; frFrame.hidden = true; frFrame.title = tr('ふれあい');
+    frBack.type = 'button'; frBack.className = 'back fr-back'; frBack.hidden = true; frBack.textContent = tr('‹ もどる');
+    frBack.addEventListener('click', frClose);
+    document.body.appendChild(frFrame); document.body.appendChild(frBack);
+    setInterval(frRefresh, 400);
+    window.addEventListener('message', frMessage);
+  }
+  function frPop(b) {
+    if (b.hidden || !frFrame.hidden) return;
+    const r = b.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    for (let i = 0; i < 4; i++) {
+      const h = document.createElement('div'); h.className = 'fr-heart';
+      h.style.left = (cx - 8) + 'px'; h.style.top = (cy - 8) + 'px'; document.body.appendChild(h);
+      const a = -Math.PI / 2 + (i - 1.5) * 0.55 + (Math.random() - 0.5) * 0.3, d = 30 + Math.random() * 16, sc = 0.6 + Math.random() * 0.5;
+      if (!h.animate) { h.remove(); continue; }
+      h.animate([{ transform: 'translate(0,0) scale(' + sc * 0.5 + ')', opacity: 0 }, { opacity: 1, offset: 0.2 },
+        { transform: 'translate(' + Math.cos(a) * d + 'px,' + (Math.sin(a) * d - 20) + 'px) scale(' + sc + ')', opacity: 0 }],
+        { duration: 1500 + Math.random() * 500, easing: 'ease-out' }).onfinish = () => h.remove();
+    }
+  }
+  // あわを出すか（なでなでの画面で、ほかの画面・お知らせが出ていないときだけ）
+  function frRefresh() {
+    if (!FR) return;
+    const can = mode === 'play' && state.phase === 'active' && sheet.hidden && evEl.hidden && frFrame.hidden && !reportOpen;
+    const seen = frSeen();
+    Object.keys(frBubs).forEach((k) => {
+      const show = can && frUnlocked(k), b = frBubs[k];
+      if (b.hidden === !show) return;
+      b.hidden = !show;
+      b.querySelector('.fr-new').hidden = !!seen[k];
+      // 開放した日（はじめて出たとき）は、タヌくんがひとこと
+      if (show && !seen['say-' + k]) {
+        frMark('say-' + k);
+        setTimeout(() => showBubble(tr('見せたいものが あるんだ…♪\nハートのあわ、さわってみて？')), 300);
+      }
+    });
+  }
+  function frOpen(k, b) {
+    if (frBusy || !frFrame.hidden) return;
+    frBusy = true; frCur = k; frPlayed = false;
+    STATS.ping(k === 'sole' ? 'p-sole' : 'p-tail');
+    frMark(k);
+    const r = b.getBoundingClientRect(), I = window.TanuIris;
+    const go = () => {
+      frFrame.onload = () => { frFrame.onload = null; if (I) I.open(); frBusy = false; };
+      frFrame.src = FR.modes[k].page + '?embed=1&lang=' + encodeURIComponent(I18N.lang);
+      frFrame.hidden = false; frBack.hidden = false; document.body.classList.add('fr-on');
+      Object.keys(frBubs).forEach((x) => { frBubs[x].hidden = true; });
+    };
+    if (I) I.close(r.left + r.width / 2, r.top + r.height / 2).then(go); else go();
+  }
+  function frClose() {
+    if (frBusy || frFrame.hidden) return;
+    frBusy = true;
+    const k = frCur, played = frPlayed, I = window.TanuIris;
+    const done = () => {
+      frFrame.hidden = true; frBack.hidden = true; frFrame.src = 'about:blank'; frCur = null;
+      document.body.classList.remove('fr-on');
+      const after = () => {
+        frBusy = false;
+        showBubble(tr(played ? 'おかえり！ 楽しかった？' : 'おかえり〜！'));
+        // 遊んでいたら、葉っぱ1枚（レポートの場所は sole・tail）。さわった記録にも入れる
+        if (played) { const place = FR.modes[k].place; track('tap.' + place); countReport(place); }
+        if (frPendingHeart) { frPendingHeart = false; setTimeout(heartUp, 700); }
+      };
+      if (I) I.open().then(after); else after();
+    };
+    if (I) I.close().then(done); else done();
+  }
+  function frMessage(e) {
+    if (!frCur || e.source !== frFrame.contentWindow || !e.data || typeof e.data !== 'object') return;
+    if (e.data.fureai === 'touch') frPlayed = true;
+    if (e.data.fureai === 'goal') { frPlayed = true; frBonus(); }
+  }
+  // 1日1回のごほうび 💗（ハートが増えたら、戻ってから思い出の演出）
+  function frBonus() {
+    if (SAVE.data.fureaiBonusDay === SAVE.today()) return;
+    SAVE.data.fureaiBonusDay = SAVE.today();
+    const up = SAVE.addPoints(FR.reward || 5);
+    renderStatus();
+    toast(tr('ふれあいの ごほうび 💗+{n}', { n: FR.reward || 5 }), 2600);
+    if (up) frPendingHeart = true;
+  }
+
   // 探す楽しみ：これまでに一度もさわっていない場所があるか（太ももは公開スイッチが open のときだけ数える）
   function unfound() {
     const tap = SAVE.data.stats.tap || {};
-    return REP_PLACES.some((p) => (p !== 'thigh' || (feature('thigh') === 'open' && C.thighJiggle)) && !tap[p]);
+    return REP_PLACES.some((p) => (p !== 'thigh' || (feature('thigh') === 'open' && C.thighJiggle)) && (p !== 'sole' || frUnlocked('sole')) && !tap[p]);
   }
   function showReport() {
     const days = Math.max(1, SAVE.data.totalDays);

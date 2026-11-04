@@ -43,7 +43,10 @@ const FILES = [
   './washing/img/item_pearl.webp', './washing/img/item_petal.webp', './washing/img/item_sand1.webp', './washing/img/item_sand2.webp', './washing/img/item_sand3.webp',
   './washing/img/item_showerhead.webp', './washing/img/item_star.webp', './washing/img/item_urchin.webp', './washing/img/lookback.webp', './washing/img/mojimoji.webp',
   './washing/img/room.webp', './washing/img/shake.webp', './washing/img/sp_splash.webp', './washing/img/sp_stumble.webp', './washing/img/sp_towel.webp',
-  './washing/img/sp_zukan.webp', './washing/img/sp_zukan_rare.webp', './washing/img/stand.webp'
+  './washing/img/sp_zukan.webp', './washing/img/sp_zukan_rare.webp', './washing/img/stand.webp',
+  // 💖 ふれあい（なでなでの中で開く。nikukyu/・shippo/）
+  './nikukyu/', './nikukyu/index.html', './nikukyu/img/sit_soles.webp', './nikukyu/img/sit_soles_smile.webp', './nikukyu/img/sit_soles_laugh.webp', './nikukyu/img/pads_mask.png',
+  './shippo/', './shippo/index.html', './shippo/img/back.webp', './shippo/img/back_shy.webp', './shippo/img/back_laugh.webp', './shippo/img/tail.webp', './shippo/img/tail_puff.webp'
 ];
 
 self.addEventListener('install', (e) => {

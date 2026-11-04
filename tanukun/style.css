@@ -1377,3 +1377,33 @@ body.in-x #post .p-tanu { height: 38vh; }
 @keyframes p-fold { from { transform: scaleY(1.8) scaleX(1.3); opacity: .4; } }
 #post .p-envelope.fly { transform: translate(90px, 120px) scale(.35) rotate(12deg); opacity: 0; }
 @media (prefers-reduced-motion: reduce) { #post .p-tanu, #post .p-box.has { animation: none; } #post .p-heart { display: none; } #post .p-desk, #post .p-desk-img { transition-duration: .01s; } }
+
+/* =========================================================
+   💖 ふれあい（app.js の FR。2026-11-04 夜）
+   なでなでの画面の「ハートのあわ」：ゆっくりふくらんで（3.2秒）、はじけてハートがぽわぽわ。タップで肉球・しっぽを重ねて開く
+   ========================================================= */
+.fr-bub { position: absolute; z-index: 4; width: 64px; height: 64px; margin: -32px 0 0 -32px; padding: 0; border: 0; background: none;
+  border-radius: 50%; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.fr-bub[hidden] { display: none; }
+.fr-bub:focus-visible { outline: 3px solid #FF5E95; outline-offset: 2px; }
+.fr-bub i { position: absolute; inset: 5px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle at 32% 28%, rgba(255,255,255,.95) 0 9%, rgba(255,255,255,0) 10%),
+              radial-gradient(circle at 50% 50%, rgba(255,200,220,.28) 0 50%, rgba(255,120,170,.55) 82%, rgba(255,255,255,.95) 96%);
+  border: 2px solid rgba(255,255,255,.9); box-shadow: 0 0 14px rgba(255,120,170,.75), inset 0 0 8px rgba(255,255,255,.6);
+  transform: scale(.25); opacity: 0; animation: fr-grow 3.2s ease-in-out infinite; }
+.fr-bub i::after { content: ""; position: absolute; left: 50%; top: 52%; width: 44%; height: 40%; transform: translate(-50%, -50%);
+  background: center / contain no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 22'%3E%3Cpath fill='%23FF5C8A' d='M12 21.5 10.3 20C4.2 14.5 0 10.8 0 6.3 0 2.7 2.8 0 6.4 0 8.4 0 10.4.9 12 2.4 13.6.9 15.6 0 17.6 0 21.2 0 24 2.7 24 6.3c0 4.5-4.2 8.2-10.3 13.7z'/%3E%3C/svg%3E"); }
+.fr-bub + .fr-bub i { animation-delay: 1.6s; }
+@keyframes fr-grow { 0% { transform: scale(.25); opacity: 0 } 12% { opacity: 1 } 72% { transform: scale(1); opacity: 1 }
+  78% { transform: scale(1.12); opacity: .9 } 84% { transform: scale(1.3); opacity: 0 } 100% { transform: scale(1.3); opacity: 0 } }
+@media (prefers-reduced-motion: reduce) { .fr-bub i { animation-duration: 6s; } }
+.fr-new { position: absolute; right: -10px; top: -6px; font-size: 10px; padding: 1px 6px; pointer-events: none; }
+.fr-heart { position: fixed; z-index: 30; width: 16px; height: 15px; pointer-events: none; opacity: 0;
+  background: center / contain no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 22'%3E%3Cpath fill='%23FF6F9C' d='M12 21.5 10.3 20C4.2 14.5 0 10.8 0 6.3 0 2.7 2.8 0 6.4 0 8.4 0 10.4.9 12 2.4 13.6.9 15.6 0 17.6 0 21.2 0 24 2.7 24 6.3c0 4.5-4.2 8.2-10.3 13.7z'/%3E%3C/svg%3E"); }
+/* 肉球・しっぽの画面（この上に重ねる）と、左上の「もどる」 */
+.fr-frame { position: fixed; inset: 0; width: 100%; height: 100%; border: 0; z-index: 45; background: #EFD7AE; }
+.fr-frame[hidden], .fr-back[hidden] { display: none; }
+.fr-back { position: fixed; z-index: 46; left: max(12px, env(safe-area-inset-left)); top: calc(env(safe-area-inset-top) + 12px);
+  background: #FFF6E6; border: 2.5px solid #4A2C1A; box-shadow: 0 3px 0 #4A2C1A; color: #4A2C1A; }
+body.fr-on .toast { z-index: 47; }
+body.fr-on #lang-btn, body.fr-on .lang-btn { visibility: hidden; }

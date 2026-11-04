@@ -46,6 +46,14 @@ WASHING_IMAGES = [
     'sp_zukan', 'sp_zukan_rare', 'stand',
 ]
 WASHING_TITLE = 'タヌくんを洗おう｜タヌくん'
+# 💖 ふれあい（2026-11-04 夜）：なでなでの画面の上に重ねて開く2ページ（features.fureai）。元のページは確認用リンクの形（doctype・head なし）なので、ここで頭を付ける
+FUREAI_PAGES = {
+    'nikukyu': ['sit_soles.webp', 'sit_soles_smile.webp', 'sit_soles_laugh.webp', 'pads_mask.png'],
+    'shippo': ['back.webp', 'back_shy.webp', 'back_laugh.webp', 'tail.webp', 'tail_puff.webp'],
+}
+FUREAI_HEAD = ('<!DOCTYPE html>\n<html lang="ja">\n<head>\n<meta charset="utf-8">\n'
+               '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
+               '<meta name="robots" content="noindex">\n<meta name="theme-color" content="#3A2210">\n')
 WASHING_DESCRIPTION = '南国のシャワールームで、タヌくんをゴシゴシ。泡でアワアワ、シャワーでピカピカ！ 落としものの ずかん集めも。／ Scrub Tanu-kun clean in a tropical shower, rinse off the bubbles, and collect seaside treasures.'
 SEESAW_DESCRIPTION = '南国の波打ち際で、タヌくんと丸太のシーソー。指でゆらすと、おなかがたぷん♪ 海へざぶーんで特別イラストも。／ Ride a log seesaw with Tanu-kun by the sea and watch his belly jiggle.'
 RALLY_TITLE = 'ぽよんラリー｜タヌくん'
@@ -129,6 +137,19 @@ def build(base, out):
         raise SystemExit('washing/index.html の <title> が見つかりませんでした')
     page = page.replace(tag, tag + '\n' + og_tags(base + 'washing/', base + 'og/main.jpg', WASHING_TITLE, WASHING_DESCRIPTION), 1)
     (out / 'washing' / 'index.html').write_text(page, encoding='utf8')
+
+    # 💖 ふれあい（nikukyu/・shippo/）：ページと、使う絵だけ。本編の中で開くので、カード（OGP）は付けない
+    for d, imgs in FUREAI_PAGES.items():
+        (out / d / 'img').mkdir(parents=True)
+        for f in imgs:
+            shutil.copy(ROOT / d / 'img' / f, out / d / 'img' / f)
+        page = (ROOT / d / 'index.html').read_text(encoding='utf8')
+        if page.lstrip().lower().startswith('<!doctype'):
+            raise SystemExit(d + '/index.html は、もう頭（doctype）が付いています。build_app.py を見直してください')
+        # 確認用リンクの形（<title> から始まる）→ head を閉じ、<body> を開く所は、最初の <canvas> の前
+        i = page.index('<canvas')
+        page = FUREAI_HEAD + page[:i] + '</head>\n<body>\n' + page[i:] + '\n</body>\n</html>\n'
+        (out / d / 'index.html').write_text(page, encoding='utf8')
 
     # index.html：カード（OGP）の設定を入れる
     page = (out / 'index.html').read_text(encoding='utf8')

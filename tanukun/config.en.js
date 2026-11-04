@@ -65,9 +65,9 @@
 
   report: {
     hashtag: 'Tanukun',
-    labels:   { head: 'Head', chest: 'Chest', belly: 'Belly', tail: 'Tail', thigh: 'Thighs', crotch: '???' },
+    labels:   { head: 'Head', chest: 'Chest', belly: 'Belly', tail: 'Tail', thigh: 'Thighs', sole: 'Soles', crotch: '???' },
     comments: { head: 'Thanks for the pats~♪', chest: 'Too much chest…!', belly: 'All belly~!',
-                tail: 'My tail\'s fluffy, right?', thigh: 'My thighs tickle~!', crotch: 'Th-the secret spot, again…!', even: 'You touched me all over~' }
+                tail: 'My tail\'s fluffy, right?', thigh: 'My thighs tickle~!', sole: 'My paw pads are squishy, right~♪', crotch: 'Th-the secret spot, again…!', even: 'You touched me all over~' }
   },
 
   rules: [

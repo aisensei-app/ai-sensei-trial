@@ -67,6 +67,7 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .adjv{margin:0;font-size:12px;font-family:ui-monospace,Menlo,monospace;background:#F3E6D0;border-radius:8px;padding:4px 8px;overflow-wrap:anywhere}
 .embed .top{padding-top:calc(env(safe-area-inset-top,0px) + 62px)}
 .embed .tag{display:none}
+.embed #adj{display:none}
 </style>
 
 <canvas id="stage" aria-label="浜辺で、うしろ姿のタヌくんがふり返っている。しっぽとおしりをさわれる"></canvas>
@@ -103,6 +104,18 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 const EMBED = /[?&]embed=1/.test(location.search) && window.parent !== window;
 if (EMBED) document.documentElement.classList.add('embed');
 const tellHub = (what) => { if (EMBED) try { window.parent.postMessage({ fureai: what }, '*'); } catch (e) {} };
+// ことば（本編から ?lang=en・zh で開かれたとき。2026-11-04 夜）：日本語の文で引く。訳がなければ日本語のまま
+const LANG = ((location.search.match(/[?&]lang=(en|zh)\b/) || [])[1]) || 'ja';
+const TL = { en: {"よみこみ中…": "Loading…", "音 ON": "Sound ON", "音 OFF": "Sound OFF", "絵を読みこめませんでした。開き直してください": "Couldn't load the pictures. Please reopen.", "ぷにっ": "Squish!", "浜辺で、うしろ姿のタヌくんがふり返っている。しっぽとおしりをさわれる": "Tanu-kun on the beach, looking back over his shoulder. You can touch his tail.", "しっぽ、さわってみる？": "Wanna touch my tail?", "ふさふさゲージ": "Floof gauge", "ふさふさ": "Floof", "しっぽをタップ・なでてね。おしりも…？": "Tap or stroke my tail. My bum too…?", "ぷるん": "Jiggle!", "むにっ": "Squish!", "ぽよん": "Boing!", "ふりふり♪": "Swish swish♪", "しっぽ、ふわふわでしょ？": "My tail is so fluffy, right?", "えへへ、しっぽ じまん♪": "Hehe, I'm proud of my tail♪", "ふさふさ…きもちいい〜": "Floofy… feels so nice~", "ブラッシングみたい♪": "Like getting brushed♪", "もっと なでて〜": "Pet me more~", "ひゃっ！？ しっぽが ボワッて なった！": "Eek!? My tail went all poofy!", "び、びっくりした〜…！": "Y-you surprised me~…!", "もう〜！ 毛が さかだっちゃったよ": "Geez~! My fur is standing on end", "ひゃっ、おしり〜！？": "Eek, my bum~!?", "もう〜、どこ さわってるの〜": "Hey~, where are you touching~", "ぷるんって した…はずかしい…": "It jiggled… so embarrassing…", "こ、腰は くすぐったい〜": "M-my waist is ticklish~", "むにむに しないで〜": "Don't squish me~", "ちょっと つまめちゃう…？": "You can kinda pinch it…?", "ふともも、むちむちでしょ？": "My thighs are nice and chubby, huh?", "ひゃっ、くすぐったい〜": "Eek, that tickles~", "いっぱい歩いて、きたえてるんだ〜": "I walk a lot to keep them strong~", "二の腕、ぷにぷに…": "My upper arms are squishy…", "ちからこぶ…ないけど〜": "No muscles… though~", "ぎゅってしたら、やわらかいよ〜": "They're soft if you squeeze~", "そんなに ぷにぷに しないで〜": "Not so much squishing~", "せなか、ひろいでしょ？": "My back is big, right?", "しっぽは こっちだよ〜": "My tail is over here~", "ボワッ！": "Poof!", "びよ〜ん": "Stretchy~", "くるくるっ！": "Spin spin!", "くるんっ！": "Spin!", "ぼよよん": "Boing-oing", "ふぁさっ": "Fwoosh"},
+  zh: {"よみこみ中…": "加载中…", "音 ON": "声音 开", "音 OFF": "声音 关", "絵を読みこめませんでした。開き直してください": "图片加载失败，请重新打开。", "ぷにっ": "噗叽！", "浜辺で、うしろ姿のタヌくんがふり返っている。しっぽとおしりをさわれる": "在海边回头看的狸君。可以摸摸尾巴。", "しっぽ、さわってみる？": "要摸摸我的尾巴吗？", "ふさふさゲージ": "蓬松度", "ふさふさ": "蓬蓬", "しっぽをタップ・なでてね。おしりも…？": "点一点、摸一摸尾巴吧。屁股也…？", "ぷるん": "噗噜～", "むにっ": "捏捏～", "ぽよん": "啵嘤～", "ふりふり♪": "摇摇♪", "しっぽ、ふわふわでしょ？": "尾巴很蓬松吧？", "えへへ、しっぽ じまん♪": "嘿嘿，这是我引以为傲的尾巴♪", "ふさふさ…きもちいい〜": "蓬蓬的…好舒服～", "ブラッシングみたい♪": "像在梳毛一样♪", "もっと なでて〜": "再多摸摸嘛～", "ひゃっ！？ しっぽが ボワッて なった！": "呀！？尾巴一下子蓬起来了！", "び、びっくりした〜…！": "吓、吓我一跳～…！", "もう〜！ 毛が さかだっちゃったよ": "真是的～！毛都竖起来啦", "ひゃっ、おしり〜！？": "呀，屁股～！？", "もう〜、どこ さわってるの〜": "真是的～，你在摸哪里啦～", "ぷるんって した…はずかしい…": "晃了一下…好害羞…", "こ、腰は くすぐったい〜": "腰、腰好痒～", "むにむに しないで〜": "不要捏来捏去啦～", "ちょっと つまめちゃう…？": "好像能捏起来一点…？", "ふともも、むちむちでしょ？": "大腿肉肉的吧？", "ひゃっ、くすぐったい〜": "呀，好痒～", "いっぱい歩いて、きたえてるんだ〜": "我经常走路锻炼哦～", "二の腕、ぷにぷに…": "手臂软软的…", "ちからこぶ…ないけど〜": "虽然…没有肌肉啦～", "ぎゅってしたら、やわらかいよ〜": "捏一捏，很软哦～", "そんなに ぷにぷに しないで〜": "别一直捏啦～", "せなか、ひろいでしょ？": "我的背很宽吧？", "しっぽは こっちだよ〜": "尾巴在这边哦～", "ボワッ！": "蓬！", "びよ〜ん": "伸～", "くるくるっ！": "转转转！", "くるんっ！": "转～！", "ぼよよん": "弹弹～", "ふぁさっ": "唰～"} };
+const tx = (s) => (LANG !== 'ja' && TL[LANG] && TL[LANG][s]) || s;
+if (LANG !== 'ja') {
+  document.documentElement.lang = LANG === 'zh' ? 'zh-Hans' : 'en';
+  // 画面に書いてある文字（ふきだし・ボタン・説明）と aria-label を置きかえる
+  const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  for (let n; (n = walk.nextNode());) { const t = n.nodeValue.trim(); if (t && tx(t) !== t) n.nodeValue = n.nodeValue.replace(t, tx(t)); }
+  document.querySelectorAll('[aria-label]').forEach((el) => { const t = el.getAttribute('aria-label'); if (tx(t) !== t) el.setAttribute('aria-label', tx(t)); });
+}
 
 const SRC = { bg: '../images/bg/beach_day.webp', body: 'img/back.webp', tail: 'img/tail.webp', puff: 'img/tail_puff.webp',
   shy: 'img/back_shy.webp', laugh: 'img/back_laugh.webp' };   // shy・laugh：同じ構図で顔だけちがう（照れ笑い・大笑い。2026-11-04 ユーザーが描いた）
@@ -215,7 +228,7 @@ function say(kind, force) {
   if (!force && now - lastTalk < 1500) return;
   lastTalk = now;
   const list = LINES[kind];
-  bubble.textContent = list[Math.floor(Math.random() * list.length)];
+  bubble.textContent = tx(list[Math.floor(Math.random() * list.length)]);
   bubble.classList.remove('bump'); void bubble.offsetWidth; bubble.classList.add('bump');
 }
 
@@ -224,7 +237,7 @@ const fx = document.getElementById('fx');
 function popWord(text, x, y, big) {
   const el = document.createElement('span');
   el.className = 'pop-word' + (big ? ' big' : '');
-  el.textContent = text;
+  el.textContent = tx(text);
   el.style.left = x + 'px'; el.style.top = y + 'px';
   fx.appendChild(el);
   const dx = (Math.random() - 0.5) * 36, rot = (Math.random() - 0.5) * 12;
@@ -451,7 +464,7 @@ $('aCopy').addEventListener('click', () => {
 function selectVal() { const r = document.createRange(); r.selectNodeContents($('adjVal')); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); }
 document.getElementById('snd').addEventListener('click', (e) => {
   soundOn = !soundOn;
-  e.currentTarget.textContent = soundOn ? '音 ON' : '音 OFF';
+  e.currentTarget.textContent = tx(soundOn ? '音 ON' : '音 OFF');
   e.currentTarget.setAttribute('aria-pressed', String(soundOn));
 });
 
@@ -633,6 +646,6 @@ Promise.all([load(SRC.bg), load(SRC.body), load(SRC.tail), load(SRC.puff)]).then
   load(SRC.shy).then((im) => { I.shy = faceLayer(im); }).catch(() => {});   // 表情の絵はあとから（なくても遊べる）
   load(SRC.laugh).then((im) => { I.laugh = faceLayer(im); }).catch(() => {});
   requestAnimationFrame(frame);
-}).catch(() => { document.getElementById('loading').textContent = '絵を読みこめませんでした。開き直してください'; });
+}).catch(() => { document.getElementById('loading').textContent = tx('絵を読みこめませんでした。開き直してください'); });
 })();
 </script>
