@@ -111,7 +111,7 @@ let smileSrc = null, laughSrc = null;   // 表情の絵の色（体の揺れを�
    位置は元の絵の座標。y はばねの上下の動き（ピクセル） */
 const BODY = {
   // 照れ笑いのときの、おなかの範囲（2026-11-04 広げた：300×150 → 330×175。大笑いの bellyWide より少しせまい）
-  belly: { cx: 610, cy: 595, rx: 330, ry: 175, y: 0, v: 0 },
+  belly: { cx: 610, cy: 595, rx: 330, ry: 175, y: 0, v: 0, x: 0, vx: 0 },   // x・vx：横の揺れ（大笑いに入った瞬間の「ぷるん！」）
   // 大笑いのときの、おなかの広い範囲（2026-11-04：ぽんぽこリズムくらい。おなか全体＋腰みのの上まで）
   bellyWide: { cx: 610, cy: 600, rx: 360, ry: 200 },
   // 胸は、揺れる所を少し下に（2026-11-04 cy 400 → 425。胸のふくらみの下のほうが、よく揺れる）
@@ -121,6 +121,12 @@ const BODY = {
 const BX0 = 245, BY0 = 325, BW = 730, BH = 480;   // 揺らす範囲（おなか・胸をかこむ四角）
 let bodyPatch = null, bodyCtx = null, bodyData = null, bodyW = null;
 let laughBeat = 0;
+// 大笑いに入った瞬間の「ぷるん！」：おなかを横に大きく振って、上下にもはずませる（胸もいっしょに）
+function laughPurun() {
+  const B = BODY.belly, dir = Math.random() < 0.5 ? -1 : 1;
+  B.vx += dir * 520; B.v += 330;
+  BODY.chestL.v += 200; BODY.chestR.v += 185;
+}
 function load(u) { return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = u; }); }
 function pixels(im) {
   const c = document.createElement('canvas'); c.width = IW; c.height = IH;
@@ -272,6 +278,7 @@ cv.addEventListener('pointerdown', (e) => {
   taps.push(now); while (taps.length && now - taps[0] > 2000) taps.shift();
   if (taps.length < 6) BODY.belly.v += 125;   // 照れ笑い：押すたびに、おなかが「たぷん」（2026-11-04 大きくした 55 → 90 → 125）
   if (taps.length >= 6) { say('tickle', taps.length === 6); laughUntil = now + 1600; }
+  if (taps.length === 6) laughPurun();   // 大笑いに入った瞬間：ぽんぽこリズムの「〜」と同じくらいの「ぷるん！」
   else if (count === 100) say('hundred', true);
   else say('tap');
   popWord(e.clientX, e.clientY - 10);
@@ -326,9 +333,10 @@ function step(dt) {
       setTimeout(() => { BODY.chestL.v += 175 * laugh; BODY.chestR.v += 160 * laugh; }, 40);
     }
   }
+  { const B = BODY.belly; B.vx += (-200 * B.x - 4.5 * B.vx) * dt; B.x += B.vx * dt; if (B.x > 34) { B.x = 34; B.vx *= 0.5; } else if (B.x < -34) { B.x = -34; B.vx *= 0.5; } }
   [BODY.belly, BODY.chestL, BODY.chestR].forEach((b) => {
     b.v += (-240 * b.y - 6.5 * b.v) * dt; b.y += b.v * dt;
-    const lim = b === BODY.belly ? 30 : 22;   // 動きすぎないように（ピクセル。おなかは大きめ）
+    const lim = b === BODY.belly ? 38 : 24;   // 動きすぎないように（ピクセル。おなかは大きめ）
     if (b.y > lim) { b.y = lim; b.v *= 0.5; } else if (b.y < -lim) { b.y = -lim; b.v *= 0.5; }
   });
   pads.forEach((p) => {
@@ -443,8 +451,8 @@ function bodyWeights() {
   }
 }
 function renderBody() {
-  const B = BODY, yb = B.belly.y, yl = B.chestL.y, yr = B.chestR.y;
-  if (Math.abs(yb) < 0.15 && Math.abs(yl) < 0.15 && Math.abs(yr) < 0.15) return;
+  const B = BODY, yb = B.belly.y, xb = B.belly.x, yl = B.chestL.y, yr = B.chestR.y;
+  if (Math.abs(yb) < 0.15 && Math.abs(xb) < 0.15 && Math.abs(yl) < 0.15 && Math.abs(yr) < 0.15) return;
   if (!bodyPatch) {
     bodyPatch = document.createElement('canvas'); bodyPatch.width = BW; bodyPatch.height = BH;
     bodyCtx = bodyPatch.getContext('2d'); bodyData = bodyCtx.createImageData(BW, BH); bodyWeights();
@@ -461,7 +469,7 @@ function renderBody() {
       else {
         const dy = yb * wb + (bodyW.cl[k] ? yl : yr) * wc;
         // 沈むと、おなかが少し横に広がる（上がると、少しすぼむ）
-        const sx = BX0 + x - (BX0 + x - cxB) * 0.0028 * yb * wb;
+        const sx = BX0 + x - (BX0 + x - cxB) * 0.0028 * yb * wb - xb * wb;   // 横の揺れ（「ぷるん！」）も
         let iy = (BY0 + y - dy + 0.5) | 0; if (iy < 0) iy = 0; else if (iy >= IH) iy = IH - 1;
         let ix = (sx + 0.5) | 0; if (ix < 0) ix = 0; else if (ix >= IW) ix = IW - 1;
         si = (iy * IW + ix) * 4;
