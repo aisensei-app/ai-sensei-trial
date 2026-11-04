@@ -10,6 +10,7 @@
         元は art/*_src.png（ユーザーが描いた。マゼンタ背景）→ tools/make_shippo_art.py。背景は本編の images/bg/beach_day.webp
   ・しっぽ：タップで「ふりふり」／指でなでると、しっぽが指についてきて「ふさふさ」（毛がふわっと舞う）／たくさんなでると「ボワッ！」（ふくらんで、ぶるぶる）
   ・おしり：タップで「ぷるん」（左右それぞれ。押した側が大きく）
+  ・表情3種類：ふつう／さわっている間は照れ笑い（img/back_shy.webp）／2秒に6回さわる・ボワッのときは大笑い（img/back_laugh.webp。ハートがぽわぽわ）
   ・15歳以上の線引き：しっぽが、おしりのまんなかを隠す位置。宣伝（X）には使わない
   ・本編にはまだつないでいない（build_app.py にも入れていない）
 -->
@@ -70,7 +71,17 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 <script>
 (() => {
 'use strict';
-const SRC = { bg: '../images/bg/beach_day.webp', body: 'img/back.webp', tail: 'img/tail.webp', puff: 'img/tail_puff.webp' };
+const SRC = { bg: '../images/bg/beach_day.webp', body: 'img/back.webp', tail: 'img/tail.webp', puff: 'img/tail_puff.webp',
+  shy: 'img/back_shy.webp', laugh: 'img/back_laugh.webp' };   // shy・laugh：同じ構図で顔だけちがう（照れ笑い・大笑い。2026-11-04 ユーザーが描いた）
+const FACE_H = 270, FACE_FADE = 70;   // 表情の絵を重ねる高さ（顔の所だけ。うしろ姿の絵の座標）。下の 70px は、だんだん消す（境目が見えないように）
+// 顔の所だけを切りとって、下のふちをぼかした絵にする
+function faceLayer(im) {
+  const c = document.createElement('canvas'); c.width = BW0; c.height = FACE_H;
+  const x = c.getContext('2d'); x.drawImage(im, 0, 0, BW0, FACE_H, 0, 0, BW0, FACE_H);
+  const g = x.createLinearGradient(0, FACE_H - FACE_FADE, 0, FACE_H); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+  x.globalCompositeOperation = 'destination-in'; x.fillStyle = g; x.fillRect(0, 0, BW0, FACE_H);
+  return c;
+}
 const BW0 = 768, BH0 = 1152;        // うしろ姿の絵の大きさ
 const TW0 = 768, TH0 = 512;         // しっぽの絵の大きさ（2枚とも）
 const ROOT = { x: 390, y: 582 };    // しっぽの付け根（うしろ姿の絵の座標。腰みののひもの所）
@@ -188,7 +199,7 @@ function addMeter(n) {
   if (meter >= 1) puffUp();
 }
 function puffUp() {
-  meter = 0; tail.puffUntil = performance.now() + 2600; tail.pv += 9; tail.va += (Math.random() < 0.5 ? -1 : 1) * 3;
+  meter = 0; tail.puffUntil = performance.now() + 2600; laughUntil = Math.max(laughUntil, tail.puffUntil);   // ボワッの間は大笑い tail.pv += 9; tail.va += (Math.random() < 0.5 ? -1 : 1) * 3;
   const [rx, ry] = rootScreen();
   popWord('ボワッ！', rx + 60 * S * 2, ry + 40, true);
   say('puff', true); boing(260, 2.4, 1); fasa(1.2, 0.5); buzz([20, 40, 20]);
@@ -211,6 +222,7 @@ function addHeart() {
     wa: 6 + Math.random() * 8, wf: 2 + Math.random() * 2, ph: Math.random() * 6, col: HEART_COLS[(Math.random() * 4) | 0] });
   if (hearts.length > 60) hearts.shift();
 }
+let heartAcc = 0;
 function heartBurst(n) { for (let i = 0; i < n; i++) addHeart(); }
 function heartPath() {
   ctx.beginPath(); ctx.moveTo(0, 7);
@@ -221,6 +233,15 @@ function heartPath() {
 /* ---------- さわる ---------- */
 const fingers = new Map();
 let rubAcc = 0, wordAcc = 0;
+/* 表情：ふつう／照れ笑い（しっぽ・おしりをさわっている間と、そのあと 1.5 秒）／大笑い（2秒に6回さわる・ボワッのとき） */
+let shy = 0, shyUntil = 0, laugh = 0, laughUntil = 0;
+const taps = [];
+function touched() {
+  const now = performance.now();
+  shyUntil = now + 1500;
+  taps.push(now); while (taps.length && now - taps[0] > 2000) taps.shift();
+  if (taps.length >= 6) { if (now >= laughUntil) heartBurst(8); laughUntil = Math.max(laughUntil, now + 1600); }
+}
 cv.addEventListener('pointerdown', (e) => {
   e.preventDefault();
   if (!I.body) return;
@@ -238,6 +259,7 @@ cv.addEventListener('pointerdown', (e) => {
   if (c && bodyPx && bodyPx[((by | 0) * BW0 + (bx | 0)) * 4 + 3] > 60) {
     // おしり：押した側が大きく、反対側も少し「ぷるん」
     c.v += 210; CHEEK.forEach((k) => { if (k !== c) k.v += 90; });
+    touched();
     popWord('ぷるん', x, y - 10); say('butt'); boing(170, 0.55, 0.9); buzz(14);
     return;
   }
@@ -255,6 +277,7 @@ cv.addEventListener('pointermove', (e) => {
   tail.target = Math.max(-0.75, Math.min(0.75, f.a0 + da * 0.85));
   // ふさふさ：なでた長さで、ゲージ・毛のかけら・文字・音
   addMeter(d * 0.0016);
+  shyUntil = performance.now() + 1500;   // なでている間は照れ笑い
   rubAcc += d; wordAcc += d;
   if (rubAcc > 14) { rubAcc = 0; addFluff(x, y); }
   // ボワッの間は、ボワッのセリフのまま（なでるセリフで上書きしない）
@@ -268,6 +291,7 @@ function release(e) {
   if (f.moved < 8) {
     // タップ：ふりふり
     tail.va += (Math.random() < 0.5 ? -1 : 1) * 5.5; tail.sqv += 6;
+    touched();
     popWord(Math.random() < 0.5 ? 'ふぁさっ' : 'ふりふり♪', f.x0, f.y0 - 10);
     say('tail'); fasa(0.8, 0.22); buzz(10); addMeter(0.17);
     for (let i = 0; i < 5; i++) addFluff(f.x0, f.y0);
@@ -297,6 +321,12 @@ function step(dt) {
   const pt = now < tail.puffUntil ? 1 : 0;
   tail.pv += (120 * (pt - tail.puff) - (pt ? 9 : 6) * tail.pv) * dt; tail.puff += tail.pv * dt;
   meter = Math.max(0, meter - dt * 0.08);
+  const wl = now < laughUntil ? 1 : 0, ws = !wl && now < shyUntil ? 1 : 0;
+  shy += (ws - shy) * Math.min(1, dt * (ws ? 12 : 3));
+  laugh += (wl - laugh) * Math.min(1, dt * (wl ? 14 : 3));
+  // 大笑いのときは、ハートがぽわぽわ
+  heartAcc += dt * (laugh > 0.5 ? 10 * laugh : 0);
+  while (heartAcc >= 1) { heartAcc -= 1; addHeart(); }
   meterEl.style.width = (now < tail.puffUntil ? 100 : meter * 100) + '%';
   // おしり
   CHEEK.forEach((k) => { k.v += (-260 * k.y - 6 * k.v) * dt; k.y += k.v * dt; if (k.y > 26) { k.y = 26; k.v *= 0.5; } else if (k.y < -26) { k.y = -26; k.v *= 0.5; } });
@@ -349,6 +379,11 @@ function draw() {
     ctx.drawImage(I.body, OX, OY, BW0 * S, BH0 * S); ctx.restore();
     drawCheeks();
   } else ctx.drawImage(I.body, OX, OY, BW0 * S, BH0 * S);
+  // 表情：顔の所だけ、照れ笑い・大笑いの絵をふわっと重ねる
+  [[I.shy, shy], [I.laugh, laugh]].forEach(([im, a]) => {
+    if (!im || a < 0.01) return;
+    ctx.globalAlpha = a; ctx.drawImage(im, OX, OY, BW0 * S, FACE_H * S); ctx.globalAlpha = 1;
+  });
   // しっぽ（付け根を中心に回す。ボワッのときは、ふくらんだ絵に切りかえて大きく）
   const [rx, ry] = rootScreen(), sc = tailScale() * S;
   ctx.save(); ctx.translate(rx, ry); ctx.rotate(tailAngle()); ctx.scale(sc * (1 - 0.04 * tail.sq), sc * (1 + 0.06 * tail.sq));
@@ -387,6 +422,8 @@ Promise.all([load(SRC.bg), load(SRC.body), load(SRC.tail), load(SRC.puff)]).then
   I = { bg, body, tail: t, puff: p };
   bodyPx = pixels(body, BW0, BH0); tailPx = pixels(t, TW0, TH0);
   document.getElementById('loading').remove();
+  load(SRC.shy).then((im) => { I.shy = faceLayer(im); }).catch(() => {});   // 表情の絵はあとから（なくても遊べる）
+  load(SRC.laugh).then((im) => { I.laugh = faceLayer(im); }).catch(() => {});
   requestAnimationFrame(frame);
 }).catch(() => { document.getElementById('loading').textContent = '絵を読みこめませんでした。開き直してください'; });
 })();

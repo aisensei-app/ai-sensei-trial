@@ -5,6 +5,7 @@
 
 shippo/art/*_src.png（ユーザーが描いた絵。背景はマゼンタ）→ shippo/img/*.webp（背景は透明）
   back      … うしろ姿（ふり返って笑う。しっぽなし）。1024×1536 → 768×1152
+  back_shy・back_laugh … 同じ構図で顔だけちがう（照れ笑い・大笑い）
   tail      … しっぽ（ふつう）、tail_puff … しっぽ（ボワッ）。1536×1024 → 768×512（2枚は同じ大きさ・同じ位置のまま）
 背景の抜き方は丸太シーソーと同じ（tools/make_seesaw_art.py の key_out）
 """
@@ -16,7 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from make_seesaw_art import key_out  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
-SIZES = {'back': (768, 1152), 'tail': (768, 512), 'tail_puff': (768, 512)}
+SIZES = {'back': (768, 1152), 'back_shy': (768, 1152), 'back_laugh': (768, 1152), 'tail': (768, 512), 'tail_puff': (768, 512)}
 
 
 def main():
