@@ -6,8 +6,10 @@
   ・目的：ユーザーが描いた横長の絵（1536×1024）が、スマホの縦画面でも使えるかを確かめる
   ・絵：img/cafe_invite.webp（カフェでメニューを見せてお誘い）・img/cafe_happy.webp（同じ背景で、目を閉じてにっこり）
         img/gate_day.webp（縦長 1024×1536。昼の会場の入り口で手を差し出す）
-  ・見せ方：横長の絵は画面の高さに合わせて大きくし、セリフごとに見る所（focus：0＝左はし〜1＝右はし）へカメラがゆっくり動く
-            右上の「全体」で、絵をそのまま縮めた見え方（上下はぼかし）と切りかえて比べられる
+  ・見せ方：恋愛ゲームの形（2026-11-05 ユーザーの希望）。上に絵、下にセリフの枠（名前の札つき・1文字ずつ出る）。
+            絵は枠の上のあいた所いっぱいに出し、セリフごとに見る所（x：0＝左はし〜100＝右はし）へゆっくり動く。
+            位置は CSS の object-position だけで決める（JS で大きさを計算しない。前の版はスマホでずれた）
+            右上の「全体」で、絵をそのまま縮めた見え方（あいた所はぼかし）と切りかえて比べられる
   ・本編にはまだつないでいない（build_app.py にも入れていない）
 -->
 <style>
@@ -19,105 +21,106 @@
 html,body{height:100%}
 body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);overflow:hidden;
   -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
-#stage{position:fixed;inset:0;overflow:hidden;cursor:pointer}
+/* 画面＝上の絵（のこり全部）＋下のセリフの枠 */
+#game{position:fixed;inset:0;display:flex;flex-direction:column;cursor:pointer}
+#stage{position:relative;flex:1;min-height:0;overflow:hidden}
 .layer{position:absolute;inset:0;opacity:0;transition:opacity .8s ease}
 .layer.on{opacity:1}
-.layer .blur{position:absolute;inset:-40px;width:calc(100% + 80px);height:calc(100% + 80px);object-fit:cover;
-  filter:blur(22px) brightness(.65);opacity:0;transition:opacity .6s}
-.layer .pic{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform;
-  transition:transform 1.8s cubic-bezier(.35,.05,.25,1)}
+.layer img{position:absolute;inset:0;width:100%;height:100%;display:block}
+.layer .blur{object-fit:cover;filter:blur(20px) brightness(.65);transform:scale(1.15);opacity:0;transition:opacity .5s}
+.layer .pic{object-fit:cover;object-position:var(--x,50%) var(--y,30%);
+  transition:object-position 1.8s cubic-bezier(.35,.05,.25,1)}
 body.whole .layer .blur{opacity:1}
-/* ふきだし（本編と同じ形：白い角丸・やわらかい影・くるっとしたしっぽ） */
-.talk{position:fixed;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 28px);z-index:3;
-  display:flex;flex-direction:column;align-items:center;gap:14px;padding:0 16px;pointer-events:none}
-.bubble{position:relative;white-space:pre-line;min-height:3.2em;max-width:min(84vw,380px);padding:12px 20px;border-radius:22px;
-  background:#fff;box-shadow:0 4px 14px rgba(74,46,22,.25);font-size:clamp(17px,4.8vw,22px);font-weight:700;line-height:1.4;
-  text-align:center;display:flex;align-items:center;justify-content:center;
-  opacity:0;transform:translateY(6px) scale(.9);transition:opacity .2s,transform .2s}
-.bubble.on{opacity:1;transform:none;transition:opacity .12s,transform .25s cubic-bezier(.3,1.6,.5,1)}
-.bubble::before{content:"タヌくん";position:absolute;left:16px;top:-12px;font-size:12px;background:var(--orange);color:#fff;
-  padding:2px 10px;border-radius:99px;font-weight:800}
-.next{font-size:12px;color:#fff;opacity:.85;text-shadow:0 1px 3px rgba(0,0,0,.6)}
-.next::after{content:" ▼";animation:blink 1.2s infinite}
-@keyframes blink{50%{opacity:.2}}
-.btn{pointer-events:auto;border:0;border-radius:99px;font:inherit;font-weight:800;font-size:17px;padding:13px 28px;cursor:pointer}
-.btn.main{background:var(--orange);color:#fff;box-shadow:0 4px 0 var(--orange-d)}
-.btn.sub{background:#fff;color:var(--orange-d);box-shadow:0 3px 10px rgba(0,0,0,.2)}
-.btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+body.whole .layer .pic{object-fit:contain;object-position:50% 50%}
+/* 絵の下のはしを、セリフの枠へなじませる */
+#stage::after{content:"";position:absolute;left:0;right:0;bottom:0;height:40px;
+  background:linear-gradient(transparent,#2a1a10);pointer-events:none}
+/* セリフの枠 */
+#talk{position:relative;flex:none;padding:22px 16px calc(env(safe-area-inset-bottom,0px) + 14px)}
+.box{position:relative;min-height:5.2em;padding:18px 20px 22px;border-radius:22px;background:#fff;
+  box-shadow:0 4px 14px rgba(0,0,0,.25);font-size:clamp(17px,4.8vw,22px);font-weight:700;line-height:1.55;white-space:pre-line}
+.name{position:absolute;left:18px;top:-14px;background:var(--orange);color:#fff;font-size:14px;font-weight:800;
+  padding:4px 14px;border-radius:99px;box-shadow:0 2px 0 var(--orange-d)}
+.more{position:absolute;right:16px;bottom:8px;color:var(--orange-d);font-size:14px;opacity:0}
+.more.on{opacity:1;animation:bob 1s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(3px)}}
+.btns{display:flex;justify-content:center;margin-top:12px}
 .btns[hidden]{display:none}
-/* 道具ボタン（右上）：白く半分すけた小さな丸・ふちなし・こげ茶の字 */
-.tool{position:fixed;top:calc(env(safe-area-inset-top,0px) + 12px);z-index:4;border:0;border-radius:99px;
-  background:rgba(255,255,255,.72);color:var(--ink);font:inherit;font-size:13px;font-weight:800;padding:7px 12px;cursor:pointer}
-#mode{right:16px}
-#step{left:16px;pointer-events:none}
+.btn{border:0;border-radius:99px;font:inherit;font-weight:800;font-size:17px;padding:12px 30px;cursor:pointer;
+  background:var(--orange);color:#fff;box-shadow:0 4px 0 var(--orange-d)}
+/* 道具ボタン：白く半分すけた小さな丸・ふちなし・こげ茶の字 */
+.tool{position:absolute;top:12px;z-index:2;border:0;border-radius:99px;background:rgba(255,255,255,.72);color:var(--ink);
+  font:inherit;font-size:13px;font-weight:800;padding:7px 12px}
+#mode{right:16px;cursor:pointer}
+#step{left:16px}
 </style>
 
-<div id="stage">
-  <div class="layer" data-src="img/cafe_invite.webp"><img class="blur" alt=""><img class="pic" alt="カフェでメニューを見せるタヌくん"></div>
-  <div class="layer" data-src="img/cafe_happy.webp"><img class="blur" alt=""><img class="pic" alt="目を閉じてにっこりするタヌくん"></div>
-  <div class="layer" data-src="img/gate_day.webp"><img class="blur" alt=""><img class="pic" alt="お祭りの会場の入り口で手を差し出すタヌくん"></div>
-</div>
-<button class="tool" id="mode" type="button">全体</button>
-<div class="tool" id="step"></div>
-<div class="talk">
-  <div class="bubble" id="bubble"></div>
-  <div class="next" id="next">タップで次へ</div>
-  <div class="btns" id="end" hidden>
-    <button class="btn main" id="again" type="button">もう一度</button>
+<div id="game">
+  <div id="stage">
+    <div class="layer" data-src="img/cafe_invite.webp"><img class="blur" alt=""><img class="pic" alt="カフェでメニューを見せるタヌくん"></div>
+    <div class="layer" data-src="img/cafe_happy.webp"><img class="blur" alt=""><img class="pic" alt="目を閉じてにっこりするタヌくん"></div>
+    <div class="layer" data-src="img/gate_day.webp"><img class="blur" alt=""><img class="pic" alt="お祭りの会場の入り口で手を差し出すタヌくん"></div>
+    <div class="tool" id="step"></div>
+    <button class="tool" id="mode" type="button">全体</button>
+  </div>
+  <div id="talk">
+    <div class="box"><span class="name">タヌくん</span><span id="text"></span><span class="more" id="more">▼</span></div>
+    <div class="btns" id="end" hidden><button class="btn" id="again" type="button">もう一度</button></div>
   </div>
 </div>
 
 <script>
-/* セリフと、そのときに見せる絵・見る所（fx：0＝左はし〜1＝右はし、fy：上下、z：寄り具合 1＝画面の高さぴったり） */
+/* セリフと、そのときの絵（pic）・見る所（x：横 0〜100、y：たて 0〜100） */
 const LINES = [
-  { pic: 0, fx: .50, fy: .3, z: 1,    t: 'あっ、来てくれたんだ♪\nちょうど会いたかったんだ！' },
-  { pic: 0, fx: .30, fy: .5, z: 1,    t: 'ねえねえ、ちょっと聞いて！' },
-  { pic: 0, fx: .72, fy: .4, z: 1,    t: '今度ね、島でお祭りがあるんだって！\n屋台もいっぱい出るんだよ♪' },
-  { pic: 1, fx: .52, fy: .3, z: 1,    t: 'いっしょに行こうよ！\n…ね？ ね？' },
-  { pic: 2, fx: .50, fy: .2, z: 1.15, t: '着いたー！\nにぎやかだねぇ♪' },
-  { pic: 2, fx: .40, fy: .4, z: 1,    t: 'ほら、こっちこっち！\n夜になったら、もっときれいになるんだって' },
+  { pic: 0, x: 50, y: 25, t: 'あっ、来てくれたんだ♪\nちょうど会いたかったんだ！' },
+  { pic: 0, x: 30, y: 40, t: 'ねえねえ、ちょっと聞いて！' },
+  { pic: 0, x: 70, y: 35, t: '今度ね、島でお祭りがあるんだって！\n屋台もいっぱい出るんだよ♪' },
+  { pic: 1, x: 50, y: 25, t: 'いっしょに行こうよ！\n…ね？ ね？' },
+  { pic: 2, x: 50, y: 15, t: '着いたー！\nにぎやかだねぇ♪' },
+  { pic: 2, x: 40, y: 40, t: 'ほら、こっちこっち！\n夜になったら、もっときれいになるんだって' },
 ];
 const $ = s => document.querySelector(s);
 const layers = [...document.querySelectorAll('.layer')];
 layers.forEach(l => { const s = l.dataset.src; l.querySelector('.blur').src = s; l.querySelector('.pic').src = s; });
 
-let i = 0, whole = false;
-function place(line){
-  const l = layers[line.pic], img = l.querySelector('.pic');
-  const W = innerWidth, H = innerHeight, iw = img.naturalWidth || 1536, ih = img.naturalHeight || 1024;
-  let s, x, y;
-  if (whole) {                     // 絵の全体を見せる（あいた上下はぼかし）
-    s = Math.min(W / iw, H / ih); x = (W - iw * s) / 2; y = (H - ih * s) * .35;
-  } else {                         // 画面いっぱいにして、見る所へカメラを向ける
-    s = Math.max(W / iw, H / ih) * line.z;
-    x = W / 2 - line.fx * iw * s; y = H * .42 - line.fy * ih * s;
-    x = Math.min(0, Math.max(W - iw * s, x)); y = Math.min(0, Math.max(H - ih * s, y));
-  }
-  img.style.width = iw + 'px'; img.style.height = ih + 'px';
-  img.style.transform = `translate(${x}px,${y}px) scale(${s})`;
+let i = 0, timer = 0, typing = false;
+function aim(line, instant){
+  const img = layers[line.pic].querySelector('.pic');
+  if (instant) img.style.transition = 'none';
+  img.style.setProperty('--x', line.x + '%'); img.style.setProperty('--y', line.y + '%');
+  if (instant) { void img.offsetWidth; img.style.transition = ''; }
+}
+function type(text){   // 1文字ずつ出す（タップで全部出す）
+  const el = $('#text'); let n = 0; typing = true; $('#more').classList.remove('on');
+  clearInterval(timer);
+  timer = setInterval(() => {
+    el.textContent = text.slice(0, ++n);
+    if (n >= text.length) finish();
+  }, 45);
+}
+function finish(){
+  clearInterval(timer); typing = false; $('#text').textContent = LINES[i].t;
+  const last = i === LINES.length - 1;
+  $('#more').classList.toggle('on', !last); $('#end').hidden = !last;
 }
 function show(){
   const line = LINES[i];
-  const img = layers[line.pic].querySelector('.pic');
-  if (!layers[line.pic].classList.contains('on')) {   // 新しく出す絵は、動かさずにその位置へ置いてからふわっと出す
-    img.style.transition = 'none'; place(line); void img.offsetWidth; img.style.transition = '';
-  } else place(line);
+  const fresh = !layers[line.pic].classList.contains('on');
+  aim(line, fresh);   // 新しく出す絵は、動かさずにその位置で出す
   layers.forEach((l, k) => l.classList.toggle('on', k === line.pic));
-  const b = $('#bubble'); b.classList.remove('on'); void b.offsetWidth;
-  b.textContent = line.t; b.classList.add('on');
-  const last = i === LINES.length - 1;
-  $('#next').hidden = last; $('#end').hidden = !last;
+  $('#end').hidden = true;
   $('#step').textContent = (i + 1) + ' / ' + LINES.length;
+  type(line.t);
 }
-$('#stage').addEventListener('click', () => { if (i < LINES.length - 1) { i++; show(); } });
+$('#game').addEventListener('click', () => {
+  if (typing) return finish();
+  if (i < LINES.length - 1) { i++; show(); }
+});
 $('#again').addEventListener('click', e => { e.stopPropagation(); i = 0; show(); });
 $('#mode').addEventListener('click', e => {
-  e.stopPropagation(); whole = !whole;
-  document.body.classList.toggle('whole', whole);
-  $('#mode').textContent = whole ? 'カメラ' : '全体';
-  place(LINES[i]);
+  e.stopPropagation();
+  const on = document.body.classList.toggle('whole');
+  $('#mode').textContent = on ? 'アップ' : '全体';
 });
-addEventListener('resize', () => place(LINES[i]));
-/* 絵の読みこみが終わってから最初の位置を決める（大きさが分からないとずれるため） */
-Promise.all(layers.map(l => l.querySelector('.pic').decode().catch(() => {}))).then(show);
+show();
 </script>
