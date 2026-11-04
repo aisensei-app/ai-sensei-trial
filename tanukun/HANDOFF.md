@@ -25,12 +25,12 @@
 - **公開のしかたを聞かれたら `tanukun/PUBLISH.md` を見せる**（Cloudflare の画面で zip をアップロード：Preview（ブランチ名 test）→ Production）。**公開はユーザーの時間のあるときに一緒に進める**
 - **本編の確認用リンク**：https://claude.ai/artifact/XApM945UdUziQMRXG8AQfH
   作り方：`python3 tools/build_preview.py --public --with-pon --out <scratchpad>/prev/tanukun.html` → Artifact で `read`（url）してから、同じ URL に publish（root＝`<scratchpad>/prev`、files に `pon/index.html`・`nikukyu/index.html`・`shippo/index.html`）。確認用リンクでは、ふれあいのあわが日数に関係なく出る（FR_ALL=true）。更新したら「一度閉じて開き直して」と伝える
-- 公開用 zip：`python3 tools/build_app.py --base-url https://tanukun.pages.dev/` → `tanukun/app-dist.zip` を SendUserFile で渡す（「これまでの zip は使わないで」と添える。いまは215ファイル）
+- 公開用 zip：`python3 tools/build_app.py --base-url https://tanukun.pages.dev/` → `tanukun/app-dist.zip` を SendUserFile で渡す（「これまでの zip は使わないで」と添える。いまは248ファイル）
 - **最初に IDEAS.md も読む**（v32 の中身・これからの順番・決めた方針はそちら）
 
 **1. いまの状況（2026-11-05）**
 - **公開中は v31**（tanukun.pages.dev。sw.js=tanukun-v31）。**プレビュー（test）には古い v32**（ラリー open の版）が上がっている
-- **📦 v32 はできている・未公開**（sw.js=`tanukun-v32`。中身は IDEAS.md）。最後に渡した zip のあとも変更があるので、**公開の前に build_app.py で作り直して渡す**
+- **📦 v32 はできている・未公開**（sw.js=`tanukun-v32`。中身は IDEAS.md）。**2026-11-05 に最新の zip（248ファイル）を渡した**（見た目そろえ・メモ整理のあと）。このあとコードを変えたら作り直す
 - **プレビューで確かめてほしいこと**：ラリーのカードが出ない／なでなでのあわ（日数しだい）→ 肉球・しっぽ → もどると葉っぱ1枚／おなかを何回もタップしてちらつかない／ポストの 💌・✉️／太ももの「ぷにっ」／お股の反応がいつもどおり
 - 🎉 2026-11-04 夜：**#タヌくん が X のトレンド入り**。お手紙は約7時間で60通（海外が約6割・ネガティブ0通・大人向けを求める内容が約1割 → 15歳以上の線は今のまま守る）
 - お手紙のシート（タヌくん用アカウント）はユーザーに閲覧者で共有済み（Google ドライブで「タヌくんへのお手紙（回答）」）。**中身はリポジトリに書かない**。これからはご意見（opinion）だけが届く
