@@ -12,6 +12,7 @@
             右上の「全体」で、絵をそのまま縮めた見え方（あいた所はぼかし）と切りかえて比べられる
   ・本編にはまだつないでいない（build_app.py にも入れていない）
 -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&display=swap&text=%E3%81%B7%E3%82%8B%E3%82%93%E2%99%AA">
 <style>
 :root{
   --ink:#4A2C1A; --orange:#F08A3C; --orange-d:#C8641E;
@@ -32,6 +33,17 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
   transition:object-position 1.8s cubic-bezier(.35,.05,.25,1)}
 body.whole .layer .blur{opacity:1}
 body.whole .layer .pic{object-fit:contain;object-position:50% 50%}
+/* おなかが揺れる絵：同じ位置に canvas を重ねて、網目のように変形して描く */
+.layer .wobble{position:absolute;inset:0;width:100%;height:100%;display:block}
+.pop{position:absolute;z-index:2;left:50%;top:50%;transform:translate(-50%,-50%);font-family:"Mochiy Pop One",var(--display);
+  font-size:clamp(26px,8vw,36px);color:#fff;-webkit-text-stroke:6px var(--orange-d);paint-order:stroke fill;
+  text-shadow:0 3px 0 #9E4A12;pointer-events:none;opacity:0;white-space:nowrap}
+.pop.go{animation:pop .9s ease-out}
+@keyframes pop{0%{opacity:0;transform:translate(-50%,-30%) scale(.6)}25%{opacity:1;transform:translate(-50%,-60%) scale(1.1)}
+  70%{opacity:1}100%{opacity:0;transform:translate(-50%,-110%) scale(1)}}
+.hint{position:absolute;z-index:2;left:50%;bottom:52px;transform:translateX(-50%);background:rgba(255,255,255,.85);color:var(--orange-d);
+  font-size:13px;font-weight:800;padding:6px 14px;border-radius:99px;white-space:nowrap;animation:bob 1.2s ease-in-out infinite}
+.hint[hidden]{display:none}
 /* 絵の下のはしを、セリフの枠へなじませる */
 #stage::after{content:"";position:absolute;left:0;right:0;bottom:0;height:40px;
   background:linear-gradient(transparent,#2a1a10);pointer-events:none}
@@ -60,6 +72,10 @@ body.whole .layer .pic{object-fit:contain;object-position:50% 50%}
     <div class="layer" data-src="img/cafe_invite.webp"><img class="blur" alt=""><img class="pic" alt="カフェでメニューを見せるタヌくん"></div>
     <div class="layer" data-src="img/cafe_happy.webp"><img class="blur" alt=""><img class="pic" alt="目を閉じてにっこりするタヌくん"></div>
     <div class="layer" data-src="img/gate_day.webp"><img class="blur" alt=""><img class="pic" alt="お祭りの会場の入り口で手を差し出すタヌくん"></div>
+    <div class="layer" data-src="img/yatai_eat.webp" data-jiggle><img class="blur" alt=""><img class="pic" alt="屋台の前でチョコバナナを食べるタヌくん"><canvas class="wobble"></canvas></div>
+    <div class="layer" data-src="img/yatai_full.webp" data-jiggle><img class="blur" alt=""><img class="pic" alt="食べ終わって、おなかをさすって笑うタヌくん"><canvas class="wobble"></canvas></div>
+    <div class="pop" id="pop">ぷるん♪</div>
+    <div class="hint" id="hint" hidden>おなかをタップしてみてね</div>
     <div class="tool" id="step"></div>
     <button class="tool" id="mode" type="button">全体</button>
   </div>
@@ -78,6 +94,10 @@ const LINES = [
   { pic: 1, x: 50, y: 25, t: 'いっしょに行こうよ！\n…ね？ ね？' },
   { pic: 2, x: 50, y: 15, t: '着いたー！\nにぎやかだねぇ♪' },
   { pic: 2, x: 40, y: 40, t: 'ほら、こっちこっち！\n夜になったら、もっときれいになるんだって' },
+  { pic: 3, x: 50, y: 20, t: 'チョコバナナ、あまーい！\nキミもひと口どう？' },
+  { pic: 3, x: 50, y: 20, t: 'え、ほっぺについてる？\n…えへへ、気づかなかった♪' },
+  { pic: 4, x: 50, y: 20, jiggle: true, t: 'ぜーんぶ食べちゃった！\nおなか、ぽんぽこりん♪' },
+  { pic: 4, x: 50, y: 20, t: 'ね、さわってみて？\nぷるんってするよ♪', hint: true },
 ];
 const $ = s => document.querySelector(s);
 const layers = [...document.querySelectorAll('.layer')];
@@ -109,10 +129,15 @@ function show(){
   aim(line, fresh);   // 新しく出す絵は、動かさずにその位置で出す
   layers.forEach((l, k) => l.classList.toggle('on', k === line.pic));
   $('#end').hidden = true;
+  $('#hint').hidden = !line.hint;
+  if (line.jiggle) setTimeout(() => wobble(layers[line.pic], 9), 500);
+  drawAll();
   $('#step').textContent = (i + 1) + ' / ' + LINES.length;
   type(line.t);
 }
-$('#game').addEventListener('click', () => {
+$('#game').addEventListener('click', e => {
+  const l = layers[LINES[i].pic];
+  if (l.hasAttribute('data-jiggle') && e.target.closest('#stage') && onBelly(l, e)) { wobble(l, 7); popAt(e); return; }
   if (typing) return finish();
   if (i < LINES.length - 1) { i++; show(); }
 });
@@ -121,6 +146,84 @@ $('#mode').addEventListener('click', e => {
   e.stopPropagation();
   const on = document.body.classList.toggle('whole');
   $('#mode').textContent = on ? 'アップ' : '全体';
+  drawAll();
 });
+addEventListener('resize', drawAll);
+
+/* ===== おなかの「ぷるん」 =====
+   絵の上のおなか（楕円）だけを網目に分けて、三角形ごとに少しずつ動かして描く。
+   動きは中心ほど大きく、ふちで 0 になるので、まわりの絵と境目ができない。
+   ばね：p（ゆがみの量）・v（速さ）。タップで v を足す → 横に広がって縦に縮む、をくり返しながら止まる */
+const BELLY = { cx: 520, cy: 715, rx: 345, ry: 235 };   // 絵（1024×1536）の中のおなか
+const SPRING = 0.16, DAMP = 0.88, N = 18;
+function fit(l){   // 画面の大きさから、絵の拡大率と位置を出す（.pic の object-fit / object-position と同じ計算）
+  const c = l.querySelector('.wobble'), img = l.querySelector('.pic'), r = c.getBoundingClientRect();
+  const W = r.width, H = r.height, iw = img.naturalWidth, ih = img.naturalHeight;
+  const whole = document.body.classList.contains('whole');
+  const s = whole ? Math.min(W / iw, H / ih) : Math.max(W / iw, H / ih);
+  const line = LINES[i], fx = whole ? .5 : line.x / 100, fy = whole ? .5 : line.y / 100;
+  return { c, img, W, H, s, ox: (W - iw * s) * fx, oy: (H - ih * s) * fy };
+}
+function onBelly(l, e){
+  const f = fit(l), r = f.c.getBoundingClientRect();
+  const x = (e.clientX - r.left - f.ox) / f.s, y = (e.clientY - r.top - f.oy) / f.s;
+  return ((x - BELLY.cx) / BELLY.rx) ** 2 + ((y - BELLY.cy) / BELLY.ry) ** 2 < 1;
+}
+function popAt(e){
+  const p = $('#pop'), r = $('#stage').getBoundingClientRect();
+  p.style.left = (e.clientX - r.left) + 'px'; p.style.top = (e.clientY - r.top - 30) + 'px';
+  p.classList.remove('go'); void p.offsetWidth; p.classList.add('go');
+}
+function warp(x, y, p){   // 絵の中の点 (x,y) が、ゆがみ p のときにどこへ動くか
+  const nx = (x - BELLY.cx) / BELLY.rx, ny = (y - BELLY.cy) / BELLY.ry, d = nx * nx + ny * ny;
+  if (d >= 1) return [x, y];
+  const w = (1 - d) * (1 - d);
+  return [x + (x - BELLY.cx) * p * w, y - (y - BELLY.cy) * p * w * .7 + BELLY.ry * p * w * .25];
+}
+function tri(ctx, img, s0, s1, s2, d0, d1, d2){   // 絵の三角形 s → 画面の三角形 d に写して描く
+  ctx.save(); ctx.beginPath();
+  const cx = (d0[0] + d1[0] + d2[0]) / 3, cy = (d0[1] + d1[1] + d2[1]) / 3, g = q => [q[0] + (q[0] - cx) * .02 + Math.sign(q[0] - cx) * .4, q[1] + (q[1] - cy) * .02 + Math.sign(q[1] - cy) * .4];
+  const a = g(d0), b = g(d1), c = g(d2);   // すき間が見えないように、少しだけ大きく切りぬく
+  ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.lineTo(c[0], c[1]); ctx.closePath(); ctx.clip();
+  const [x0, y0] = s0, [x1, y1] = s1, [x2, y2] = s2, den = x0 * (y1 - y2) + x1 * (y2 - y0) + x2 * (y0 - y1);
+  const m11 = (d0[0] * (y1 - y2) + d1[0] * (y2 - y0) + d2[0] * (y0 - y1)) / den;
+  const m12 = (d0[1] * (y1 - y2) + d1[1] * (y2 - y0) + d2[1] * (y0 - y1)) / den;
+  const m21 = (d0[0] * (x2 - x1) + d1[0] * (x0 - x2) + d2[0] * (x1 - x0)) / den;
+  const m22 = (d0[1] * (x2 - x1) + d1[1] * (x0 - x2) + d2[1] * (x1 - x0)) / den;
+  const dx = (d0[0] * (x1 * y2 - x2 * y1) + d1[0] * (x2 * y0 - x0 * y2) + d2[0] * (x0 * y1 - x1 * y0)) / den;
+  const dy = (d0[1] * (x1 * y2 - x2 * y1) + d1[1] * (x2 * y0 - x0 * y2) + d2[1] * (x0 * y1 - x1 * y0)) / den;
+  ctx.transform(m11, m12, m21, m22, dx, dy); ctx.drawImage(img, 0, 0); ctx.restore();
+}
+function draw(l){
+  if (!l.classList.contains('on') && !l.classList.contains('fade')) return;
+  const f = fit(l); if (!f.img.naturalWidth) return;
+  const dpr = Math.min(devicePixelRatio || 1, 2), c = f.c;
+  if (c.width !== Math.round(f.W * dpr) || c.height !== Math.round(f.H * dpr)) { c.width = Math.round(f.W * dpr); c.height = Math.round(f.H * dpr); }
+  const ctx = c.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, f.W, f.H);
+  ctx.save(); ctx.translate(f.ox, f.oy); ctx.scale(f.s, f.s);
+  ctx.drawImage(f.img, 0, 0);
+  const p = l._p || 0;
+  if (Math.abs(p) > .002) {   // おなかの所だけ、ゆがめて上から描き直す
+    const x0 = BELLY.cx - BELLY.rx, y0 = BELLY.cy - BELLY.ry, sw = BELLY.rx * 2 / N, sh = BELLY.ry * 2 / N;
+    for (let r = 0; r < N; r++) for (let q = 0; q < N; q++) {
+      const A = [x0 + q * sw, y0 + r * sh], B = [A[0] + sw, A[1]], C = [A[0], A[1] + sh], D = [A[0] + sw, A[1] + sh];
+      const a = warp(A[0], A[1], p), b = warp(B[0], B[1], p), cc = warp(C[0], C[1], p), d = warp(D[0], D[1], p);
+      tri(ctx, f.img, A, B, C, a, b, cc); tri(ctx, f.img, B, D, C, b, d, cc);
+    }
+  }
+  ctx.restore();
+}
+function drawAll(){ layers.forEach(l => l.hasAttribute('data-jiggle') && draw(l)); }
+function wobble(l, power){
+  l._v = (l._v || 0) + power / 100;
+  if (l._run) return; l._run = true;
+  (function step(){
+    l._v = (l._v - SPRING * (l._p || 0)) * DAMP; l._p = (l._p || 0) + l._v;
+    draw(l);
+    if (Math.abs(l._p) < .002 && Math.abs(l._v) < .002) { l._p = 0; l._v = 0; l._run = false; draw(l); return; }
+    requestAnimationFrame(step);
+  })();
+}
+layers.forEach(l => l.hasAttribute('data-jiggle') && l.querySelector('.pic').addEventListener('load', () => draw(l)));
 show();
 </script>
