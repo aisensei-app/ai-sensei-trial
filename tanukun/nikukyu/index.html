@@ -64,6 +64,7 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 (() => {
 'use strict';
 const SRC_IMG = 'img/sit_soles.webp', SRC_MASK = 'img/pads_mask.png';
+const SRC_SMILE = 'img/sit_soles_smile.webp';   // さわっている間の笑顔（同じ構図で顔だけちがう絵。2026-11-04 ユーザーが描いた）
 const IW = 1199, IH = 1312;
 const cv = document.getElementById('stage'), ctx = cv.getContext('2d');
 let W = 0, H = 0, DPR = 1, S = 1, OX = 0, OY = 0;
@@ -89,7 +90,8 @@ const FEEL = [
 let feel = 1;
 
 /* ---------- 絵の読みこみ ---------- */
-let img = null, src = null, mask = null, bg = null;
+let img = null, src = null, mask = null, bg = null, smileImg = null;
+let smile = 0, smileUntil = 0;   // 笑顔の濃さ（0〜1）と、笑顔でいる時刻
 function load(u) { return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = u; }); }
 function pixels(im) {
   const c = document.createElement('canvas'); c.width = IW; c.height = IH;
@@ -207,6 +209,7 @@ function release(e) {
   if (p.press && p.press.id === e.pointerId) {
     const held = performance.now() - p.press.t0;
     p.press = null;
+    smileUntil = performance.now() + 1200;
     p.dentV -= (8 + Math.min(8, held / 90)) * FEEL[feel].snap;   // はなすと、控えめに「ぷるん」
     puni(0.5, true); buzz(8);
   }
@@ -226,6 +229,9 @@ document.getElementById('snd').addEventListener('click', (e) => {
 /* ---------- 動き（ばね） ---------- */
 function step(dt) {
   const now = performance.now(), F = FEEL[feel];
+  // さわっている間と、はなしてから 1.2 秒は笑顔。すっと笑って、ゆっくりもどる
+  const want = (fingers.size || now < smileUntil) ? 1 : 0;
+  smile += (want - smile) * Math.min(1, dt * (want ? 12 : 3));
   pads.forEach((p) => {
     let target = 0;
     if (p.press) {
@@ -319,6 +325,8 @@ function draw() {
   ctx.imageSmoothingEnabled = true;
   if (bg) { ctx.drawImage(bg, 0, 0, W, H); ctx.fillStyle = 'rgba(239,215,174,.45)'; ctx.fillRect(0, 0, W, H); }
   ctx.drawImage(img, OX, OY, IW * S, IH * S);
+  // 笑顔：顔だけちがう絵を、ふわっと重ねる（足・肉球は同じなので、絵全体を重ねてもずれない）
+  if (smileImg && smile > 0.01) { ctx.globalAlpha = smile; ctx.drawImage(smileImg, OX, OY, IW * S, IH * S); ctx.globalAlpha = 1; }
   pads.forEach((p) => { if (Math.abs(p.dent) > 0.004 || Math.abs(p.dentV) > 0.02) renderPad(p); });
   pops.forEach((q) => {
     const k = q.t / 0.9, sc = q.s * (0.7 + 0.5 * Math.min(1, k * 4));
@@ -340,6 +348,7 @@ addEventListener('resize', resize);
 resize();
 Promise.all([load(SRC_IMG), load(SRC_MASK)]).then(([a, b]) => {
   img = a; src = pixels(a); mask = pixels(b); makeBg();
+  load(SRC_SMILE).then((c) => { smileImg = c; }).catch(() => {});   // 笑顔の絵はあとから（なくても遊べる）
   document.getElementById('loading').remove();
   requestAnimationFrame(frame);
 }).catch(() => { document.getElementById('loading').textContent = '絵を読みこめませんでした。開き直してください'; });
