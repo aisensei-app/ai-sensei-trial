@@ -3,7 +3,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap">
 <!-- 飛び出す文字だけ、ころんと太い丸文字（使う字だけ読みこむ） -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&display=swap&text=%E2%99%AA%E3%81%81%E3%81%95%E3%81%9F%E3%81%A3%E3%81%AB%E3%81%B5%E3%81%B7%E3%81%BD%E3%82%80%E3%82%88%E3%82%8A%E3%82%8B%E3%82%93%E3%83%83%E3%83%9C%E3%83%AF%EF%BC%81">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&display=swap&text=%E2%99%AA%E3%80%9C%E3%81%81%E3%81%8F%E3%81%95%E3%81%A3%E3%81%AB%E3%81%B3%E3%81%B5%E3%81%B7%E3%81%BC%E3%81%BD%E3%82%80%E3%82%88%E3%82%8A%E3%82%8B%E3%82%93%E3%83%83%E3%83%9C%E3%83%AF%EF%BC%81">
 <!--
   タヌくん：しっぽ ふさふさ（お試し版。2026-11-04）
   ・絵：img/back.webp（うしろ姿でふり返って笑う。しっぽなし）・img/tail.webp（しっぽ）・img/tail_puff.webp（ボワッとしたしっぽ）
@@ -114,15 +114,18 @@ const TROOT = { x: 200, y: 90 };    // しっぽの絵の中の付け根（毛�
 /* しっぽの付け方（2026-11-04：画面の「🦝 しっぽの位置」で動かして決められる。決めた値は、このスマホに覚える）
    x, y … 付け根（うしろ姿の絵の座標）、deg … 向き（0 で絵のまま。プラスで時計まわり）、scale … 大きさ、back … true なら腰みのの葉っぱの下から出す */
 // 2026-11-04 ユーザーのリファレンス（設定画のうしろ姿）に合わせた：まんなかより右、腰みのの葉っぱの下から出て、右下へたれる。大きめ
-// 2026-11-04 ユーザーの印（うしろ姿の絵に黄色いバツ）に合わせた：おしりの割れ目より右、ひものすぐ下の葉っぱに隠れる所から出る
-const TP_DEFAULT = { x: 470, y: 600, deg: 18, scale: 0.82, back: true };
-const TP_KEY = 'tanu-shippo-tail-v3';   // 前の位置を覚えていても、新しいはじめの位置から始まるように、名前を変えた
+// 2026-11-04 ユーザーの印（うしろ姿の絵に黄色いバツ）：おしりの割れ目より右。
+// 同じ日にユーザー「しっぽは腰みのより上に」→ ひものすぐ上から出して、腰みのの前に重ねる（back=false）
+const TP_DEFAULT = { x: 470, y: 558, deg: 18, scale: 0.82, back: false };
+const TP_KEY = 'tanu-shippo-tail-v4';   // 前の位置を覚えていても、新しいはじめの位置から始まるように、名前を変えた
 const TP = Object.assign({}, TP_DEFAULT);
 try { Object.assign(TP, JSON.parse(localStorage.getItem(TP_KEY) || '{}')); } catch (e) {}
 /* 揺れる所（2026-11-04：おなかと同じしくみ。うしろ姿の絵の座標のだ円。まんなかほど大きく動く）
    kick … タップしたときの勢い、pair … 同じ場所の反対側（少しだけいっしょに揺れる）、word・talk … 飛び出す文字とセリフ
    2026-11-04 ユーザーの印（黄色い丸）に合わせて置き直した：二の腕＝肩のすぐ下の腕の裏／腰＝ひものすぐ上のおしりの上のふくらみ（横長1つ。左右半分ずつ）
    ／おしり＝葉っぱのすぐ下の丸み／ふともも＝おしりのすぐ下の付け根 */
+// 2026-11-04 ユーザー「ぜんぜん ぷるんとしない」→ ゆがめる範囲は、さわる範囲（だ円）の 1.5 倍（drx・dry）。
+// 肌の色は一色に近いので、輪郭（おしりの下のふち・ふとももの線など）まで動かさないと揺れが見えないため。揺れ幅・回数も大きく
 const REGIONS = [
   { id: 'buttL', kind: 'butt',  cx: 335, cy: 705, rx: 70, ry: 57, kick: 210, pair: 'buttR', word: 'ぷるん' },
   { id: 'buttR', kind: 'butt',  cx: 540, cy: 700, rx: 62, ry: 60, kick: 210, pair: 'buttL', word: 'ぷるん' },
@@ -133,7 +136,7 @@ const REGIONS = [
   // 二の腕は「ぷにぷに」（poke）：押している間は指の所がくぼみ、なでるとくぼみがついてくる。はなすと「ぷるん」（肉球ぷにぷにと同じ考え）
   { id: 'armL', kind: 'arm',   cx: 238, cy: 381, rx: 72, ry: 62, kick: 190, word: 'ぷにっ', poke: true },
   { id: 'armR', kind: 'arm',   cx: 600, cy: 416, rx: 40, ry: 64, kick: 190, word: 'ぷにっ', poke: true }
-].map((r) => Object.assign(r, { y: 0, v: 0, dent: 0, dentV: 0, px: r.cx, py: r.cy, press: null, t0: 0 }));
+].map((r) => Object.assign(r, { drx: r.rx * 1.5, dry: r.ry * 1.5, y: 0, v: 0, dent: 0, dentV: 0, px: r.cx, py: r.cy, press: null, t0: 0 }));
 const REG = Object.fromEntries(REGIONS.map((r) => [r.id, r]));
 
 const cv = document.getElementById('stage'), ctx = cv.getContext('2d');
@@ -226,18 +229,32 @@ function popWord(text, x, y, big) {
 }
 
 /* ---------- しっぽ ---------- */
-const tail = { a: 0, va: 0, follow: null, puff: 0, pv: 0, puffUntil: 0, sq: 0, sqv: 0 };
+/* 2026-11-04 ユーザーの希望で作り直し：
+   ・引っぱると伸びる（st。付け根は動かず、指の方へ長く・細く。はなすと、ばねで「ぼよよん」と戻る）
+   ・指ではじくと 360 度くるんと回る（spin。1〜2回転）
+   ・ボワッは、ぶるぶる震えず「ふわふわ」：ふくらんだ絵を、ゆっくりフェードイン・アウトをくり返す＋ゆっくり ふくらむ・しぼむ */
+const tail = { a: 0, va: 0, follow: null, puffT0: 0, puffUntil: 0, st: 1, stv: 0, stTarget: null, spin: 0, spinT0: 0, spinDur: 0, spinTo: 0 };
+const AX = 48 * Math.PI / 180;   // しっぽの絵の中で、付け根から先っぽへの向き（伸ばす方向）
+const PUFF_PERIOD = 1300, PUFF_TIMES = 3;   // ふわふわ1回の長さ（ミリ秒）と回数
 let meter = 0;   // ふさふさゲージ（たまると ボワッ）
 const meterEl = document.getElementById('meter');
-function tailAngle() { return TP.deg * Math.PI / 180 + tail.a + (tail.puff > 0.05 ? Math.sin(performance.now() / 1000 * 42) * 0.035 * tail.puff : 0); }
-function tailScale() { return TP.scale * (1 + 0.16 * tail.puff); }
+function tailAngle() { return TP.deg * Math.PI / 180 + tail.a + tail.spin; }
+// ボワッのふわふわ（0〜1）：0 から始まり、なめらかに 1 になって 0 に戻る、をくり返す
+function puffAmt() {
+  const now = performance.now(); if (now >= tail.puffUntil) return 0;
+  return 0.5 - 0.5 * Math.cos(2 * Math.PI * (now - tail.puffT0) / PUFF_PERIOD);
+}
+function tailScale() { return TP.scale * (1 + 0.1 * puffAmt()); }
+// しっぽの絵の座標 → 画面の座標 への変換（描くときと、さわった所の判定で同じものを使う）
+function tailMatrix() {
+  const [rx, ry] = rootScreen(), sc = tailScale() * S, st = Math.max(0.6, tail.st), D = 180 / Math.PI;
+  return new DOMMatrix().translate(rx, ry).rotate(tailAngle() * D).rotate(AX * D).scale(sc * st, sc / Math.sqrt(st)).rotate(-AX * D).translate(-TROOT.x, -TROOT.y);
+}
 function rootScreen() { return [OX + TP.x * S, OY + TP.y * S]; }
 // 画面の点が、しっぽの絵の上か（絵の透明でない所）
 function onTail(x, y) {
   if (!tailPx) return false;
-  const [rx, ry] = rootScreen(), a = -tailAngle(), sc = tailScale() * S * (1 + 0.06 * tail.sq);
-  const dx = x - rx, dy = y - ry;
-  const lx = (dx * Math.cos(a) - dy * Math.sin(a)) / sc + TROOT.x, ly = (dx * Math.sin(a) + dy * Math.cos(a)) / sc + TROOT.y;
+  const q = tailMatrix().inverse().transformPoint(new DOMPoint(x, y)), lx = q.x, ly = q.y;
   if (lx < 0 || ly < 0 || lx >= TW0 || ly >= TH0) return false;
   return tailPx[((ly | 0) * TW0 + (lx | 0)) * 4 + 3] > 60;
 }
@@ -247,10 +264,11 @@ function addMeter(n) {
   if (meter >= 1) puffUp();
 }
 function puffUp() {
-  meter = 0; tail.puffUntil = performance.now() + 2600; laughUntil = Math.max(laughUntil, tail.puffUntil);   // ボワッの間は大笑い tail.pv += 9; tail.va += (Math.random() < 0.5 ? -1 : 1) * 3;
+  const now = performance.now();
+  meter = 0; tail.puffT0 = now; tail.puffUntil = now + PUFF_PERIOD * PUFF_TIMES; laughUntil = Math.max(laughUntil, tail.puffUntil);   // ボワッの間は大笑い
   const [rx, ry] = rootScreen();
   popWord('ボワッ！', rx + 60 * S * 2, ry + 40, true);
-  say('puff', true); boing(260, 2.4, 1); fasa(1.2, 0.5); buzz([20, 40, 20]);
+  say('puff', true); fasa(1.2, 0.5); buzz(15);
   heartBurst(8);
 }
 
@@ -299,7 +317,9 @@ cv.addEventListener('pointerdown', (e) => {
   if (adjOpen) { fingers.set(e.pointerId, { kind: 'adj', x, y, tx: TP.x, ty: TP.y }); return; }
   if (onTail(x, y)) {
     const [rx, ry] = rootScreen();
-    fingers.set(e.pointerId, { kind: 'tail', x, y, x0: x, y0: y, moved: 0, a0: tail.a, ang0: Math.atan2(y - ry, x - rx) });
+    fingers.set(e.pointerId, { kind: 'tail', x, y, x0: x, y0: y, moved: 0, a0: tail.a, ang0: Math.atan2(y - ry, x - rx),
+      d0: Math.max(40 * S, Math.hypot(x - rx, y - ry)), hist: [[performance.now(), x, y]], boyon: false });
+    tail.spin = 0; tail.spinDur = 0;
     tail.follow = e.pointerId;
     return;
   }
@@ -317,7 +337,7 @@ cv.addEventListener('pointerdown', (e) => {
       return;
     }
     // 押した所が大きく、反対側も少し揺れる
-    c.v += c.kick; if (c.pair) REG[c.pair].v += c.kick * 0.4;
+    c.v += c.kick * 2.3; if (c.pair) REG[c.pair].v += c.kick * 0.7;
     touched();
     popWord(c.word, x, y - 10); say(c.kind);
     boing(c.kind === 'arm' ? 230 : c.kind === 'butt' ? 170 : 200, 0.55, 0.85); buzz(14);
@@ -346,7 +366,12 @@ cv.addEventListener('pointermove', (e) => {
   const [rx, ry] = rootScreen();
   let da = Math.atan2(y - ry, x - rx) - f.ang0;
   while (da > Math.PI) da -= Math.PI * 2; while (da < -Math.PI) da += Math.PI * 2;
-  tail.target = Math.max(-0.75, Math.min(0.75, f.a0 + da * 0.85));
+  tail.target = Math.max(-1.3, Math.min(1.3, f.a0 + da));
+  // 引っぱると伸びる（付け根から指までの長さに合わせて。ゴムのように、のびるほど重く。2倍くらいまで）
+  const raw = Math.hypot(x - rx, y - ry) / f.d0;
+  tail.stTarget = raw > 1 ? 1 + 1.1 * Math.tanh((raw - 1) / 1.1) : 1;
+  if (tail.stTarget > 1.45 && !f.boyon) { f.boyon = true; popWord('びよ〜ん', x, y - 14); boing(180, 0.6, 0.8); }
+  const tnow = performance.now(); f.hist.push([tnow, x, y]); while (f.hist.length > 2 && tnow - f.hist[0][0] > 120) f.hist.shift();
   // ふさふさ：なでた長さで、ゲージ・毛のかけら・文字・音
   addMeter(d * 0.0016);
   shyUntil = performance.now() + 1500;   // なでている間は照れ笑い
@@ -363,10 +388,25 @@ function release(e) {
     return;
   }
   if (f.kind !== 'tail') return;
-  tail.follow = null; tail.target = null;
+  tail.follow = null; tail.target = null; tail.stTarget = null;
+  // はじいたか：はなす直前 0.12 秒の指の速さ
+  const h = f.hist, now = performance.now();
+  let vx = 0, vy = 0;
+  if (h.length >= 2 && now - h[h.length - 1][0] < 80) { const a = h[0], b = h[h.length - 1], t = Math.max(0.016, (b[0] - a[0]) / 1000); vx = (b[1] - a[1]) / t; vy = (b[2] - a[2]) / t; }
+  const speed = Math.hypot(vx, vy);
+  if (f.moved >= 8 && speed > 900) {
+    // はじく：付け根のまわりを、はじいた向きに 360 度くるん（速いと2回転）
+    const [rx, ry] = rootScreen(), dir = ((f.x - rx) * vy - (f.y - ry) * vx) >= 0 ? 1 : -1, turns = speed > 2600 ? 2 : 1;
+    tail.spinTo = dir * Math.PI * 2 * turns; tail.spinT0 = now; tail.spinDur = 520 + 260 * turns; tail.va = 0;
+    touched(); popWord(turns > 1 ? 'くるくるっ！' : 'くるんっ！', f.x, f.y - 12, turns > 1);
+    say('tail'); fasa(1, 0.3); buzz(12); addMeter(0.22);
+    for (let i = 0; i < 8; i++) addFluff(f.x, f.y);
+    return;
+  }
+  if (tail.st > 1.15) { tail.stv -= 4; popWord('ぼよよん', f.x, f.y - 12); boing(220, 1.2, 0.7); }   // 伸ばしてはなすと、ゴムのように戻る
   if (f.moved < 8) {
     // タップ：ふりふり
-    tail.va += (Math.random() < 0.5 ? -1 : 1) * 5.5; tail.sqv += 6;
+    tail.va += (Math.random() < 0.5 ? -1 : 1) * 5.5; tail.stv += 2.5;
     touched();
     popWord(Math.random() < 0.5 ? 'ふぁさっ' : 'ふりふり♪', f.x0, f.y0 - 10);
     say('tail'); fasa(0.8, 0.22); buzz(10); addMeter(0.17);
@@ -411,13 +451,22 @@ function step(dt) {
   T += dt;
   const now = performance.now();
   // しっぽ：指についてくる間は目標の角度へ、はなすと、ばねで「ぶるるん」。ふだんは、ゆっくり ゆらゆら
-  const idle = Math.sin(T * 1.6) * 0.05;
+  const idle = Math.sin(T * 1.6) * 0.05 + (now < tail.puffUntil ? Math.sin(T * 2.4) * 0.06 : 0);
   const target = tail.target != null ? tail.target : idle;
   tail.va += ((tail.target != null ? 160 : 70) * (target - tail.a) - (tail.target != null ? 16 : 3.2) * tail.va) * dt;
   tail.a += tail.va * dt;
-  tail.sqv += (-180 * tail.sq - 8 * tail.sqv) * dt; tail.sq += tail.sqv * dt;
-  const pt = now < tail.puffUntil ? 1 : 0;
-  tail.pv += (120 * (pt - tail.puff) - (pt ? 9 : 6) * tail.pv) * dt; tail.puff += tail.pv * dt;
+  // 伸び：つかんでいる間は指に合わせて、はなすと、ばねで「ぼよよん」（少し縮みすぎてから戻る）
+  const stT = tail.stTarget != null ? tail.stTarget : 1;
+  tail.stv += ((tail.stTarget != null ? 260 : 200) * (stT - tail.st) - (tail.stTarget != null ? 26 : 4.2) * tail.stv) * dt; tail.st += tail.stv * dt;
+  if (tail.st < 0.7) { tail.st = 0.7; tail.stv = 0; }
+  // くるん：はじめ速く、だんだんゆっくり。回り終わったら 0 にもどす（同じ向き）＋少し ゆらん
+  if (tail.spinDur > 0) {
+    const p = Math.min(1, (now - tail.spinT0) / tail.spinDur), e = 1 - Math.pow(1 - p, 3);
+    tail.spin = tail.spinTo * e;
+    if (p >= 1) { tail.spin = 0; tail.spinDur = 0; tail.va += Math.sign(tail.spinTo) * 2.2; }
+  }
+  // ふわふわの間は、ときどき毛がふわっと舞う
+  if (now < tail.puffUntil && Math.random() < dt * 6) { const q = tailMatrix().transformPoint(new DOMPoint(380 + (Math.random() - 0.5) * 300, 270 + (Math.random() - 0.5) * 200)); addFluff(q.x, q.y); }
   meter = Math.max(0, meter - dt * 0.08);
   const wl = now < laughUntil ? 1 : 0, ws = !wl && now < shyUntil ? 1 : 0;
   shy += (ws - shy) * Math.min(1, dt * (ws ? 12 : 3));
@@ -428,7 +477,7 @@ function step(dt) {
   meterEl.style.width = (now < tail.puffUntil ? 100 : meter * 100) + '%';
   // 揺れる所（ばね）
   REGIONS.forEach((k) => {
-    k.v += (-260 * k.y - 6 * k.v) * dt; k.y += k.v * dt; if (k.y > 26) { k.y = 26; k.v *= 0.5; } else if (k.y < -26) { k.y = -26; k.v *= 0.5; }
+    k.v += (-190 * k.y - 2.6 * k.v) * dt; k.y += k.v * dt; if (k.y > 42) { k.y = 42; k.v *= 0.5; } else if (k.y < -42) { k.y = -42; k.v *= 0.5; }
     if (k.poke) {   // くぼみ：押さえている間は 1、長押しで 1.3 まで。はなすと、ばねで戻る
       const tg = k.press != null ? 1 + Math.min(0.3, (now - k.t0) / 1000 * 0.25) : 0;
       k.dentV += (300 * (tg - k.dent) - (k.press != null ? 18 : 11) * k.dentV) * dt; k.dent += k.dentV * dt;
@@ -444,7 +493,7 @@ function step(dt) {
 let mv = null;   // いま揺れている四角 { x0, y0, w, h }
 function movingBox() {
   let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9, any = false;
-  REGIONS.forEach((r) => { if (Math.abs(r.y) > 0.15 || Math.abs(r.dent) > 0.01) { any = true; x0 = Math.min(x0, r.cx - r.rx); x1 = Math.max(x1, r.cx + r.rx); y0 = Math.min(y0, r.cy - r.ry - 30); y1 = Math.max(y1, r.cy + r.ry + 30); } });
+  REGIONS.forEach((r) => { if (Math.abs(r.y) > 0.15 || Math.abs(r.dent) > 0.01) { any = true; x0 = Math.min(x0, r.cx - r.drx); x1 = Math.max(x1, r.cx + r.drx); y0 = Math.min(y0, r.cy - r.dry - 45); y1 = Math.max(y1, r.cy + r.dry + 45); } });
   if (!any) return null;
   x0 = Math.max(0, Math.floor(x0)); y0 = Math.max(0, Math.floor(y0)); x1 = Math.min(BW0, Math.ceil(x1)); y1 = Math.min(BH0, Math.ceil(y1));
   return { x0, y0, w: x1 - x0, h: y1 - y0 };
@@ -461,10 +510,11 @@ function drawMoving(b) {
       const ix0 = b.x0 + x, o = (y * b.w + x) * 4;
       let dy = 0, dx = 0, sh = 1;
       for (let n = 0; n < act.length; n++) {
-        const r = act[n], u = (ix0 - r.cx) / r.rx, v = (iy0 - r.cy) / r.ry, r2 = u * u + v * v;
+        const r = act[n], u = (ix0 - r.cx) / r.drx, v = (iy0 - r.cy) / r.dry, r2 = u * u + v * v;
         if (r2 >= 1) continue;
         const w = (1 - r2) * (1 - r2);
-        dy += r.y * w; dx += (ix0 - r.cx) * 0.003 * r.y * w;
+        // 上下にずらす＋沈むと横に広がり、たてに縮む（ぷるん）
+        dy += r.y * w + (iy0 - r.cy) * 0.004 * r.y * w; dx += (ix0 - r.cx) * 0.009 * r.y * w;
         // 二の腕のくぼみ：指のまわりの絵を縮めて（奥にへこむ）、左上からの光で影をつける
         if (r.poke && r.dent > 0.01) {
           const qx = ix0 - r.px, qy = iy0 - r.py, R = (r.rx + r.ry) / 2 * 0.75, dist = Math.hypot(qx, qy), rn = dist / R;
@@ -516,7 +566,7 @@ function draw() {
   // からだ（揺れている間は、その四角だけ、揺らした絵にさしかえる）
   mv = movingBox();
   if (mv) {
-    ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.rect(OX + mv.x0 * S, OY + mv.y0 * S, mv.w * S, mv.h * S); ctx.clip('evenodd');
+    ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.rect(OX + (mv.x0 + 2) * S, OY + (mv.y0 + 2) * S, (mv.w - 4) * S, (mv.h - 4) * S); ctx.clip('evenodd');   // 少し内側で切って、揺れた絵と重ねる（つなぎ目に線が出ないように）
     ctx.drawImage(I.body, OX, OY, BW0 * S, BH0 * S); ctx.restore();
     drawMoving(mv);
   } else ctx.drawImage(I.body, OX, OY, BW0 * S, BH0 * S);
@@ -527,10 +577,10 @@ function draw() {
   });
   // しっぽ（付け根を中心に回す。ボワッのときは、ふくらんだ絵に切りかえて大きく）
   const [rx, ry] = rootScreen(), sc = tailScale() * S;
-  ctx.save(); ctx.translate(rx, ry); ctx.rotate(tailAngle()); ctx.scale(sc * (1 - 0.04 * tail.sq), sc * (1 + 0.06 * tail.sq));
-  const pf = Math.max(0, Math.min(1, tail.puff));
-  if (pf < 0.99) ctx.drawImage(I.tail, -TROOT.x, -TROOT.y, TW0, TH0);
-  if (pf > 0.01) { ctx.globalAlpha = pf; ctx.drawImage(I.puff, -TROOT.x, -TROOT.y, TW0, TH0); ctx.globalAlpha = 1; }
+  ctx.save(); ctx.setTransform(new DOMMatrix([DPR, 0, 0, DPR, 0, 0]).multiply(tailMatrix()));
+  const pf = puffAmt();   // ふわふわ：ふくらんだ絵を、ゆっくり重ねたり消したり
+  if (pf < 0.99) ctx.drawImage(I.tail, 0, 0, TW0, TH0);
+  if (pf > 0.01) { ctx.globalAlpha = pf; ctx.drawImage(I.puff, 0, 0, TW0, TH0); ctx.globalAlpha = 1; }
   ctx.restore();
   // 「葉っぱの下から出す」とき：しっぽの上に、葉っぱとひもを重ねる
   if (TP.back && leaves) ctx.drawImage(leaves, OX, OY, BW0 * S, BH0 * S);
