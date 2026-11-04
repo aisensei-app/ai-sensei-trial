@@ -8,6 +8,7 @@
         img/pads_mask.png（肉球の所だけ白い絵。tools/make_nikukyu_mask.py）
   ・肉球を押すと：押した所がくぼむ（左上から光が当たっている影＝くぼみの左上の内側が暗く、右下の内側が明るい・まわりの土手が明るい）
                   ＋中身が逃げるように、ふちが外へ押し出される。長押しで深く、なでるとくぼみが指についてくる
+  ・表情3種類：ふつう／さわっている間は照れ笑い（img/sit_soles_smile.webp）／連打でくすぐったいときは大笑い（img/sit_soles_laugh.webp）
   ・はなすと、控えめに「ぷるん」と戻る。かたさは3種類（やわらか・ふつう・ハリあり）
   ・本編にはまだつないでいない（build_app.py にも入れていない）
 -->
@@ -64,7 +65,8 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 (() => {
 'use strict';
 const SRC_IMG = 'img/sit_soles.webp', SRC_MASK = 'img/pads_mask.png';
-const SRC_SMILE = 'img/sit_soles_smile.webp';   // さわっている間の笑顔（同じ構図で顔だけちがう絵。2026-11-04 ユーザーが描いた）
+// 表情は3種類（同じ構図で顔だけちがう絵。2026-11-04 ユーザーが描いた）：ふつう（SRC_IMG）／照れ笑い＝さわっている間／大笑い＝連打でくすぐったいとき
+const SRC_SMILE = 'img/sit_soles_smile.webp', SRC_LAUGH = 'img/sit_soles_laugh.webp';
 const IW = 1199, IH = 1312;
 const cv = document.getElementById('stage'), ctx = cv.getContext('2d');
 let W = 0, H = 0, DPR = 1, S = 1, OX = 0, OY = 0;
@@ -90,8 +92,9 @@ const FEEL = [
 let feel = 1;
 
 /* ---------- 絵の読みこみ ---------- */
-let img = null, src = null, mask = null, bg = null, smileImg = null;
-let smile = 0, smileUntil = 0;   // 笑顔の濃さ（0〜1）と、笑顔でいる時刻
+let img = null, src = null, mask = null, bg = null, smileImg = null, laughImg = null;
+let smile = 0, smileUntil = 0;   // 照れ笑いの濃さ（0〜1）と、照れ笑いでいる時刻
+let laugh = 0, laughUntil = 0;   // 大笑いの濃さと、大笑いでいる時刻（連打のあと 1.6 秒）
 function load(u) { return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = u; }); }
 function pixels(im) {
   const c = document.createElement('canvas'); c.width = IW; c.height = IH;
@@ -189,7 +192,7 @@ cv.addEventListener('pointerdown', (e) => {
   count++; document.getElementById('count').textContent = '🐾 ' + count;
   const now = performance.now();
   taps.push(now); while (taps.length && now - taps[0] > 2000) taps.shift();
-  if (taps.length >= 6) say('tickle', taps.length === 6);
+  if (taps.length >= 6) { say('tickle', taps.length === 6); laughUntil = now + 1600; }
   else if (count === 100) say('hundred', true);
   else say('tap');
   pops.push({ x: e.clientX, y: e.clientY - 14, t: 0, r: (Math.random() - 0.5) * 0.6, s: p.big ? 1.1 : 0.8 });
@@ -230,8 +233,10 @@ document.getElementById('snd').addEventListener('click', (e) => {
 function step(dt) {
   const now = performance.now(), F = FEEL[feel];
   // さわっている間と、はなしてから 1.2 秒は笑顔。すっと笑って、ゆっくりもどる
-  const want = (fingers.size || now < smileUntil) ? 1 : 0;
+  const wl = now < laughUntil ? 1 : 0;
+  const want = !wl && (fingers.size || now < smileUntil) ? 1 : 0;
   smile += (want - smile) * Math.min(1, dt * (want ? 12 : 3));
+  laugh += (wl - laugh) * Math.min(1, dt * (wl ? 14 : 3));
   pads.forEach((p) => {
     let target = 0;
     if (p.press) {
@@ -327,6 +332,7 @@ function draw() {
   ctx.drawImage(img, OX, OY, IW * S, IH * S);
   // 笑顔：顔だけちがう絵を、ふわっと重ねる（足・肉球は同じなので、絵全体を重ねてもずれない）
   if (smileImg && smile > 0.01) { ctx.globalAlpha = smile; ctx.drawImage(smileImg, OX, OY, IW * S, IH * S); ctx.globalAlpha = 1; }
+  if (laughImg && laugh > 0.01) { ctx.globalAlpha = laugh; ctx.drawImage(laughImg, OX, OY, IW * S, IH * S); ctx.globalAlpha = 1; }
   pads.forEach((p) => { if (Math.abs(p.dent) > 0.004 || Math.abs(p.dentV) > 0.02) renderPad(p); });
   pops.forEach((q) => {
     const k = q.t / 0.9, sc = q.s * (0.7 + 0.5 * Math.min(1, k * 4));
@@ -348,7 +354,8 @@ addEventListener('resize', resize);
 resize();
 Promise.all([load(SRC_IMG), load(SRC_MASK)]).then(([a, b]) => {
   img = a; src = pixels(a); mask = pixels(b); makeBg();
-  load(SRC_SMILE).then((c) => { smileImg = c; }).catch(() => {});   // 笑顔の絵はあとから（なくても遊べる）
+  load(SRC_SMILE).then((c) => { smileImg = c; }).catch(() => {});   // 表情の絵はあとから（なくても遊べる）
+  load(SRC_LAUGH).then((c) => { laughImg = c; }).catch(() => {});
   document.getElementById('loading').remove();
   requestAnimationFrame(frame);
 }).catch(() => { document.getElementById('loading').textContent = '絵を読みこめませんでした。開き直してください'; });
