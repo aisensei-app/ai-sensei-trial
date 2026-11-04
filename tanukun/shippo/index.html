@@ -9,7 +9,7 @@
   ・絵：img/back.webp（うしろ姿でふり返って笑う。しっぽなし）・img/tail.webp（しっぽ）・img/tail_puff.webp（ボワッとしたしっぽ）
         元は art/*_src.png（ユーザーが描いた。マゼンタ背景）→ tools/make_shippo_art.py。背景は本編の images/bg/beach_day.webp
   ・しっぽ：タップで「ふりふり」／指でなでると、しっぽが指についてきて「ふさふさ」（毛がふわっと舞う）／たくさんなでると「ボワッ！」（ふくらんで、ぶるぶる）
-  ・揺れる所：おしり「ぷるん」・腰「むにっ」・ふともも「ぽよん」・二の腕「たぷん」（左右それぞれ。押した側が大きく、反対側も少し）
+  ・揺れる所：おしり「ぷるん」・腰「むにっ」・ふともも「ぽよん」・二の腕「ぷにっ」（押すとくぼむ）（左右それぞれ。押した側が大きく、反対側も少し）
   ・しっぽの位置は「🦝 しっぽの位置」で調整できる（ドラッグ・よこ・たて・向き・大きさ・葉っぱの下から出す）。値はこのスマホに覚える
   ・表情3種類：ふつう／さわっている間は照れ笑い（img/back_shy.webp）／2秒に6回さわる・ボワッのときは大笑い（img/back_laugh.webp。ハートがぽわぽわ）
   ・15歳以上の線引き：しっぽが、おしりのまんなかを隠す位置。宣伝（X）には使わない
@@ -113,9 +113,11 @@ const TW0 = 768, TH0 = 512;         // しっぽの絵の大きさ（2枚とも�
 const TROOT = { x: 200, y: 90 };    // しっぽの絵の中の付け根（毛のうずの所）
 /* しっぽの付け方（2026-11-04：画面の「🦝 しっぽの位置」で動かして決められる。決めた値は、このスマホに覚える）
    x, y … 付け根（うしろ姿の絵の座標）、deg … 向き（0 で絵のまま。プラスで時計まわり）、scale … 大きさ、back … true なら腰みのの葉っぱの下から出す */
-const TP_DEFAULT = { x: 395, y: 515, deg: 44, scale: 0.6, back: false };   // ふつうのタヌキは、背骨の先（おしりの割れ目の上）から下へたれる
+// 2026-11-04 ユーザーのリファレンス（設定画のうしろ姿）に合わせた：まんなかより右、腰みのの葉っぱの下から出て、右下へたれる。大きめ
+const TP_DEFAULT = { x: 432, y: 600, deg: 18, scale: 0.82, back: true };
+const TP_KEY = 'tanu-shippo-tail-v2';   // 前の位置を覚えていても、新しいはじめの位置から始まるように、名前を変えた
 const TP = Object.assign({}, TP_DEFAULT);
-try { Object.assign(TP, JSON.parse(localStorage.getItem('tanu-shippo-tail') || '{}')); } catch (e) {}
+try { Object.assign(TP, JSON.parse(localStorage.getItem(TP_KEY) || '{}')); } catch (e) {}
 /* 揺れる所（2026-11-04：おなかと同じしくみ。うしろ姿の絵の座標のだ円。まんなかほど大きく動く）
    kick … タップしたときの勢い、pair … 同じ場所の反対側（少しだけいっしょに揺れる）、word・talk … 飛び出す文字とセリフ */
 const REGIONS = [
@@ -125,9 +127,10 @@ const REGIONS = [
   { id: 'waistR', kind: 'waist', cx: 545, cy: 505, rx: 115, ry: 68, kick: 170, pair: 'waistL', word: 'むにっ' },
   { id: 'thighL', kind: 'thigh', cx: 285, cy: 885, rx: 108, ry: 82, kick: 170, pair: 'thighR', word: 'ぽよん' },
   { id: 'thighR', kind: 'thigh', cx: 502, cy: 885, rx: 108, ry: 82, kick: 170, pair: 'thighL', word: 'ぽよん' },
-  { id: 'armL', kind: 'arm',   cx: 110, cy: 480, rx: 62, ry: 112, kick: 190, word: 'たぷん' },
-  { id: 'armR', kind: 'arm',   cx: 672, cy: 480, rx: 62, ry: 112, kick: 190, word: 'たぷん' }
-].map((r) => Object.assign(r, { y: 0, v: 0 }));
+  // 二の腕は「ぷにぷに」（poke）：押している間は指の所がくぼみ、なでるとくぼみがついてくる。はなすと「ぷるん」（肉球ぷにぷにと同じ考え）
+  { id: 'armL', kind: 'arm',   cx: 124, cy: 490, rx: 58, ry: 108, kick: 190, word: 'ぷにっ', poke: true },
+  { id: 'armR', kind: 'arm',   cx: 630, cy: 490, rx: 58, ry: 108, kick: 190, word: 'ぷにっ', poke: true }
+].map((r) => Object.assign(r, { y: 0, v: 0, dent: 0, dentV: 0, px: r.cx, py: r.cy, press: null, t0: 0 }));
 const REG = Object.fromEntries(REGIONS.map((r) => [r.id, r]));
 
 const cv = document.getElementById('stage'), ctx = cv.getContext('2d');
@@ -188,7 +191,7 @@ const LINES = {
   butt:  ['ひゃっ、おしり〜！？', 'もう〜、どこ さわってるの〜', 'ぷるんって した…はずかしい…'],
   waist: ['こ、腰は くすぐったい〜', 'むにむに しないで〜', 'ちょっと つまめちゃう…？'],
   thigh: ['ふともも、むちむちでしょ？', 'ひゃっ、くすぐったい〜', 'いっぱい歩いて、きたえてるんだ〜'],
-  arm:   ['二の腕、たぷたぷ…', 'ちからこぶ…ないけど〜', 'ぎゅってしたら、やわらかいよ〜'],
+  arm:   ['二の腕、ぷにぷに…', 'ちからこぶ…ないけど〜', 'ぎゅってしたら、やわらかいよ〜', 'そんなに ぷにぷに しないで〜'],
   body:  ['せなか、ひろいでしょ？', 'しっぽは こっちだよ〜']
 };
 const bubble = document.getElementById('bubble');
@@ -303,6 +306,13 @@ cv.addEventListener('pointerdown', (e) => {
   let c = null, cd = 1;
   REGIONS.forEach((r) => { const d = Math.hypot((bx - r.cx) / r.rx, (by - r.cy) / r.ry); if (d < cd) { cd = d; c = r; } });
   if (c && onBody) {
+    if (c.poke) {
+      // 二の腕：押さえている間くぼむ（はなすと「ぷるん」）
+      c.press = e.pointerId; c.t0 = performance.now(); c.px = bx; c.py = by; c.v += c.kick * 0.35;
+      fingers.set(e.pointerId, { kind: 'poke', r: c, x, y });
+      touched(); popWord(c.word, x, y - 10); say(c.kind); boing(250, 0.5, 0.75); buzz(12);
+      return;
+    }
     // 押した所が大きく、反対側も少し揺れる
     c.v += c.kick; if (c.pair) REG[c.pair].v += c.kick * 0.4;
     touched();
@@ -318,6 +328,12 @@ cv.addEventListener('pointermove', (e) => {
     TP.x = Math.round(Math.max(200, Math.min(600, f0.tx + (e.clientX - f0.x) / S)));
     TP.y = Math.round(Math.max(380, Math.min(760, f0.ty + (e.clientY - f0.y) / S)));
     adjSave(); return;
+  }
+  if (f0 && f0.kind === 'poke') {
+    // くぼみが指についてくる（腕の外に出たら、ふちで止まる）
+    const r = f0.r, [bx, by] = toBody(e.clientX, e.clientY), u = (bx - r.cx) / r.rx, v = (by - r.cy) / r.ry, d = Math.hypot(u, v), m = d > 0.8 ? 0.8 / d : 1;
+    r.px = r.cx + u * m * r.rx; r.py = r.cy + v * m * r.ry; shyUntil = performance.now() + 1500;
+    return;
   }
   const f = fingers.get(e.pointerId); if (!f || f.kind !== 'tail') return;
   const x = e.clientX, y = e.clientY, d = Math.hypot(x - f.x, y - f.y);
@@ -339,6 +355,10 @@ cv.addEventListener('pointermove', (e) => {
 function release(e) {
   const f = fingers.get(e.pointerId); if (!f) return;
   fingers.delete(e.pointerId);
+  if (f.kind === 'poke') {
+    const r = f.r; if (r.press === e.pointerId) { r.press = null; r.dentV -= 7; r.v += r.kick * 0.6; boing(300, 1.5, 0.5); buzz(8); }
+    return;
+  }
   if (f.kind !== 'tail') return;
   tail.follow = null; tail.target = null;
   if (f.moved < 8) {
@@ -364,7 +384,7 @@ function adjShow() {
   $('adjVal').textContent = adjText();
 }
 function adjText() { return 'しっぽ x=' + Math.round(TP.x) + ' y=' + Math.round(TP.y) + ' 向き=' + Math.round(TP.deg) + ' 大きさ=' + Number(TP.scale).toFixed(2) + ' 葉っぱの下=' + (TP.back ? 'はい' : 'いいえ'); }
-function adjSave() { try { localStorage.setItem('tanu-shippo-tail', JSON.stringify(TP)); } catch (e) {} adjShow(); }
+function adjSave() { try { localStorage.setItem(TP_KEY, JSON.stringify(TP)); } catch (e) {} adjShow(); }
 Object.entries(adjInputs).forEach(([id, k]) => $(id).addEventListener('input', (e) => { TP[k] = Number(e.target.value); adjSave(); }));
 $('aB').addEventListener('change', (e) => { TP.back = e.target.checked; adjSave(); });
 $('adj').addEventListener('click', () => { adjOpen = !adjOpen; $('adjPanel').hidden = !adjOpen; adjShow(); });
@@ -404,7 +424,13 @@ function step(dt) {
   while (heartAcc >= 1) { heartAcc -= 1; addHeart(); }
   meterEl.style.width = (now < tail.puffUntil ? 100 : meter * 100) + '%';
   // 揺れる所（ばね）
-  REGIONS.forEach((k) => { k.v += (-260 * k.y - 6 * k.v) * dt; k.y += k.v * dt; if (k.y > 26) { k.y = 26; k.v *= 0.5; } else if (k.y < -26) { k.y = -26; k.v *= 0.5; } });
+  REGIONS.forEach((k) => {
+    k.v += (-260 * k.y - 6 * k.v) * dt; k.y += k.v * dt; if (k.y > 26) { k.y = 26; k.v *= 0.5; } else if (k.y < -26) { k.y = -26; k.v *= 0.5; }
+    if (k.poke) {   // くぼみ：押さえている間は 1、長押しで 1.3 まで。はなすと、ばねで戻る
+      const tg = k.press != null ? 1 + Math.min(0.3, (now - k.t0) / 1000 * 0.25) : 0;
+      k.dentV += (300 * (tg - k.dent) - (k.press != null ? 18 : 11) * k.dentV) * dt; k.dent += k.dentV * dt;
+    }
+  });
   for (let i = fluffs.length - 1; i >= 0; i--) { const q = fluffs[i]; q.t += dt; q.x += q.vx * dt; q.y += q.vy * dt; q.vy += 30 * dt; q.vx *= 1 - dt; q.rot += q.vr * dt; if (q.t > q.life) fluffs.splice(i, 1); }
   for (let i = hearts.length - 1; i >= 0; i--) { const q = hearts[i]; q.t += dt; q.x += q.vx * dt; q.y += q.vy * dt; q.vy *= 1 - 0.4 * dt; if (q.t > q.life) hearts.splice(i, 1); }
 }
@@ -415,7 +441,7 @@ function step(dt) {
 let mv = null;   // いま揺れている四角 { x0, y0, w, h }
 function movingBox() {
   let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9, any = false;
-  REGIONS.forEach((r) => { if (Math.abs(r.y) > 0.15) { any = true; x0 = Math.min(x0, r.cx - r.rx); x1 = Math.max(x1, r.cx + r.rx); y0 = Math.min(y0, r.cy - r.ry - 30); y1 = Math.max(y1, r.cy + r.ry + 30); } });
+  REGIONS.forEach((r) => { if (Math.abs(r.y) > 0.15 || Math.abs(r.dent) > 0.01) { any = true; x0 = Math.min(x0, r.cx - r.rx); x1 = Math.max(x1, r.cx + r.rx); y0 = Math.min(y0, r.cy - r.ry - 30); y1 = Math.max(y1, r.cy + r.ry + 30); } });
   if (!any) return null;
   x0 = Math.max(0, Math.floor(x0)); y0 = Math.max(0, Math.floor(y0)); x1 = Math.min(BW0, Math.ceil(x1)); y1 = Math.min(BH0, Math.ceil(y1));
   return { x0, y0, w: x1 - x0, h: y1 - y0 };
@@ -425,22 +451,37 @@ function drawMoving(b) {
   if (!wPatch) { wPatch = document.createElement('canvas'); wCtx = wPatch.getContext('2d'); }
   if (wPatch.width !== b.w || wPatch.height !== b.h) { wPatch.width = b.w; wPatch.height = b.h; }
   const data = wCtx.createImageData(b.w, b.h), out = data.data;
-  const act = REGIONS.filter((r) => Math.abs(r.y) > 0.15);
+  const act = REGIONS.filter((r) => Math.abs(r.y) > 0.15 || Math.abs(r.dent) > 0.01);
   for (let y = 0; y < b.h; y++) {
     const iy0 = b.y0 + y;
     for (let x = 0; x < b.w; x++) {
       const ix0 = b.x0 + x, o = (y * b.w + x) * 4;
-      let dy = 0, dx = 0;
+      let dy = 0, dx = 0, sh = 1;
       for (let n = 0; n < act.length; n++) {
         const r = act[n], u = (ix0 - r.cx) / r.rx, v = (iy0 - r.cy) / r.ry, r2 = u * u + v * v;
         if (r2 >= 1) continue;
         const w = (1 - r2) * (1 - r2);
         dy += r.y * w; dx += (ix0 - r.cx) * 0.003 * r.y * w;
+        // 二の腕のくぼみ：指のまわりの絵を縮めて（奥にへこむ）、左上からの光で影をつける
+        if (r.poke && r.dent > 0.01) {
+          const qx = ix0 - r.px, qy = iy0 - r.py, R = r.rx * 0.75, dist = Math.hypot(qx, qy), rn = dist / R;
+          if (rn < 1.6) {
+            const t = (1 - rn / 1.6) * (1 - rn / 1.6), D = r.dent * w;
+            dx -= qx * 0.28 * D * t; dy -= qy * 0.28 * D * t;
+            const g = Math.exp(-rn * rn * 1.6), dl = dist > 0.01 ? (qx * -0.55 + qy * -0.83) / dist : 0;
+            sh *= (1 - 0.32 * D * g * 3.2 * rn * dl) * (1 - 0.3 * D * g);
+          }
+        }
       }
       let iy = (iy0 - dy + 0.5) | 0, ix = (ix0 - dx + 0.5) | 0;
       if (iy < 0) iy = 0; else if (iy >= BH0) iy = BH0 - 1; if (ix < 0) ix = 0; else if (ix >= BW0) ix = BW0 - 1;
       const si = (iy * BW0 + ix) * 4;
-      out[o] = bodyPx[si]; out[o + 1] = bodyPx[si + 1]; out[o + 2] = bodyPx[si + 2]; out[o + 3] = bodyPx[si + 3];
+      if (sh !== 1) {
+        if (sh < 0.35) sh = 0.35;
+        if (sh < 1) { out[o] = bodyPx[si] * sh; out[o + 1] = bodyPx[si + 1] * sh; out[o + 2] = bodyPx[si + 2] * sh; }
+        else { const k = Math.min(1, sh - 1) * 0.5; out[o] = bodyPx[si] + (255 - bodyPx[si]) * k; out[o + 1] = bodyPx[si + 1] + (255 - bodyPx[si + 1]) * k; out[o + 2] = bodyPx[si + 2] + (255 - bodyPx[si + 2]) * k; }
+        out[o + 3] = bodyPx[si + 3];
+      } else { out[o] = bodyPx[si]; out[o + 1] = bodyPx[si + 1]; out[o + 2] = bodyPx[si + 2]; out[o + 3] = bodyPx[si + 3]; }
     }
   }
   wCtx.putImageData(data, 0, 0);
