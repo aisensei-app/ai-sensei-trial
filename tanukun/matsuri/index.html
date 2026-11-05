@@ -240,7 +240,7 @@ function show(){
   $('#end').hidden = true;
   $('#hint').hidden = !line.hint; $('#hint').textContent = line.hint || '';
   if (line.drum) setTimeout(() => hit(), 700);
-  if (line.jiggle) setTimeout(() => wobble(layers[line.pic], 9), 500);
+  if (line.jiggle) setTimeout(() => { const E = ell(layers[line.pic].dataset.belly); purun(layers[line.pic], E.cx, E.cy); }, 500);
   drawAll();
   $('#step').textContent = (++shown) + ' / ' + TOTAL;
   type(tx(line));
@@ -248,7 +248,7 @@ function show(){
 $('#game').addEventListener('click', e => {
   const l = layers[LINES[i].pic];
   const inStage = e.target.closest('#stage');
-  if (l.dataset.belly && inStage && inside(l, e, l.dataset.belly)) { wobble(l, 7); popAt(e, 'ぷるん♪'); return; }
+  if (l.dataset.belly && inStage && inside(l, e, l.dataset.belly)) { const q = toImg(l, e); purun(l, q.x, q.y); popAt(e, 'ぷるん♪'); return; }
   if (LINES[i].pic === 11 && inStage && !e.target.closest('.tool')) { const r = $('#stage').getBoundingClientRect(); launch(e.clientX - r.left, e.clientY - r.top); return; }
   if (LINES[i].drum && l.dataset.drum && inStage && inside(l, e, l.dataset.drum)) { hit(e); return; }
   if (typing) return finish();
@@ -274,7 +274,12 @@ addEventListener('resize', drawAll);
    ばね：p（ゆがみの量）・v（速さ）。タップで v を足す → 横に広がって縦に縮む、をくり返しながら止まる */
 /* おなか・太鼓の場所は、各絵の data-belly / data-drum に「中心x,中心y,横の半径,たての半径」（絵の中の px）で書く */
 const ell = t => { const [cx, cy, rx, ry] = t.split(',').map(Number); return { cx, cy, rx, ry }; };
-const SPRING = 0.16, DAMP = 0.88, N = 18;
+/* おなかの「ぷるん」は、ぽんぽこリズムと同じ動き（2026-11-05 ユーザーの希望）。belly.js と同じ「ばね」の式を、時間（秒）で計算する
+   ばね 450・止まりやすさ 6（本編は 9。小さいほど長く揺れる）・タップで最初にへこむ量 0.15（本編 0.08）・指を置いている間のへこみ 0.08・
+   はなしたときの「ぷるん」の強さ 0.9・指の位置のくぼみ 深さ 0.45／大きさ 0.5 */
+const SPRING = 450, DAMP = 6, TAP_DENT = 0.15, PRESS_DENT = 0.08, REBOUND = 0.9, POKE_DEPTH = 0.45, POKE_SIZE = 0.5, N = 22;
+const _wd = Math.sqrt(SPRING - (DAMP / 2) ** 2), _t1 = Math.atan(_wd / (DAMP / 2)) / _wd;
+const TAP_V = TAP_DENT / (Math.exp(-DAMP / 2 * _t1) * Math.sin(_wd * _t1) / _wd);   // 最初にへこむ量が TAP_DENT になる初速
 function fit(l){   // 画面の大きさから、絵の拡大率と位置を出す（.pic の object-fit / object-position と同じ計算）
   const c = l.querySelector('.wobble'), img = l.querySelector('.pic'), r = img.getBoundingClientRect();
   const W = r.width, H = r.height, iw = img.naturalWidth, ih = img.naturalHeight;
@@ -283,10 +288,13 @@ function fit(l){   // 画面の大きさから、絵の拡大率と位置を出�
   const line = LINES[i], fx = whole ? .5 : line.x / 100, fy = whole ? .5 : line.y / 100;
   return { c, img, W, H, s, ox: (W - iw * s) * fx, oy: (H - ih * s) * fy };
 }
+function toImg(l, e){   // 画面の位置 → 絵の中の位置（px）
+  const f = fit(l), r = f.img.getBoundingClientRect();
+  return { x: (e.clientX - r.left - f.ox) / f.s, y: (e.clientY - r.top - f.oy) / f.s };
+}
 function inside(l, e, spec){
-  const E = ell(spec), f = fit(l), r = f.img.getBoundingClientRect();
-  const x = (e.clientX - r.left - f.ox) / f.s, y = (e.clientY - r.top - f.oy) / f.s;
-  return ((x - E.cx) / E.rx) ** 2 + ((y - E.cy) / E.ry) ** 2 < 1;
+  const E = ell(spec), q = toImg(l, e);
+  return ((q.x - E.cx) / E.rx) ** 2 + ((q.y - E.cy) / E.ry) ** 2 < 1;
 }
 function popAt(e, word){
   const p = $('#pop'), r = $('#stage').getBoundingClientRect();
@@ -303,11 +311,15 @@ function hit(e){   // 太鼓「ドン！」：たたく絵を一瞬だけ出す
   popAt(e, 'ドン！');
   clearTimeout(hitT); hitT = setTimeout(() => h.classList.remove('flash'), 320);
 }
-function warp(x, y, p, BELLY){   // 絵の中の点 (x,y) が、ゆがみ p のときにどこへ動くか
+function warp(x, y, l, BELLY){   // 絵の中の点 (x,y) が、いまのゆがみ（l._x）と指のくぼみ（l._pk）でどこへ動くか
   const nx = (x - BELLY.cx) / BELLY.rx, ny = (y - BELLY.cy) / BELLY.ry, d = nx * nx + ny * ny;
-  if (d >= 1) return [x, y];
-  const w = (1 - d) * (1 - d);
-  return [x + (x - BELLY.cx) * p * w, y - (y - BELLY.cy) * p * w * .7 + BELLY.ry * p * w * .25];
+  let dx = 0, dy = 0;
+  if (d < 1) { const w = (1 - d) * (1 - d), sc = Math.max(-.35, Math.min(.35, l._x || 0)); dx += (x - BELLY.cx) * sc * w; dy += (y - BELLY.cy) * sc * w; }
+  if (l._pk) {   // 指の位置だけ、小さくへこむ
+    const u = (x - l._pcx) / (BELLY.rx * POKE_SIZE), v = (y - l._pcy) / (BELLY.ry * POKE_SIZE), r2 = u * u + v * v;
+    if (r2 < 1) { const f = (1 - r2) * (1 - r2), pk = Math.max(-.5, Math.min(.3, l._pk)); dx += (x - l._pcx) * pk * f; dy += (y - l._pcy) * pk * f; }
+  }
+  return [x + dx, y + dy];
 }
 function tri(ctx, img, s0, s1, s2, d0, d1, d2){   // 絵の三角形 s → 画面の三角形 d に写して描く
   ctx.save(); ctx.beginPath();
@@ -331,28 +343,48 @@ function draw(l){
   const ctx = c.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, f.W, f.H);
   ctx.save(); ctx.translate(f.ox, f.oy); ctx.scale(f.s, f.s);
   ctx.drawImage(f.img, 0, 0);
-  const p = l._p || 0;
-  if (Math.abs(p) > .002) {   // おなかの所だけ、ゆがめて上から描き直す
+  if (Math.abs(l._x || 0) > .0015 || Math.abs(l._pk || 0) > .0015) {   // おなかの所だけ、ゆがめて上から描き直す
     const BELLY = ell(l.dataset.belly);
     const x0 = BELLY.cx - BELLY.rx, y0 = BELLY.cy - BELLY.ry, sw = BELLY.rx * 2 / N, sh = BELLY.ry * 2 / N;
     for (let r = 0; r < N; r++) for (let q = 0; q < N; q++) {
       const A = [x0 + q * sw, y0 + r * sh], B = [A[0] + sw, A[1]], C = [A[0], A[1] + sh], D = [A[0] + sw, A[1] + sh];
-      const a = warp(A[0], A[1], p, BELLY), b = warp(B[0], B[1], p, BELLY), cc = warp(C[0], C[1], p, BELLY), d = warp(D[0], D[1], p, BELLY);
+      const a = warp(A[0], A[1], l, BELLY), b = warp(B[0], B[1], l, BELLY), cc = warp(C[0], C[1], l, BELLY), d = warp(D[0], D[1], l, BELLY);
       tri(ctx, f.img, A, B, C, a, b, cc); tri(ctx, f.img, B, D, C, b, d, cc);
     }
   }
   ctx.restore();
 }
 function drawAll(){ layers.forEach(l => l.hasAttribute('data-jiggle') && draw(l)); }
-function wobble(l, power){
-  l._v = (l._v || 0) + power / 100;
+/* おなかをタップ＝指を置く（へこむ・指の位置がくぼむ）→ 少しして、はなす（「ぷるん」と戻る）。belly.js の press / release と同じ */
+function purun(l, ix, iy){
+  const E = ell(l.dataset.belly);
+  l._hold = -PRESS_DENT; l._pkHold = -POKE_DEPTH;
+  const u = (ix - E.cx) / E.rx, v = (iy - E.cy) / E.ry, d = Math.hypot(u, v), m = d > .5 ? .5 / d : 1;   // 指の位置を、楕円の内側におさめる
+  l._pcx = E.cx + u * m * E.rx; l._pcy = E.cy + v * m * E.ry;
+  runSpring(l);
+  clearTimeout(l._rel);
+  l._rel = setTimeout(() => {
+    l._hold = 0; l._pkHold = 0;
+    if ((l._x || 0) < -PRESS_DENT * .5) l._v = (l._v || 0) + TAP_V * REBOUND;   // しっかり押していた：へこみから「ぷるん」と強めに戻す
+    else l._v = (l._v || 0) - TAP_V;                                              // ちょんと触っただけ：まずへこんでから戻る
+    runSpring(l);
+  }, 90);
+}
+function runSpring(l){
   if (l._run) return; l._run = true;
-  (function step(){
-    l._v = (l._v - SPRING * (l._p || 0)) * DAMP; l._p = (l._p || 0) + l._v;
+  let last = performance.now();
+  (function step(now){
+    let dt = Math.max(0, Math.min(.05, (now - last) / 1000)); last = now;
+    for (; dt > 0; dt -= 1 / 240) {   // 細かく区切って計算（スマホの画面の更新の速さに関係なく、同じ動きになる）
+      const h = Math.min(dt, 1 / 240);
+      l._v = (l._v || 0) + (-SPRING * ((l._x || 0) - (l._hold || 0)) - DAMP * (l._v || 0)) * h; l._x = (l._x || 0) + l._v * h;
+      l._pkv = (l._pkv || 0) + (-SPRING * ((l._pk || 0) - (l._pkHold || 0)) - DAMP * (l._pkv || 0)) * h; l._pk = (l._pk || 0) + l._pkv * h;
+    }
     draw(l);
-    if (Math.abs(l._p) < .002 && Math.abs(l._v) < .002) { l._p = 0; l._v = 0; l._run = false; draw(l); return; }
+    const still = !l._hold && !l._pkHold && Math.abs(l._x) < .001 && Math.abs(l._v) < .02 && Math.abs(l._pk) < .001 && Math.abs(l._pkv) < .02;
+    if (still) { l._x = l._v = l._pk = l._pkv = 0; l._run = false; draw(l); return; }
     requestAnimationFrame(step);
-  })();
+  })(last);
 }
 layers.forEach(l => l.hasAttribute('data-jiggle') && l.querySelector('.pic').addEventListener('load', () => draw(l)));
 show();
