@@ -112,6 +112,7 @@ body.whole .layer .pic{object-fit:contain;object-position:50% 50%}
     <div class="layer sky" data-src="img/night_sky.webp"><img class="blur" alt=""><img class="pic" alt="月の出ている夜空と、お祭りのちょうちん"><canvas class="fw"></canvas></div>
     <div class="layer" data-src="img/yatai_corn.webp"><img class="blur" alt=""><img class="pic" alt="焼きとうもろこしをふーふーしながら食べるタヌくん"></div>
     <div class="layer" data-src="img/yatai_cotton.webp"><img class="blur" alt=""><img class="pic" alt="ほっぺにお菓子をつけて、綿あめを食べるタヌくん"></div>
+    <div class="layer" data-src="img/yatai_end.webp" data-jiggle data-belly="580,770,290,190"><img class="blur" alt=""><img class="pic" alt="食べ終わって、おなかをさすって笑うタヌくん"><canvas class="wobble"></canvas></div>
     <div class="pop" id="pop">ぷるん♪</div>
     <div class="hint" id="hint" hidden>おなかをタップしてみてね</div>
     <div class="tool" id="step"></div>
@@ -148,11 +149,14 @@ const LINES = [
   { id: 'sweet', pic: 13, x: 60, y: 30, t: 'あまいの、2連続！？ いいね♪\nぼくも気になってたんだ' },
   { pic: 13, x: 60, y: 45, t: '見て見て、綿あめ！\nふわふわで、ぼくのしっぽみたい♪' },
   { pic: 13, x: 60, y: 20, t: 'あむっ…あまーい！' },
-  { pic: 13, x: 60, y: 20, go: 'taiko', t: 'あっ、またほっぺについてる？\n…えへへ、さっきもだったね♪' },
+  { pic: 13, x: 60, y: 20, go: 'yend', t: 'あっ、またほっぺについてる？\n…えへへ、さっきもだったね♪' },
   { id: 'salty', pic: 12, x: 40, y: 40, t: 'いいね、口直し！\nぼくも気になってたんだ♪' },
   { pic: 12, x: 40, y: 30, t: 'あちち…ふーふー。\nできたては、やけどしそうだね' },
   { pic: 12, x: 40, y: 40, t: 'ん〜っ！ しょっぱくて、\nあまくて…とまらなーい！' },
   /* ここから先はまだ仮（6日目：太鼓・休憩／9日目：夜・花火）。「キミ」は「きみ」にそろえた */
+  /* 綿あめ／とうもろこしのあと：食べ終わった絵（pic 14）で、この日の場面はおしまい */
+  { id: 'yend', pic: 14, x: 50, y: 20, jiggle: true, t: 'ふぅ〜、おいしかった！\nおなか、ぽんぽこりん♪' },
+  { pic: 14, x: 50, y: 20, t: 'ね、さわってみて？\nぷるんってするよ♪', hint: 'おなかをタップしてみてね' },
   { id: 'taiko', pic: 5, x: 50, y: 15, t: '見て見て、はっぴ着てみたんだ！\n今夜の太鼓、まかされちゃった♪' },
   { pic: 5, x: 50, y: 15, t: 'ちょっと緊張するけど…\nきみが見ててくれるなら、がんばれる！' },
   { pic: 5, x: 50, y: 15, drum: true, t: 'いくよー！ そーれっ！', hint: '太鼓をタップしてみてね' },
