@@ -23,7 +23,7 @@ html,body{height:100%}
 body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);overflow:hidden;
   -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
 /* 画面＝上の絵（のこり全部）＋下のセリフの枠 */
-#game{position:fixed;inset:0;display:flex;flex-direction:column;cursor:pointer}
+#game{position:fixed;inset:0;display:flex;flex-direction:column;cursor:pointer;touch-action:none}
 #stage{position:relative;flex:1;min-height:0;overflow:hidden}
 .layer{position:absolute;inset:0;opacity:0;transition:opacity .8s ease}
 .layer.on{opacity:1}
@@ -114,7 +114,7 @@ body.whole .layer .pic{object-fit:contain;object-position:50% 50%}
     <div class="layer" data-src="img/yatai_cotton.webp"><img class="blur" alt=""><img class="pic" alt="ほっぺにお菓子をつけて、綿あめを食べるタヌくん"></div>
     <div class="layer" data-src="img/yatai_end.webp" data-jiggle data-belly="580,770,290,190"><img class="blur" alt=""><img class="pic" alt="食べ終わって、おなかをさすって笑うタヌくん"><canvas class="wobble"></canvas></div>
     <div class="pop" id="pop">ぷるん♪</div>
-    <div class="hint" id="hint" hidden>おなかをタップしてみてね</div>
+    <div class="hint" id="hint" hidden>おなかをタップ・スワイプしてみてね</div>
     <div class="tool" id="step"></div>
     <button class="tool" id="nm" type="button"></button>
     <button class="tool" id="mode" type="button">全体</button>
@@ -156,12 +156,12 @@ const LINES = [
   /* ここから先はまだ仮（6日目：太鼓・休憩／9日目：夜・花火）。「キミ」は「きみ」にそろえた */
   /* 綿あめ／とうもろこしのあと：食べ終わった絵（pic 14）で、この日の場面はおしまい */
   { id: 'yend', pic: 14, x: 50, y: 20, jiggle: true, t: 'ふぅ〜、おいしかった！\nおなか、ぽんぽこりん♪' },
-  { pic: 14, x: 50, y: 20, t: 'ね、さわってみて？\nぷるんってするよ♪', hint: 'おなかをタップしてみてね' },
+  { pic: 14, x: 50, y: 20, t: 'ね、さわってみて？\nぷるんってするよ♪', hint: 'おなかをタップ・スワイプしてみてね' },
   { id: 'taiko', pic: 5, x: 50, y: 15, t: '見て見て、はっぴ着てみたんだ！\n今夜の太鼓、まかされちゃった♪' },
   { pic: 5, x: 50, y: 15, t: 'ちょっと緊張するけど…\nきみが見ててくれるなら、がんばれる！' },
   { pic: 5, x: 50, y: 15, drum: true, t: 'いくよー！ そーれっ！', hint: '太鼓をタップしてみてね' },
   { pic: 7, x: 50, y: 20, t: 'ふぅ〜、たたいたら\nのどかわいちゃった' },
-  { pic: 7, x: 50, y: 20, t: 'ヤシの実ジュース、おいしい♪\n…となり、座る？', hint: 'おなかをタップしてみてね' },
+  { pic: 7, x: 50, y: 20, t: 'ヤシの実ジュース、おいしい♪\n…となり、座る？', hint: 'おなかをタップ・スワイプしてみてね' },
   { pic: 7, x: 50, y: 20, t: 'もうすぐ暗くなるね。\n夜はもっと楽しいよ、きっと！' },
   { pic: 8, x: 50, y: 20, t: 'お祭り、楽しかったね。\n…ねえ、もうちょっとだけ、いっしょにいてもいい？' },
   { pic: 8, x: 50, y: 20, t: 'あのね、きみに\n渡したいものがあるんだ' },
@@ -246,6 +246,7 @@ function show(){
   type(tx(line));
 }
 $('#game').addEventListener('click', e => {
+  if (noClick) return;
   const l = layers[LINES[i].pic];
   const inStage = e.target.closest('#stage');
   if (l.dataset.belly && inStage && inside(l, e, l.dataset.belly)) { const q = toImg(l, e); purun(l, q.x, q.y); popAt(e, 'ぷるん♪'); return; }
@@ -266,6 +267,36 @@ $('#mode').addEventListener('click', e => {
   $('#mode').textContent = on ? 'アップ' : '全体';
   drawAll();
 });
+/* ===== スワイプ（おなかをつかんで引っぱる）=====
+   指がおなかの上で動いたら、おなかが指についてのびる（最大 PULL_MAX％）。はなすと、ばねで「ぼよよん」と戻る（belly.js の drag と同じ）。
+   動かさずにはなしたら、いままでどおり「タップ」（click）として扱う。引っぱったあとの click は、セリフを進めない */
+let grab = null, noClick = false;
+$('#game').addEventListener('pointerdown', e => {
+  const l = layers[LINES[i].pic];
+  if (!l.dataset.belly || !e.target.closest('#stage') || e.target.closest('.tool') || !inside(l, e, l.dataset.belly)) return;
+  grab = { l, x: e.clientX, y: e.clientY, moved: false, id: e.pointerId };
+});
+addEventListener('pointermove', e => {
+  if (!grab || e.pointerId !== grab.id) return;
+  const l = grab.l, dx = e.clientX - grab.x, dy = e.clientY - grab.y;
+  if (!grab.moved) {
+    if (Math.hypot(dx, dy) < 8) return;   // 少しの動きは、まだタップのまま
+    grab.moved = true; l._drag = true; l._hold = 0; l._pkHold = 0; clearTimeout(l._rel);
+  }
+  const f = fit(l), max = PULL_MAX / 100 * f.img.naturalWidth;
+  let px = dx / f.s, py = dy / f.s; const len = Math.hypot(px, py);
+  if (len > max) { px *= max / len; py *= max / len; }
+  l._px = px; l._py = py; l._pvx = l._pvy = 0;
+  runSpring(l); draw(l);
+});
+const letGo = e => {
+  if (!grab || e.pointerId !== grab.id) return;
+  const l = grab.l, moved = grab.moved; grab = null;
+  if (!moved) return;
+  l._drag = false; noClick = true; setTimeout(() => { noClick = false; }, 50);
+  popAt(e, 'ぷるん♪'); runSpring(l);
+};
+addEventListener('pointerup', letGo); addEventListener('pointercancel', letGo);
 addEventListener('resize', drawAll);
 
 /* ===== おなかの「ぷるん」 =====
@@ -277,7 +308,7 @@ const ell = t => { const [cx, cy, rx, ry] = t.split(',').map(Number); return { c
 /* おなかの「ぷるん」は、ぽんぽこリズムと同じ動き（2026-11-05 ユーザーの希望）。belly.js と同じ「ばね」の式を、時間（秒）で計算する
    ばね 450・止まりやすさ 6（本編は 9。小さいほど長く揺れる）・タップで最初にへこむ量 0.15（本編 0.08）・指を置いている間のへこみ 0.08・
    はなしたときの「ぷるん」の強さ 0.9・指の位置のくぼみ 深さ 0.45／大きさ 0.5 */
-const SPRING = 450, DAMP = 6, TAP_DENT = 0.15, PRESS_DENT = 0.08, REBOUND = 0.9, POKE_DEPTH = 0.45, POKE_SIZE = 0.5, N = 22;
+const SPRING = 450, DAMP = 6, TAP_DENT = 0.15, PRESS_DENT = 0.08, REBOUND = 0.9, POKE_DEPTH = 0.45, POKE_SIZE = 0.5, PULL_MAX = 13, N = 22;   // PULL_MAX＝引っぱれる最大の長さ（絵の横幅の％）
 const _wd = Math.sqrt(SPRING - (DAMP / 2) ** 2), _t1 = Math.atan(_wd / (DAMP / 2)) / _wd;
 const TAP_V = TAP_DENT / (Math.exp(-DAMP / 2 * _t1) * Math.sin(_wd * _t1) / _wd);   // 最初にへこむ量が TAP_DENT になる初速
 function fit(l){   // 画面の大きさから、絵の拡大率と位置を出す（.pic の object-fit / object-position と同じ計算）
@@ -314,7 +345,7 @@ function hit(e){   // 太鼓「ドン！」：たたく絵を一瞬だけ出す
 function warp(x, y, l, BELLY){   // 絵の中の点 (x,y) が、いまのゆがみ（l._x）と指のくぼみ（l._pk）でどこへ動くか
   const nx = (x - BELLY.cx) / BELLY.rx, ny = (y - BELLY.cy) / BELLY.ry, d = nx * nx + ny * ny;
   let dx = 0, dy = 0;
-  if (d < 1) { const w = (1 - d) * (1 - d), sc = Math.max(-.35, Math.min(.35, l._x || 0)); dx += (x - BELLY.cx) * sc * w; dy += (y - BELLY.cy) * sc * w; }
+  if (d < 1) { const w = (1 - d) * (1 - d), sc = Math.max(-.35, Math.min(.35, l._x || 0)); dx += (x - BELLY.cx) * sc * w + (l._px || 0) * w; dy += (y - BELLY.cy) * sc * w + (l._py || 0) * w; }
   if (l._pk) {   // 指の位置だけ、小さくへこむ
     const u = (x - l._pcx) / (BELLY.rx * POKE_SIZE), v = (y - l._pcy) / (BELLY.ry * POKE_SIZE), r2 = u * u + v * v;
     if (r2 < 1) { const f = (1 - r2) * (1 - r2), pk = Math.max(-.5, Math.min(.3, l._pk)); dx += (x - l._pcx) * pk * f; dy += (y - l._pcy) * pk * f; }
@@ -343,7 +374,7 @@ function draw(l){
   const ctx = c.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, f.W, f.H);
   ctx.save(); ctx.translate(f.ox, f.oy); ctx.scale(f.s, f.s);
   ctx.drawImage(f.img, 0, 0);
-  if (Math.abs(l._x || 0) > .0015 || Math.abs(l._pk || 0) > .0015) {   // おなかの所だけ、ゆがめて上から描き直す
+  if (Math.abs(l._x || 0) > .0015 || Math.abs(l._pk || 0) > .0015 || Math.abs(l._px || 0) > .3 || Math.abs(l._py || 0) > .3) {   // おなかの所だけ、ゆがめて上から描き直す
     const BELLY = ell(l.dataset.belly);
     const x0 = BELLY.cx - BELLY.rx, y0 = BELLY.cy - BELLY.ry, sw = BELLY.rx * 2 / N, sh = BELLY.ry * 2 / N;
     for (let r = 0; r < N; r++) for (let q = 0; q < N; q++) {
@@ -379,10 +410,15 @@ function runSpring(l){
       const h = Math.min(dt, 1 / 240);
       l._v = (l._v || 0) + (-SPRING * ((l._x || 0) - (l._hold || 0)) - DAMP * (l._v || 0)) * h; l._x = (l._x || 0) + l._v * h;
       l._pkv = (l._pkv || 0) + (-SPRING * ((l._pk || 0) - (l._pkHold || 0)) - DAMP * (l._pkv || 0)) * h; l._pk = (l._pk || 0) + l._pkv * h;
+      if (!l._drag) {   // 引っぱった指をはなしたら、ばねで「ぼよよん」と戻る
+        l._pvx = (l._pvx || 0) + (-SPRING * (l._px || 0) - DAMP * (l._pvx || 0)) * h; l._px = (l._px || 0) + l._pvx * h;
+        l._pvy = (l._pvy || 0) + (-SPRING * (l._py || 0) - DAMP * (l._pvy || 0)) * h; l._py = (l._py || 0) + l._pvy * h;
+      }
     }
     draw(l);
-    const still = !l._hold && !l._pkHold && Math.abs(l._x) < .001 && Math.abs(l._v) < .02 && Math.abs(l._pk) < .001 && Math.abs(l._pkv) < .02;
-    if (still) { l._x = l._v = l._pk = l._pkv = 0; l._run = false; draw(l); return; }
+    const still = !l._drag && !l._hold && !l._pkHold && Math.abs(l._x) < .001 && Math.abs(l._v) < .02 && Math.abs(l._pk) < .001 && Math.abs(l._pkv) < .02
+      && Math.abs(l._px || 0) < .3 && Math.abs(l._py || 0) < .3 && Math.abs(l._pvx || 0) < 8 && Math.abs(l._pvy || 0) < 8;
+    if (still) { l._x = l._v = l._pk = l._pkv = l._px = l._py = l._pvx = l._pvy = 0; l._run = false; draw(l); return; }
     requestAnimationFrame(step);
   })(last);
 }
