@@ -181,7 +181,10 @@ const LINES = [
   /* 綿あめ／とうもろこしのあと：食べ終わった絵（pic 14）で、この日の場面はおしまい */
   { id: 'yend', pic: 14, x: 50, y: 20, jiggle: true, t: 'ふぅ〜、おいしかった！\nおなか、ぽんぽこりん♪' },
   { pic: 14, x: 50, y: 20, t: 'ね、さわってみて？\nぷるんってするよ♪', hint: 'タップしてね' },
-  { id: 'taiko', pic: 5, x: 50, y: 15, t: '見て見て、はっぴ着てみたんだ！\n今夜の太鼓、まかされちゃった♪' },
+  { pic: 14, x: 50, y: 20, t: '次はね、きみに見てほしいものがあるんだ。\n…楽しみにしててね♪' },
+  /* 6日目：最初に前回の1行。3日目に選んだ味（picked）で言葉を変える（alt。選んでいないときは sweet） */
+  { id: 'taiko', pic: 5, x: 50, y: 15, t: '', alt: { sweet: 'また来てくれたんだ♪\nこの前の綿あめ、ふわふわだったね', salty: 'また来てくれたんだ♪\nこの前のとうもろこし、おいしかったね' } },
+  { pic: 5, x: 50, y: 15, t: '見て見て、はっぴ着てみたんだ！\n今夜の太鼓、まかされちゃった♪' },
   { pic: 5, x: 50, y: 15, t: 'ちょっと緊張するけど…\nきみが見ててくれるなら、がんばれる！' },
   { pic: 5, x: 50, y: 15, drum: true, t: 'いくよー！ そーれっ！', hint: 'タップしてね' },
   { pic: 7, x: 50, y: 20, t: '太鼓、どうだったかな？\n{name}が見てたから、\nちょっとドキドキしちゃった' },
@@ -215,7 +218,7 @@ function withName(t){
   if (NAME) return t.split('{name}').join(NAME);
   return t.replace(/[、,]\{name\}(?=[！!。〜…？?♪]|$)/g, '').replace(/\{name\}[、,]/g, '').split('{name}').join('きみ');
 }
-const tx = l => withName(l.t);
+const tx = l => withName(l.alt ? l.alt[picked] || l.alt.sweet : l.t);
 function nmLabel(){ $('#nm').textContent = NAME ? '名前：' + NAME : '名前：なし'; }
 nmLabel();
 /* さわる場面（hint のあるセリフ：おなか・太鼓・花火）は、一度さわるまで進まない（2026-11-05 ユーザーの希望）。
