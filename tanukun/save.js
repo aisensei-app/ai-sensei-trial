@@ -54,7 +54,9 @@ window.TanuSave = (function () {
       seesawPoints: 0,       // 丸太シーソーのごほうび（まだ受け取っていないなかよしポイント。2026-11-04）
       seesawBonusDay: null,  // 丸太シーソーのごほうびをもらった日（1日1回）
       feedbackAsked: false,  // おたより（感想）を自動で出した
-      feedbackSent: false    // おたよりに答えてくれた（お礼のポイントは1回だけ）
+      feedbackSent: false,   // おたよりに答えてくれた（お礼のポイントは1回だけ）
+      k2Seen: {},            // 🏮 第2章：場面（0〜3）→ はじめて最後まで見た日（のべ日数）。次の場面は、その日から k2 の gap 日あと
+      k2Pick: null           // 🏮 第2章：屋台で最初に選んだ味（'sweet' / 'salty'）。もう一度遊んで選び直しても変えない
     };
   }
 
@@ -185,6 +187,9 @@ window.TanuSave = (function () {
     if (!data.cleared) { data.cleared = true; data.clearDay = data.totalDays; save(); }
   }
   function setFlag(key) { data[key] = true; save(); }
+  // 🏮 第2章：場面を見た（はじめての日だけ覚える）・最初に選んだ味（1回目だけ覚える）。戻り値：はじめてか
+  function k2See(part) { if (data.k2Seen[part] != null) return false; data.k2Seen[part] = data.totalDays; save(); return true; }
+  function k2SetPick(to) { if (data.k2Pick) return; data.k2Pick = to; save(); }
   // なかよしポイントを足す（おたよりのお礼など）。戻り値：ハートが増えたか
   function addPoints(n) {
     const before = hearts();
@@ -271,6 +276,8 @@ window.TanuSave = (function () {
     clearRemain: clearRemain,
     setCleared: setCleared,
     setFlag: setFlag,
+    k2See: k2See,
+    k2SetPick: k2SetPick,
     addPoints: addPoints,
     heartProgress: heartProgress,
     hearts: hearts,

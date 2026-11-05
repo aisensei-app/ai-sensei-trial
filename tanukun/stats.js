@@ -38,7 +38,8 @@ window.TanuStats = (function () {
     'f-show', 'f-later', 'f-send', 'f-more', 'f-miss-big', 'f-miss-some', 'f-miss-no',
     'f-like-belly', 'f-like-tanu', 'f-like-art', 'f-like-game', 'f-like-line',
     'm-open', 'm-send', 'm-read', 'm-diary', 'm-n1', 'm-n3', 'm-n7', 'm-n15', 'm-n30', 'm-s3', 'm-s7', 'm-s14', 'm-s30', 'o-open', 'o-send',
-    'n-open', 'n-ok', 'n-name', 'n-skip', 'n-tap1', 'n-tap10'];
+    'n-open', 'n-ok', 'n-name', 'n-skip', 'n-tap1', 'n-tap10',
+    'k2-0', 'k2-1', 'k2-2', 'k2-3'];   // 🏮 第2章の場面をはじめて最後まで見た（0＝序章〜3＝夜と花火）
   const KEY = 'tanukun-stats';
   // 数える場所か（本番の URL のときだけ）
   const on = S.on !== false && /^https?:$/.test(location.protocol) && (S.hosts || []).indexOf(location.hostname) >= 0;

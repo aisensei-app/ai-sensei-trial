@@ -1705,6 +1705,107 @@
     if (up) frPendingHeart = true;
   }
 
+  /* =========================================================
+     🏮 第2章「島の夜祭り」（config.js の matsuri・公開スイッチ features.matsuri。2026-11-05 ユーザーと決めた）
+     ・クリアしたら序章が開く。そのあとは、前の場面をはじめて見た日から gap 日（開いた日の数）たつと次の場面（休んでも消えない）
+     ・開いている・まだ見ていない場面があると、なでなでの画面にちょうちん（.mt-bub）。タップで matsuri/ を上に重ねて開く（ふれあいと同じ形）
+     ・見た場面は「実績」のアルバム（第2章）から何度でも。2回目からは、ごほうびなし・最初に選んだ味は変えない
+     ・セリフは日本語だけなので、いまは日本語のときだけ出す。確認用：URL に ?matsuri（クリアや日にちに関係なく、全部の場面を出す）
+     ========================================================= */
+  const MT = (!DEMO && C.matsuri && feature('matsuri') === 'open' && I18N.lang === 'ja') ? C.matsuri : null;
+  const MT_ALL = /[?&]matsuri\b/.test(location.search);
+  const MT_SAID = 'tanukun.matsuriSaid';
+  let mtPart = -1, mtReplay = false, mtBusy = false;
+  const mtBub = document.createElement('button'), mtFrame = document.createElement('iframe'), mtBack = document.createElement('button');
+  // 場面 k の状態：'seen'（見た）／'open'（いま見られる）／数（あと何日）／null（まだ先）
+  function mtState(k) {
+    const d = SAVE.data, seen = d.k2Seen || {};
+    if (seen[k] != null) return 'seen';
+    if (MT_ALL) return 'open';
+    if (!d.cleared) return null;
+    if (k === 0) return 'open';
+    if (seen[k - 1] == null) return null;
+    const left = MT.gap - (d.totalDays - seen[k - 1]);
+    return left <= 0 ? 'open' : left;
+  }
+  function mtNext() { if (!MT) return -1; for (let k = 0; k < MT.parts.length; k++) { if (mtState(k) === 'open') return k; } return -1; }
+  if (MT) {
+    mtBub.type = 'button'; mtBub.className = 'mt-bub'; mtBub.hidden = true; mtBub.textContent = '🏮';
+    mtBub.style.left = MT.x + '%'; mtBub.style.top = MT.y + '%';
+    mtBub.setAttribute('aria-label', tr('お祭りへ行く'));
+    mtBub.addEventListener('pointerdown', (e) => e.stopPropagation());
+    mtBub.addEventListener('click', (e) => { e.stopPropagation(); const k = mtNext(); if (k >= 0) mtOpen(k, false, mtBub); });
+    area.appendChild(mtBub);
+    mtFrame.className = 'fr-frame mt-frame'; mtFrame.hidden = true; mtFrame.title = tr('島の夜祭り');
+    mtBack.type = 'button'; mtBack.className = 'back fr-back'; mtBack.hidden = true; mtBack.textContent = tr('‹ もどる');
+    mtBack.addEventListener('click', mtClose);
+    document.body.appendChild(mtFrame); document.body.appendChild(mtBack);
+    setInterval(mtRefresh, 400);
+    window.addEventListener('message', mtMessage);
+  }
+  function mtRefresh() {
+    const can = mode === 'play' && state.phase === 'active' && sheet.hidden && evEl.hidden && mtFrame.hidden && frFrame.hidden && !reportOpen;
+    const k = can ? mtNext() : -1, show = k >= 0;
+    if (mtBub.hidden === !show) return;
+    mtBub.hidden = !show;
+    // 新しい場面が開いた日は、タヌくんがひとこと（場面ごとに1回）
+    let said = ''; try { said = localStorage.getItem(MT_SAID) || ''; } catch (e) {}
+    if (show && said.indexOf('[' + k + ']') < 0) {
+      try { localStorage.setItem(MT_SAID, said + '[' + k + ']'); } catch (e) {}
+      setTimeout(() => showBubble(withName(tr(k === 0 ? '{name}、ねえねえ…！\nちょうちん、さわってみて？' : 'お祭りの続きに行こう♪\nちょうちん、さわってみて？'))), 300);
+    }
+  }
+  function mtOpen(k, replay, from) {
+    if (!MT || mtBusy || !mtFrame.hidden) return;
+    mtBusy = true; mtPart = k; mtReplay = replay;
+    const I = window.TanuIris, r = from ? from.getBoundingClientRect() : null;
+    const go = () => {
+      mtFrame.onload = () => { mtFrame.onload = null; if (I) I.open(); mtBusy = false; };
+      mtFrame.src = MT.page + '?embed=1&part=' + k + '&name=' + encodeURIComponent(SAVE.data.name || '') + '&pick=' + (SAVE.data.k2Pick || '');
+      mtFrame.hidden = false; mtBack.hidden = false; mtBub.hidden = true; document.body.classList.add('fr-on');
+    };
+    if (I) I.close(r ? r.left + r.width / 2 : innerWidth / 2, r ? r.top + r.height / 2 : innerHeight / 2).then(go); else go();
+  }
+  function mtClose() {
+    if (mtBusy || mtFrame.hidden) return;
+    mtBusy = true;
+    const first = !mtReplay && (SAVE.data.k2Seen || {})[mtPart] != null && mtPart >= 0, I = window.TanuIris;
+    const done = () => {
+      mtFrame.hidden = true; mtBack.hidden = true; mtFrame.src = 'about:blank'; mtPart = -1;
+      document.body.classList.remove('fr-on');
+      const after = () => { mtBusy = false; if (first && mode === 'play') showBubble(tr('えへへ、楽しかったね♪')); };
+      if (I) I.open().then(after); else after();
+    };
+    if (I) I.close().then(done); else done();
+  }
+  function mtMessage(e) {
+    if (mtPart < 0 || e.source !== mtFrame.contentWindow || !e.data || typeof e.data !== 'object') return;
+    const m = e.data;
+    if (m.matsuri === 'pick' && /^(sweet|salty)$/.test(m.to) && !mtReplay) SAVE.k2SetPick(m.to);
+    if (m.matsuri === 'seen' && m.part === mtPart && !mtReplay && SAVE.k2See(mtPart)) STATS.ping('k2-' + mtPart);
+    if (m.matsuri === 'close') mtClose();
+  }
+  // アルバムの「第2章」：見た場面と、いま見られる場面はボタン。まだの場面は「？」（あと○日）
+  function mtAlbum() {
+    if (!MT || !(SAVE.data.cleared || MT_ALL)) return '';
+    const parts = MT.parts;
+    return '<h3>' + tr('🏮 第2章 島の夜祭り（{a} ／ {b}）', { a: parts.filter((p, k) => mtState(k) === 'seen').length, b: parts.length }) + '</h3>' +
+      '<div class="album">' + parts.map((p, k) => {
+        const st = mtState(k);
+        if (st === 'seen' || st === 'open') return '<button class="mem mt-mem" type="button" data-k="' + k + '"><span class="mem-pic"><img alt=""></span><span class="mem-t"></span></button>';
+        return '<div class="mem locked"><span class="mem-pic">🏮</span><span class="mem-t">' + (typeof st === 'number' ? tr('あと{n}日…', { n: st }) : '？？？') + '</span></div>';
+      }).join('') + '</div>';
+  }
+  function mtAlbumWire() {
+    if (!MT) return;
+    $('sheet-body').querySelectorAll('button.mt-mem').forEach((b) => {
+      const k = +b.dataset.k, p = MT.parts[k];
+      b.querySelector('img').src = p.thumb;
+      b.querySelector('.mem-t').textContent = (mtState(k) === 'open' ? 'NEW ' : '') + p.title;
+      b.addEventListener('click', () => mtOpen(k, mtState(k) === 'seen', b));
+    });
+  }
+
   // 探す楽しみ：これまでに一度もさわっていない場所があるか（太ももは公開スイッチが open のときだけ数える）
   function unfound() {
     const tap = SAVE.data.stats.tap || {};
@@ -1868,12 +1969,12 @@
           (m.secret ? secretLabel : tr('💖{n}で見られる', { n: m.hearts })) + '</span></div>').join('') +
       '</div>' : '';
     openSheet(tr('実績'),
-      album +
+      album + mtAlbum() +
       '<button id="btn-zukan" class="btn btn-wide" type="button">' + tr('💬 セリフ図鑑（{a} ／ {b}）', { a: zk.seen, b: zk.total }) + '</button>' +
       '<h3>' + tr('きろく') + '</h3>' +
       '<table class="rec">' + rows.map((r) => '<tr><th>' + r[0] + '</th><td>' + r[1] + '</td></tr>').join('') + '</table>' +
       '<p class="note">' + tr('バッジ（実績のごほうび）は準備中だよ') + '</p>');
-    $('sheet-body').querySelectorAll('button.mem').forEach((b) => {
+    $('sheet-body').querySelectorAll('button.mem:not(.mt-mem)').forEach((b) => {
       const m = all[+b.dataset.i];
       const pic = b.querySelector('.mem-pic');
       b.querySelector('img').src = m.thumb || m.image || C.images[m.stand] || C.images.normal;
@@ -1882,6 +1983,7 @@
       // 実績の画面は閉じずに、その上に思い出を重ねて流す（トップ画面が一瞬見えないように。見終わると実績の画面に戻る）
       b.addEventListener('click', () => playMemory(m, false));
     });
+    mtAlbumWire();
     $('btn-zukan').addEventListener('click', openZukan);
   }
   $('btn-record').addEventListener('click', openRecord);

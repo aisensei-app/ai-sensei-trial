@@ -1407,6 +1407,15 @@ body.in-x #post .p-tanu { height: 38vh; }
 .fr-back { position: fixed; z-index: 46; left: max(16px, env(safe-area-inset-left)); top: calc(env(safe-area-inset-top) + 12px); }
 body.fr-on .toast { z-index: 47; }
 body.fr-on #lang-btn, body.fr-on .lang-btn { visibility: hidden; }
+/* 🏮 第2章（app.js の MT。2026-11-05）：なでなでの画面のちょうちん。ゆらゆら揺れて、ふわっと光る */
+.mt-bub { position: absolute; z-index: 4; width: 60px; height: 60px; margin: -30px 0 0 -30px; padding: 0; border: 0; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,190,90,.55) 0 35%, rgba(255,150,60,0) 70%); font-size: 34px; line-height: 60px; cursor: pointer;
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent; transform-origin: 50% 0; animation: mt-sway 2.6s ease-in-out infinite; }
+.mt-bub[hidden] { display: none; }
+.mt-bub:focus-visible { outline: 3px solid #F08A3C; outline-offset: 2px; }
+@keyframes mt-sway { 0%, 100% { transform: rotate(-6deg); filter: drop-shadow(0 0 4px rgba(255,170,70,.6)); } 50% { transform: rotate(6deg); filter: drop-shadow(0 0 12px rgba(255,170,70,.95)); } }
+@media (prefers-reduced-motion: reduce) { .mt-bub { animation: none; } }
+.mt-frame { background: #2a1a10; }
 
 /* ---- 📖 交換日記（post.js の showBox。2026-11-04 夜）：日付ごとに「きみ」のお手紙と「タヌくん」のお返事を、ふきだしで並べる ---- */
 #post .p-diary .p-dstat { margin: -4px 0 2px; text-align: center; font-size: 13px; font-weight: 700; opacity: .7; }

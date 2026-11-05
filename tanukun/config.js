@@ -262,6 +262,7 @@ window.TANU_CONFIG = {
     seesaw:    'hidden',   // 丸太シーソー（seesaw/。指で上下になぞって、タヌくんとシーソー）
     thigh:     'open',     // 太ももをさわると「ぷにっ」（2026-11-04。隠し要素。ヒント・レポートには出さない）
     fureai:    'open',     // 💖 ふれあい（なでなでの中のハートのあわ → 🐾 肉球ぷにぷに nikukyu/・🦝 しっぽ ふさふさ shippo/。2026-11-04 夜。来週公開）
+    matsuri:   'hidden',   // 🏮 第2章「島の夜祭り」（matsuri/。クリアのあと、3日おきに場面が開く。2026-11-05 本編につないだ。日本語だけ）
     washing:   'hidden',   // タヌくんを洗おう（washing/。こすって汚れを落とす → シャワー → ぶるぶる。試作中）
     english:   'open',     // 英語版（スマホが英語なら英語。設定の「ことば / Language」で切りかえ。i18n.js）
     chinese:   'open'      // 中国語版（簡体字。スマホが中国語なら中国語。i18n.zh.js・config.zh.js・lines.zh.js）
@@ -373,6 +374,23 @@ window.TANU_CONFIG = {
     },
     reward: 5,
     soleGoal: 30
+  },
+
+  /* ---- 🏮 第2章「タヌくんと島の夜祭り」（features.matsuri。2026-11-05 ユーザーと決めた） ----
+     クリアした日から場面が開く：序章はすぐ → そのあとは、前の場面を見た日から gap 日（開いた日の数）たつと次の場面。
+     なでなでの画面にちょうちん（🏮）が出て、タップすると matsuri/ を上に重ねて開く。見た場面は「実績」のアルバムから何度でも見られる。
+     2回目からは二択で反対側も選べる。ごほうび（ポイント）はなし。6日目の1行目は、最初に選んだ味のまま
+     x, y … ちょうちんの場所（なでなでの画面の％） */
+  matsuri: {
+    page: 'matsuri/index.html',
+    gap: 3,
+    x: 86, y: 22,
+    parts: [
+      { title: 'お祭りのお誘い', thumb: 'matsuri/img/cafe_invite.webp' },
+      { title: '屋台めぐり',     thumb: 'matsuri/img/yatai_eat.webp' },
+      { title: '夕暮れの太鼓',   thumb: 'matsuri/img/taiko_ready.webp' },
+      { title: '夜祭りと花火',   thumb: 'matsuri/img/night_gift.webp' }
+    ]
   },
 
   report: {

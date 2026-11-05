@@ -50,7 +50,13 @@ WASHING_TITLE = 'タヌくんを洗おう｜タヌくん'
 FUREAI_PAGES = {
     'nikukyu': ['sit_soles.webp', 'sit_soles_smile.webp', 'sit_soles_laugh.webp', 'pads_mask.png'],
     'shippo': ['back.webp', 'back_shy.webp', 'back_laugh.webp', 'tail.webp', 'tail_puff.webp'],
+    # 🏮 第2章「島の夜祭り」（2026-11-05。features.matsuri。STORY.md は入れない）
+    'matsuri': ['cafe_invite.webp', 'cafe_happy.webp', 'gate_day.webp', 'yatai_eat.webp', 'yatai_full.webp', 'taiko_ready.webp',
+                'taiko_hit.webp', 'rest_coconut.webp', 'night_shy.webp', 'night_gift.webp', 'night_kiss.webp', 'night_sky.webp',
+                'yatai_corn.webp', 'yatai_cotton.webp', 'yatai_end.webp'],
 }
+# head を閉じて <body> を開く所（その文字の前）。肉球・しっぽは最初の <canvas>、お祭りは絵の枠
+FUREAI_BODY_AT = {'nikukyu': '<canvas', 'shippo': '<canvas', 'matsuri': '<div id="game"'}
 FUREAI_HEAD = ('<!DOCTYPE html>\n<html lang="ja">\n<head>\n<meta charset="utf-8">\n'
                '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
                '<meta name="robots" content="noindex">\n<meta name="theme-color" content="#3A2210">\n')
@@ -147,7 +153,7 @@ def build(base, out):
         if page.lstrip().lower().startswith('<!doctype'):
             raise SystemExit(d + '/index.html は、もう頭（doctype）が付いています。build_app.py を見直してください')
         # 確認用リンクの形（<title> から始まる）→ head を閉じ、<body> を開く所は、最初の <canvas> の前
-        i = page.index('<canvas')
+        i = page.index(FUREAI_BODY_AT[d])
         page = FUREAI_HEAD + page[:i] + '</head>\n<body>\n' + page[i:] + '\n</body>\n</html>\n'
         (out / d / 'index.html').write_text(page, encoding='utf8')
 

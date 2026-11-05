@@ -115,6 +115,8 @@ body.whole .layer .pic{object-fit:contain;object-position:50% 50%}
 @keyframes btnBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
 @media (prefers-reduced-motion:reduce){.btn.alt{animation:none}}
 #step{left:16px}
+/* 本編の中で開くとき：確認用の道具（何番目・名前・全体）は出さない（左上には本編の「もどる」が重なる） */
+body.embed #step,body.embed #nm,body.embed #mode{display:none}
 </style>
 
 <div id="game">
@@ -162,7 +164,7 @@ const LINES = [
   { pic: 2, x: 40, y: 40, t: 'ほら、{name}、こっちこっち！\n夜になったら、もっときれいになるんだって' },
   /* 3日目：屋台。まず必ずチョコバナナ → 食べたりなくて「次はどっち？」の二択（綿あめ／焼きとうもろこし）→ どちらも同じ所へ合流。
      選んだ結果は、あとの日に思い出す用に残せる */
-  { pic: 2, x: 50, y: 60, t: 'また来てくれたんだ♪\n前回は入り口まで来たよね' },
+  { id: 'd3', pic: 2, x: 50, y: 60, t: 'また来てくれたんだ♪\n前回は入り口まで来たよね' },
   { pic: 2, x: 50, y: 60, t: '今日は屋台をぜーんぶ回るよ！\nいいにおいがしてきたー♪' },
   { pic: 3, x: 50, y: 20, t: 'まずはチョコバナナ！\n{name}もひと口どう？' },
   { pic: 3, x: 50, y: 20, t: 'あまーい！' },
@@ -183,7 +185,7 @@ const LINES = [
   { pic: 14, x: 50, y: 20, t: 'ね、さわってみて？\nぷるんってするよ♪', hint: 'タップしてね' },
   { pic: 14, x: 50, y: 20, t: '次はね、きみに見てほしいものがあるんだ。\n…楽しみにしててね♪' },
   /* 6日目：最初に前回の1行。3日目に選んだ味（picked）で言葉を変える（alt。選んでいないときは sweet） */
-  { id: 'taiko', pic: 5, x: 50, y: 15, t: '', alt: { sweet: 'また来てくれたんだ♪\nこの前の綿あめ、ふわふわだったね', salty: 'また来てくれたんだ♪\nこの前のとうもろこし、おいしかったね' } },
+  { id: 'taiko', pic: 5, x: 50, y: 15, t: '', alt: { sweet: 'また来てくれたんだ♪\nこの前の綿あめ、\nふわふわだったね', salty: 'また来てくれたんだ♪\nこの前のとうもろこし、\nおいしかったね' } },
   { pic: 5, x: 50, y: 15, t: '見て見て、はっぴ着てみたんだ！\n今夜の太鼓、まかされちゃった♪' },
   { pic: 5, x: 50, y: 15, t: 'ちょっと緊張するけど…\nきみが見ててくれるなら、がんばれる！' },
   { pic: 5, x: 50, y: 15, drum: true, t: 'いくよー！ そーれっ！', hint: 'タップしてね' },
@@ -192,7 +194,7 @@ const LINES = [
   { pic: 7, x: 50, y: 20, t: '…そんなに見つめて、どうしたの？', hint: 'タップしてね', touch: 'くすぐったいよ！' },
   { pic: 7, x: 50, y: 20, t: 'もうすぐ暗くなるね。\n夜はもっと楽しいよ、きっと！' },
   /* 9日目：夜・貝がら・ちゅ〜 → 花火（2026-11-05 たたき台。名前2回・B案「今日のお礼…と、それから…」は使わない＝余白を守る） */
-  { pic: 8, x: 50, y: 20, t: 'また来てくれたんだ♪\nほら、すっかり夜になったよ' },
+  { id: 'd9', pic: 8, x: 50, y: 20, t: 'また来てくれたんだ♪\nほら、すっかり夜になったよ' },
   { pic: 8, x: 50, y: 20, t: 'ちょうちんが光って…\nこの前より、ずっときれいだね' },
   { pic: 8, x: 50, y: 20, t: 'お祭り、楽しいね。' },
   { pic: 8, x: 50, y: 20, t: '…ねえ、もうちょっとだけ、\nいっしょにいてもいい？' },
@@ -213,12 +215,22 @@ layers.forEach(l => { const s = l.dataset.src; l.querySelector('.blur').src = s;
 
 /* 呼び名（お試し版だけの仕組み。本編では app.js の withName と同じ置きかえ）
    名前がないとき：呼びかけ「{name}、」は消し、文の途中は「きみ」。右上の「名前」ボタンで、あり／なしを切りかえて確かめる */
-let NAME = (() => { try { return new URLSearchParams(location.search).get('name') || ''; } catch (e) { return ''; } })() || 'コンちゃん';
+/* 本編の中で開くとき（?embed=1&part=0〜3&name=〇〇&pick=sweet|salty。2026-11-05）
+   part＝その日の場面（0＝序章・1＝屋台・2＝太鼓と休憩・3＝夜と花火）だけを流す。名前は本編の呼び名（空＝名前なし）。
+   pick＝屋台で最初に選んだ味（6日目の1行目に使う）。本編へは postMessage で知らせる：
+   { matsuri: 'pick', to }＝二択を選んだ／{ matsuri: 'seen', part }＝最後のセリフまで見た／{ matsuri: 'close' }＝「おしまい」を押した */
+const Q = (() => { try { return new URLSearchParams(location.search); } catch (e) { return new URLSearchParams(''); } })();
+const EMBED = Q.get('embed') === '1';
+const PART = Math.max(0, Math.min(3, parseInt(Q.get('part'), 10) || 0));
+const FIRST = /^(sweet|salty)$/.test(Q.get('pick') || '') ? Q.get('pick') : null;
+const tell = m => { try { if (EMBED && parent !== window) parent.postMessage(m, '*'); } catch (e) {} };
+if (EMBED) document.body.classList.add('embed');
+let NAME = EMBED ? (Q.get('name') || '') : (Q.get('name') || 'コンちゃん');
 function withName(t){
   if (NAME) return t.split('{name}').join(NAME);
   return t.replace(/[、,]\{name\}(?=[！!。〜…？?♪]|$)/g, '').replace(/\{name\}[、,]/g, '').split('{name}').join('きみ');
 }
-const tx = l => withName(l.alt ? l.alt[picked] || l.alt.sweet : l.t);
+const tx = l => withName(l.alt ? l.alt[FIRST || picked] || l.alt.sweet : l.t);
 function nmLabel(){ $('#nm').textContent = NAME ? '名前：' + NAME : '名前：なし'; }
 nmLabel();
 /* さわる場面（hint のあるセリフ：おなか・太鼓・花火）は、一度さわるまで進まない（2026-11-05 ユーザーの希望）。
@@ -243,7 +255,13 @@ function showGuide(line, delay){
 $('#guide').addEventListener('animationend', e => { if (e.animationName === 'guideBlink') { $('#guide').hidden = true; $('#guide').classList.remove('go'); } });
 const at = id => LINES.findIndex(l => l.id === id);
 /* 選択肢のあとは、どちらを選んでも同じ所（go）へ合流する。数え方は「見たセリフの数」 */
-const TOTAL = (() => { let k = 0, j = 0; while (j < LINES.length) { k++; const l = LINES[j]; j = l.go ? at(l.go) : l.choice ? at(l.choice[0].to) : j + 1; } return k; })();
+/* その日の場面の始まり。本編の中では、次の場面の始まりに来たら、そこでおしまい */
+const STARTS = [0, at('d3'), at('taiko'), at('d9')];
+const BEGIN = EMBED ? STARTS[PART] : 0;
+const nextOf = j => { const l = LINES[j]; return l.go ? at(l.go) : l.choice ? at(l.choice[0].to) : j + 1; };
+const isEnd = j => j >= LINES.length || (EMBED && j !== BEGIN && STARTS.includes(j));
+const isLast = j => !LINES[j].choice && isEnd(nextOf(j));
+const TOTAL = (() => { let k = 0, j = BEGIN; while (!isEnd(j) || j === BEGIN) { k++; if (isLast(j)) break; j = nextOf(j); } return k; })();
 let picked = null;   // 選んだ味（'sweet' / 'salty'）。あとの日に「あまいの、好きだったよね」と思い出す用
 function aim(line, instant){
   const img = layers[line.pic].querySelector('.pic');
@@ -261,18 +279,19 @@ function type(text){   // 1文字ずつ出す（タップで全部出す）
 }
 function finish(){
   clearInterval(timer); typing = false; $('#text').textContent = curText;
-  const ch = LINES[i].choice, last = i === LINES.length - 1;
+  const ch = LINES[i].choice, last = isLast(i);
+  if (last) tell({ matsuri: 'seen', part: PART });
   $('#more').classList.toggle('on', !last && !ch && (!need || done)); $('#end').hidden = !last;
   if (ch) {   // 二択：どちらも「脇役の白い丸」で並べる。押したら、選んだ側へ進む
     choosing = true; const box = $('#choice'); box.innerHTML = ''; box.hidden = false;
     ch.forEach(o => {
       const b = document.createElement('button'); b.type = 'button'; b.className = 'btn alt'; b.textContent = o.label;
-      b.addEventListener('click', e => { e.stopPropagation(); choosing = false; box.hidden = true; picked = o.to; i = at(o.to); show(); });
+      b.addEventListener('click', e => { e.stopPropagation(); choosing = false; box.hidden = true; picked = o.to; tell({ matsuri: 'pick', to: o.to }); i = at(o.to); show(); });
       box.appendChild(b);
     });
   }
 }
-function markDone(){ if (!need || done) return; done = true; if (!typing && i < LINES.length - 1) $('#more').classList.add('on'); }
+function markDone(){ if (!need || done) return; done = true; if (!typing && !isLast(i)) $('#more').classList.add('on'); }
 function onTouch(){   // おなかにさわった（タップ・スワイプ）：セリフに touch があれば、その返事に切りかわる（1回だけ）
   const line = LINES[i]; markDone();
   $('#guide').hidden = true; clearTimeout(guideT);
@@ -320,9 +339,10 @@ $('#game').addEventListener('click', e => {
   if (typing) return finish();
   if (choosing) return;   // 二択のときは、ボタンを押すまで進まない
   if (need && !done) return showGuide(LINES[i], 0);   // まださわっていない：ガイドをもう一度出して、ここで待つ
-  if (i < LINES.length - 1) { i = LINES[i].go ? at(LINES[i].go) : i + 1; show(); }
+  if (!isLast(i)) { i = nextOf(i); show(); }
 });
-$('#again').addEventListener('click', e => { e.stopPropagation(); rising = false; i = 0; shown = 0; picked = null; show(); });
+$('#again').addEventListener('click', e => { e.stopPropagation(); if (EMBED) return tell({ matsuri: 'close' }); rising = false; i = 0; shown = 0; picked = null; show(); });
+if (EMBED) $('#again').textContent = 'おしまい';
 $('#nm').addEventListener('click', e => {
   e.stopPropagation(); NAME = NAME ? '' : 'コンちゃん'; nmLabel();
   if (!typing) $('#text').textContent = tx(LINES[i]);
@@ -533,7 +553,7 @@ function runSpring(l){
   })(last);
 }
 layers.forEach(l => l.hasAttribute('data-jiggle') && l.querySelector('.pic').addEventListener('load', () => draw(l)));
-show();
+i = BEGIN; show();
 
 /* ===== 花火 =====
    下から玉が上がって（ヒュ〜）、ぱっと開く。粒は重さで少しずつ落ちながら、尾を引いて消える。
