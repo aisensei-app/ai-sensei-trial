@@ -220,7 +220,7 @@ function nmLabel(){ $('#nm').textContent = NAME ? '名前：' + NAME : '名前�
 nmLabel();
 /* さわる場面（hint のあるセリフ：おなか・太鼓・花火）は、一度さわるまで進まない（2026-11-05 ユーザーの希望）。
    さわるまでは ▼ を出さず、ほかの所をタップしたら指のガイドをもう一度出す */
-let need = false, done = false;
+let need = false, done = false, rising = false;   // rising＝カメラが夜空へ上がっている間（セリフはまだ出さない）
 let i = 0, timer = 0, typing = false, choosing = false, shown = 0, sweatOn = false, touched = false, curText = '', guideT = 0;
 /* 操作ガイド：触る場所（おなか・太鼓・夜空）の上に出して、2回点滅したら消える。カメラが動き終わってから出す */
 function showGuide(line, delay){
@@ -285,9 +285,12 @@ function show(){
     void sky.offsetWidth; sky.classList.add('go'); aim(line);
     setTimeout(() => { kiss.classList.remove('on', 'away'); sky.classList.remove('rise', 'go'); }, 2700);
     setTimeout(() => { fwStart(); for (let k = 0; k < 3; k++) setTimeout(() => launch(), k * 450); }, 1900);
-    $('#end').hidden = true; showGuide(line, 3000);
+    $('#end').hidden = true; showGuide(line, 3400);
     $('#step').textContent = (++shown) + ' / ' + TOTAL;
-    return type(tx(line));
+    /* セリフは、カメラが夜空に着いて最初の花火が開いてから出す（ちゅ〜の絵のまま「花火だ！」と言わないように。2026-11-05） */
+    clearInterval(timer); $('#text').textContent = ''; $('#more').classList.remove('on'); rising = true;
+    const at0 = i;
+    return setTimeout(() => { rising = false; if (i === at0) type(tx(line)); }, 2900);
   }
   if (!line.sky && line.pic !== 11) { kiss.classList.remove('away'); sky.classList.remove('rise', 'go'); }
   const fresh = !layers[line.pic].classList.contains('on');
@@ -310,12 +313,13 @@ $('#game').addEventListener('click', e => {
   if (l.dataset.belly && inStage && inside(l, e, l.dataset.belly)) { const q = toImg(l, e); purun(l, q.x, q.y); popAt(e, 'ぷるん♪'); bellyAt = performance.now(); onTouch(); return; }
   if (LINES[i].pic === 11 && inStage && !e.target.closest('.tool')) { const r = $('#stage').getBoundingClientRect(); launch(e.clientX - r.left, e.clientY - r.top); markDone(); return; }
   if (LINES[i].drum && l.dataset.drum && inStage && inside(l, e, l.dataset.drum)) { hit(e); markDone(); return; }
+  if (rising) return;   // 夜空へ上がっている間は進めない
   if (typing) return finish();
   if (choosing) return;   // 二択のときは、ボタンを押すまで進まない
   if (need && !done) return showGuide(LINES[i], 0);   // まださわっていない：ガイドをもう一度出して、ここで待つ
   if (i < LINES.length - 1) { i = LINES[i].go ? at(LINES[i].go) : i + 1; show(); }
 });
-$('#again').addEventListener('click', e => { e.stopPropagation(); i = 0; shown = 0; picked = null; show(); });
+$('#again').addEventListener('click', e => { e.stopPropagation(); rising = false; i = 0; shown = 0; picked = null; show(); });
 $('#nm').addEventListener('click', e => {
   e.stopPropagation(); NAME = NAME ? '' : 'コンちゃん'; nmLabel();
   if (!typing) $('#text').textContent = tx(LINES[i]);
