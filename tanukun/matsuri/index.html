@@ -174,7 +174,7 @@ layers.forEach(l => { const s = l.dataset.src; l.querySelector('.blur').src = s;
 
 /* 呼び名（お試し版だけの仕組み。本編では app.js の withName と同じ置きかえ）
    名前がないとき：呼びかけ「{name}、」は消し、文の途中は「きみ」。右上の「名前」ボタンで、あり／なしを切りかえて確かめる */
-let NAME = (() => { try { return new URLSearchParams(location.search).get('name') || ''; } catch (e) { return ''; } })() || 'ポポ';
+let NAME = (() => { try { return new URLSearchParams(location.search).get('name') || ''; } catch (e) { return ''; } })() || 'コンちゃん';
 function withName(t){
   if (NAME) return t.split('{name}').join(NAME);
   return t.replace(/[、,]\{name\}(?=[！!。〜…？?♪]|$)/g, '').replace(/\{name\}[、,]/g, '').split('{name}').join('きみ');
@@ -252,7 +252,7 @@ $('#game').addEventListener('click', e => {
 });
 $('#again').addEventListener('click', e => { e.stopPropagation(); i = 0; shown = 0; picked = null; show(); });
 $('#nm').addEventListener('click', e => {
-  e.stopPropagation(); NAME = NAME ? '' : 'ポポ'; nmLabel();
+  e.stopPropagation(); NAME = NAME ? '' : 'コンちゃん'; nmLabel();
   if (!typing) $('#text').textContent = tx(LINES[i]);
 });
 $('#mode').addEventListener('click', e => {
