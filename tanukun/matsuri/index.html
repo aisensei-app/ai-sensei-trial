@@ -218,6 +218,9 @@ function withName(t){
 const tx = l => withName(l.t);
 function nmLabel(){ $('#nm').textContent = NAME ? '名前：' + NAME : '名前：なし'; }
 nmLabel();
+/* さわる場面（hint のあるセリフ：おなか・太鼓・花火）は、一度さわるまで進まない（2026-11-05 ユーザーの希望）。
+   さわるまでは ▼ を出さず、ほかの所をタップしたら指のガイドをもう一度出す */
+let need = false, done = false;
 let i = 0, timer = 0, typing = false, choosing = false, shown = 0, sweatOn = false, touched = false, curText = '', guideT = 0;
 /* 操作ガイド：触る場所（おなか・太鼓・夜空）の上に出して、2回点滅したら消える。カメラが動き終わってから出す */
 function showGuide(line, delay){
@@ -256,7 +259,7 @@ function type(text){   // 1文字ずつ出す（タップで全部出す）
 function finish(){
   clearInterval(timer); typing = false; $('#text').textContent = curText;
   const ch = LINES[i].choice, last = i === LINES.length - 1;
-  $('#more').classList.toggle('on', !last && !ch); $('#end').hidden = !last;
+  $('#more').classList.toggle('on', !last && !ch && (!need || done)); $('#end').hidden = !last;
   if (ch) {   // 二択：どちらも「脇役の白い丸」で並べる。押したら、選んだ側へ進む
     choosing = true; const box = $('#choice'); box.innerHTML = ''; box.hidden = false;
     ch.forEach(o => {
@@ -266,14 +269,15 @@ function finish(){
     });
   }
 }
+function markDone(){ if (!need || done) return; done = true; if (!typing && i < LINES.length - 1) $('#more').classList.add('on'); }
 function onTouch(){   // おなかにさわった（タップ・スワイプ）：セリフに touch があれば、その返事に切りかわる（1回だけ）
-  const line = LINES[i];
+  const line = LINES[i]; markDone();
   $('#guide').hidden = true; clearTimeout(guideT);
   if (line.touch && !touched) { touched = true; const at0 = i; setTimeout(() => { if (i === at0) type(withName(line.touch)); }, 450); }   // ぷるんを少し見せてから、返事に切りかえる
 }
 function show(){
   const line = LINES[i];
-  choosing = false; touched = false; $('#choice').hidden = true;
+  choosing = false; touched = false; $('#choice').hidden = true; need = !!line.hint; done = false;
   const sky = layers[11], kiss = layers[10];
   if (line.sky && !sky.classList.contains('on')) {   // カメラが夜空へ上がる
     aim({ pic: 11, x: 50, y: 100 }, true);   // 下（ちょうちん）から始めて、月のほうへ見上げる
@@ -304,10 +308,11 @@ $('#game').addEventListener('click', e => {
   if (l.dataset.belly && performance.now() - bellyAt < 800) { const q = toImg(l, e), E = ell(l.dataset.belly); if (((q.x - E.cx) / (E.rx * 1.5)) ** 2 + ((q.y - E.cy) / (E.ry * 1.5)) ** 2 < 1) { purun(l, q.x, q.y); popAt(e, 'ぷるん♪'); bellyAt = performance.now(); return; } }   // おなかの近くを連打したときは、ふちに当たってもぷるんにする
   const inStage = e.target.closest('#stage');
   if (l.dataset.belly && inStage && inside(l, e, l.dataset.belly)) { const q = toImg(l, e); purun(l, q.x, q.y); popAt(e, 'ぷるん♪'); bellyAt = performance.now(); onTouch(); return; }
-  if (LINES[i].pic === 11 && inStage && !e.target.closest('.tool')) { const r = $('#stage').getBoundingClientRect(); launch(e.clientX - r.left, e.clientY - r.top); return; }
-  if (LINES[i].drum && l.dataset.drum && inStage && inside(l, e, l.dataset.drum)) { hit(e); return; }
+  if (LINES[i].pic === 11 && inStage && !e.target.closest('.tool')) { const r = $('#stage').getBoundingClientRect(); launch(e.clientX - r.left, e.clientY - r.top); markDone(); return; }
+  if (LINES[i].drum && l.dataset.drum && inStage && inside(l, e, l.dataset.drum)) { hit(e); markDone(); return; }
   if (typing) return finish();
   if (choosing) return;   // 二択のときは、ボタンを押すまで進まない
+  if (need && !done) return showGuide(LINES[i], 0);   // まださわっていない：ガイドをもう一度出して、ここで待つ
   if (i < LINES.length - 1) { i = LINES[i].go ? at(LINES[i].go) : i + 1; show(); }
 });
 $('#again').addEventListener('click', e => { e.stopPropagation(); i = 0; shown = 0; picked = null; show(); });
