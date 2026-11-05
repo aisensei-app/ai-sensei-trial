@@ -45,16 +45,27 @@ body.whole .layer .pic{object-fit:contain;object-position:50% 50%}
 .layer.hitpic.flash{opacity:1;transition:none}
 #stage.shake .layer{animation:shake .28s ease-out}
 @keyframes shake{20%{transform:translate(-5px,3px)}45%{transform:translate(4px,-3px)}70%{transform:translate(-2px,1px)}}
-/* キス：ゆっくり近づく（寄っていく） */
-.layer.kiss.on .pic{animation:lean 5s ease-in forwards}
-@keyframes lean{to{transform:scale(1.12)}}
+/* ちゅ〜の場面（2026-11-05 ユーザーと決めた：日本古来の「余白」。直前と分かる言葉・表現は入れず、そのあとどうなったかは遊ぶ人にまかせる）
+   不器用さは動きで見せる：ぷるぷる震えながら近づく → 一度ためらって少し引く → もう一度、ぎゅっと近づく。まわりは胸の鼓動のように、ふちがほんのり赤く脈打つ */
+.layer.kiss.on .pic{animation:lean 6.5s ease-in-out forwards}
+@keyframes lean{
+  0%{transform:none}
+  14%{transform:scale(1.035) rotate(-.5deg)} 17%{transform:scale(1.037) rotate(.5deg)} 20%{transform:scale(1.04) rotate(-.4deg)}
+  23%{transform:scale(1.042) rotate(.3deg)} 26%{transform:scale(1.043)}
+  40%{transform:scale(1.01) translateY(4px)}
+  52%{transform:scale(1.012) translateX(-2px)} 54%{transform:scale(1.014) translateX(2px)} 56%{transform:scale(1.016) translateX(-2px)} 58%{transform:scale(1.018) translateX(1px)}
+  100%{transform:scale(1.13)}}
+.layer.kiss::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:0;
+  background:radial-gradient(ellipse at 50% 40%,transparent 45%,rgba(255,90,130,.38) 100%)}
+.layer.kiss.on::after{animation:beat .9s ease-in-out infinite}
+@keyframes beat{0%,100%{opacity:.25}15%{opacity:.85}30%{opacity:.35}45%{opacity:.7}}
 /* カメラが夜空へ上がる：キスの絵は下へ出ていき、夜空が上から入ってくる */
 .layer.kiss.away{opacity:1;transform:translateY(100%);transition:transform 2.6s cubic-bezier(.6,0,.3,1),opacity .1s}
 .layer.sky{transition:opacity .1s}
 .layer.sky.rise{transform:translateY(-100%)}
 .layer.sky.rise.go{transform:none;transition:transform 2.6s cubic-bezier(.6,0,.3,1)}
 .layer .fw{position:absolute;inset:0;width:100%;height:100%;display:block}
-.hint{position:absolute;z-index:2;left:50%;bottom:52px;transform:translateX(-50%);background:rgba(255,255,255,.85);color:var(--orange-d);
+.hint{position:absolute;z-index:2;left:0;right:0;margin:0 auto;width:max-content;max-width:calc(100% - 32px);bottom:52px;background:rgba(255,255,255,.85);color:var(--orange-d);
   font-size:13px;font-weight:800;padding:6px 14px;border-radius:99px;white-space:nowrap;animation:bob 1.2s ease-in-out infinite}
 .hint[hidden]{display:none}
 /* 絵の下のはしを、セリフの枠へなじませる */
@@ -92,7 +103,7 @@ body.whole .layer .pic{object-fit:contain;object-position:50% 50%}
     <div class="layer" data-src="img/rest_coconut.webp" data-jiggle data-belly="640,1000,300,200"><img class="blur" alt=""><img class="pic" alt="ベンチに座ってヤシの実ジュースを飲むタヌくん"><canvas class="wobble"></canvas></div>
     <div class="layer" data-src="img/night_shy.webp"><img class="blur" alt=""><img class="pic" alt="夜の草むらに座って、照れながらこちらを見るタヌくん"></div>
     <div class="layer" data-src="img/night_gift.webp"><img class="blur" alt=""><img class="pic" alt="光る貝がらを両手で差し出すタヌくん"></div>
-    <div class="layer kiss" data-src="img/night_kiss.webp"><img class="blur" alt=""><img class="pic" alt="目を閉じて顔を近づけるタヌくん"></div>
+    <div class="layer kiss" data-src="img/night_kiss.webp"><img class="blur" alt=""><img class="pic" alt="目をぎゅっと閉じて、顔を真っ赤にしたタヌくん"></div>
     <div class="layer sky" data-src="img/night_sky.webp"><img class="blur" alt=""><img class="pic" alt="月の出ている夜空と、お祭りのちょうちん"><canvas class="fw"></canvas></div>
     <div class="pop" id="pop">ぷるん♪</div>
     <div class="hint" id="hint" hidden>おなかをタップしてみてね</div>
@@ -128,9 +139,10 @@ const LINES = [
   { pic: 8, x: 50, y: 20, t: 'あのね、キミに\n渡したいものがあるんだ' },
   { pic: 9, x: 50, y: 40, t: 'じゃーん！ 浜辺で見つけた、光る貝がら。\nキミにあげたくて、ずっと持ってたんだ♪' },
   { pic: 9, x: 50, y: 40, t: '今日のお礼…と、それから…' },
-  { pic: 10, x: 50, y: 30, t: '…目、つぶってて…？' },
+  { pic: 10, x: 50, y: 30, t: 'あ、あのね…！' },
+  { pic: 10, x: 50, y: 30, t: '……' },
   { pic: 11, x: 50, y: 25, sky: true, t: 'わぁっ…！ 花火だ！', hint: '夜空をタップすると花火が上がるよ' },
-  { pic: 11, x: 50, y: 25, t: '…さっきの、見なかったことにして！\n…う、うそ！ やっぱり覚えてて♪' },
+  { pic: 11, x: 50, y: 25, t: '…花火、きれいだね。' },
   { pic: 11, x: 50, y: 25, t: '来年も、いっしょに見ようね' },
 ];
 const $ = s => document.querySelector(s);
