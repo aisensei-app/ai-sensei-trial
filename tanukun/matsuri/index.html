@@ -68,6 +68,18 @@ body.whole .layer .pic{object-fit:contain;object-position:50% 50%}
 .hint{position:absolute;z-index:2;left:0;right:0;margin:0 auto;width:max-content;max-width:calc(100% - 32px);bottom:52px;background:rgba(255,255,255,.85);color:var(--orange-d);
   font-size:13px;font-weight:800;padding:6px 14px;border-radius:99px;white-space:nowrap;animation:bob 1.2s ease-in-out infinite}
 .hint[hidden]{display:none}
+/* 操作ガイド（2026-11-05）：触る場所の上に、指のアイコンと「タップしてね」を、ゆっくり2回だけ点滅させて消す。
+   指を置く場所のうえに出すので、ガイド自体は押せない（pointer-events:none）＝ガイドを押してセリフが進んでしまうことがない */
+.guide{position:absolute;z-index:2;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:4px;opacity:0;transform:translate(-45%,-14px)}
+.guide[hidden]{display:none}
+.guide.go{animation:guideBlink 2.8s ease-in-out 2 forwards}
+@keyframes guideBlink{0%{opacity:0}22%{opacity:1}62%{opacity:1}88%,100%{opacity:0}}
+.guide .finger{filter:drop-shadow(0 3px 4px rgba(0,0,0,.35));animation:fingerTap 1.4s ease-in-out infinite}
+@keyframes fingerTap{0%,100%{transform:translateY(0)}38%{transform:translateY(-7px)}60%{transform:translateY(3px) scale(.95)}}
+.guide .ring{position:absolute;left:calc(50% - 4px);top:-4px;width:26px;height:26px;margin-left:-13px;border-radius:50%;border:3px solid rgba(255,255,255,.9);opacity:0;animation:ringTap 1.4s ease-out infinite}
+@keyframes ringTap{0%,52%{opacity:0;transform:scale(.4)}60%{opacity:.9}100%{opacity:0;transform:scale(1.6)}}
+.guide .gtext{background:rgba(255,255,255,.88);color:var(--orange-d);font-size:13px;font-weight:800;padding:5px 12px;border-radius:99px;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+@media (prefers-reduced-motion:reduce){.guide .finger,.guide .ring{animation:none}}
 /* 絵の下のはしを、セリフの枠へなじませる */
 #stage::after{content:"";position:absolute;left:0;right:0;bottom:0;height:40px;
   background:linear-gradient(transparent,#2a1a10);pointer-events:none}
@@ -123,7 +135,10 @@ body.whole .layer .pic{object-fit:contain;object-position:50% 50%}
     <div class="layer" data-src="img/yatai_cotton.webp"><img class="blur" alt=""><img class="pic" alt="ほっぺにお菓子をつけて、綿あめを食べるタヌくん"></div>
     <div class="layer" data-src="img/yatai_end.webp" data-jiggle data-belly="580,770,290,190"><img class="blur" alt=""><img class="pic" alt="食べ終わって、おなかをさすって笑うタヌくん"><canvas class="wobble"></canvas></div>
     <div class="pop" id="pop">ぷるん♪</div>
-    <div class="hint" id="hint" hidden>おなかをタップ・スワイプしてみてね</div>
+    <div class="guide" id="guide" hidden>
+      <svg class="finger" viewBox="0 0 44 48" width="44" height="48" aria-hidden="true"><path d="M18 3.5c-2.3 0-4.2 1.9-4.2 4.2v18.2l-2.5-2.3c-1.9-1.7-4.8-1.5-6.2.6-1 1.5-.8 3.4.4 4.6l8.8 10c1.7 1.9 4 3 6.6 3H31c4.6 0 8.2-3.7 8.2-8.2v-9.2c0-2.1-1.6-3.7-3.7-3.7-.7 0-1.4.2-1.9.5-.6-1.5-2-2.4-3.5-2.4-.9 0-1.7.3-2.4.9-.7-1.2-2-2-3.5-2-.5 0-1 .1-1.4.3V7.7c0-2.3-1.9-4.2-4.2-4.2z" fill="#fff" stroke="#4A2C1A" stroke-width="2.4" stroke-linejoin="round"/><path d="M23.8 28.5v6.5M29.6 29.5v5.5" stroke="#4A2C1A" stroke-width="1.8" stroke-linecap="round" opacity=".4"/></svg>
+      <span class="ring"></span><span class="gtext" id="gtext">タップしてね</span>
+    </div>
     <div class="tool" id="step"></div>
     <button class="tool" id="nm" type="button"></button>
     <button class="tool" id="mode" type="button">全体</button>
@@ -165,13 +180,13 @@ const LINES = [
   /* ここから先はまだ仮（6日目：太鼓・休憩／9日目：夜・花火）。「キミ」は「きみ」にそろえた */
   /* 綿あめ／とうもろこしのあと：食べ終わった絵（pic 14）で、この日の場面はおしまい */
   { id: 'yend', pic: 14, x: 50, y: 20, jiggle: true, t: 'ふぅ〜、おいしかった！\nおなか、ぽんぽこりん♪' },
-  { pic: 14, x: 50, y: 20, t: 'ね、さわってみて？\nぷるんってするよ♪', hint: 'おなかをタップ・スワイプしてみてね' },
+  { pic: 14, x: 50, y: 20, t: 'ね、さわってみて？\nぷるんってするよ♪', hint: 'タップ・スワイプしてね' },
   { id: 'taiko', pic: 5, x: 50, y: 15, t: '見て見て、はっぴ着てみたんだ！\n今夜の太鼓、まかされちゃった♪' },
   { pic: 5, x: 50, y: 15, t: 'ちょっと緊張するけど…\nきみが見ててくれるなら、がんばれる！' },
-  { pic: 5, x: 50, y: 15, drum: true, t: 'いくよー！ そーれっ！', hint: '太鼓をタップしてみてね' },
+  { pic: 5, x: 50, y: 15, drum: true, t: 'いくよー！ そーれっ！', hint: 'タップしてね' },
   { pic: 7, x: 50, y: 20, t: '太鼓、どうだったかな？\n{name}が見てたから、\nちょっとドキドキしちゃった' },
   { pic: 7, x: 50, y: 20, t: 'でも、見ててくれたから\n最後までがんばれたよ。ありがとう♪' },
-  { pic: 7, x: 50, y: 20, t: 'ヤシの実ジュース、冷たくておいしい♪\n…となり、座る？', hint: 'おなかをタップ・スワイプしてみてね' },
+  { pic: 7, x: 50, y: 20, t: '…そんなに見つめて、どうしたの？', hint: 'タップ・スワイプしてね', touch: 'くすぐったいよ！' },
   { pic: 7, x: 50, y: 20, t: 'もうすぐ暗くなるね。\n夜はもっと楽しいよ、きっと！' },
   { pic: 8, x: 50, y: 20, t: 'お祭り、楽しかったね。\n…ねえ、もうちょっとだけ、いっしょにいてもいい？' },
   { pic: 8, x: 50, y: 20, t: 'あのね、きみに\n渡したいものがあるんだ' },
@@ -179,7 +194,7 @@ const LINES = [
   { pic: 9, x: 50, y: 40, t: '今日のお礼…と、それから…' },
   { pic: 10, x: 50, y: 30, t: 'あ、あのね…！' },
   { pic: 10, x: 50, y: 30, t: '……' },
-  { pic: 11, x: 50, y: 25, sky: true, t: 'わぁっ…！ 花火だ！', hint: '夜空をタップすると花火が上がるよ' },
+  { pic: 11, x: 50, y: 25, sky: true, t: 'わぁっ…！ 花火だ！', hint: 'タップしてね' },
   { pic: 11, x: 50, y: 25, t: '…花火、きれいだね。' },
   { pic: 11, x: 50, y: 25, t: '来年も、いっしょに見ようね' },
 ];
@@ -197,7 +212,23 @@ function withName(t){
 const tx = l => withName(l.t);
 function nmLabel(){ $('#nm').textContent = NAME ? '名前：' + NAME : '名前：なし'; }
 nmLabel();
-let i = 0, timer = 0, typing = false, choosing = false, shown = 0, sweatOn = false;
+let i = 0, timer = 0, typing = false, choosing = false, shown = 0, sweatOn = false, touched = false, curText = '', guideT = 0;
+/* 操作ガイド：触る場所（おなか・太鼓・夜空）の上に出して、2回点滅したら消える。カメラが動き終わってから出す */
+function showGuide(line, delay){
+  const g = $('#guide'); clearTimeout(guideT); g.hidden = true; g.classList.remove('go');
+  if (!line.hint) return;
+  const at0 = i;
+  guideT = setTimeout(() => {
+    if (i !== at0) return;
+    const l = layers[line.pic], st = $('#stage').getBoundingClientRect();
+    let x = st.width / 2, y = st.height * .4;   // 夜空：画面の中ほど
+    const spec = line.drum ? l.dataset.drum : l.dataset.belly;
+    if (spec) { const E = ell(spec), f = fit(l), r = f.img.getBoundingClientRect(); x = r.left - st.left + f.ox + E.cx * f.s; y = r.top - st.top + f.oy + E.cy * f.s; }
+    $('#gtext').textContent = line.hint;
+    g.style.left = x + 'px'; g.style.top = y + 'px'; g.hidden = false; void g.offsetWidth; g.classList.add('go');
+  }, delay);
+}
+$('#guide').addEventListener('animationend', e => { if (e.animationName === 'guideBlink') { $('#guide').hidden = true; $('#guide').classList.remove('go'); } });
 const at = id => LINES.findIndex(l => l.id === id);
 /* 選択肢のあとは、どちらを選んでも同じ所（go）へ合流する。数え方は「見たセリフの数」 */
 const TOTAL = (() => { let k = 0, j = 0; while (j < LINES.length) { k++; const l = LINES[j]; j = l.go ? at(l.go) : l.choice ? at(l.choice[0].to) : j + 1; } return k; })();
@@ -209,7 +240,7 @@ function aim(line, instant){
   if (instant) { void img.offsetWidth; img.style.transition = ''; }
 }
 function type(text){   // 1文字ずつ出す（タップで全部出す）
-  const el = $('#text'); let n = 0; typing = true; $('#more').classList.remove('on');
+  const el = $('#text'); let n = 0; typing = true; curText = text; $('#more').classList.remove('on');
   clearInterval(timer);
   timer = setInterval(() => {
     el.textContent = text.slice(0, ++n);
@@ -217,7 +248,7 @@ function type(text){   // 1文字ずつ出す（タップで全部出す）
   }, 45);
 }
 function finish(){
-  clearInterval(timer); typing = false; $('#text').textContent = tx(LINES[i]);
+  clearInterval(timer); typing = false; $('#text').textContent = curText;
   const ch = LINES[i].choice, last = i === LINES.length - 1;
   $('#more').classList.toggle('on', !last && !ch); $('#end').hidden = !last;
   if (ch) {   // 二択：どちらも「脇役の白い丸」で並べる。押したら、選んだ側へ進む
@@ -229,9 +260,14 @@ function finish(){
     });
   }
 }
+function onTouch(){   // おなかにさわった（タップ・スワイプ）：セリフに touch があれば、その返事に切りかわる（1回だけ）
+  const line = LINES[i];
+  $('#guide').hidden = true; clearTimeout(guideT);
+  if (line.touch && !touched) { touched = true; type(withName(line.touch)); }
+}
 function show(){
   const line = LINES[i];
-  choosing = false; $('#choice').hidden = true;
+  choosing = false; touched = false; $('#choice').hidden = true;
   const sky = layers[11], kiss = layers[10];
   if (line.sky && !sky.classList.contains('on')) {   // カメラが夜空へ上がる
     aim({ pic: 11, x: 50, y: 100 }, true);   // 下（ちょうちん）から始めて、月のほうへ見上げる
@@ -239,7 +275,7 @@ function show(){
     void sky.offsetWidth; sky.classList.add('go'); aim(line);
     setTimeout(() => { kiss.classList.remove('on', 'away'); sky.classList.remove('rise', 'go'); }, 2700);
     setTimeout(() => { fwStart(); for (let k = 0; k < 3; k++) setTimeout(() => launch(), k * 450); }, 1900);
-    $('#end').hidden = true; $('#hint').hidden = false; $('#hint').textContent = line.hint;
+    $('#end').hidden = true; showGuide(line, 3000);
     $('#step').textContent = (++shown) + ' / ' + TOTAL;
     return type(tx(line));
   }
@@ -248,7 +284,7 @@ function show(){
   aim(line, fresh);   // 新しく出す絵は、動かさずにその位置で出す
   layers.forEach((l, k) => l.classList.toggle('on', k === line.pic));
   $('#end').hidden = true;
-  $('#hint').hidden = !line.hint; $('#hint').textContent = line.hint || '';
+  showGuide(line, 1300);
   if (line.drum) setTimeout(() => hit(), 700);
   if (line.jiggle) setTimeout(() => { const E = ell(layers[line.pic].dataset.belly); purun(layers[line.pic], E.cx, E.cy); }, 500);
   drawAll();
@@ -260,7 +296,7 @@ $('#game').addEventListener('click', e => {
   if (noClick) return;
   const l = layers[LINES[i].pic];
   const inStage = e.target.closest('#stage');
-  if (l.dataset.belly && inStage && inside(l, e, l.dataset.belly)) { const q = toImg(l, e); purun(l, q.x, q.y); popAt(e, 'ぷるん♪'); return; }
+  if (l.dataset.belly && inStage && inside(l, e, l.dataset.belly)) { const q = toImg(l, e); purun(l, q.x, q.y); popAt(e, 'ぷるん♪'); onTouch(); return; }
   if (LINES[i].pic === 11 && inStage && !e.target.closest('.tool')) { const r = $('#stage').getBoundingClientRect(); launch(e.clientX - r.left, e.clientY - r.top); return; }
   if (LINES[i].drum && l.dataset.drum && inStage && inside(l, e, l.dataset.drum)) { hit(e); return; }
   if (typing) return finish();
@@ -305,7 +341,7 @@ const letGo = e => {
   const l = grab.l, moved = grab.moved; grab = null;
   if (!moved) return;
   l._drag = false; noClick = true; setTimeout(() => { noClick = false; }, 50);
-  popAt(e, 'ぷるん♪'); runSpring(l);
+  popAt(e, 'ぷるん♪'); runSpring(l); onTouch();
 };
 addEventListener('pointerup', letGo); addEventListener('pointercancel', letGo);
 addEventListener('resize', drawAll);
