@@ -88,6 +88,10 @@ body.whole .layer .pic{object-fit:contain;object-position:50% 50%}
 .tool{position:absolute;top:12px;z-index:2;border:0;border-radius:99px;background:rgba(255,255,255,.72);color:var(--ink);
   font:inherit;font-size:13px;font-weight:800;padding:7px 12px}
 #mode{right:16px;cursor:pointer}
+#nm{right:76px;cursor:pointer}
+/* 選択肢（2026-11-05）：どちらを選んでも先は同じ。ボタンの3段階の「② 脇役＝白い丸」で2つ並べる */
+.btns.choice{gap:12px;flex-wrap:wrap}
+.btn.alt{background:#fff;color:var(--orange-d);box-shadow:0 4px 0 rgba(0,0,0,.18);padding:12px 22px}
 #step{left:16px}
 </style>
 
@@ -96,7 +100,7 @@ body.whole .layer .pic{object-fit:contain;object-position:50% 50%}
     <div class="layer" data-src="img/cafe_invite.webp"><img class="blur" alt=""><img class="pic" alt="カフェでメニューを見せるタヌくん"></div>
     <div class="layer" data-src="img/cafe_happy.webp"><img class="blur" alt=""><img class="pic" alt="目を閉じてにっこりするタヌくん"></div>
     <div class="layer" data-src="img/gate_day.webp"><img class="blur" alt=""><img class="pic" alt="お祭りの会場の入り口で手を差し出すタヌくん"></div>
-    <div class="layer" data-src="img/yatai_eat.webp" data-jiggle data-belly="520,715,345,235"><img class="blur" alt=""><img class="pic" alt="屋台の前でチョコバナナを食べるタヌくん"><canvas class="wobble"></canvas></div>
+    <div class="layer" data-src="img/yatai_cotton.webp"><img class="blur" alt=""><img class="pic" alt="ほっぺにお菓子をつけて、綿あめを食べるタヌくん"></div>
     <div class="layer" data-src="img/yatai_full.webp" data-jiggle data-belly="520,715,345,235"><img class="blur" alt=""><img class="pic" alt="食べ終わって、おなかをさすって笑うタヌくん"><canvas class="wobble"></canvas></div>
     <div class="layer" data-src="img/taiko_ready.webp" data-drum="750,1080,280,250"><img class="blur" alt=""><img class="pic" alt="はっぴを着て、ばちをかまえるタヌくん"></div>
     <div class="layer hitpic" data-src="img/taiko_hit.webp"><img class="blur" alt=""><img class="pic" alt="太鼓を力いっぱいたたくタヌくん"></div>
@@ -105,13 +109,16 @@ body.whole .layer .pic{object-fit:contain;object-position:50% 50%}
     <div class="layer" data-src="img/night_gift.webp"><img class="blur" alt=""><img class="pic" alt="光る貝がらを両手で差し出すタヌくん"></div>
     <div class="layer kiss" data-src="img/night_kiss.webp"><img class="blur" alt=""><img class="pic" alt="目をぎゅっと閉じて、顔を真っ赤にしたタヌくん"></div>
     <div class="layer sky" data-src="img/night_sky.webp"><img class="blur" alt=""><img class="pic" alt="月の出ている夜空と、お祭りのちょうちん"><canvas class="fw"></canvas></div>
+    <div class="layer" data-src="img/yatai_corn.webp"><img class="blur" alt=""><img class="pic" alt="焼きとうもろこしをふーふーしながら食べるタヌくん"></div>
     <div class="pop" id="pop">ぷるん♪</div>
     <div class="hint" id="hint" hidden>おなかをタップしてみてね</div>
     <div class="tool" id="step"></div>
+    <button class="tool" id="nm" type="button"></button>
     <button class="tool" id="mode" type="button">全体</button>
   </div>
   <div id="talk">
     <div class="box"><span class="name">タヌくん</span><span id="text"></span><span class="more" id="more">▼</span></div>
+    <div class="btns choice" id="choice" hidden></div>
     <div class="btns" id="end" hidden><button class="btn" id="again" type="button">もう一度</button></div>
   </div>
 </div>
@@ -119,25 +126,41 @@ body.whole .layer .pic{object-fit:contain;object-position:50% 50%}
 <script>
 /* セリフと、そのときの絵（pic）・見る所（x：横 0〜100、y：たて 0〜100） */
 const LINES = [
-  { pic: 0, x: 50, y: 25, t: 'あっ、来てくれたんだ♪\nちょうど会いたかったんだ！' },
+  /* 序章（0日目）：カフェ → 入り口。{name} は呼び名（なければ文頭は消えて、文の途中は「きみ」） */
+  { pic: 0, x: 50, y: 25, t: '{name}、あっ、来てくれたんだ♪\nちょうど会いたかったんだ！' },
   { pic: 0, x: 30, y: 40, t: 'ねえねえ、ちょっと聞いて！' },
   { pic: 0, x: 70, y: 35, t: '今度ね、島でお祭りがあるんだって！\n屋台もいっぱい出るんだよ♪' },
-  { pic: 1, x: 50, y: 25, t: 'いっしょに行こうよ！\n…ね？ ね？' },
+  { pic: 1, x: 50, y: 25, t: '{name}と行きたいなぁ。\nいっしょに行こうよ！…ね？ ね？' },
   { pic: 2, x: 50, y: 15, t: '着いたー！\nにぎやかだねぇ♪' },
-  { pic: 2, x: 40, y: 40, t: 'ほら、こっちこっち！\n夜になったら、もっときれいになるんだって' },
-  { pic: 3, x: 50, y: 20, t: 'チョコバナナ、あまーい！\nキミもひと口どう？' },
-  { pic: 3, x: 50, y: 20, t: 'え、ほっぺについてる？\n…えへへ、気づかなかった♪' },
-  { pic: 4, x: 50, y: 20, jiggle: true, t: 'ぜーんぶ食べちゃった！\nおなか、ぽんぽこりん♪' },
+  { pic: 2, x: 40, y: 40, t: 'ほら、{name}、こっちこっち！\n夜になったら、もっときれいになるんだって' },
+  /* 3日目：屋台。二択（綿あめ／焼きとうもろこし）はどちらも同じ先へ合流する。選んだ結果は、あとの日に思い出す用に残せる */
+  { pic: 2, x: 50, y: 60, t: 'また来てくれたんだ♪\n前回は入り口まで来たよね' },
+  { pic: 2, x: 50, y: 60, t: '今日は屋台をぜーんぶ回るよ！\nいいにおいがしてきたー♪' },
+  { pic: 2, x: 50, y: 60, t: '{name}は、どっちにする？\nあまいの？ しょっぱいの？',
+    choice: [{ label: 'あまい　綿あめ', to: 'sweet' }, { label: 'しょっぱい　焼きとうもろこし', to: 'salty' }] },
+  { id: 'sweet', pic: 3, x: 50, y: 30, t: 'やっぱり、あまいのだよね！\nぼくもそっちが気になってたんだ♪' },
+  { pic: 3, x: 60, y: 45, t: '見て見て、綿あめ！\nふわふわで、ぼくのしっぽみたい♪' },
+  { pic: 3, x: 60, y: 20, t: 'あむっ…あまーい！' },
+  { pic: 3, x: 60, y: 20, go: 'full', t: 'え、ほっぺについてる？\n…えへへ、気づかなかった♪' },
+  { id: 'salty', pic: 12, x: 40, y: 40, t: 'えっ、そっち！？ いいね！\nぼくも気になってたんだ♪' },
+  { pic: 12, x: 40, y: 30, t: 'あちち…ふーふー。\nできたては、やけどしそうだね' },
+  { pic: 12, x: 40, y: 40, t: 'ん〜っ！ しょっぱくて、\nあまくて…とまらなーい！' },
+  { pic: 12, x: 45, y: 40, t: 'ひと口あげたいけど…\nぼくのだー！ …なんてね♪' },
+  { id: 'full', pic: 4, x: 50, y: 20, jiggle: true, t: 'ふぅ〜、おいしかった！\nおなか、ぽんぽこりん♪' },
   { pic: 4, x: 50, y: 20, t: 'ね、さわってみて？\nぷるんってするよ♪', hint: 'おなかをタップしてみてね' },
+  { pic: 4, x: 50, y: 20, t: '…あのね。ぼく、お祭りの屋台、\nずっとやってみたかったんだ' },
+  { pic: 4, x: 50, y: 20, t: '{name}がいっしょだから、\nいつもの倍おいしい気がするよ♪' },
+  { pic: 4, x: 50, y: 20, t: '次は、ぼくのがんばるところを\n見せる番だよ。楽しみにしててね♪' },
+  /* ここから先はまだ仮（6日目：太鼓・休憩／9日目：夜・花火）。「キミ」は「きみ」にそろえた */
   { pic: 5, x: 50, y: 15, t: '見て見て、はっぴ着てみたんだ！\n今夜の太鼓、まかされちゃった♪' },
-  { pic: 5, x: 50, y: 15, t: 'ちょっと緊張するけど…\nキミが見ててくれるなら、がんばれる！' },
+  { pic: 5, x: 50, y: 15, t: 'ちょっと緊張するけど…\nきみが見ててくれるなら、がんばれる！' },
   { pic: 5, x: 50, y: 15, drum: true, t: 'いくよー！ そーれっ！', hint: '太鼓をタップしてみてね' },
   { pic: 7, x: 50, y: 20, t: 'ふぅ〜、たたいたら\nのどかわいちゃった' },
   { pic: 7, x: 50, y: 20, t: 'ヤシの実ジュース、おいしい♪\n…となり、座る？', hint: 'おなかをタップしてみてね' },
   { pic: 7, x: 50, y: 20, t: 'もうすぐ暗くなるね。\n夜はもっと楽しいよ、きっと！' },
   { pic: 8, x: 50, y: 20, t: 'お祭り、楽しかったね。\n…ねえ、もうちょっとだけ、いっしょにいてもいい？' },
-  { pic: 8, x: 50, y: 20, t: 'あのね、キミに\n渡したいものがあるんだ' },
-  { pic: 9, x: 50, y: 40, t: 'じゃーん！ 浜辺で見つけた、光る貝がら。\nキミにあげたくて、ずっと持ってたんだ♪' },
+  { pic: 8, x: 50, y: 20, t: 'あのね、きみに\n渡したいものがあるんだ' },
+  { pic: 9, x: 50, y: 40, t: 'じゃーん！ 浜辺で見つけた、光る貝がら。\nきみにあげたくて、ずっと持ってたんだ♪' },
   { pic: 9, x: 50, y: 40, t: '今日のお礼…と、それから…' },
   { pic: 10, x: 50, y: 30, t: 'あ、あのね…！' },
   { pic: 10, x: 50, y: 30, t: '……' },
@@ -149,7 +172,21 @@ const $ = s => document.querySelector(s);
 const layers = [...document.querySelectorAll('.layer')];
 layers.forEach(l => { const s = l.dataset.src; l.querySelector('.blur').src = s; l.querySelector('.pic').src = s; });
 
-let i = 0, timer = 0, typing = false;
+/* 呼び名（お試し版だけの仕組み。本編では app.js の withName と同じ置きかえ）
+   名前がないとき：呼びかけ「{name}、」は消し、文の途中は「きみ」。右上の「名前」ボタンで、あり／なしを切りかえて確かめる */
+let NAME = (() => { try { return new URLSearchParams(location.search).get('name') || ''; } catch (e) { return ''; } })() || 'ポポ';
+function withName(t){
+  if (NAME) return t.split('{name}').join(NAME);
+  return t.replace(/[、,]\{name\}(?=[！!。〜…？?♪]|$)/g, '').replace(/\{name\}[、,]/g, '').split('{name}').join('きみ');
+}
+const tx = l => withName(l.t);
+function nmLabel(){ $('#nm').textContent = NAME ? '名前：' + NAME : '名前：なし'; }
+nmLabel();
+let i = 0, timer = 0, typing = false, choosing = false, shown = 0;
+const at = id => LINES.findIndex(l => l.id === id);
+/* 選択肢のあとは、どちらを選んでも同じ所（go）へ合流する。数え方は「見たセリフの数」 */
+const TOTAL = (() => { let k = 0, j = 0; while (j < LINES.length) { k++; const l = LINES[j]; j = l.go ? at(l.go) : l.choice ? at(l.choice[0].to) : j + 1; } return k; })();
+let picked = null;   // 選んだ味（'sweet' / 'salty'）。あとの日に「あまいの、好きだったよね」と思い出す用
 function aim(line, instant){
   const img = layers[line.pic].querySelector('.pic');
   if (instant) img.style.transition = 'none';
@@ -165,12 +202,21 @@ function type(text){   // 1文字ずつ出す（タップで全部出す）
   }, 45);
 }
 function finish(){
-  clearInterval(timer); typing = false; $('#text').textContent = LINES[i].t;
-  const last = i === LINES.length - 1;
-  $('#more').classList.toggle('on', !last); $('#end').hidden = !last;
+  clearInterval(timer); typing = false; $('#text').textContent = tx(LINES[i]);
+  const ch = LINES[i].choice, last = i === LINES.length - 1;
+  $('#more').classList.toggle('on', !last && !ch); $('#end').hidden = !last;
+  if (ch) {   // 二択：どちらも「脇役の白い丸」で並べる。押したら、選んだ側へ進む
+    choosing = true; const box = $('#choice'); box.innerHTML = ''; box.hidden = false;
+    ch.forEach(o => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'btn alt'; b.textContent = o.label;
+      b.addEventListener('click', e => { e.stopPropagation(); choosing = false; box.hidden = true; picked = o.to; i = at(o.to); show(); });
+      box.appendChild(b);
+    });
+  }
 }
 function show(){
   const line = LINES[i];
+  choosing = false; $('#choice').hidden = true;
   const sky = layers[11], kiss = layers[10];
   if (line.sky && !sky.classList.contains('on')) {   // カメラが夜空へ上がる
     aim({ pic: 11, x: 50, y: 100 }, true);   // 下（ちょうちん）から始めて、月のほうへ見上げる
@@ -179,8 +225,8 @@ function show(){
     setTimeout(() => { kiss.classList.remove('on', 'away'); sky.classList.remove('rise', 'go'); }, 2700);
     setTimeout(() => { fwStart(); for (let k = 0; k < 3; k++) setTimeout(() => launch(), k * 450); }, 1900);
     $('#end').hidden = true; $('#hint').hidden = false; $('#hint').textContent = line.hint;
-    $('#step').textContent = (i + 1) + ' / ' + LINES.length;
-    return type(line.t);
+    $('#step').textContent = (++shown) + ' / ' + TOTAL;
+    return type(tx(line));
   }
   if (!line.sky && line.pic !== 11) { kiss.classList.remove('away'); sky.classList.remove('rise', 'go'); }
   const fresh = !layers[line.pic].classList.contains('on');
@@ -191,8 +237,8 @@ function show(){
   if (line.drum) setTimeout(() => hit(), 700);
   if (line.jiggle) setTimeout(() => wobble(layers[line.pic], 9), 500);
   drawAll();
-  $('#step').textContent = (i + 1) + ' / ' + LINES.length;
-  type(line.t);
+  $('#step').textContent = (++shown) + ' / ' + TOTAL;
+  type(tx(line));
 }
 $('#game').addEventListener('click', e => {
   const l = layers[LINES[i].pic];
@@ -201,9 +247,14 @@ $('#game').addEventListener('click', e => {
   if (LINES[i].pic === 11 && inStage && !e.target.closest('.tool')) { const r = $('#stage').getBoundingClientRect(); launch(e.clientX - r.left, e.clientY - r.top); return; }
   if (LINES[i].drum && l.dataset.drum && inStage && inside(l, e, l.dataset.drum)) { hit(e); return; }
   if (typing) return finish();
-  if (i < LINES.length - 1) { i++; show(); }
+  if (choosing) return;   // 二択のときは、ボタンを押すまで進まない
+  if (i < LINES.length - 1) { i = LINES[i].go ? at(LINES[i].go) : i + 1; show(); }
 });
-$('#again').addEventListener('click', e => { e.stopPropagation(); i = 0; show(); });
+$('#again').addEventListener('click', e => { e.stopPropagation(); i = 0; shown = 0; picked = null; show(); });
+$('#nm').addEventListener('click', e => {
+  e.stopPropagation(); NAME = NAME ? '' : 'ポポ'; nmLabel();
+  if (!typing) $('#text').textContent = tx(LINES[i]);
+});
 $('#mode').addEventListener('click', e => {
   e.stopPropagation();
   const on = document.body.classList.toggle('whole');
