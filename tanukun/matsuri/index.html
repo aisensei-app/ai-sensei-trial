@@ -263,7 +263,7 @@ function finish(){
 function onTouch(){   // おなかにさわった（タップ・スワイプ）：セリフに touch があれば、その返事に切りかわる（1回だけ）
   const line = LINES[i];
   $('#guide').hidden = true; clearTimeout(guideT);
-  if (line.touch && !touched) { touched = true; type(withName(line.touch)); }
+  if (line.touch && !touched) { touched = true; const at0 = i; setTimeout(() => { if (i === at0) type(withName(line.touch)); }, 450); }   // ぷるんを少し見せてから、返事に切りかえる
 }
 function show(){
   const line = LINES[i];
@@ -295,8 +295,9 @@ function show(){
 $('#game').addEventListener('click', e => {
   if (noClick) return;
   const l = layers[LINES[i].pic];
+  if (l.dataset.belly && performance.now() - bellyAt < 800) { const q = toImg(l, e), E = ell(l.dataset.belly); if (((q.x - E.cx) / (E.rx * 1.5)) ** 2 + ((q.y - E.cy) / (E.ry * 1.5)) ** 2 < 1) { purun(l, q.x, q.y); popAt(e, 'ぷるん♪'); bellyAt = performance.now(); return; } }   // おなかの近くを連打したときは、ふちに当たってもぷるんにする
   const inStage = e.target.closest('#stage');
-  if (l.dataset.belly && inStage && inside(l, e, l.dataset.belly)) { const q = toImg(l, e); purun(l, q.x, q.y); popAt(e, 'ぷるん♪'); onTouch(); return; }
+  if (l.dataset.belly && inStage && inside(l, e, l.dataset.belly)) { const q = toImg(l, e); purun(l, q.x, q.y); popAt(e, 'ぷるん♪'); bellyAt = performance.now(); onTouch(); return; }
   if (LINES[i].pic === 11 && inStage && !e.target.closest('.tool')) { const r = $('#stage').getBoundingClientRect(); launch(e.clientX - r.left, e.clientY - r.top); return; }
   if (LINES[i].drum && l.dataset.drum && inStage && inside(l, e, l.dataset.drum)) { hit(e); return; }
   if (typing) return finish();
@@ -317,7 +318,7 @@ $('#mode').addEventListener('click', e => {
 /* ===== スワイプ（おなかをつかんで引っぱる）=====
    指がおなかの上で動いたら、おなかが指についてのびる（最大 PULL_MAX％）。はなすと、ばねで「ぼよよん」と戻る（belly.js の drag と同じ）。
    動かさずにはなしたら、いままでどおり「タップ」（click）として扱う。引っぱったあとの click は、セリフを進めない */
-let grab = null, noClick = false;
+let grab = null, noClick = false, bellyAt = 0;   // bellyAt＝おなかにさわった時刻（この直後の 0.8秒は、セリフを進めない）
 $('#game').addEventListener('pointerdown', e => {
   const l = layers[LINES[i].pic];
   if (!l.dataset.belly || !e.target.closest('#stage') || e.target.closest('.tool') || !inside(l, e, l.dataset.belly)) return;
@@ -341,7 +342,7 @@ const letGo = e => {
   const l = grab.l, moved = grab.moved; grab = null;
   if (!moved) return;
   l._drag = false; noClick = true; setTimeout(() => { noClick = false; }, 50);
-  popAt(e, 'ぷるん♪'); runSpring(l); onTouch();
+  popAt(e, 'ぷるん♪'); runSpring(l); bellyAt = performance.now(); onTouch();
 };
 addEventListener('pointerup', letGo); addEventListener('pointercancel', letGo);
 addEventListener('resize', drawAll);
