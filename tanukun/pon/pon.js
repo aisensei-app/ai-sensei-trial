@@ -152,6 +152,7 @@
     mole: { area: { x: 745, y: 975, rx: 165, ry: 55 }, gap: 95 },
     purunArea: { x: 525, y: 635, rx: 110, ry: 75 },
     drum: { cx: 750, cy: 1080, rx: 280, ry: 250 },
+    drumHead: { cx: 750, cy: 935, rx: 230, ry: 52 },   // 太鼓の面（波紋を出す所）
     hit: { chest: { x0: 380, y0: 330, x1: 700, y1: 470 }, belly: { cx: 530, cy: 640, rx: 200, ry: 165 } },
     parts: {}, noWear: true, fade: false
   };
@@ -349,16 +350,37 @@
     tHit = Object.assign(document.createElement('img'), { className: 't-hit', alt: '', draggable: false });
     tImg.src = IMG(T.src); tHit.src = IMG(T.hitSrc);
     body.appendChild(tImg); body.appendChild(tCanvas); body.appendChild(tHit);
-    bellyT = window.TanuBelly({ config: Object.assign({}, JIGGLE, T.belly), img: tImg, canvas: tCanvas, layers: () => [] });
+    // drum … 太鼓のまわり（絵の％）。たたくと、ほんの少しだけ沈んで戻る（kick）
+    bellyT = window.TanuBelly({ config: Object.assign({}, JIGGLE, T.belly), img: tImg, canvas: tCanvas, layers: () => [],
+      extra: { drum: { type: 'bob', x: 73.2, y: 70.3, rx: 27.3, ry: 16.3 } } });
     tImg.addEventListener('load', () => bellyT.warm([tImg.src]), { once: true });
   }
-  // 太鼓をたたいた：たたく絵を一瞬だけ出す（第2章の「ドン！」と同じ）
-  let hitTimer = 0;
-  function drumFrame() {
-    if (!tHit) return;
+  /* 太鼓をたたいた（2026-11-06 ユーザー「ちかちかして気持ち悪くなる」→ 直した）：
+     ① 絵は切りかえない。動くのは太鼓の所だけ（面にやわらかい波紋・太鼓がほんの少し沈む）
+     ③ おなかは揺らさない（揺れるのは 〜 をすべらせたときだけ）
+     ② たたく絵は「ごほうび」のときだけ（コンボ10ごと・カットイン・最後の一打）、ふわっと重ねて、ふわっと戻す。
+        前に出してから HIT_GAP 秒は出さない
+     ④ スマホの「動きを減らす」設定の人には、② を出さず、太鼓も沈ませない */
+  const CALM = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const HIT_SHOW = 650, HIT_GAP = 2.5;
+  let hitTimer = 0, hitAt = -9;
+  function drumHit() {
+    if (!tImg) return;
+    const D = ARTS.taiko.drumHead;   // 太鼓の面（絵のピクセル）
+    const el = document.createElement('div');
+    el.className = 'drum-ripple';
+    Object.assign(el.style, { left: offX + D.cx * scale + 'px', top: offY + D.cy * scale + 'px',
+      width: D.rx * 2 * scale + 'px', height: D.ry * 2 * scale + 'px' });
+    $('pops').appendChild(el);
+    setTimeout(() => el.remove(), 520);
+    if (!CALM) belly.kick('drum', 5);
+  }
+  function rewardFrame(now) {
+    if (!tHit || CALM || !taiko() || (now != null && now - hitAt < HIT_GAP)) return;
+    if (now != null) hitAt = now;
     tHit.classList.add('on');
     clearTimeout(hitTimer);
-    hitTimer = setTimeout(() => tHit.classList.remove('on'), 130);
+    hitTimer = setTimeout(() => tHit.classList.remove('on'), HIT_SHOW);
   }
   renderParts();
   let armSide = 0;
@@ -947,7 +969,7 @@
     if (!area) return;   // からぶり
     const p = pointers[e.pointerId] = { sx: sx, sy: sy, x0: e.clientX, y0: e.clientY, now: 0, wait: false, purun: false, pull: false, drum: area === 'drum' };
     // おまつり：太鼓をたたいたら、たたく絵が一瞬出て、おなかが少しだけ揺れる（ドンの響き）
-    if (p.drum) { drumFrame(); belly.bounce('belly', 0.03); }
+    if (p.drum) drumHit();
     else if (belly.ready()) belly.press('belly', ix, iy);
     else { body.classList.remove('bounce'); void body.offsetWidth; body.classList.add('bounce'); }
     if (playing && ac) {
@@ -995,7 +1017,8 @@
       counts[j.key]++;
       combo++;
       maxCombo = Math.max(maxCombo, combo);
-      if (combo % SHY_EVERY === 0) shyUntil = now + SHY_SECONDS;
+      if (combo % SHY_EVERY === 0) { shyUntil = now + SHY_SECONDS; rewardFrame(now); }   // おまつり：コンボ10ごとに、たたく絵（ごほうび）
+      if (n && n.last) rewardFrame(null);   // 最後の一打
       // コンボ10ごとに、1回の点数が10点ずつ増える（最大 +50）
       score += j.point + Math.min(50, Math.floor(combo / 10) * 10);
       $('score').textContent = score;
@@ -1023,6 +1046,7 @@
   }
   // カットイン：がんばる顔と「スピードアップ！」の帯が、右から入って左へ抜ける
   function cutin(bpm, i) {
+    rewardFrame(songTime());   // おまつり：速くなる前に、たたく絵（ごほうび）
     const el = $('cutin'), lv = CUTIN.levels[Math.min(i, CUTIN.levels.length - 1)];
     $('cutin-bpm').textContent = 'BPM ' + bpm;
     $('cutin-text').textContent = tr(lv.text);
