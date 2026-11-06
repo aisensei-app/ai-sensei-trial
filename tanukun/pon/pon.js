@@ -9,7 +9,7 @@
        ステージ3 まんぷく … おなかモードの ◉ が食べもの（🍙🍉🍡🌽）になる。吹き出しの「たべたい！」と
                       同じものだけたたく（ちがうものはミス）。正しく食べるほど、おなかがふくらんでいく
        ステージ1 ながれる … ◉ が右から左に流れてきて、左のわくに重なったときにたたく
-       ステージ4 おまつり … 第2章「島の夜祭り」の太鼓の絵で。◉ は太鼓の上に出る（ドン＝太鼓・カッ＝ふち）。〜 はおなか。
+       ステージ4 おまつり … 第2章「島の夜祭り」の太鼓の絵で、三三七拍子「ポンポンドンッ」。ポン＝おなかをタップ・ドンッ＝太鼓をタップ（2026-11-06 ユーザーと決めた）。
                       第2章を最後まで見ると開く（features.ponTaiko。2026-11-06 ユーザーと決めた）
    ・ピンクの「〜」は、指でおなかをさっとすべらせて「ぷるん」（たたくのとは別のアクション）
    ・タイミングが合うほど点数が高い。続けて合わせると右上のタヌくんが笑顔になる
@@ -144,13 +144,13 @@
   /* ステージ4 おまつり（第2章の太鼓の絵 1024×1536。matsuri/img）。hit … たたいたときに一瞬だけ出す絵
      view.cover … 画面いっぱいに映す（左右は少し切れる）。cx … 画面の横まんなかに来る所
      drum … 太鼓（絵のピクセル。ここをたたくと「ドン」＝おなかはへこまず、太鼓をたたく絵が一瞬出る）
-     purunArea … 〜 が出る所（おなか） */
+     bellyArea … ポン（おなか）の ◉ が出る所 */
   ARTS.taiko = {
     src: 'matsuri/img/taiko_ready.webp', hitSrc: 'matsuri/img/taiko_hit.webp', w: 1024, h: 1536,
     belly: { x: 51.8, y: 41.7, rx: 18.6, ry: 10.4 },   // おなか（中心 530, 640、半径 190, 160）
     view: { cover: true, cx: 600 },
     mole: { area: { x: 745, y: 975, rx: 165, ry: 55 }, gap: 95 },
-    purunArea: { x: 525, y: 635, rx: 110, ry: 75 },
+    bellyArea: { x: 525, y: 635, rx: 110, ry: 75 },
     drum: { cx: 750, cy: 1080, rx: 280, ry: 250 },
     drumHead: { cx: 750, cy: 935, rx: 230, ry: 52 },   // 太鼓の面（波紋を出す所）
     hit: { chest: { x0: 380, y0: 330, x1: 700, y1: 470 }, belly: { cx: 530, cy: 640, rx: 200, ry: 165 } },
@@ -165,8 +165,14 @@
      hitR   … 指が ◉ の中心からこれだけ（画面のピクセル）以内なら当たり */
   const MOLE = { appear: 1.0, area: ART.mole.area, gap: ART.mole.gap, hitR: 56 };
   const taiko = () => mode === 'taiko';
-  // ステージ4 おまつりの譜面：「ドン・ドン・カッカッ・ドン」（pon＝ドン、poko＝カッ）
-  const TAIKO_PATTERN = { 0: 'pon', 2: 'pon', 4: 'poko', 5: 'poko', 6: 'pon' };
+  /* ステージ4 おまつりの譜面：三三七拍子（昔からある日本の拍子）を「ポンポンドンッ」で（2026-11-06 ユーザーと決めた。エイトビートはやめた）
+       ポン ポン ドンッ ・ | ポン ポン ドンッ ・ | ポン ポン ドンッ ポン | ポン ドンッ ドンッ ・
+     pon＝おなかをタップ（ポン）、don＝太鼓をタップ（ドンッ）。1小節を8つに分けた位置（4分音符なので 0・2・4・6）。〜（ぷるん）はなし
+     sections … 速さ（bpm）と小節の数（4小節で三三七が1回）。最後に「ドンッ」で決める */
+  const TAIKO_SONG = {
+    sections: [{ bpm: 80, bars: 4 }, { bpm: 92, bars: 4 }, { bpm: 104, bars: 4 }],
+    bars: [{ 0: 'pon', 2: 'pon', 4: 'don' }, { 0: 'pon', 2: 'pon', 4: 'don' }, { 0: 'pon', 2: 'pon', 4: 'don', 6: 'pon' }, { 0: 'pon', 2: 'don', 4: 'don' }]
+  };
   /* ステージ3 まんぷく
      foods      … 出てくる食べもの（形と色が似ていないものを選ぶ）
      appear     … 食べものが出てから、たたく時までの秒数（吹き出しを切りかえる間をとるため、おなかモードより短く）
@@ -209,12 +215,12 @@
   const stageName = (m) => tr('ステージ{n}（{s}）', { n: STAGES[m].num, s: tr(STAGES[m].label) });
   /* ステージが始まってから最初の ◉ が出るまでの間（数を数えている間）に出す、遊び方の説明
      ◉ や 〜 は、ゲームの中と同じ見た目の小さな絵で出す */
-  const NOTE_IC = '<i class="ic-note"></i>', PURUN_IC = '<i class="ic-purun">〜</i>';
+  const NOTE_IC = '<i class="ic-note"></i>', PURUN_IC = '<i class="ic-purun">〜</i>', DRUM_IC = '<i class="ic-note ic-don"></i>';
   const HOWTO = {   // {note} は ◉、{purun} は 〜 の小さな絵に入れかわる
     lane:  ['{note} が わくに来たら <b>タップ</b>', '{purun} は さっと <b>すべらせる</b>'],
     belly: ['{note} に 輪が重なったら <b>タップ</b>', '{purun} は さっと <b>すべらせる</b>'],
     food:  ['「🍙 たべたい！」なら 🍙 を <b>タップ</b>', 'ちがうものは たたかないでね'],
-    taiko: ['{note} に 輪が重なったら 太鼓を <b>タップ</b>', '{purun} は おなかを さっと <b>すべらせる</b>']
+    taiko: ['{note} は おなかを <b>タップ</b>（ポン）', '{drum} は 太鼓を <b>タップ</b>（ドンッ）']
   };
   const onBelly = () => mode !== 'lane';   // ◉ がおなかの上に出るステージ（おなか・まんぷく）
   const appearT = () => (mode === 'food' ? FOOD.appear : MOLE.appear);
@@ -473,17 +479,6 @@
     o.start(t); o.stop(t + 0.65);
     hitNoise(t, 500, 0.35 * vol, 0.07);
   }
-  // カッ：太鼓のふちをたたく、かわいた短い音
-  function soundKa(t, vol) {
-    const o = ac.createOscillator(), g = ac.createGain();
-    o.type = 'square';
-    o.frequency.setValueAtTime(1150, t);
-    o.frequency.exponentialRampToValueAtTime(800, t + 0.03);
-    env(g, t, 0.16 * vol, 0.05);
-    o.connect(g).connect(ac.destination);
-    o.start(t); o.stop(t + 0.07);
-    hitNoise(t, 3200, 0.45 * vol, 0.04);
-  }
   // ぷるん：音がふるえながら下がる「ぷるるん」
   function soundPurun(t) {
     const o = ac.createOscillator(), g = ac.createGain();
@@ -578,10 +573,11 @@
     const food = mode === 'food';
     let want = null;
     let t = 0;
-    const first = SONG.sections[0].bpm;
+    const TK = taiko(), SEC = TK ? TAIKO_SONG.sections : SONG.sections;
+    const first = SEC[0].bpm;
     for (let i = 0; i < SONG.countIn; i++) clicks.push({ t: t + i * 60 / first, high: i === 0 });
     t += SONG.countIn * 60 / first;
-    SONG.sections.forEach((sec, si) => {
+    SEC.forEach((sec, si) => {
       const eighth = 30 / sec.bpm;
       const gapStart = t;   // カットインの始まり（2つ目からの速さ）
       if (si === 0) {
@@ -591,7 +587,7 @@
         banners.push({ t: t, bpm: sec.bpm, cutin: si - 1 });   // 何回目のカットインか（0 から）
         if (food) grows.push(t + CUTIN.growAfter);
         for (let e = 0; e < 8; e++) {
-          hats.push({ t: t, accent: e % 2 === 0 });
+          if (!TK || e % 2 === 0) hats.push({ t: t, accent: e % 2 === 0 });
           t += eighth;
         }
       }
@@ -604,9 +600,9 @@
       let firstInSec = true;
       for (let b = 0; b < sec.bars; b++) {
         for (let e = 0; e < 8; e++) {
-          hats.push({ t: t, accent: e % 2 === 0 });
-          const purun = !food && b % SONG.purun.every === SONG.purun.every - 1 && e === SONG.purun.at;
-          const pat = taiko() ? TAIKO_PATTERN : SONG.pattern;
+          if (!TK || e % 2 === 0) hats.push({ t: t, accent: e % 2 === 0 });   // おまつりは、シャカシャカも4分音符だけ（落ちついた感じに）
+          const purun = !food && !TK && b % SONG.purun.every === SONG.purun.every - 1 && e === SONG.purun.at;
+          const pat = TK ? TAIKO_SONG.bars[b % 4] : SONG.pattern;
           if (pat[e]) {
             const n = { t: t, kind: purun ? 'purun' : pat[e] };
             if (food) {
@@ -621,11 +617,11 @@
       }
     });
     // 最後に「ぽん！」で決める
-    notes.push(food ? { t: t, kind: 'pon', last: true, target: true, food: want } : { t: t, kind: 'pon', last: true });
+    notes.push(food ? { t: t, kind: 'pon', last: true, target: true, food: want } : { t: t, kind: TK ? 'don' : 'pon', last: true });
     // おなかモード：◉ の出る場所をランダムに（前の2つの ◉ から gap 以上はなす）
     notes.forEach((n, i) => {
-      // おまつり：〜 はおなかの上、ほかは太鼓の上
-      const A = taiko() && n.kind === 'purun' ? ART.purunArea : MOLE.area;
+      // おまつり：ポンはおなかの上、ドンッは太鼓の上
+      const A = TK && n.kind === 'pon' ? ART.bellyArea : MOLE.area;
       for (let k = 0; k < 30; k++) {
         const a = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random());
         n.ix = A.x + Math.cos(a) * r * A.rx;
@@ -746,8 +742,8 @@
     showBar();
     // 遊び方の説明：最初の ◉ が見えはじめる少し前に消す
     const howto = $('howto');
-    howto.innerHTML = HOWTO[mode].map((line) => '<p>' + tr(line, { note: NOTE_IC, purun: PURUN_IC }) + '</p>').join('') +
-      '<p class="howto-sub">' + tr('8ビート・だんだん速くなるよ') + '</p>';
+    howto.innerHTML = HOWTO[mode].map((line) => '<p>' + tr(line, { note: NOTE_IC, purun: PURUN_IC, drum: DRUM_IC }) + '</p>').join('') +
+      '<p class="howto-sub">' + tr(taiko() ? '三三七拍子・だんだん速くなるよ' : '8ビート・だんだん速くなるよ') + '</p>';
     howto.classList.remove('out', 'top');
     howto.hidden = false;
     howtoUntil = chart.notes[0].t - (mode === 'lane' ? 0.6 : appearT() + 0.1);
@@ -864,7 +860,7 @@
     return j;
   }
   function tap(p) {
-    const found = playing ? nearest(p.now, ['pon', 'poko'], p) : null;
+    const found = playing ? nearest(p.now, ['pon', 'poko', 'don'], p) : null;
     // まんぷく：「たべたい」でない食べものをたたいた → ミス
     if (found && found.note.food && !found.note.target && found.d <= MISS_AFTER) {
       found.note.done = true;
@@ -879,10 +875,10 @@
     const kind = found && found.d < 0.25 ? found.note.kind : 'pon';
     // おまつり：太鼓をたたいたら「ドン」「カッ」（おなかをたたいたときは、いつもの「ぽん」）
     const drum = taiko() && p.drum;
-    if (ac) (drum ? (kind === 'poko' ? soundKa : soundDon) : kind === 'poko' ? soundPoko : soundPon)(ac.currentTime, 1);
+    if (ac) (drum ? soundDon : kind === 'poko' ? soundPoko : soundPon)(ac.currentTime, 1);
     react(false);
     const eat = found && found.note.food;
-    popWord(tr(eat ? 'ぱくっ！' : drum ? (kind === 'poko' ? 'カッ！' : 'ドン！') : kind === 'poko' ? 'ぽこ！' : 'ぽん！'), p.sx, p.sy, kind);
+    popWord(tr(eat ? 'ぱくっ！' : drum ? 'ドンッ！' : kind === 'poko' ? 'ぽこ！' : taiko() ? 'ポン！' : 'ぽん！'), p.sx, p.sy, drum ? 'don' : kind);
     if (playing && hit(found, p.now) && eat) feed();
   }
   // まんぷく：食べた数に合わせて、おなかをふくらませる
@@ -963,7 +959,7 @@
     let area = areaAt(ix, iy);
     if (area !== 'body' && area !== 'drum' && playing && ac && onBelly()) {
       const late = Math.min(0.1, Math.max(0, (performance.now() - e.timeStamp) / 1000));
-      if (nearest(songTime() - late, ['pon', 'poko', 'purun'], { sx: sx, sy: sy })) area = 'body';
+      if (nearest(songTime() - late, ['pon', 'poko', 'don', 'purun'], { sx: sx, sy: sy })) area = 'body';
     }
     if (area === 'skirt') { belly.nudge('skirt', (skirtSide++ % 2 ? 1 : -1) * 5, 2); return; }   // 腰みのが少し揺れるだけ
     if (!area) return;   // からぶり
@@ -976,7 +972,7 @@
       // 指が触れた瞬間（イベントが届くまでの遅れを差し引く）
       const late = Math.min(0.1, Math.max(0, (performance.now() - e.timeStamp) / 1000));
       p.now = songTime() - late;
-      const t = nearest(p.now, ['pon', 'poko'], p), pr = nearest(p.now, ['purun'], p);
+      const t = nearest(p.now, ['pon', 'poko', 'don'], p), pr = nearest(p.now, ['purun'], p);
       if (pr && pr.d <= MISS_AFTER && (!t || pr.d < t.d)) { p.wait = true; return; }
     }
     p.wait = true;   // 遊んでいないとき：すべらせたら「ぷるん」、離したら「ぽん」

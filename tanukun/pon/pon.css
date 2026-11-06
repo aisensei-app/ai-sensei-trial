@@ -712,3 +712,12 @@ body.in-x .result.scroll-more::after { bottom: 25vh; }
 .btn-taiko .lock { font-size: 14px; margin-left: 2px; }
 .taiko-note { margin: 2px 0 0; font-size: 13px; font-weight: bold; color: #8A4A1A; text-align: center; }
 .taiko-note.show { animation: banner 2.4s ease-out forwards; }
+/* おまつりの「ドンッ」（太鼓をタップ）：赤い ◉ と輪。ポン（おなか）はいつものオレンジ */
+.mole.don {
+  width: 72px; height: 72px;
+  margin: -36px 0 0 -36px;
+  background: radial-gradient(circle, #fff 0 18%, rgba(200, 40, 46, .7) 19%);
+}
+.mole.don .ring { border-color: #E0383E; }
+.pop.don { font-size: 30px; -webkit-text-stroke-color: #A8222A; }
+.ic-note.ic-don { background: radial-gradient(circle, #7A1A1A 0 30%, #fff 31% 45%, #E0383E 46%); }
