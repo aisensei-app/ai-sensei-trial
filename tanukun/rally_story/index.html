@@ -37,8 +37,10 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
 .chara img{position:absolute;inset:0;height:100%;width:auto;display:block}
 .chara img+img{opacity:0}           /* 表情は2枚を重ねて、ふわっと切りかえる */
 #tanu{left:33%;aspect-ratio:627/900;z-index:1}
+#tanu img{transform:scaleX(-1)}   /* 左右反転して、ウルくんと向き合う（2026-11-06 お試し） */
 #uru{left:73%;aspect-ratio:491/850;height:calc(94% * 850 / 900);z-index:1}
 #uru.away{left:120%}
+#tanu.talk,#uru.talk{z-index:3}   /* 話している方を手前に（id の z-index より強く） */
 #tanu.solo{left:50%}            /* ウルくんが来る前は、タヌくんがまんなか */
 .chara.on{opacity:1}
 .chara.talk{filter:none;transform:translateX(-50%) scale(1);z-index:2}
