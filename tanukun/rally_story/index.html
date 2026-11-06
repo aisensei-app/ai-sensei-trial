@@ -3,16 +3,16 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="claude:viewport-fit-sides" content="cover">
 <!--
-  タヌくん：ラリーの序章「ウルくんとの出会い」のお試し版（2026-11-06）
-  ・目的：恋愛ゲームの形（背景＋左右の立ち絵＋名前の札つきセリフ枠）で、2人の会話が見やすいかを確かめる
-  ・絵：img/bg_court.webp（キャラのいない浜のコート・横長）
-        img/tanu_*.webp（本編の立ち絵。正面寄り・仮）／img/uru_*.webp（ウルくん。マゼンタを key_out で抜いた）
-        img/intro_invite.webp・intro_sand.webp（1枚絵＝スチル。序章の頭と終わり）
-  ・背の高さは 180cm：170cm（img を作るときに 900px：850px にそろえた）
-  ・話している方を明るく・少し前へ。話していない方は少し暗く・小さく
-  ・セリフは仮（ユーザーと相談中）。本編にはまだつないでいない
+  タヌくん：第3章（ラリーの物語）のお試し版（2026-11-06〜07）
+  ・話は3つ（右上の「話」で切りかえ・URL の ?part=0〜2 でも）
+      0 序章：ウルくんとの出会い → 背中を押されて、おなかのアップで「ぽよん」
+      1 特訓（3日目）：転んで砂まみれ → {name}が指でなぞると砂が落ちる（砂あり・砂なしの2枚を重ねて、なぞった所だけ消す）
+      2 前夜（6日目）：ふたりきりの夜。「もたれかかっても、いい…？」→ 二択 → 絵が寄って暗くなる（もたれた＝余白）
+  ・絵：img/bg_court.webp・tanu_*（本編の立ち絵を左右反転）・uru_*・intro_*・push_bump・sand_sandy／sand_clean・night_ask／night_relief
+  ・おなかの「ぷるん」は第2章（matsuri）と同じ「ばね」と網目の変形（Jig）。点滅はしない（ちかちか対策）
+  ・セリフは仮。本編にはまだつないでいない
 -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&display=swap&text=%E3%81%BD%E3%82%88%E3%82%93%EF%BC%81">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&display=swap&text=%E3%81%BD%E3%82%88%E3%82%93%EF%BC%81%E3%81%9A%E3%81%95%E3%83%BC%E3%81%A3">
 <style>
 :root{
   --ink:#4A2C1A; --orange:#F08A3C; --orange-d:#C8641E; --uru:#5B7FA6; --uru-d:#3E5F84;
@@ -28,9 +28,12 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
 #game{position:fixed;inset:0;display:flex;flex-direction:column;cursor:pointer;touch-action:manipulation;
   max-width:520px;margin:0 auto}
 #stage{position:relative;flex:1;min-height:0;overflow:hidden;background:#87c6ef}
+#stage.dark{background:#0b1024}
+#stage.quake{animation:quake .35s ease-out}
+@keyframes quake{0%,100%{translate:0 0}25%{translate:0 4px}50%{translate:0 -3px}75%{translate:0 2px}}
 /* 背景（横長の絵を、ネットが見える所で切り取る） */
-#bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:62% 50%;
-  transition:object-position 1.6s cubic-bezier(.35,.05,.25,1)}
+#bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:62% 50%;transition:opacity .6s}
+#stage.dark #bg{opacity:0}
 /* 立ち絵 */
 .chara{position:absolute;bottom:-16%;height:94%;transform:translateX(-50%) translateY(0) scale(.96);transform-origin:50% 100%;
   filter:brightness(.8) saturate(.9);transition:filter .35s,transform .35s,opacity .5s,left .6s cubic-bezier(.3,.1,.25,1);
@@ -38,13 +41,13 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
 .chara img{position:absolute;inset:0;height:100%;width:auto;display:block}
 .chara img+img{opacity:0}           /* 表情は2枚を重ねて、ふわっと切りかえる */
 #tanu{left:33%;aspect-ratio:627/900;z-index:1}
-#tanu img{transform:scaleX(-1)}   /* 左右反転して、ウルくんと向き合う（2026-11-06 お試し） */
+#tanu img{transform:scaleX(-1)}   /* 左右反転して、ウルくんと向き合う */
 #uru{left:73%;aspect-ratio:491/850;height:calc(94% * 850 / 900);z-index:1}
 #uru.away{left:120%}
-#tanu.talk,#uru.talk{z-index:3}   /* 話している方を手前に（id の z-index より強く） */
 #tanu.solo{left:50%}            /* ウルくんが来る前は、タヌくんがまんなか */
 .chara.on{opacity:1}
-.chara.talk{filter:none;transform:translateX(-50%) scale(1);z-index:2}
+.chara.talk{filter:none;transform:translateX(-50%) scale(1)}
+#tanu.talk,#uru.talk{z-index:3}   /* 話している方を手前に（id の z-index より強く） */
 .chara.hop{animation:hop .5s ease-out}
 .chara.shake{animation:shake .5s ease-in-out}
 @keyframes hop{0%,100%{translate:0 0}35%{translate:0 -6%}60%{translate:0 0}80%{translate:0 -1.5%}}
@@ -52,22 +55,44 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
 /* 1枚絵（スチル） */
 .still{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 25%;opacity:0;transition:opacity .8s;z-index:3}
 .still.on{opacity:1}
-/* 押されて飛びこんでくる場面（1枚絵＋おなかのぷるん）。canvas に描き直す */
-#bump{position:absolute;inset:0;z-index:6;opacity:0;transition:opacity .25s}
-#bump.on{opacity:1;touch-action:none}
-#bump canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+/* おなかが揺れる1枚絵（canvas に描き直す）：押されて飛びこむ・砂はらい */
+.jig{position:absolute;inset:0;z-index:6;opacity:0;transition:opacity .35s;pointer-events:none}
+.jig.on{opacity:1;pointer-events:auto;touch-action:none}
+.jig canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 #bump.beat{animation:beat 2.7s ease-in-out}
 @keyframes beat{0%,100%{transform:scale(1)}8%{transform:scale(1.025)}16%{transform:scale(1)}24%{transform:scale(1.018)}33%{transform:scale(1)}
   41%{transform:scale(1.025)}49%{transform:scale(1)}57%{transform:scale(1.018)}66%{transform:scale(1)}}
 #tanu.lunge{left:50%;transform:translateX(-50%) scale(1.9);transform-origin:50% 45%;filter:none;z-index:3;
   transition:left .45s ease-in,transform .45s cubic-bezier(.5,0,.9,.6)}
+#tanu.dive{left:55%;transform:translateX(-50%) translateY(18%) rotate(14deg) scale(1.05);filter:none;z-index:3;
+  transition:left .35s ease-in,transform .35s cubic-bezier(.5,0,.9,.6)}
 #uru.pushed{left:60%;z-index:1;transition:left .3s ease-out}   /* ウルくんはタヌくんのうしろへ回って押す */
 #tanu.front{z-index:4;filter:none}
+/* 夜（前夜）：絵を包む2重の箱。外＝もたれる動き（寄る・傾く・暗く）、内＝ゆっくりした鼓動 */
+#night{position:absolute;inset:0;z-index:5;opacity:0;transition:opacity 1s;overflow:hidden;background:#0b1024}
+#night.on{opacity:1}
+#night .lean{position:absolute;inset:0;transition:transform 1.8s cubic-bezier(.35,.05,.25,1),filter 1.8s ease}
+#night.leaning .lean{transform:translateX(20%) translateY(5%) rotate(-7deg) scale(1.2);filter:brightness(.32) blur(2.5px)}
+#night .beat{position:absolute;inset:0}
+#night.leaning .beat{animation:slowbeat 1.5s ease-in-out infinite}
+@keyframes slowbeat{0%,100%{transform:scale(1)}12%{transform:scale(1.012)}24%{transform:scale(1)}36%{transform:scale(1.008)}48%{transform:scale(1)}}
+#night img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 30%;transition:opacity .9s}
+#night img.off{opacity:0}
 .pop{position:absolute;z-index:8;left:50%;top:50%;transform:translate(-50%,-50%);font-family:"Mochiy Pop One",var(--display);
   font-size:clamp(30px,9vw,40px);color:#fff;-webkit-text-stroke:6px var(--orange-d);paint-order:stroke fill;
   text-shadow:0 3px 0 #9E4A12;pointer-events:none;opacity:0;white-space:nowrap}
 .pop.go{animation:pop 1s ease-out}
 @keyframes pop{0%{opacity:0;transform:translate(-50%,-30%) scale(.6)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}35%{transform:translate(-50%,-50%) scale(1)}75%{opacity:1}100%{opacity:0;transform:translate(-50%,-70%)}}
+/* 操作ガイド（押せない・ふわっと出て消える） */
+.hint{position:absolute;z-index:8;left:50%;bottom:64px;transform:translateX(-50%);background:rgba(255,255,255,.9);color:var(--orange-d);
+  font-size:14px;font-weight:800;padding:7px 14px;border-radius:99px;box-shadow:0 2px 8px rgba(0,0,0,.25);white-space:nowrap;
+  opacity:0;transition:opacity .5s;pointer-events:none}
+.hint.on{opacity:1}
+/* 砂のはらい具合 */
+.meter{position:absolute;z-index:8;left:50%;bottom:50px;transform:translateX(-50%);width:120px;height:8px;border-radius:99px;
+  background:rgba(255,255,255,.55);overflow:hidden;opacity:0;transition:opacity .5s;pointer-events:none}
+.meter.on{opacity:1}
+.meter i{display:block;height:100%;width:0;background:var(--orange);border-radius:99px;transition:width .2s}
 #stage::after{content:"";position:absolute;left:0;right:0;bottom:0;height:40px;z-index:7;
   background:linear-gradient(transparent,#2a1a10);pointer-events:none}
 /* セリフの枠 */
@@ -80,16 +105,23 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
 .more{position:absolute;right:16px;bottom:8px;color:var(--orange-d);font-size:14px;opacity:0}
 .more.on{opacity:1;animation:bob 1s ease-in-out infinite}
 @keyframes bob{50%{transform:translateY(3px)}}
-.btns{position:absolute;left:0;right:0;bottom:100%;z-index:5;display:flex;justify-content:center;margin-bottom:6px}
+.btns{position:absolute;left:0;right:0;bottom:100%;z-index:5;display:flex;justify-content:center;gap:12px;margin-bottom:6px}
 .btns[hidden]{display:none}
 .btn{border:0;border-radius:99px;font:inherit;font-weight:800;font-size:17px;padding:12px 30px;cursor:pointer;
   background:var(--orange);color:#fff;box-shadow:0 4px 0 var(--orange-d)}
+/* 二択：白い丸・ぷっくり（第2章と同じ） */
+.btn.alt{background:#fff;color:var(--orange-d);padding:13px 24px;border:2px solid #FFD2A6;
+  box-shadow:0 5px 0 #E3B98F,0 10px 18px rgba(0,0,0,.30);animation:btnIn .45s ease-out backwards}
+.btn.alt:nth-child(2){animation-delay:.15s}
+@keyframes btnIn{from{opacity:0;transform:translateY(10px) scale(.96)}to{opacity:1;transform:none}}
 /* 道具ボタン */
 .tool{position:absolute;top:12px;z-index:9;border:0;border-radius:99px;background:rgba(255,255,255,.72);color:var(--ink);
   font:inherit;font-size:13px;font-weight:800;padding:7px 12px;cursor:pointer}
 #nm{right:16px}
+#part{right:132px}
 #step{left:16px;cursor:default}
-@media (prefers-reduced-motion:reduce){#bump.beat,.chara.hop,.chara.shake{animation:none}#tanu.lunge{transition:none}.more.on{animation:none}}
+@media (prefers-reduced-motion:reduce){#bump.beat,#night.leaning .beat,#stage.quake,.chara.hop,.chara.shake{animation:none}
+  #tanu.lunge,#tanu.dive{transition:none}.more.on{animation:none}}
 </style>
 
 <div id="game">
@@ -99,51 +131,89 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
     <div class="chara away" id="uru"><img alt=""><img alt=""></div>
     <img class="still" data-k="invite" src="img/intro_invite.webp" alt="">
     <img class="still" data-k="sand" src="img/intro_sand.webp" alt="">
-    <div id="bump" data-belly="510,1050,520,390"><canvas></canvas></div>
-    <div class="pop" id="pop">ぽよん！</div>
+    <div class="jig" id="bump"><canvas></canvas></div>
+    <div class="jig" id="sand"><canvas></canvas></div>
+    <div id="night"><div class="lean"><div class="beat">
+      <img data-k="ask" src="img/night_ask.webp" alt="">
+      <img data-k="relief" class="off" src="img/night_relief.webp" alt="">
+    </div></div></div>
+    <div class="pop" id="pop"></div>
+    <div class="hint" id="hint"></div>
+    <div class="meter" id="meter"><i></i></div>
     <span class="tool" id="step"></span>
+    <button class="tool" id="part" type="button"></button>
     <button class="tool" id="nm" type="button"></button>
   </div>
   <div id="talk">
-    <div class="btns" hidden><button class="btn" id="again" type="button">もう一度</button></div>
+    <div class="btns" hidden></div>
     <div class="box"><span class="name"></span><span id="text"></span><span class="more">▼</span></div>
   </div>
 </div>
 
 <script>
 (() => {
-  // セリフ（仮）。who＝話す人（tanu／uru）・t／u＝その行の表情（書かないと前のまま）
-  // still＝1枚絵（invite／sand）・uru＝ウルくんの出入り（'in'）・anim＝動き（hop／shake）・label＝名前の札（初登場の「？？？」）
-  const LINES = [
-    { still: 'invite', who: 'tanu', text: '{name}！ 浜でね、ボールを見つけたんだ♪' },
-    { still: 'invite', who: 'tanu', text: 'いっしょに、ぽよんラリーしよ！' },
-    { who: 'tanu', t: 'happy', text: 'あ、そうだ。今日はね、{name}に会ってほしい友だちがいるんだ。' },
-    { who: 'uru', uru: 'in', u: 'laugh', label: '？？？', text: 'おーい、タヌくーん！' },
-    { who: 'tanu', t: 'happy', anim: 'hop', text: 'ウルくん！ こっちこっち♪' },
-    { who: 'uru', u: 'normal', text: 'きみが{name}だね！\nはじめまして、ウルだよ。よろしくね♪' },
-    { who: 'tanu', t: 'normal', text: 'ウルくんはね、となりの島に住んでる、ぼくの幼なじみなんだ。' },
-    { who: 'uru', u: 'laugh', text: 'タヌくんね、{name}の話をするとき、いっつも すっごくうれしそうなんだ。\nだから、ぼくも会ってみたかったんだ。' },
-    { who: 'tanu', t: 'shy', anim: 'shake', text: 'ウ、ウルくん…！ それ、言わないでって…' },
-    { who: 'uru', u: 'surprise', anim: 'hop', text: 'あれっ、ないしょだった？ ごめんごめん！' },
-    { who: 'uru', u: 'normal', text: 'でもさ、タヌくん。{name}に言いたいこと、あるんでしょ？' },
-    { who: 'uru', u: 'laugh', fx: 'push', text: 'ほらっ、いってらっしゃい！' },
-    { bump: true, fx: 'bump', who: 'tanu', text: 'わわっ…！' },
-    { bump: true, who: 'tanu', text: 'ご、ごめん、{name}…！\nぶつかっちゃった…' },
-    { bump: true, who: 'tanu', text: '……でも、{name}、あったかいね。' },
-    { bump: true, who: 'tanu', text: '…あのね。\nぼく、{name}とラリーするの、ずっと楽しみにしてたんだ。' },
-    { who: 'uru', u: 'laugh', anim: 'hop', text: 'よーし！ じゃあ3人で、ぽよんラリーだ！' },
-    { still: 'sand', who: 'tanu', text: 'えへへ…ころんじゃった。' },
-    { still: 'sand', who: 'tanu', text: 'でも、{name}とウルくんとだと、すっごく楽しいね♪' },
-    { still: 'sand', who: 'uru', text: 'またやろうね、{name}！' }
+  /* ===== セリフ（仮） =====
+     who＝話す人（tanu／uru）・t／u＝表情・still＝1枚絵（invite／sand）・uru:'in'＝ウルくん登場・anim＝hop／shake・label＝名前の札
+     fx：push（ウルくんが押す）・bump（飛びこむ→おなかアップ）・dive（ボールに飛びつく→砂まみれ）
+     jig：'bump'／'sand'＝おなかが揺れる1枚絵を出す・interact:'sand'＝砂をはらい終わるまで進まない
+     night：'ask'／'relief'＝夜の絵・lean＝もたれている間（絵が寄って暗く）・choice＝二択（どちらでも先は同じ。alt＝選んだ側で変わる次の行） */
+  const PARTS = [
+    { title: '序章', start: 'solo', lines: [
+      { still: 'invite', who: 'tanu', text: '{name}！ 浜でね、ボールを見つけたんだ♪' },
+      { still: 'invite', who: 'tanu', text: 'いっしょに、ぽよんラリーしよ！' },
+      { who: 'tanu', t: 'happy', text: 'あ、そうだ。今日はね、{name}に会ってほしい友だちがいるんだ。' },
+      { who: 'uru', uru: 'in', u: 'laugh', label: '？？？', text: 'おーい、タヌくーん！' },
+      { who: 'tanu', t: 'happy', anim: 'hop', text: 'ウルくん！ こっちこっち♪' },
+      { who: 'uru', u: 'normal', text: 'きみが{name}だね！\nはじめまして、ウルだよ。よろしくね♪' },
+      { who: 'tanu', t: 'normal', text: 'ウルくんはね、となりの島に住んでる、ぼくの幼なじみなんだ。' },
+      { who: 'uru', u: 'laugh', text: 'タヌくんね、{name}の話をするとき、いっつも すっごくうれしそうなんだ。\nだから、ぼくも会ってみたかったんだ。' },
+      { who: 'tanu', t: 'shy', anim: 'shake', text: 'ウ、ウルくん…！ それ、言わないでって…' },
+      { who: 'uru', u: 'surprise', anim: 'hop', text: 'あれっ、ないしょだった？ ごめんごめん！' },
+      { who: 'uru', u: 'normal', text: 'でもさ、タヌくん。{name}に言いたいこと、あるんでしょ？' },
+      { who: 'uru', u: 'laugh', fx: 'push', text: 'ほらっ、いってらっしゃい！' },
+      { jig: 'bump', fx: 'bump', who: 'tanu', text: 'わわっ…！' },
+      { jig: 'bump', who: 'tanu', text: 'ご、ごめん、{name}…！\nぶつかっちゃった…' },
+      { jig: 'bump', who: 'tanu', text: '……でも、{name}、あったかいね。' },
+      { jig: 'bump', who: 'tanu', text: '…あのね。\nぼく、{name}とラリーするの、ずっと楽しみにしてたんだ。' },
+      { who: 'uru', u: 'laugh', anim: 'hop', text: 'よーし！ じゃあ3人で、ぽよんラリーだ！' },
+      { still: 'sand', who: 'tanu', text: 'えへへ…ころんじゃった。' },
+      { still: 'sand', who: 'tanu', text: 'でも、{name}とウルくんとだと、すっごく楽しいね♪' },
+      { still: 'sand', who: 'uru', text: 'またやろうね、{name}！' }
+    ] },
+    { title: '特訓', start: 'duo', lines: [
+      { who: 'uru', u: 'laugh', text: 'よーし！ 今日は、大会に向けて特訓だよ！' },
+      { who: 'tanu', t: 'happy', anim: 'hop', text: '{name}も見ててね！ ぼく、がんばるから♪' },
+      { who: 'uru', u: 'normal', text: 'いくよ、タヌくん！ それっ！' },
+      { who: 'tanu', t: 'happy', fx: 'dive', text: 'とりゃ〜っ！' },
+      { jig: 'sand', who: 'uru', text: 'あはは！ タヌくん、砂まみれだ〜！' },
+      { jig: 'sand', who: 'tanu', text: 'えへへ…ころんじゃった。' },
+      { jig: 'sand', who: 'uru', text: 'ぼくはタオル持ってるから、\n{name}は、お腹の砂をはらってあげて！' },
+      { jig: 'sand', who: 'tanu', interact: 'sand', text: 'えっ、{name}が…？\n…じゃあ、お願い、しようかな…' },
+      { jig: 'sand', who: 'tanu', text: '…えへへ。\n{name}にはらってもらうの、なんだか、うれしいな。' },
+      { jig: 'sand', who: 'uru', text: 'ピカピカだね！ はい、タオル♪' },
+      { jig: 'sand', who: 'tanu', text: '大会、もうすぐなんだ。\n…{name}、また見に来てくれる？' }
+    ] },
+    { title: '前夜', start: 'night', lines: [
+      { night: 'ask', who: 'tanu', text: '{name}、来てくれたんだ。\n…えへへ、なんだか、眠れなくて。' },
+      { night: 'ask', who: 'tanu', text: '明日の大会、負けちゃったら…\n{name}に、かっこ悪いとこ見せちゃうな…' },
+      { night: 'ask', who: 'tanu', choice: ['いいよ', 'もちろん'], text: 'あのね、{name}…\nちょっとだけ、もたれかかっても、いい…？' },
+      { night: 'ask', who: 'tanu', alt: ['…ほんと？\nえへへ…じゃあ、ちょっとだけ…', '…もちろん、って。\nえへへ…じゃあ、ちょっとだけ…'] },
+      { night: 'ask', lean: true, who: 'tanu', text: '……あったかい。' },
+      { night: 'ask', lean: true, who: 'tanu', text: 'とくん、とくんって…\nなんだか、落ちつくな。' },
+      { night: 'ask', lean: true, who: 'tanu', text: '{name}がいてくれたら、\n明日、がんばれる気がする。' },
+      { night: 'relief', who: 'tanu', text: 'ありがと、{name}。\n…今夜のことは、ふたりだけのひみつだよ♪' },
+      { night: 'relief', who: 'tanu', text: '明日、いっしょにがんばろうね。' }
+    ] }
   ];
   const NAMES = { tanu: 'タヌくん', uru: 'ウルくん' };
+  const NAME = 'コンちゃん';
 
   const $ = (s) => document.querySelector(s);
-  const ch = { tanu: $('#tanu'), uru: $('#uru') };
-  const face = { tanu: 'normal', uru: 'normal' };
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const stage = $('#stage'), ch = { tanu: $('#tanu'), uru: $('#uru') };
   const textEl = $('#text'), nameEl = $('.name'), more = $('.more'), btns = $('.btns');
-  let i = -1, typing = null, full = '', useName = true;
-  const NAME = 'コンちゃん';
+  let part = Math.max(0, Math.min(2, +(new URLSearchParams(location.search).get('part') || 0)));
+  let LINES = PARTS[part].lines, i = -1, typing = null, full = '', useName = true, picked = 0, waitChoice = false, waitSand = false;
 
   // 名前：なしの人は、文頭の「{name}、」は消し、文の途中は「きみ」（本編の withName と同じ）
   function withName(s) {
@@ -163,49 +233,301 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
     nxt.src = src;
     if (nxt.complete) nxt.onload();
   }
-  function anim(who, a) {
-    const el = ch[who];
-    el.classList.remove('hop', 'shake'); void el.offsetWidth; el.classList.add(a);
-  }
+  function anim(who, a) { const el = ch[who]; el.classList.remove('hop', 'shake'); void el.offsetWidth; el.classList.add(a); }
   function type(s) {
     clearInterval(typing); full = s; textEl.textContent = ''; more.classList.remove('on');
     let n = 0;
     typing = setInterval(() => {
       n++; textEl.textContent = full.slice(0, n);
-      if (n >= full.length) { clearInterval(typing); typing = null; more.classList.add('on'); }
+      if (n >= full.length) { clearInterval(typing); typing = null; if (!waitChoice && !waitSand) more.classList.add('on'); }
     }, 38);
   }
+  function popWord(w) { const p = $('#pop'); p.textContent = w; p.classList.remove('go'); void p.offsetWidth; p.classList.add('go'); }
+  let hintT = 0;
+  function hint(s, ms) { const h = $('#hint'); h.textContent = s; h.classList.add('on'); clearTimeout(hintT); if (ms) hintT = setTimeout(() => h.classList.remove('on'), ms); }
+  function hideHint() { $('#hint').classList.remove('on'); }
+
+  /* ===== おなかが揺れる1枚絵（Jig）：第2章 matsuri と同じ「ばね」と網目の変形 =====
+     src＝絵（img か canvas）・belly＝おなかの楕円（絵の中の px）・pos＝object-position と同じ・pull＝指で引っぱれるか
+     overlay(ctx)＝変形のあとに上から描く物（砂つぶ・ほおの赤み）・busy()＝描き続ける必要があるか */
+  function Jig(el, o) {
+    const cv = el.querySelector('canvas'), E = o.belly, SPRING = 420, DAMP = 4.5, N = 30;
+    const B = { x: 0, v: 0, pk: 0, pkv: 0, pcx: E.cx, pcy: E.cy, px: 0, py: 0, pvx: 0, pvy: 0, drag: false, run: false };
+    let ripples = [];
+    const PULL = E.rx * .28, WAVE_L = E.rx * .21, WAVE_V = E.rx, WAVE_A = E.rx * .03;
+    const dims = () => [o.src.naturalWidth || o.src.width, o.src.naturalHeight || o.src.height];
+    function fit() {
+      const r = el.getBoundingClientRect(), [iw, ih] = dims(), s = Math.max(r.width / iw, r.height / ih);
+      return { W: r.width, H: r.height, s, ox: (r.width - iw * s) * o.pos[0], oy: (r.height - ih * s) * o.pos[1], r };
+    }
+    const toImg = (e) => { const f = fit(); return { x: (e.clientX - f.r.left - f.ox) / f.s, y: (e.clientY - f.r.top - f.oy) / f.s }; };
+    const inBelly = (q) => ((q.x - E.cx) / E.rx) ** 2 + ((q.y - E.cy) / E.ry) ** 2 < 1;
+    function warp(x, y) {
+      const nx = (x - E.cx) / E.rx, ny = (y - E.cy) / E.ry, d = nx * nx + ny * ny;
+      let dx = 0, dy = 0;
+      if (d < 1) {
+        const w = (1 - d) * (1 - d), sc = Math.max(-.5, Math.min(.5, B.x));
+        dx += (x - E.cx) * sc * w + B.px * w; dy -= (y - E.cy) * sc * w * .6 - B.py * w;   // 横に広がると縦に縮む
+        const now = performance.now() / 1000;
+        for (const r of ripples) {   // 波紋：さわった所から輪が広がって、だんだん消える（ふちでは 0）
+          const t = now - r.t0, ux = x - r.x, uy = y - r.y, dist = Math.hypot(ux, uy) || 1, front = dist - WAVE_V * t;
+          const m = WAVE_A * r.a * Math.exp(-((front / (WAVE_L * 1.2)) ** 2)) * Math.exp(-t * 1.6) * Math.sin(front / WAVE_L * Math.PI * 2) * Math.sqrt(w);
+          dx += ux / dist * m; dy += uy / dist * m;
+        }
+      }
+      if (B.pk) { const u = (x - B.pcx) / (E.rx * .5), v = (y - B.pcy) / (E.ry * .5), r2 = u * u + v * v;
+        if (r2 < 1) { const f = (1 - r2) * (1 - r2), pk = Math.max(-.5, Math.min(.3, B.pk)); dx += (x - B.pcx) * pk * f; dy += (y - B.pcy) * pk * f; } }
+      return [x + dx, y + dy];
+    }
+    function tri(ctx, s0, s1, s2, d0, d1, d2) {
+      ctx.save(); ctx.beginPath();
+      const cx = (d0[0] + d1[0] + d2[0]) / 3, cy = (d0[1] + d1[1] + d2[1]) / 3, g = (q) => [q[0] + (q[0] - cx) * .02 + Math.sign(q[0] - cx) * .4, q[1] + (q[1] - cy) * .02 + Math.sign(q[1] - cy) * .4];
+      const a = g(d0), b = g(d1), c = g(d2);
+      ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.lineTo(c[0], c[1]); ctx.closePath(); ctx.clip();
+      const [x0, y0] = s0, [x1, y1] = s1, [x2, y2] = s2, den = x0 * (y1 - y2) + x1 * (y2 - y0) + x2 * (y0 - y1);
+      const m11 = (d0[0] * (y1 - y2) + d1[0] * (y2 - y0) + d2[0] * (y0 - y1)) / den, m12 = (d0[1] * (y1 - y2) + d1[1] * (y2 - y0) + d2[1] * (y0 - y1)) / den;
+      const m21 = (d0[0] * (x2 - x1) + d1[0] * (x0 - x2) + d2[0] * (x1 - x0)) / den, m22 = (d0[1] * (x2 - x1) + d1[1] * (x0 - x2) + d2[1] * (x1 - x0)) / den;
+      const tx = (d0[0] * (x1 * y2 - x2 * y1) + d1[0] * (x2 * y0 - x0 * y2) + d2[0] * (x0 * y1 - x1 * y0)) / den;
+      const ty = (d0[1] * (x1 * y2 - x2 * y1) + d1[1] * (x2 * y0 - x0 * y2) + d2[1] * (x0 * y1 - x1 * y0)) / den;
+      ctx.transform(m11, m12, m21, m22, tx, ty); ctx.drawImage(o.src, 0, 0); ctx.restore();
+    }
+    function draw() {
+      if (!dims()[0] || !el.classList.contains('on')) return;
+      const f = fit(), dpr = Math.min(devicePixelRatio || 1, 2);
+      if (!f.W) return;
+      if (cv.width !== Math.round(f.W * dpr) || cv.height !== Math.round(f.H * dpr)) { cv.width = Math.round(f.W * dpr); cv.height = Math.round(f.H * dpr); }
+      const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, f.W, f.H);
+      ctx.save(); ctx.translate(f.ox, f.oy); ctx.scale(f.s, f.s); ctx.drawImage(o.src, 0, 0);
+      if (Math.abs(B.x) > .0015 || Math.abs(B.pk) > .0015 || Math.abs(B.px) > .3 || Math.abs(B.py) > .3 || ripples.length) {
+        const x0 = E.cx - E.rx, y0 = E.cy - E.ry, sw = E.rx * 2 / N, sh = E.ry * 2 / N;
+        for (let r = 0; r < N; r++) for (let q = 0; q < N; q++) {
+          const A = [x0 + q * sw, y0 + r * sh], Bq = [A[0] + sw, A[1]], C = [A[0], A[1] + sh], D = [A[0] + sw, A[1] + sh];
+          const a = warp(...A), b = warp(...Bq), c = warp(...C), d = warp(...D);
+          tri(ctx, A, Bq, C, a, b, c); tri(ctx, Bq, D, C, b, d, c);
+        }
+      }
+      if (o.overlay) o.overlay(ctx);
+      ctx.restore();
+    }
+    function spring() {
+      if (B.run) return; B.run = true; let last = performance.now();
+      (function step(now) {
+        let dt = Math.max(0, Math.min(.05, (now - last) / 1000)); last = now;
+        for (; dt > 0; dt -= 1 / 240) { const h = Math.min(dt, 1 / 240);
+          B.v += (-SPRING * B.x - DAMP * B.v) * h; B.x += B.v * h;
+          B.pkv += (-SPRING * B.pk - DAMP * B.pkv) * h; B.pk += B.pkv * h;
+          if (!B.drag) { B.pvx += (-SPRING * B.px - DAMP * B.pvx) * h; B.px += B.pvx * h; B.pvy += (-SPRING * B.py - DAMP * B.pvy) * h; B.py += B.pvy * h; } }
+        const t = performance.now() / 1000; ripples = ripples.filter((r) => t - r.t0 < 2.2);
+        draw();
+        const still = !B.drag && !ripples.length && !(o.busy && o.busy()) && Math.abs(B.px) < .3 && Math.abs(B.py) < .3 && Math.abs(B.pvx) < 8 && Math.abs(B.pvy) < 8
+          && Math.abs(B.x) < .001 && Math.abs(B.v) < .02 && Math.abs(B.pk) < .001 && Math.abs(B.pkv) < .02;
+        if (still) { B.x = B.v = B.pk = B.pkv = B.px = B.py = B.pvx = B.pvy = 0; B.run = false; draw(); return; }
+        requestAnimationFrame(step);
+      })(last);
+    }
+    const kick = (k) => { if (reduce) k *= .4; B.v -= 2.2 * k; spring(); };                 // へこんでから「ぽよん」と戻る
+    const wave = (q, a) => { if (reduce) a *= .4; ripples.push({ x: q.x, y: q.y, t0: performance.now() / 1000, a }); spring(); };
+    const poke = (q, k = 1) => { B.pcx = q.x; B.pcy = q.y; B.pkv -= 4 * k; spring(); };      // 指の所だけ、小さくくぼむ
+    // スワイプ：pull の絵は、おなかを指で引っぱる → はなすと「ぼよよん」と戻って波紋。pull でない絵は o.onMove に任せる（砂はらい）
+    let d0 = null;
+    el.addEventListener('pointerdown', (e) => {
+      dragged = false;
+      if (!el.classList.contains('on')) return;
+      const q = toImg(e);
+      if (o.onDown) o.onDown(q, e);
+      if (!o.pull || !inBelly(q)) { d0 = { q, cx: e.clientX, cy: e.clientY, s: fit().s, free: true }; return; }
+      d0 = { q, cx: e.clientX, cy: e.clientY, s: fit().s }; B.pcx = q.x; B.pcy = q.y;
+    });
+    addEventListener('pointermove', (e) => {
+      if (!d0) return;
+      const mx = e.clientX - d0.cx, my = e.clientY - d0.cy;
+      if (d0.free) { if (o.onMove) o.onMove(toImg(e), e); if (Math.hypot(mx, my) > 10) dragged = true; return; }
+      if (!B.drag && Math.hypot(mx, my) < 10) return;
+      B.drag = true; dragged = true;
+      const k = (v) => PULL * Math.tanh(v / d0.s / PULL);   // 引っぱるほど重くなる（最大 PULL）
+      B.px = k(mx); B.py = k(my); B.pvx = B.pvy = 0; spring();
+    });
+    const up = () => {
+      if (!d0) return;
+      if (B.drag) { B.drag = false; const pull = Math.hypot(B.px, B.py) / PULL; wave({ x: d0.q.x + B.px, y: d0.q.y + B.py }, .6 + pull); kick(.8 + pull * 1.5); }
+      if (o.onUp) o.onUp();
+      d0 = null; spring();
+    };
+    addEventListener('pointerup', up); addEventListener('pointercancel', up);
+    addEventListener('resize', draw);
+    if (o.src.decode) o.src.onload = draw;
+    return { draw, kick, wave, poke, toImg, inBelly, spring, E };
+  }
+  let dragged = false;
+
+  // 押されて飛びこむ絵
+  const bumpEl = $('#bump'), bimg = new Image(); bimg.src = 'img/push_bump.webp';
+  const bump = Jig(bumpEl, { src: bimg, belly: { cx: 510, cy: 1050, rx: 520, ry: 390 }, pos: [.5, .3], pull: true });
+
+  /* ===== 砂はらい：砂あり（sandy）を、なぞった所だけ消して、砂なし（clean）を見せる =====
+     comp（絵と同じ大きさの canvas）に clean → 消しあとのついた sandy → ほおの赤み、の順に重ね、それを Jig で揺らして描く
+     どれだけはらったかは、2枚の差（＝砂の量）を小さな升目で数えて、消した分の割合で出す */
+  const sandEl = $('#sand'), clean = new Image(), sandy = new Image();
+  const SW = 768, SH = 1152, AREA = { cx: 375, cy: 790, rx: 310, ry: 260 }, BRUSH = 46, GX = 48, GY = 72;
+  const comp = document.createElement('canvas'), sMask = document.createElement('canvas');
+  comp.width = sMask.width = SW; comp.height = sMask.height = SH;
+  let sandW = null, sandTotal = 1, cleared = new Float32Array(GX * GY), progress = 0, blush = 0, grains = [], lastStroke = null, lastPoke = 0, said = 0;
+  const CHEEKS = [[262, 435], [478, 425]];
+  function sandReady() {
+    // 2枚の差から、升目ごとの砂の量を出す（はらい具合のものさし）
+    const c = document.createElement('canvas'); c.width = GX; c.height = GY; const x = c.getContext('2d');
+    x.drawImage(sandy, 0, 0, GX, GY); const a = x.getImageData(0, 0, GX, GY).data;
+    x.clearRect(0, 0, GX, GY); x.drawImage(clean, 0, 0, GX, GY); const b = x.getImageData(0, 0, GX, GY).data;
+    sandW = new Float32Array(GX * GY); sandTotal = 0;
+    for (let k = 0; k < GX * GY; k++) {
+      const px = (k % GX + .5) * SW / GX, py = (Math.floor(k / GX) + .5) * SH / GY;
+      if (((px - AREA.cx) / AREA.rx) ** 2 + ((py - AREA.cy) / AREA.ry) ** 2 > 1) continue;
+      const d = Math.abs(a[k * 4] - b[k * 4]) + Math.abs(a[k * 4 + 1] - b[k * 4 + 1]) + Math.abs(a[k * 4 + 2] - b[k * 4 + 2]);
+      sandW[k] = Math.max(0, d - 12); sandTotal += sandW[k];
+    }
+    resetSand();
+  }
+  function resetSand() {
+    const m = sMask.getContext('2d'); m.globalCompositeOperation = 'source-over'; m.clearRect(0, 0, SW, SH); m.drawImage(sandy, 0, 0);
+    cleared.fill(0); progress = 0; blush = 0; grains = []; said = 0; $('#meter i').style.width = '0';
+    compose();
+  }
+  function compose() {
+    const c = comp.getContext('2d'); c.clearRect(0, 0, SW, SH); c.drawImage(clean, 0, 0); c.drawImage(sMask, 0, 0);
+    if (blush > .01) for (const [x, y] of CHEEKS) {   // ほおの赤み（はらうほど、少しずつ濃く）
+      const g = c.createRadialGradient(x, y, 4, x, y, 62); g.addColorStop(0, 'rgba(255,95,110,' + (.32 * blush) + ')'); g.addColorStop(1, 'rgba(255,95,110,0)');
+      c.fillStyle = g; c.beginPath(); c.arc(x, y, 62, 0, Math.PI * 2); c.fill();
+    }
+  }
+  function brushAt(q) {
+    if (((q.x - AREA.cx) / AREA.rx) ** 2 + ((q.y - AREA.cy) / AREA.ry) ** 2 > 1.15) return;
+    const m = sMask.getContext('2d'); m.globalCompositeOperation = 'destination-out';
+    const from = lastStroke || q, steps = Math.max(1, Math.ceil(Math.hypot(q.x - from.x, q.y - from.y) / (BRUSH * .35)));
+    for (let s = 1; s <= steps; s++) {
+      const x = from.x + (q.x - from.x) * s / steps, y = from.y + (q.y - from.y) * s / steps;
+      const g = m.createRadialGradient(x, y, BRUSH * .3, x, y, BRUSH); g.addColorStop(0, 'rgba(0,0,0,.55)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+      m.fillStyle = g; m.beginPath(); m.arc(x, y, BRUSH, 0, Math.PI * 2); m.fill();
+      // 升目の「消した量」
+      const gx = Math.floor(x / SW * GX), gy = Math.floor(y / SH * GY), rr = Math.ceil(BRUSH / (SW / GX));
+      for (let yy = gy - rr; yy <= gy + rr; yy++) for (let xx = gx - rr; xx <= gx + rr; xx++) {
+        if (xx < 0 || yy < 0 || xx >= GX || yy >= GY) continue;
+        const dd = Math.hypot((xx + .5) * SW / GX - x, (yy + .5) * SH / GY - y) / BRUSH;
+        if (dd < 1) { const k = yy * GX + xx; cleared[k] = Math.min(1, cleared[k] + .35 * (1 - dd)); }
+      }
+      if (Math.random() < .7) for (let n = 0; n < 3; n++) grains.push({ x: x + (Math.random() - .5) * BRUSH, y: y + (Math.random() - .5) * BRUSH * .5,
+        vx: (Math.random() - .5) * 60, vy: -Math.random() * 40, t: 0, r: 1.2 + Math.random() * 2 });
+    }
+    lastStroke = q;
+    let sum = 0; for (let k = 0; k < GX * GY; k++) sum += sandW[k] * cleared[k];
+    progress = Math.min(1, sum / sandTotal); blush = Math.min(1, progress * 1.2);
+    $('#meter i').style.width = Math.round(Math.min(1, progress / DONE) * 100) + '%';
+    compose();
+    const now = performance.now();
+    if (now - lastPoke > 140) { lastPoke = now; sand.poke(q, .7); sand.kick(.5); if (Math.random() < .35) sand.wave(q, .5); }
+    reactSand();
+  }
+  // はらい具合で、タヌくんの反応が変わる。8割で終わり
+  const DONE = .7;   // 7割はらえば終わり（胸の砂まで全部でなくてよい）
+  const REACT = [[.12, 'ひゃっ…！'], [.32, 'く、くすぐったいってば〜！'], [.52, 'おへそのとこ、\nくすぐったい〜…！']];
+  function reactSand() {
+    while (said < REACT.length && progress >= REACT[said][0]) { type(REACT[said][1]); said++; }
+    if (progress >= DONE && waitSand) finishSand();
+  }
+  function finishSand() {
+    waitSand = false; hideHint(); $('#meter').classList.remove('meter-on'); $('#meter').classList.remove('on');
+    // 残りの砂を、ふわっと消す
+    const start = performance.now(), m = sMask.getContext('2d'), snap = document.createElement('canvas'); snap.width = SW; snap.height = SH; snap.getContext('2d').drawImage(sMask, 0, 0);
+    (function fade(now) {
+      const t = Math.min(1, (now - start) / 700);
+      m.globalCompositeOperation = 'source-over'; m.clearRect(0, 0, SW, SH); m.globalAlpha = 1 - t; m.drawImage(snap, 0, 0); m.globalAlpha = 1;
+      compose(); sand.draw();
+      if (t < 1) requestAnimationFrame(fade); else { sand.kick(1.2); sand.wave({ x: AREA.cx, y: AREA.cy + 40 }, .8); setTimeout(() => show(++i), 500); }
+    })(start);
+  }
+  const sand = Jig(sandEl, { src: comp, belly: { cx: 375, cy: 815, rx: 300, ry: 245 }, pos: [.5, .3], pull: false,
+    onDown: (q) => { lastStroke = null; if (waitSand) brushAt(q); },
+    onMove: (q) => { if (waitSand) brushAt(q); },
+    onUp: () => { lastStroke = null; },
+    busy: () => grains.length > 0,
+    overlay: (ctx) => {   // はらった砂つぶが、さらさら落ちる
+      const dt = 1 / 60;
+      grains = grains.filter((g) => (g.t += dt) < .9);
+      ctx.fillStyle = 'rgba(232,200,150,.9)';
+      for (const g of grains) { g.vy += 900 * dt; g.x += g.vx * dt; g.y += g.vy * dt; ctx.globalAlpha = 1 - g.t / .9; ctx.beginPath(); ctx.arc(g.x, g.y, g.r, 0, Math.PI * 2); ctx.fill(); }
+      ctx.globalAlpha = 1;
+    } });
+  let loaded = 0; [clean, sandy].forEach((im) => { im.onload = () => { if (++loaded === 2) sandReady(); }; });
+  clean.src = 'img/sand_clean.webp'; sandy.src = 'img/sand_sandy.webp';
+
+  /* ===== 1行を出す ===== */
   function show(k) {
     const L = LINES[k];
     document.querySelectorAll('.still').forEach((s) => s.classList.toggle('on', s.dataset.k === L.still));
-    if (!L.bump) { bumpEl.classList.remove('on', 'beat'); ch.tanu.classList.remove('lunge'); if (L.fx !== 'push') ch.tanu.classList.remove('front'); ch.uru.classList.remove('pushed'); }
+    // おなかが揺れる1枚絵
+    if (L.jig !== 'bump') { bumpEl.classList.remove('on', 'beat'); ch.tanu.classList.remove('lunge'); if (L.fx !== 'push') ch.tanu.classList.remove('front'); ch.uru.classList.remove('pushed'); }
+    if (L.jig === 'sand' && !sandEl.classList.contains('on')) { sandEl.classList.add('on'); sand.draw(); sand.kick(2.4); sand.wave({ x: AREA.cx, y: AREA.cy }, 1); popWord('ずさーっ！'); }
+    if (L.jig !== 'sand') sandEl.classList.remove('on');
+    if (L.fx !== 'dive' && L.jig !== 'sand') ch.tanu.classList.remove('dive');
     if (L.fx === 'push') { ch.uru.classList.add('pushed'); ch.tanu.classList.add('front'); setTimeout(() => anim('tanu', 'shake'), 300); }
-    if (L.fx === 'bump') {
-      // タヌくんがよろけて、こちらへ大きくなる → 1枚絵に切りかえて「ぽよん！」＋鼓動
+    if (L.fx === 'bump') {   // タヌくんがよろけて、こちらへ大きくなる → 1枚絵に切りかえて「ぽよん！」＋鼓動
       ch.tanu.classList.add('lunge');
-      setTimeout(() => { bumpEl.classList.add('on'); drawBump(); kick(3.8); wave({ x: E.cx, y: E.cy + 40 }, 1.2); popWord(); setTimeout(() => kick(1.6), 520);
+      setTimeout(() => { bumpEl.classList.add('on'); bump.draw(); bump.kick(3.8); bump.wave({ x: 510, y: 1090 }, 1.2); popWord('ぽよん！'); setTimeout(() => bump.kick(1.6), 520);
         if (!reduce) { bumpEl.classList.remove('beat'); void bumpEl.offsetWidth; bumpEl.classList.add('beat'); } }, 420);
     }
+    if (L.fx === 'dive') {   // ボールに飛びつく → 地面が少し揺れる（点滅はしない）
+      ch.tanu.classList.add('dive');
+      setTimeout(() => { if (!reduce) { stage.classList.remove('quake'); void stage.offsetWidth; stage.classList.add('quake'); } }, 330);
+    }
+    if (L.interact === 'sand') { waitSand = true; setTimeout(() => { if (waitSand) { hint('👆 おなかを なでて、砂を おとしてね'); $('#meter').classList.add('on'); } }, 900); }
+    // 夜
+    const nt = $('#night');
+    nt.classList.toggle('on', !!L.night);
+    nt.classList.toggle('leaning', !!L.lean);
+    if (L.night) nt.querySelectorAll('img').forEach((im) => im.classList.toggle('off', im.dataset.k !== L.night));
+    // 立ち絵
     if (L.uru === 'in') { ch.uru.classList.remove('away'); ch.uru.classList.add('on'); ch.tanu.classList.remove('solo'); }
-    if (L.t) { face.tanu = L.t; setFace('tanu', L.t); }
-    if (L.u) { face.uru = L.u; setFace('uru', L.u); }
+    if (L.t) setFace('tanu', L.t);
+    if (L.u) setFace('uru', L.u);
     for (const w of ['tanu', 'uru']) ch[w].classList.toggle('talk', L.who === w);
     if (L.anim) anim(L.who, L.anim);
     nameEl.textContent = L.label || NAMES[L.who];
     nameEl.classList.toggle('uru', L.who === 'uru');
     more.style.color = L.who === 'uru' ? 'var(--uru-d)' : '';
     $('#step').textContent = (k + 1) + ' / ' + LINES.length;
-    type(withName(L.text));
+    // 二択
+    btns.innerHTML = ''; btns.hidden = true; waitChoice = false;
+    if (L.choice) {
+      waitChoice = true;
+      L.choice.forEach((c, n) => { const b = document.createElement('button'); b.className = 'btn alt'; b.type = 'button'; b.textContent = c;
+        b.addEventListener('click', () => { picked = n; waitChoice = false; btns.hidden = true; show(++i); }); btns.appendChild(b); });
+      setTimeout(() => { if (waitChoice) btns.hidden = false; }, 700);
+    }
+    type(withName(L.alt ? L.alt[picked] : L.text));
   }
   function next() {
-    if (typing) { clearInterval(typing); typing = null; textEl.textContent = full; more.classList.add('on'); return; }
-    if (i >= LINES.length - 1) { btns.hidden = false; more.classList.remove('on'); return; }
+    if (typing) { clearInterval(typing); typing = null; textEl.textContent = full; if (!waitChoice && !waitSand) more.classList.add('on'); return; }
+    if (waitChoice || waitSand) return;   // 二択・砂はらいの間は進まない
+    if (i >= LINES.length - 1) { endButtons(); return; }
     show(++i);
   }
-  function reset() {
-    i = -1; btns.hidden = true;
-    ch.uru.classList.add('away'); ch.uru.classList.remove('on'); ch.tanu.classList.add('solo');
-    setFace('tanu', 'normal', true); setFace('uru', 'normal', true);
+  function endButtons() {
+    more.classList.remove('on'); btns.innerHTML = ''; btns.hidden = false;
+    const again = document.createElement('button'); again.className = 'btn'; again.type = 'button'; again.textContent = 'もう一度';
+    again.addEventListener('click', () => reset(part)); btns.appendChild(again);
+    if (part < PARTS.length - 1) { const nx = document.createElement('button'); nx.className = 'btn alt'; nx.type = 'button'; nx.textContent = '次の話 ▶';
+      nx.addEventListener('click', () => reset(part + 1)); btns.appendChild(nx); }
+  }
+  function reset(p) {
+    part = p; LINES = PARTS[p].lines; i = -1; picked = 0; waitChoice = waitSand = false;
+    btns.innerHTML = ''; btns.hidden = true; hideHint(); $('#meter').classList.remove('on');
+    const st = PARTS[p].start;
+    stage.classList.toggle('dark', st === 'night');
+    ch.tanu.className = 'chara'; ch.uru.className = 'chara away';
+    bumpEl.classList.remove('on', 'beat'); sandEl.classList.remove('on'); $('#night').className = '';
+    if (st === 'solo') { ch.tanu.classList.add('on', 'solo'); setFace('tanu', 'normal', true); setFace('uru', 'normal', true); }
+    if (st === 'duo') { ch.tanu.classList.add('on'); ch.uru.classList.add('on'); ch.uru.classList.remove('away'); setFace('tanu', 'happy', true); setFace('uru', 'laugh', true); }
+    if (sandW) resetSand();
+    $('#part').textContent = '話：' + PARTS[p].title + ' ▸';
     next();
   }
   function nmLabel() { $('#nm').textContent = '名前：' + (useName ? NAME : 'なし'); }
@@ -213,119 +535,15 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
   $('#game').addEventListener('click', (e) => {
     if (e.target.closest('button')) return;
     if (dragged) { dragged = false; return; }   // スワイプしたあとは、セリフを進めない
-    if (bumpEl.classList.contains('on')) { const q = toImg(e); if (inBelly(q)) { poke(q); kick(1.8); wave(q, 1); } }   // おなかをタップすると、そこから「ぷるん」＋波紋
+    if (bumpEl.classList.contains('on')) { const q = bump.toImg(e); if (bump.inBelly(q)) { bump.poke(q); bump.kick(1.8); bump.wave(q, 1); } }   // タップでも「ぷるん」＋波紋
+    if (sandEl.classList.contains('on') && !waitSand) { const q = sand.toImg(e); if (sand.inBelly(q)) { sand.poke(q); sand.kick(1.4); sand.wave(q, .8); } }
     next();
   });
-  $('#again').addEventListener('click', reset);
-  $('#nm').addEventListener('click', () => { useName = !useName; nmLabel(); if (i >= 0) { clearInterval(typing); typing = null; i--; show(++i); } });
-  /* ===== おなかのぷるん（第2章 matsuri と同じ「ばね」と網目の変形。ここでは強さ _x とくぼみ _pk だけ） ===== */
-  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const bumpEl = $('#bump'), cv = bumpEl.querySelector('canvas'), bimg = new Image();
-  bimg.src = 'img/push_bump.webp'; bimg.onload = () => drawBump();
-  const E = (() => { const [cx, cy, rx, ry] = bumpEl.dataset.belly.split(',').map(Number); return { cx, cy, rx, ry }; })();
-  const SPRING = 420, DAMP = 4.5, N = 30, POS = [.5, .3];   // POS＝絵のどこを画面に合わせるか（object-position と同じ）
-  const B = { x: 0, v: 0, pk: 0, pkv: 0, pcx: E.cx, pcy: E.cy, px: 0, py: 0, pvx: 0, pvy: 0, drag: false, run: false };
-  let ripples = [];   // 波紋：{ x, y, t0, a }（絵の中の px・始まった時刻・強さ）
-  const PULL = E.rx * .28, WAVE_L = 110, WAVE_V = 520, WAVE_A = 16;   // 引っぱれる長さ・波の長さ・波の速さ（px/秒）・波の高さ
-  function fitB() {
-    const r = bumpEl.getBoundingClientRect(), W = r.width, H = r.height, iw = bimg.naturalWidth, ih = bimg.naturalHeight;
-    const s = Math.max(W / iw, H / ih);
-    return { W, H, s, ox: (W - iw * s) * POS[0], oy: (H - ih * s) * POS[1], r };
-  }
-  function toImg(e) { const f = fitB(); return { x: (e.clientX - f.r.left - f.ox) / f.s, y: (e.clientY - f.r.top - f.oy) / f.s }; }
-  const inBelly = (q) => ((q.x - E.cx) / E.rx) ** 2 + ((q.y - E.cy) / E.ry) ** 2 < 1;
-  function warp(x, y) {
-    const nx = (x - E.cx) / E.rx, ny = (y - E.cy) / E.ry, d = nx * nx + ny * ny;
-    let dx = 0, dy = 0;
-    if (d < 1) { const w = (1 - d) * (1 - d), sc = Math.max(-.5, Math.min(.5, B.x)); dx += (x - E.cx) * sc * w + B.px * w; dy -= (y - E.cy) * sc * w * .6 - B.py * w;
-      // 波紋：さわった所から輪が広がって、だんだん消える（おなかのふちでは 0）
-      const now = performance.now() / 1000;
-      for (const r of ripples) {
-        const t = now - r.t0, ux = x - r.x, uy = y - r.y, dist = Math.hypot(ux, uy) || 1, front = dist - WAVE_V * t;
-        const env = Math.exp(-((front / (WAVE_L * 1.2)) ** 2)) * Math.exp(-t * 1.6) * r.a;
-        const m = WAVE_A * env * Math.sin(front / WAVE_L * Math.PI * 2) * Math.sqrt(w);
-        dx += ux / dist * m; dy += uy / dist * m;
-      }
-    }   // 横に広がると縦に縮む（ぷるんらしく）
-    if (B.pk) { const u = (x - B.pcx) / (E.rx * .5), v = (y - B.pcy) / (E.ry * .5), r2 = u * u + v * v;
-      if (r2 < 1) { const f = (1 - r2) * (1 - r2), pk = Math.max(-.5, Math.min(.3, B.pk)); dx += (x - B.pcx) * pk * f; dy += (y - B.pcy) * pk * f; } }
-    return [x + dx, y + dy];
-  }
-  function tri(ctx, s0, s1, s2, d0, d1, d2) {
-    ctx.save(); ctx.beginPath();
-    const cx = (d0[0] + d1[0] + d2[0]) / 3, cy = (d0[1] + d1[1] + d2[1]) / 3, g = (q) => [q[0] + (q[0] - cx) * .02 + Math.sign(q[0] - cx) * .4, q[1] + (q[1] - cy) * .02 + Math.sign(q[1] - cy) * .4];
-    const a = g(d0), b = g(d1), c = g(d2);
-    ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.lineTo(c[0], c[1]); ctx.closePath(); ctx.clip();
-    const [x0, y0] = s0, [x1, y1] = s1, [x2, y2] = s2, den = x0 * (y1 - y2) + x1 * (y2 - y0) + x2 * (y0 - y1);
-    const m11 = (d0[0] * (y1 - y2) + d1[0] * (y2 - y0) + d2[0] * (y0 - y1)) / den, m12 = (d0[1] * (y1 - y2) + d1[1] * (y2 - y0) + d2[1] * (y0 - y1)) / den;
-    const m21 = (d0[0] * (x2 - x1) + d1[0] * (x0 - x2) + d2[0] * (x1 - x0)) / den, m22 = (d0[1] * (x2 - x1) + d1[1] * (x0 - x2) + d2[1] * (x1 - x0)) / den;
-    const tx = (d0[0] * (x1 * y2 - x2 * y1) + d1[0] * (x2 * y0 - x0 * y2) + d2[0] * (x0 * y1 - x1 * y0)) / den;
-    const ty = (d0[1] * (x1 * y2 - x2 * y1) + d1[1] * (x2 * y0 - x0 * y2) + d2[1] * (x0 * y1 - x1 * y0)) / den;
-    ctx.transform(m11, m12, m21, m22, tx, ty); ctx.drawImage(bimg, 0, 0); ctx.restore();
-  }
-  function drawBump() {
-    if (!bimg.naturalWidth) return;
-    const f = fitB(), dpr = Math.min(devicePixelRatio || 1, 2);
-    if (!f.W) return;
-    if (cv.width !== Math.round(f.W * dpr) || cv.height !== Math.round(f.H * dpr)) { cv.width = Math.round(f.W * dpr); cv.height = Math.round(f.H * dpr); }
-    const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, f.W, f.H);
-    ctx.save(); ctx.translate(f.ox, f.oy); ctx.scale(f.s, f.s); ctx.drawImage(bimg, 0, 0);
-    if (Math.abs(B.x) > .0015 || Math.abs(B.pk) > .0015 || Math.abs(B.px) > .3 || Math.abs(B.py) > .3 || ripples.length) {
-      const x0 = E.cx - E.rx, y0 = E.cy - E.ry, sw = E.rx * 2 / N, sh = E.ry * 2 / N;
-      for (let r = 0; r < N; r++) for (let q = 0; q < N; q++) {
-        const A = [x0 + q * sw, y0 + r * sh], Bq = [A[0] + sw, A[1]], C = [A[0], A[1] + sh], D = [A[0] + sw, A[1] + sh];
-        const a = warp(...A), b = warp(...Bq), c = warp(...C), d = warp(...D);
-        tri(ctx, A, Bq, C, a, b, c); tri(ctx, Bq, D, C, b, d, c);
-      }
-    }
-    ctx.restore();
-  }
-  function kick(k) { if (reduce) k *= .4; B.v -= 2.2 * k; spring(); }
-  function wave(q, a) { if (reduce) a *= .4; ripples.push({ x: q.x, y: q.y, t0: performance.now() / 1000, a }); spring(); }          // ぶつかった：へこんでから「ぽよん」と戻る
-  function poke(q) { B.pcx = q.x; B.pcy = q.y; B.pkv -= 4; spring(); }        // 指の所だけ、小さくくぼむ
-  function spring() {
-    if (B.run) return; B.run = true; let last = performance.now();
-    (function step(now) {
-      let dt = Math.max(0, Math.min(.05, (now - last) / 1000)); last = now;
-      for (; dt > 0; dt -= 1 / 240) { const h = Math.min(dt, 1 / 240);
-        B.v += (-SPRING * B.x - DAMP * B.v) * h; B.x += B.v * h;
-        B.pkv += (-SPRING * B.pk - DAMP * B.pkv) * h; B.pk += B.pkv * h;
-        if (!B.drag) { B.pvx += (-SPRING * B.px - DAMP * B.pvx) * h; B.px += B.pvx * h; B.pvy += (-SPRING * B.py - DAMP * B.pvy) * h; B.py += B.pvy * h; } }
-      const nowS = performance.now() / 1000; ripples = ripples.filter((r) => nowS - r.t0 < 2.2);
-      drawBump();
-      if (!B.drag && !ripples.length && Math.abs(B.px) < .3 && Math.abs(B.py) < .3 && Math.abs(B.pvx) < 8 && Math.abs(B.pvy) < 8 && Math.abs(B.x) < .001 && Math.abs(B.v) < .02 && Math.abs(B.pk) < .001 && Math.abs(B.pkv) < .02) { B.x = B.v = B.pk = B.pkv = B.px = B.py = B.pvx = B.pvy = 0; B.run = false; drawBump(); return; }
-      requestAnimationFrame(step);
-    })(last);
-  }
-  /* スワイプ：おなかを指で引っぱる → はなすと「ぼよよん」と戻って、波紋が広がる */
-  let dragged = false, d0 = null;
-  bumpEl.addEventListener('pointerdown', (e) => {
-    dragged = false;
-    if (!bumpEl.classList.contains('on')) return;
-    const q = toImg(e); if (!inBelly(q)) return;
-    d0 = { q, cx: e.clientX, cy: e.clientY, s: fitB().s }; B.pcx = q.x; B.pcy = q.y;
-  });
-  addEventListener('pointermove', (e) => {
-    if (!d0) return;
-    const mx = e.clientX - d0.cx, my = e.clientY - d0.cy;
-    if (!B.drag && Math.hypot(mx, my) < 10) return;
-    B.drag = true; dragged = true;
-    const k = (v) => PULL * Math.tanh(v / d0.s / PULL);   // 引っぱるほど重くなる（最大 PULL）
-    B.px = k(mx); B.py = k(my); B.pvx = B.pvy = 0; spring();
-  });
-  addEventListener('pointerup', (e) => {
-    if (!d0) return;
-    if (B.drag) { B.drag = false; const pull = Math.hypot(B.px, B.py) / PULL; wave({ x: d0.q.x + B.px, y: d0.q.y + B.py }, .6 + pull); kick(.8 + pull * 1.5); spring(); }
-    d0 = null;
-  });
-  addEventListener('pointercancel', () => { if (d0) { B.drag = false; d0 = null; spring(); } });
-
-  function popWord() { const p = $('#pop'); p.classList.remove('go'); void p.offsetWidth; p.classList.add('go'); }
-  addEventListener('resize', drawBump);
+  $('#part').addEventListener('click', () => reset((part + 1) % PARTS.length));
+  $('#nm').addEventListener('click', () => { useName = !useName; nmLabel(); if (i >= 0 && !waitSand) { clearInterval(typing); typing = null; show(i); } });
 
   // 絵を先に読みこんでおく
   ['tanu_normal', 'tanu_happy', 'tanu_shy', 'tanu_dere', 'uru_normal', 'uru_laugh', 'uru_surprise'].forEach((n) => { new Image().src = 'img/' + n + '.webp'; });
-  ch.tanu.classList.add('on');
-  nmLabel(); reset();
+  nmLabel(); reset(part);
 })();
 </script>

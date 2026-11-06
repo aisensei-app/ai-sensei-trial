@@ -66,7 +66,7 @@
 4. 11/8〜9：Web Analytics の数字（上の「次にもらう」）を表にする
 5. 11月中旬：ラリーを open（v33）
 
-- 🐺 **ラリーの序章のお試し版（2026-11-06）**：`tanukun/rally_story/`（index.html・img/）。背景＋左右の立ち絵（タヌくん＝本編の立ち絵・仮／ウルくん）＋名前の札つきセリフ枠。セリフは `LINES`（who・t／u＝表情・still・uru:'in'・anim）。確認用リンク https://claude.ai/artifact/PK85vu2rdU66Q1NTWVopwp（同じ file_path で publish・files に img/*）。絵の元は art/uru・art/rally_story（bg_court_day.webp＝コートの背景の元）。設定は IDEAS.md の「🐺」
+- 🐺 **第3章（ラリーの物語）のお試し版（2026-11-06〜07）**：序章・特訓（3日目＝砂はらい：砂あり／砂なしの2枚を重ね、なぞった所だけ消す・7割で終わり）・前夜（6日目＝おねだり→二択→もたれる＝絵が寄って暗く・余白）。右上「話」か ?part=0〜2。おなかの揺れは Jig（matsuri と同じばね＋波紋＋スワイプで引っぱる）。以下は序章のときのメモ／🐺 **ラリーの序章のお試し版（2026-11-06）**：`tanukun/rally_story/`（index.html・img/）。背景＋左右の立ち絵（タヌくん＝本編の立ち絵・仮／ウルくん）＋名前の札つきセリフ枠。セリフは `LINES`（who・t／u＝表情・still・uru:'in'・anim）。確認用リンク https://claude.ai/artifact/PK85vu2rdU66Q1NTWVopwp（同じ file_path で publish・files に img/*）。絵の元は art/uru・art/rally_story（bg_court_day.webp＝コートの背景の元）。設定は IDEAS.md の「🐺」
 
 **4. 作業のコツ（このチャットでわかったこと）**
 - お祭りのお試し版（matsuri/index.html）：絵のパスは相対（img/〇〇.webp）。更新は Artifact で同じ file_path を publish（新しい絵は files に `img/〇〇.webp` を足す）。ローカルで試すときは matsuri/ で `python3 -m http.server <ポート>`（ページに meta charset あり）。おなか・太鼓の場所は各絵の data-belly／data-drum（絵の中の px で「中心x,中心y,横半径,たて半径」）。絵の番号（pic）は .layer の並び順
