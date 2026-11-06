@@ -1260,7 +1260,8 @@
     // 今日2回目以降（画面に戻ってきたときなど）でも、ひみつの思い出をまだ見ていなければ流す（2026-11-03 夜）
     if (r.visit === 'again') { if (!r.heartUp) maybeClear(2200); return false; }
     if (mode === 'home') homeGreet({ scene: 'home', visit: r.visit });
-    autoUranai();
+    // 🏮 お祭りのおしらせ（ちらし）が出る日は、自動の占いはお休み（1回開いたときに自動で出すのは1つだけ）
+    if (!maybeFlyer()) autoUranai();
     // ひみつの思い出（クリア）の日なら、あいさつのあとに流す（トップ画面は、それまでズームを待つ）
     if (!r.heartUp) maybeClear(2200, true);
     return true;
@@ -1290,6 +1291,7 @@
 
   /* ---- クリア：ひみつの思い出 → クリア画面（X にポスト） ---- */
   const CLR = C.clear || null;
+  let clearTease = false;   // クリア画面をとじたら、第2章の予告をひとこと
   function playClear() {
     if (!CLR || !$('event').hidden) return;
     playMemory(CLR.memory, true).then(() => { SAVE.setCleared(); STATS.ping('clear'); showClear(); });
@@ -1298,6 +1300,7 @@
     const days = Math.max(1, SAVE.data.clearDay || SAVE.data.totalDays);
     const text = tr('タヌくんと、ずっと一緒の約束をしたよ🌺\n（なかよし{n}日目でクリア！）', { n: days }) +
       '\n' + tr('#タヌくん') + (CLR.hashtag ? ' #' + CLR.hashtag : '');
+    clearTease = true;
     openSheet(tr('🌺 クリアおめでとう！'),
       '<img class="res-img clear-img" alt="">' +
       '<p class="res-comment">' + tr('ここまで遊んでくれて、ほんとうにありがとう！') + '</p>' +
@@ -1498,6 +1501,7 @@
   // トップ画面に戻ってきたとき：条件がそろっていれば、1回だけ自動で
   function maybeFeedback() {
     if (maybeClear(1400)) return;   // ひみつの思い出がまだなら、そちらが先（トップ画面に戻ってきたとき）
+    if (maybeFlyer()) return;       // 🏮 お祭りのおしらせ（ちらし）がまだなら、そちらが先
     if (!FB || DEMO || !FB.minDays || SAVE.data.feedbackAsked || mode !== 'home') return;
     if (SAVE.data.totalDays < FB.minDays && !SAVE.data.cleared) return;
     setTimeout(() => {
@@ -1554,6 +1558,14 @@
   function closeSheet() {
     sheet.hidden = true;
     if (reportOpen) { reportOpen = false; resetReport(); }
+    // 🏮 クリアの日：クリア画面をとじたら、タヌくんが明日の予告（第2章が公開中のときだけ。2026-11-06 ユーザーと決めた）
+    if (clearTease) {
+      clearTease = false;
+      if (MT && mode === 'home') {
+        const t = withName(tr('{name}、明日ね、\n見せたいものがあるんだ♪'));
+        setTimeout(() => { if (HOME) HOME.zoomNow(t); else showBubble(t); }, 400);
+      }
+    }
   }
 
   /* =========================================================
@@ -1818,6 +1830,74 @@
     });
   }
 
+  /* ---- 🏮 お祭りのおしらせ（ちらし。2026-11-06 ユーザーと決めた）----
+     第2章を open にした版で、なかよし flyerDays（3）日目以上の人に、トップ画面で自動で1回だけ（あとで3日目になった人にも）。
+     'go'＝クリア済み（「なでなでへ」でなでなでの画面へ。ちょうちんが光って「さわってみて？」）／
+     'soon'＝今日クリアした（明日から）／'wait'＝まだクリアしていない（ひみつの思い出を見た次の日から）。
+     クリアの日（ひみつの思い出を流す日・クリアした日）は自動では出さない。設定の「🏮 お祭りのおしらせ」から、いつでも見直せる */
+  function flyerKind() {
+    const d = SAVE.data;
+    if (d.cleared) return d.clearDay != null && d.clearDay >= d.totalDays && !MT_ALL ? 'soon' : 'go';
+    return 'wait';
+  }
+  let flyerWait = false;
+  function maybeFlyer() {
+    if (!MT || DEMO || SAVE.data.k2Flyer || mode !== 'home') return false;
+    const d = SAVE.data;
+    if (d.totalDays < (MT.flyerDays || 3) || SAVE.clearReady() || flyerKind() === 'soon') return false;
+    if ((d.k2Seen || {})[0] != null) return false;   // もう序章を見ている
+    if (flyerWait) return true;
+    flyerWait = true;
+    const release = holdHome(), t0 = Date.now();
+    let calm = 0;
+    (function wait() {
+      const busy = mode !== 'home' || !sheet.hidden || !$('event').hidden || (URANAI && URANAI.isOpen()) || (POST && POST.isOpen());
+      calm = busy ? 0 : calm + 1;
+      if (mode !== 'home' || SAVE.data.k2Flyer || Date.now() - t0 > 90000) { flyerWait = false; release(); return; }   // 次にトップ画面に戻ってきたときに、またためす
+      if (Date.now() - t0 >= 1800 && calm >= 2) { flyerWait = false; showFlyer(true); release(); return; }
+      setTimeout(wait, 400);
+    })();
+    return true;
+  }
+  function showFlyer(isAuto) {
+    if (!MT) return;
+    if (isAuto) { SAVE.setFlag('k2Flyer'); STATS.ping('k2-flyer'); }
+    const kind = flyerKind(), all = MT.parts.every((p, k) => mtState(k) === 'seen');
+    let say, note, btns;
+    if (kind === 'go') {
+      say = tr('{name}、見て見て！\n島でお祭りがあるんだって！\n…いっしょに、行ってくれる？');
+      note = all ? tr('見た場面は「実績」のアルバムから、何度でも見られるよ') : tr('なでなでの画面の 🏮 から始まるよ。\nお話は3日ごとに進むよ（全4話）');
+      // 「とじる」はパネルの下にいつもある（白）。主役のオレンジは「なでなでへ」だけ
+      btns = all ? '' : '<button class="btn btn-main btn-wide mt-fl-go" type="button">' + tr('🏮 なでなでへ') + '</button>';
+    } else if (kind === 'soon') {
+      say = tr('{name}、明日ね、\n見せたいものがあるんだ♪');
+      note = tr('明日から、なでなでの画面の 🏮 から始まるよ');
+      btns = '';
+    } else {
+      const left = SAVE.clearRemain();
+      say = tr('島でお祭りがあるんだって！\n{name}ともっとなかよくなったら、\nいっしょに行きたいな♪');
+      note = tr('7日目の「ひみつの思い出」を見た次の日から始まるよ') +
+        (left != null && left > 0 ? '\n' + tr('ひみつの思い出まで、あと{n}日', { n: left }) : '');
+      btns = '';
+    }
+    openSheet(tr('🏮 お祭りのおしらせ'),
+      '<div class="mt-flyer"><div class="mt-fl-lamps" aria-hidden="true">🏮 🏮 🏮 🏮 🏮</div>' +
+      '<p class="mt-fl-ch">' + tr('第2章') + '</p><p class="mt-fl-title">' + tr('島の夜祭り') + '</p>' +
+      '<span class="mt-fl-pic"><img alt=""></span></div>' +
+      '<p class="mt-fl-say"></p><p class="note small mt-fl-note"></p>' + btns);
+    const body = $('sheet-body');
+    body.querySelector('.mt-fl-pic img').src = MT.flyerImage || MT.parts[0].thumb;
+    body.querySelector('.mt-fl-say').textContent = withName(say);
+    body.querySelector('.mt-fl-note').textContent = note;
+    const go = body.querySelector('.mt-fl-go');
+    // なでなでの画面へ（ちょうちんが光って、タヌくんが「ちょうちん、さわってみて？」）
+    if (go) go.addEventListener('click', () => {
+      STATS.ping('k2-go'); closeSheet();
+      if (mode === 'play') return;
+      veilIn().then(() => { enterPlay(true); veilOut(); });
+    });
+  }
+
   // 探す楽しみ：これまでに一度もさわっていない場所があるか（太ももは公開スイッチが open のときだけ数える）
   function unfound() {
     const tap = SAVE.data.stats.tap || {};
@@ -2051,6 +2131,7 @@
       (C.notice ? '<h3>' + tr('このアプリ') + '</h3><button id="btn-about" class="btn btn-wide" type="button">' + tr('このアプリについて') + '</button>' : '') +
       (C.rules ? '<button id="btn-rules" class="btn btn-wide" type="button">' + tr('ⓘ お約束と注意') + '</button>' : '') +
       (FB ? '<button id="btn-feedback" class="btn btn-wide" type="button">' + tr('💬 タヌくんにおたより') + '</button>' : '') +
+      (MT ? '<button id="btn-flyer" class="btn btn-wide" type="button">' + tr('🏮 お祭りのおしらせ') + '</button>' : '') +
       (postFormInfo() ? '<button id="btn-opinion" class="btn btn-wide" type="button">' + tr('💡 作者へのご意見・ご感想') + '</button>' : '') +
       '<h3>' + tr('記録') + '</h3>' +
       '<p class="note">' + tr('記録はこのスマホのブラウザの中だけに保存されます。') +
@@ -2082,6 +2163,7 @@
     if ($('btn-about')) $('btn-about').addEventListener('click', () => showNotice(null));
     if ($('btn-rules')) $('btn-rules').addEventListener('click', () => showRules());
     if ($('btn-feedback')) $('btn-feedback').addEventListener('click', () => showFeedback(false));
+    if ($('btn-flyer')) $('btn-flyer').addEventListener('click', () => showFlyer(false));
     if ($('btn-opinion')) $('btn-opinion').addEventListener('click', showOpinion);
     if (C.testHearts && $('btn-test-feedback')) $('btn-test-feedback').addEventListener('click', () => showFeedback(true));
     if (C.testHearts && POST && $('btn-test-post')) $('btn-test-post').addEventListener('click', () => { POST.testArrive(); closeSheet(); toast('📮 お返事が とどいたよ（確認用）'); });

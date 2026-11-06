@@ -386,6 +386,10 @@ window.TANU_CONFIG = {
     gap: 3,
     firstGap: 1,   // 序章は、クリアした日から何日あとに開くか（1＝次の日。クリアの日は出さない）
     x: 86, y: 22,
+    // お祭りのおしらせ（ちらし。2026-11-06 ユーザーと決めた）：公開スイッチを open にした版で、なかよし flyerDays 日目以上の人に自動で1回だけ。
+    // クリア済み＝「なでなでへ」／まだ＝「ひみつの思い出を見た次の日から」の予告。1〜2日目の人には出さない（あとで3日目になった日に出る）
+    flyerDays: 3,
+    flyerImage: 'matsuri/img/gate_day.webp',
     parts: [
       { title: 'お祭りのお誘い', thumb: 'matsuri/img/cafe_invite.webp' },
       { title: '屋台めぐり',     thumb: 'matsuri/img/yatai_eat.webp' },

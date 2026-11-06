@@ -56,7 +56,8 @@ window.TanuSave = (function () {
       feedbackAsked: false,  // おたより（感想）を自動で出した
       feedbackSent: false,   // おたよりに答えてくれた（お礼のポイントは1回だけ）
       k2Seen: {},            // 🏮 第2章：場面（0〜3）→ はじめて最後まで見た日（のべ日数）。次の場面は、その日から k2 の gap 日あと
-      k2Pick: null           // 🏮 第2章：屋台で最初に選んだ味（'sweet' / 'salty'）。もう一度遊んで選び直しても変えない
+      k2Pick: null,          // 🏮 第2章：屋台で最初に選んだ味（'sweet' / 'salty'）。もう一度遊んで選び直しても変えない
+      k2Flyer: false         // 🏮 第2章：お祭りのおしらせ（ちらし）を自動で出した（一度とじたら、もう自動では出さない）
     };
   }
 
