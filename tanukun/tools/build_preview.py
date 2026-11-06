@@ -118,8 +118,15 @@ if __name__ == '__main__':
         text = out.read_text(encoding='utf8')
         text = text.replace("href: 'pon/'", "href: 'pon/index.html'").replace('href="pon/"', 'href="pon/index.html"')
         out.write_text(text, encoding='utf8')
+        # 🥁 ステージ4「おまつり」（2026-11-06）：確認用リンクでは公開スイッチを open にして、第2章を見ていなくても遊べる（TAIKO_ALL）。
+        # 太鼓の絵は ../matsuri/img/〇〇.webp（Artifact の files にある第2章の絵）を使う
+        text = text.replace("ponTaiko:  'hidden'", "ponTaiko:  'open'")
+        out.write_text(text, encoding='utf8')
         pon = out.parent / 'pon' / 'index.html'
         build_pon(pon)
+        ptext = pon.read_text(encoding='utf8')
+        ptext = ptext.replace("ponTaiko:  'hidden'", "ponTaiko:  'open'").replace("const TAIKO_ALL = /[?&]taiko\\b/.test(location.search);", "const TAIKO_ALL = true;")
+        pon.write_text(ptext, encoding='utf8')
         # Artifact では、いっしょに載せるページは そのまま出るので、文字コードと画面の幅の宣言を先頭に付ける
         pon.write_text('<!doctype html>\n<html lang="ja"><head><meta charset="utf-8">'
                        '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">'
