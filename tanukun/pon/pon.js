@@ -147,13 +147,15 @@
      bellyArea … ポン（おなか）の ◉ が出る所 */
   ARTS.taiko = {
     src: 'matsuri/img/taiko_ready.webp', hitSrc: 'matsuri/img/taiko_hit.webp', w: 1024, h: 1536,
-    belly: { x: 51.8, y: 41.7, rx: 18.6, ry: 10.4 },   // おなか（中心 530, 640、半径 190, 160）
+    // おなか（揺れる所）：おへそ（595, 835）のあたりを中心に（2026-11-06 ユーザー「おへそあたりで揺れるように」）。
+    // 中心 585, 765、半径 175, 140。下のふちは腰みののひも・バチの先にかからないように
+    belly: { x: 57.1, y: 49.8, rx: 17.1, ry: 9.1 },
     view: { cover: true, cx: 600 },
     mole: { area: { x: 745, y: 975, rx: 165, ry: 55 }, gap: 95 },
-    bellyArea: { x: 525, y: 635, rx: 110, ry: 75 },
-    drum: { cx: 750, cy: 1080, rx: 280, ry: 250 },
+    bellyArea: { x: 578, y: 790, rx: 95, ry: 52 },   // ポンの ◉（おへそのまわり。2026-11-06 下に下げた）
+    drum: { cx: 760, cy: 1100, rx: 270, ry: 230 },   // 上のはしは、おへその少し下（おなかとまちがえにくく）
     drumHead: { cx: 750, cy: 935, rx: 230, ry: 52 },   // 太鼓の面（波紋を出す所）
-    hit: { chest: { x0: 380, y0: 330, x1: 700, y1: 470 }, belly: { cx: 530, cy: 640, rx: 200, ry: 165 } },
+    hit: { chest: { x0: 380, y0: 330, x1: 700, y1: 470 }, belly: { cx: 575, cy: 720, rx: 220, ry: 190 } },
     parts: {}, noWear: true, fade: false
   };
   const TAIKO_CUTIN_AT = 30;   // カットインの帯の高さ（絵の％。顔の下・おなかの上）
@@ -898,7 +900,8 @@
     return j;
   }
   function tap(p) {
-    const found = playing ? nearest(p.now, ['pon', 'poko', 'don'], p) : null;
+    // おまつり：太鼓をたたいたらドンッの ◉ だけ、おなかならポンの ◉ だけ（おへそと太鼓が近いので、取りちがえないように）
+    const found = playing ? nearest(p.now, taiko() ? (p.drum ? ['don'] : ['pon']) : ['pon', 'poko', 'don'], p) : null;
     // まんぷく：「たべたい」でない食べものをたたいた → ミス
     if (found && found.note.food && !found.note.target && found.d <= MISS_AFTER) {
       found.note.done = true;
