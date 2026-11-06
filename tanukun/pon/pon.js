@@ -382,11 +382,20 @@
     $('pops').appendChild(el);
     setTimeout(() => el.remove(), 520);
     drumDown++;
+    drumUntil = performance.now() + DRUM_MIN;   // タップでも、すぐには戻さない（2026-11-06 ユーザー「長押しと同じように、すぐ切りかわらないように」）
+    clearTimeout(drumTimer);
     if (!CALM && tHit) tHit.classList.add('on');
   }
-  function drumRelease() {
+  // 離した：押しはじめから DRUM_MIN ミリ秒たつまでは、たたく絵のまま。そのあと、ふわっと戻る
+  const DRUM_MIN = 800;
+  let drumUntil = 0, drumTimer = 0;
+  function drumRelease(now) {
     drumDown = Math.max(0, drumDown - 1);
-    if (!drumDown && tHit) tHit.classList.remove('on');
+    if (drumDown || !tHit) return;
+    clearTimeout(drumTimer);
+    const wait = now ? 0 : drumUntil - performance.now();
+    if (wait > 0) drumTimer = setTimeout(() => { if (!drumDown) tHit.classList.remove('on'); }, wait);
+    else tHit.classList.remove('on');
   }
   /* ドーン（長押し）：押しはじめで判定（hit）→ 輪が一周するまで押し続けたら成功（ボーナス）。
      早く離しても、押しはじめの点はそのまま（失敗にはしない。「もうちょっと！」だけ） */
@@ -707,7 +716,7 @@
     MOLE.area = ART.mole.area; MOLE.gap = ART.mole.gap;
     belly.stop();
     belly = taiko() ? bellyT : bellyN;
-    holds.length = 0; drumDown = 1; drumRelease();
+    holds.length = 0; drumDown = 1; drumRelease(true);
     app.classList.toggle('mode-taiko', taiko());
     app.classList.toggle('art-fade', ART.fade);
     app.classList.toggle('mode-belly', onBelly());
@@ -1180,7 +1189,7 @@
     playing = false;   // 中断中は、たたいても判定しない
     if (ac) ac.suspend();
     Object.keys(pointers).forEach((id) => { delete pointers[id]; });
-    drumDown = 1; drumRelease();
+    drumDown = 1; drumRelease(true);
     holds.slice().forEach((n) => holdEnd(n, 0, true));   // 中断：長押しの途中は、成功にしておく
     belly.stop();
     $('count').hidden = true;
@@ -1229,7 +1238,7 @@
     $('cutin').hidden = true;
     belly.setBase('fat', 0);
     belly.stop();
-    holds.length = 0; drumDown = 1; drumRelease();
+    holds.length = 0; drumDown = 1; drumRelease(true);
     if (taiko()) { mode = 'belly'; ART = ARTS.normal; belly = bellyN; app.classList.remove('mode-taiko'); app.classList.toggle('art-fade', ART.fade); layout(); }
     setFace('normal');
     showBar();
