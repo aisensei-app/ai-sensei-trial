@@ -64,8 +64,15 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
   41%{transform:scale(1.025)}49%{transform:scale(1)}57%{transform:scale(1.018)}66%{transform:scale(1)}}
 #tanu.lunge{left:50%;transform:translateX(-50%) scale(1.9);transform-origin:50% 45%;filter:none;z-index:3;
   transition:left .45s ease-in,transform .45s cubic-bezier(.5,0,.9,.6)}
-#tanu.dive{left:55%;transform:translateX(-50%) translateY(18%) rotate(14deg) scale(1.05);filter:none;z-index:3;
-  transition:left .35s ease-in,transform .35s cubic-bezier(.5,0,.9,.6)}
+#tanu.dive{filter:none;z-index:3;animation:dive .75s cubic-bezier(.4,0,.8,.6) forwards}
+@keyframes dive{0%{transform:translateX(-50%) scale(1)}
+  35%{transform:translateX(-35%) translateY(-22%) rotate(-6deg) scale(1)}
+  100%{transform:translateX(40%) translateY(75%) rotate(48deg) scale(1.1);opacity:1}}
+/* 砂けむり（画面の下からふわっと広がって消える） */
+.puff{position:absolute;z-index:4;left:50%;bottom:-6%;width:120%;height:46%;transform:translateX(-50%) scale(.3);opacity:0;pointer-events:none;
+  background:radial-gradient(closest-side,rgba(240,214,170,.95),rgba(236,205,155,.75) 45%,rgba(230,200,150,0) 100%);filter:blur(4px)}
+.puff.go{animation:puff 1.1s ease-out forwards}
+@keyframes puff{0%{opacity:0;transform:translateX(-50%) scale(.3)}25%{opacity:1}100%{opacity:0;transform:translateX(-50%) scale(1.5) translateY(-12%)}}
 #uru.pushed{left:60%;z-index:1;transition:left .3s ease-out}   /* ウルくんはタヌくんのうしろへ回って押す */
 #tanu.front{z-index:4;filter:none}
 /* 夜（前夜）：絵を包む2重の箱。外＝もたれる動き（寄る・傾く・暗く）、内＝ゆっくりした鼓動 */
@@ -121,7 +128,7 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
 #part{right:132px}
 #step{left:16px;cursor:default}
 @media (prefers-reduced-motion:reduce){#bump.beat,#night.leaning .beat,#stage.quake,.chara.hop,.chara.shake{animation:none}
-  #tanu.lunge,#tanu.dive{transition:none}.more.on{animation:none}}
+  #tanu.lunge{transition:none}.puff.go{animation-duration:.4s}.more.on{animation:none}}
 </style>
 
 <div id="game">
@@ -130,13 +137,13 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
     <div class="chara" id="tanu"><img alt=""><img alt=""></div>
     <div class="chara away" id="uru"><img alt=""><img alt=""></div>
     <img class="still" data-k="invite" src="img/intro_invite.webp" alt="">
-    <img class="still" data-k="sand" src="img/intro_sand.webp" alt="">
     <div class="jig" id="bump"><canvas></canvas></div>
     <div class="jig" id="sand"><canvas></canvas></div>
     <div id="night"><div class="lean"><div class="beat">
       <img data-k="ask" src="img/night_ask.webp" alt="">
       <img data-k="relief" class="off" src="img/night_relief.webp" alt="">
     </div></div></div>
+    <div class="puff" id="puff"></div>
     <div class="pop" id="pop"></div>
     <div class="hint" id="hint"></div>
     <div class="meter" id="meter"><i></i></div>
@@ -159,14 +166,16 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
      night：'ask'／'relief'＝夜の絵・lean＝もたれている間（絵が寄って暗く）・choice＝二択（どちらでも先は同じ。alt＝選んだ側で変わる次の行） */
   const PARTS = [
     { title: '序章', start: 'solo', lines: [
-      { still: 'invite', who: 'tanu', text: '{name}！ 浜でね、ボールを見つけたんだ♪' },
-      { still: 'invite', who: 'tanu', text: 'いっしょに、ぽよんラリーしよ！' },
-      { who: 'tanu', t: 'happy', text: 'あ、そうだ。今日はね、{name}に会ってほしい友だちがいるんだ。' },
+      { still: 'invite', who: 'tanu', text: '{name}！ 見て見て！\n浜で、ビーチバレーの大会があるんだって！' },
+      { still: 'invite', who: 'tanu', text: 'ふたり一組で出るんだ。\n…{name}、ぼくといっしょに、出てくれない？' },
+      { who: 'tanu', t: 'happy', anim: 'hop', text: 'やったぁ！\nあのね、優勝すると、すっごくきれいな貝のネックレスがもらえるんだよ♪' },
+      { who: 'tanu', t: 'shy', text: 'ぼく、どうしても、それがほしくて…\nえへへ、なんでかは、ないしょ！' },
+      { who: 'tanu', t: 'normal', text: 'それでね、練習相手を呼んであるんだ！' },
       { who: 'uru', uru: 'in', u: 'laugh', label: '？？？', text: 'おーい、タヌくーん！' },
       { who: 'tanu', t: 'happy', anim: 'hop', text: 'ウルくん！ こっちこっち♪' },
       { who: 'uru', u: 'normal', text: 'きみが{name}だね！\nはじめまして、ウルだよ。よろしくね♪' },
-      { who: 'tanu', t: 'normal', text: 'ウルくんはね、となりの島に住んでる、ぼくの幼なじみなんだ。' },
-      { who: 'uru', u: 'laugh', text: 'タヌくんね、{name}の話をするとき、いっつも すっごくうれしそうなんだ。\nだから、ぼくも会ってみたかったんだ。' },
+      { who: 'tanu', t: 'normal', text: 'ウルくんはね、となりの島に住んでる、ぼくの幼なじみなんだ。\nバレー、すっごく上手なんだよ！' },
+      { who: 'uru', u: 'laugh', text: 'タヌくんが大会に出るなんて、びっくりしたよ。\n昔は「ぼくなんて無理だよ〜」って、いつも見てるだけだったのに。' },
       { who: 'tanu', t: 'shy', anim: 'shake', text: 'ウ、ウルくん…！ それ、言わないでって…' },
       { who: 'uru', u: 'surprise', anim: 'hop', text: 'あれっ、ないしょだった？ ごめんごめん！' },
       { who: 'uru', u: 'normal', text: 'でもさ、タヌくん。{name}に言いたいこと、あるんでしょ？' },
@@ -174,35 +183,36 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
       { jig: 'bump', fx: 'bump', who: 'tanu', text: 'わわっ…！' },
       { jig: 'bump', who: 'tanu', text: 'ご、ごめん、{name}…！\nぶつかっちゃった…' },
       { jig: 'bump', who: 'tanu', text: '……でも、{name}、あったかいね。' },
-      { jig: 'bump', who: 'tanu', text: '…あのね。\nぼく、{name}とラリーするの、ずっと楽しみにしてたんだ。' },
-      { who: 'uru', u: 'laugh', anim: 'hop', text: 'よーし！ じゃあ3人で、ぽよんラリーだ！' },
-      { still: 'sand', who: 'tanu', text: 'えへへ…ころんじゃった。' },
-      { still: 'sand', who: 'tanu', text: 'でも、{name}とウルくんとだと、すっごく楽しいね♪' },
-      { still: 'sand', who: 'uru', text: 'またやろうね、{name}！' }
+      { jig: 'bump', who: 'tanu', text: '…あのね。\n{name}がいっしょだから、ぼく、がんばれる気がするんだ。' },
+      { who: 'uru', u: 'laugh', anim: 'hop', text: 'よーし！ じゃあ、さっそく特訓だ！' },
+      { who: 'tanu', t: 'happy', text: '{name}、大会まで、いっしょにがんばろうね♪' }
     ] },
     { title: '特訓', start: 'duo', lines: [
       { who: 'uru', u: 'laugh', text: 'よーし！ 今日は、大会に向けて特訓だよ！' },
       { who: 'tanu', t: 'happy', anim: 'hop', text: '{name}も見ててね！ ぼく、がんばるから♪' },
       { who: 'uru', u: 'normal', text: 'いくよ、タヌくん！ それっ！' },
-      { who: 'tanu', t: 'happy', fx: 'dive', text: 'とりゃ〜っ！' },
+      { who: 'tanu', t: 'happy', u: 'surprise', fx: 'dive', auto: 1500, text: 'とりゃ〜っ！' },
       { jig: 'sand', who: 'uru', text: 'あはは！ タヌくん、砂まみれだ〜！' },
-      { jig: 'sand', who: 'tanu', text: 'えへへ…ころんじゃった。' },
+      { jig: 'sand', who: 'tanu', text: 'えへへ…ころんじゃった。\nでも今の、ボールにさわれたよ！' },
       { jig: 'sand', who: 'uru', text: 'ぼくはタオル持ってるから、\n{name}は、お腹の砂をはらってあげて！' },
       { jig: 'sand', who: 'tanu', interact: 'sand', text: 'えっ、{name}が…？\n…じゃあ、お願い、しようかな…' },
       { jig: 'sand', who: 'tanu', text: '…えへへ。\n{name}にはらってもらうの、なんだか、うれしいな。' },
-      { jig: 'sand', who: 'uru', text: 'ピカピカだね！ はい、タオル♪' },
-      { jig: 'sand', who: 'tanu', text: '大会、もうすぐなんだ。\n…{name}、また見に来てくれる？' }
+      { jig: 'sand', who: 'uru', text: 'ピカピカだね！ はい、タオル♪\n…タヌくん、ほんとに変わったね。' },
+      { jig: 'sand', who: 'tanu', text: '大会まで、あと少し。\n…{name}、また練習、見に来てくれる？' }
     ] },
     { title: '前夜', start: 'night', lines: [
       { night: 'ask', who: 'tanu', text: '{name}、来てくれたんだ。\n…えへへ、なんだか、眠れなくて。' },
-      { night: 'ask', who: 'tanu', text: '明日の大会、負けちゃったら…\n{name}に、かっこ悪いとこ見せちゃうな…' },
+      { night: 'ask', who: 'tanu', text: '明日、いよいよ大会だね。\n…ぼく、ほんとは、ちょっとこわいんだ。' },
+      { night: 'ask', who: 'tanu', text: 'ぼくね、ずっと、何かに挑戦する勇気がなかったんだ。\n失敗したらどうしようって、いつも見てるだけで。' },
+      { night: 'ask', who: 'tanu', text: 'でも、{name}と会ってから…\nなんだか、一歩ふみ出してみたくなったんだ。' },
       { night: 'ask', who: 'tanu', choice: ['いいよ', 'もちろん'], text: 'あのね、{name}…\nちょっとだけ、もたれかかっても、いい…？' },
       { night: 'ask', who: 'tanu', alt: ['…ほんと？\nえへへ…じゃあ、ちょっとだけ…', '…もちろん、って。\nえへへ…じゃあ、ちょっとだけ…'] },
       { night: 'ask', lean: true, who: 'tanu', text: '……あったかい。' },
-      { night: 'ask', lean: true, who: 'tanu', text: 'とくん、とくんって…\nなんだか、落ちつくな。' },
-      { night: 'ask', lean: true, who: 'tanu', text: '{name}がいてくれたら、\n明日、がんばれる気がする。' },
-      { night: 'relief', who: 'tanu', text: 'ありがと、{name}。\n…今夜のことは、ふたりだけのひみつだよ♪' },
-      { night: 'relief', who: 'tanu', text: '明日、いっしょにがんばろうね。' }
+      { night: 'ask', lean: true, who: 'tanu', text: 'ねえ、{name}。\nひとつ、ひみつを言ってもいい？' },
+      { night: 'ask', lean: true, who: 'tanu', text: '優勝したら、あの貝のネックレス…\n{name}に、プレゼントしたかったんだ。' },
+      { night: 'ask', lean: true, who: 'tanu', text: 'いつも会いに来てくれる、\nお礼に。' },
+      { night: 'relief', who: 'tanu', text: 'えへへ…言っちゃった。\nなんだか、すっきりして、元気が出てきた！' },
+      { night: 'relief', who: 'tanu', text: '明日、いっしょにがんばろうね、{name}。\nおやすみ♪' }
     ] }
   ];
   const NAMES = { tanu: 'タヌくん', uru: 'ウルくん' };
@@ -212,6 +222,7 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const stage = $('#stage'), ch = { tanu: $('#tanu'), uru: $('#uru') };
   const textEl = $('#text'), nameEl = $('.name'), more = $('.more'), btns = $('.btns');
+  let autoT = 0;
   let part = Math.max(0, Math.min(2, +(new URLSearchParams(location.search).get('part') || 0)));
   let LINES = PARTS[part].lines, i = -1, typing = null, full = '', useName = true, picked = 0, waitChoice = false, waitSand = false;
 
@@ -465,7 +476,7 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
     document.querySelectorAll('.still').forEach((s) => s.classList.toggle('on', s.dataset.k === L.still));
     // おなかが揺れる1枚絵
     if (L.jig !== 'bump') { bumpEl.classList.remove('on', 'beat'); ch.tanu.classList.remove('lunge'); if (L.fx !== 'push') ch.tanu.classList.remove('front'); ch.uru.classList.remove('pushed'); }
-    if (L.jig === 'sand' && !sandEl.classList.contains('on')) { sandEl.classList.add('on'); sand.draw(); sand.kick(2.4); sand.wave({ x: AREA.cx, y: AREA.cy }, 1); popWord('ずさーっ！'); }
+    if (L.jig === 'sand' && !sandEl.classList.contains('on')) { sandEl.classList.add('on'); sand.draw(); sand.kick(2.4); sand.wave({ x: AREA.cx, y: AREA.cy }, 1); }
     if (L.jig !== 'sand') sandEl.classList.remove('on');
     if (L.fx !== 'dive' && L.jig !== 'sand') ch.tanu.classList.remove('dive');
     if (L.fx === 'push') { ch.uru.classList.add('pushed'); ch.tanu.classList.add('front'); setTimeout(() => anim('tanu', 'shake'), 300); }
@@ -474,10 +485,15 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
       setTimeout(() => { bumpEl.classList.add('on'); bump.draw(); bump.kick(3.8); bump.wave({ x: 510, y: 1090 }, 1.2); popWord('ぽよん！'); setTimeout(() => bump.kick(1.6), 520);
         if (!reduce) { bumpEl.classList.remove('beat'); void bumpEl.offsetWidth; bumpEl.classList.add('beat'); } }, 420);
     }
-    if (L.fx === 'dive') {   // ボールに飛びつく → 地面が少し揺れる（点滅はしない）
-      ch.tanu.classList.add('dive');
-      setTimeout(() => { if (!reduce) { stage.classList.remove('quake'); void stage.offsetWidth; stage.classList.add('quake'); } }, 330);
+    if (L.fx === 'dive') {   // ボールに飛びつく：上へ跳んで、画面の外へ飛びこむ → 砂けむり・地面が少し揺れる（点滅はしない）→ 砂まみれの絵へ
+      ch.tanu.classList.remove('dive'); void ch.tanu.offsetWidth; ch.tanu.classList.add('dive');
+      setTimeout(() => {
+        const pf = $('#puff'); pf.classList.remove('go'); void pf.offsetWidth; pf.classList.add('go'); popWord('ずさーっ！');
+        if (!reduce) { stage.classList.remove('quake'); void stage.offsetWidth; stage.classList.add('quake'); }
+      }, 700);
     }
+    clearTimeout(autoT);
+    if (L.auto) autoT = setTimeout(() => { if (i === k) { clearInterval(typing); typing = null; show(++i); } }, L.auto);
     if (L.interact === 'sand') { waitSand = true; setTimeout(() => { if (waitSand) { hint('👆 おなかを なでて、砂を おとしてね'); $('#meter').classList.add('on'); } }, 900); }
     // 夜
     const nt = $('#night');
