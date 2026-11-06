@@ -166,13 +166,16 @@
   const MOLE = { appear: 1.0, area: ART.mole.area, gap: ART.mole.gap, hitR: 56 };
   const taiko = () => mode === 'taiko';
   /* ステージ4 おまつりの譜面：三三七拍子（昔からある日本の拍子）を「ポンポンドンッ」で（2026-11-06 ユーザーと決めた。エイトビートはやめた）
-       ポン ポン ドンッ ・ | ポン ポン ドンッ ・ | ポン ポン ドンッ ポン | ポン ドンッ ドンッ ・
-     pon＝おなかをタップ（ポン）、don＝太鼓をタップ（ドンッ）。1小節を8つに分けた位置（4分音符なので 0・2・4・6）。〜（ぷるん）はなし
-     sections … 速さ（bpm）と小節の数（4小節で三三七が1回）。最後に「ドンッ」で決める */
+       ポン ポン ドーーン | ポン ポン ドーーン | ポン ポン ポン ポン | ポン ポン ドーーン   （3・3・7＝4＋3）
+     pon＝おなかをタップ（ポン）、don＝太鼓を長押し（ドーン。2拍。2026-11-06 ユーザー：ちかちか対策で長押しに）。
+     1小節を8つに分けた位置（4分音符なので 0・2・4・6）。〜（ぷるん）はなし
+     sections … 速さ（bpm）と小節の数（4小節で三三七が1回）。最後の「ドーン」で終わり
+     HOLD … 長押しの長さ（8分音符いくつ分）、HOLD_OK … この割合まで押していれば成功 */
   const TAIKO_SONG = {
     sections: [{ bpm: 80, bars: 4 }, { bpm: 92, bars: 4 }, { bpm: 104, bars: 4 }],
-    bars: [{ 0: 'pon', 2: 'pon', 4: 'don' }, { 0: 'pon', 2: 'pon', 4: 'don' }, { 0: 'pon', 2: 'pon', 4: 'don', 6: 'pon' }, { 0: 'pon', 2: 'don', 4: 'don' }]
+    bars: [{ 0: 'pon', 2: 'pon', 4: 'don' }, { 0: 'pon', 2: 'pon', 4: 'don' }, { 0: 'pon', 2: 'pon', 4: 'pon', 6: 'pon' }, { 0: 'pon', 2: 'pon', 4: 'don' }]
   };
+  const HOLD = 4, HOLD_OK = 0.7, HOLD_BONUS = 50;
   /* ステージ3 まんぷく
      foods      … 出てくる食べもの（形と色が似ていないものを選ぶ）
      appear     … 食べものが出てから、たたく時までの秒数（吹き出しを切りかえる間をとるため、おなかモードより短く）
@@ -359,15 +362,17 @@
     bellyT = window.TanuBelly({ config: Object.assign({}, JIGGLE, T.belly), img: tImg, canvas: tCanvas, layers: () => [] });
     tImg.addEventListener('load', () => bellyT.warm([tImg.src]), { once: true });
   }
-  /* 太鼓をたたいた（2026-11-06）：
-     ・最初は、たたくたびに絵を0.13秒パッと切りかえていた → ユーザー「ちかちかして気持ち悪くなる」
-     ・三三七拍子（ドンッは数が少ない）にしてから、ユーザー「ドンッのときにイラスト切りかえにして」→ ドンッで、たたく絵に。
-       パッと切りかえず、ふわっと出して（0.06秒）、少し見せて（HIT_SHOW）、ふわっと戻す（0.2秒）。太鼓の面に波紋も出す
+  /* 太鼓（2026-11-06 ユーザーと決めた）：
+     ・最初は、たたくたびに絵を0.13秒パッと切りかえていた → 「ちかちかして気持ち悪くなる」
+     ・ドンッのときだけ、ふわっと切りかえ → それでも「ちかちかする」
+     ・いま：ドンッは長押し（ドーン）。押している間だけ、たたく絵のまま。離したら、ふわっと戻る（CSS .t-hit）。太鼓の面に波紋
+       （絵が変わるのは押した時と離した時だけ。三三七で2小節に1回くらい）
+     ・太鼓とバチのまわりだけ重ねる案は、2枚の絵のポーズが左右逆でできなかった
      ・おなかは揺らさない。スマホの「動きを減らす」設定の人には、たたく絵を出さない（波紋だけ） */
   const CALM = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
-  const HIT_SHOW = 220;
-  let hitTimer = 0;
-  function drumHit() {
+  // 太鼓を押している間だけ、たたく絵（指を離したら、ふわっと戻る）。2本の指で押していても、全部離すまでそのまま
+  let drumDown = 0;
+  function drumPress() {
     if (!tImg) return;
     const D = ARTS.taiko.drumHead;   // 太鼓の面（絵のピクセル）
     const el = document.createElement('div');
@@ -376,10 +381,35 @@
       width: D.rx * 2 * scale + 'px', height: D.ry * 2 * scale + 'px' });
     $('pops').appendChild(el);
     setTimeout(() => el.remove(), 520);
-    if (CALM || !tHit) return;
-    tHit.classList.add('on');
-    clearTimeout(hitTimer);
-    hitTimer = setTimeout(() => tHit.classList.remove('on'), HIT_SHOW);
+    drumDown++;
+    if (!CALM && tHit) tHit.classList.add('on');
+  }
+  function drumRelease() {
+    drumDown = Math.max(0, drumDown - 1);
+    if (!drumDown && tHit) tHit.classList.remove('on');
+  }
+  /* ドーン（長押し）：押しはじめで判定（hit）→ 輪が一周するまで押し続けたら成功（ボーナス）。
+     早く離しても、押しはじめの点はそのまま（失敗にはしない。「もうちょっと！」だけ） */
+  const holds = [];
+  function holdStart(n, p) {
+    n.el.classList.add('holding');
+    n.el.style.setProperty('--hold', n.hold + 's');
+    n.el.insertAdjacentHTML('beforeend', '<svg class="hold-gauge" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"></circle></svg>');
+    p.hold = n;
+    holds.push(n);
+  }
+  function holdEnd(n, now, ok) {
+    const k = holds.indexOf(n);
+    if (k < 0) return;
+    holds.splice(k, 1);
+    n.el.classList.remove('holding');
+    n.el.classList.add('hit');
+    const x = offX + n.ix * scale, y = offY + n.iy * scale - 44;
+    if (ok) {
+      score += HOLD_BONUS;
+      $('score').textContent = score;
+      popWord(tr('ドーン！'), x, y - 20, 'don');
+    } else popWord(tr('もうちょっと！'), x, y - 20, 'jd miss');
   }
   renderParts();
   let armSide = 0;
@@ -598,6 +628,7 @@
           const pat = TK ? TAIKO_SONG.bars[b % 4] : SONG.pattern;
           if (pat[e]) {
             const n = { t: t, kind: purun ? 'purun' : pat[e] };
+            if (TK && n.kind === 'don') n.hold = HOLD * eighth;   // ドーン：長押しの長さ（秒）
             if (food) {
               n.target = firstInSec || Math.random() < FOOD.targetRate;
               n.food = n.target ? want : pick(FOOD.foods.filter((f) => f !== want));
@@ -610,7 +641,8 @@
       }
     });
     // 最後に「ぽん！」で決める
-    notes.push(food ? { t: t, kind: 'pon', last: true, target: true, food: want } : { t: t, kind: TK ? 'don' : 'pon', last: true });
+    if (TK) notes[notes.length - 1].last = true;   // おまつり：最後の「ドーン」で終わり（続けて押すと絵がすぐ切りかわるので、足さない）
+    else notes.push(food ? { t: t, kind: 'pon', last: true, target: true, food: want } : { t: t, kind: 'pon', last: true });
     // おなかモード：◉ の出る場所をランダムに（前の2つの ◉ から gap 以上はなす）
     notes.forEach((n, i) => {
       // おまつり：ポンはおなかの上、ドンッは太鼓の上
@@ -675,6 +707,7 @@
     MOLE.area = ART.mole.area; MOLE.gap = ART.mole.gap;
     belly.stop();
     belly = taiko() ? bellyT : bellyN;
+    holds.length = 0; drumDown = 1; drumRelease();
     app.classList.toggle('mode-taiko', taiko());
     app.classList.toggle('art-fade', ART.fade);
     app.classList.toggle('mode-belly', onBelly());
@@ -701,6 +734,7 @@
       n.done = false;
       if (onBelly()) {
         n.el.className = 'mole' + (n.kind === 'pon' ? '' : ' ' + n.kind) + (n.food ? ' food' : '');
+        if (n.hold) n.el.appendChild(Object.assign(document.createElement('b'), { className: 'hold-label', textContent: tr('ながおし') }));
         if (n.food) n.el.appendChild(Object.assign(document.createElement('span'), { textContent: n.food }));
         n.ring = document.createElement('div');
         n.ring.className = 'ring';
@@ -792,6 +826,8 @@
         if (!n.done) n.el.style.transform = 'translateX(' + (TARGET_X + dt * speed) + 'px)';
       }
     }
+    // ドーン：輪が一周したら成功（押したままでも）
+    holds.slice().forEach((n) => { if (now >= n.t + n.hold) holdEnd(n, now, true); });
     // 速さが変わるお知らせ
     const nb = chart.banners[nextBanner];
     if (nb && now >= nb.t - (nb.cutin != null ? 0 : 0.4)) {
@@ -848,7 +884,7 @@
     const j = found && JUDGE.find((x) => found.d <= x.within);
     if (!j) return null;
     found.note.done = true;
-    found.note.el.classList.add(onBelly() ? 'hit' : 'done');
+    if (!found.note.hold) found.note.el.classList.add(onBelly() ? 'hit' : 'done');   // ドーン（長押し）は、押している間は消さない
     judge(j, now, found.note);
     return j;
   }
@@ -872,7 +908,9 @@
     react(false);
     const eat = found && found.note.food;
     popWord(tr(eat ? 'ぱくっ！' : drum ? 'ドンッ！' : kind === 'poko' ? 'ぽこ！' : taiko() ? 'ポン！' : 'ぽん！'), p.sx, p.sy, drum ? 'don' : kind);
-    if (playing && hit(found, p.now) && eat) feed();
+    const got = playing && hit(found, p.now);
+    if (got && eat) feed();
+    if (got && found.note.hold) { if (drum) holdStart(found.note, p); else found.note.el.classList.add('hit'); }
   }
   // まんぷく：食べた数に合わせて、おなかをふくらませる
   // まんぷく：食べた（ゲージはすぐにたまる。おなかは grow でまとめてふくらむ）
@@ -958,7 +996,7 @@
     if (!area) return;   // からぶり
     const p = pointers[e.pointerId] = { sx: sx, sy: sy, x0: e.clientX, y0: e.clientY, now: 0, wait: false, purun: false, pull: false, drum: area === 'drum' };
     // おまつり：太鼓をたたいたら、たたく絵が一瞬出て、おなかが少しだけ揺れる（ドンの響き）
-    if (p.drum) drumHit();
+    if (p.drum) drumPress();
     else if (belly.ready()) belly.press('belly', ix, iy);
     else { body.classList.remove('bounce'); void body.offsetWidth; body.classList.add('bounce'); }
     if (playing && ac) {
@@ -990,8 +1028,14 @@
     if (!p) return;
     delete pointers[e.pointerId];
     if (p.wait && e.type === 'pointerup') tap(p);
+    if (p.drum) {
+      drumRelease();
+      // ドーン：輪がほぼ一周（HOLD_OK）していれば成功
+      if (p.hold && chart && ac) { const n = p.hold, now = songTime(); holdEnd(n, now, now - n.t >= n.hold * HOLD_OK); }
+      return;
+    }
     // ぷるん：引っぱった所から、はなすと大きく揺れて戻る
-    if (!p.drum) belly.release('belly', e.type === 'pointerup' && !p.pull);
+    belly.release('belly', e.type === 'pointerup' && !p.pull);
   }
   stage.addEventListener('pointerup', lift);
   stage.addEventListener('pointercancel', lift);
@@ -1136,6 +1180,8 @@
     playing = false;   // 中断中は、たたいても判定しない
     if (ac) ac.suspend();
     Object.keys(pointers).forEach((id) => { delete pointers[id]; });
+    drumDown = 1; drumRelease();
+    holds.slice().forEach((n) => holdEnd(n, 0, true));   // 中断：長押しの途中は、成功にしておく
     belly.stop();
     $('count').hidden = true;
     $('pause').hidden = false;
@@ -1183,6 +1229,7 @@
     $('cutin').hidden = true;
     belly.setBase('fat', 0);
     belly.stop();
+    holds.length = 0; drumDown = 1; drumRelease();
     if (taiko()) { mode = 'belly'; ART = ARTS.normal; belly = bellyN; app.classList.remove('mode-taiko'); app.classList.toggle('art-fade', ART.fade); layout(); }
     setFace('normal');
     showBar();

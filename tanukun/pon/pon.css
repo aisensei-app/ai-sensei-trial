@@ -700,8 +700,8 @@ body.in-x .result.scroll-more::after { bottom: 25vh; }
 .t-canvas { visibility: hidden; }
 #pon.mode-taiko #tanu-img, #pon.mode-taiko #belly-canvas, #pon.mode-taiko #parts-layer { display: none; }
 #pon.mode-taiko .t-img, #pon.mode-taiko .t-canvas { display: block; }
-#pon.mode-taiko .t-hit { display: block; opacity: 0; transition: opacity .2s ease-out; }   /* ドンッ：ふわっと出て、ふわっと戻る（パッと切りかえない） */
-#pon.mode-taiko .t-hit.on { opacity: 1; transition-duration: .06s; }
+#pon.mode-taiko .t-hit { display: block; opacity: 0; transition: opacity .35s ease-out; }   /* 太鼓を押している間だけ。離したら、ふわっと戻る */
+#pon.mode-taiko .t-hit.on { opacity: 1; transition-duration: .15s; }
 /* 太鼓の面に広がる、やわらかい波紋 */
 .drum-ripple { position: absolute; transform: translate(-50%, -50%) scale(.45); border-radius: 50%; border: 3px solid rgba(255, 236, 190, .85);
   box-shadow: 0 0 10px rgba(255, 220, 150, .5); opacity: .9; pointer-events: none; animation: drumRipple .5s ease-out forwards; }
@@ -721,3 +721,13 @@ body.in-x .result.scroll-more::after { bottom: 25vh; }
 .mole.don .ring { border-color: #E0383E; }
 .pop.don { font-size: 30px; -webkit-text-stroke-color: #A8222A; }
 .ic-note.ic-don { background: radial-gradient(circle, #7A1A1A 0 30%, #fff 31% 45%, #E0383E 46%); }
+
+/* ドーン（長押し）：赤い ◉ の下に「ながおし」、押している間は輪が一周する（--hold 秒） */
+.mole .hold-label { position: absolute; left: 50%; top: 100%; margin-top: 6px; transform: translateX(-50%); white-space: nowrap;
+  font-size: 13px; font-weight: 900; color: #fff; background: #C8282E; border-radius: 999px; padding: 1px 8px; }
+.mole.holding { opacity: 1 !important; }
+.mole.holding .ring { display: none; }
+.hold-gauge { position: absolute; inset: -12px; width: calc(100% + 24px); height: calc(100% + 24px); transform: rotate(-90deg); pointer-events: none; }
+.hold-gauge circle { fill: none; stroke: #FFD040; stroke-width: 8; stroke-linecap: round; stroke-dasharray: 289; stroke-dashoffset: 289;
+  animation: holdFill var(--hold, 1s) linear forwards; }
+@keyframes holdFill { to { stroke-dashoffset: 0; } }
