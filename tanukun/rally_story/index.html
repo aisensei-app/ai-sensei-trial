@@ -54,7 +54,7 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
 .still.on{opacity:1}
 /* 押されて飛びこんでくる場面（1枚絵＋おなかのぷるん）。canvas に描き直す */
 #bump{position:absolute;inset:0;z-index:6;opacity:0;transition:opacity .25s}
-#bump.on{opacity:1}
+#bump.on{opacity:1;touch-action:none}
 #bump canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 #bump.beat{animation:beat 2.7s ease-in-out}
 @keyframes beat{0%,100%{transform:scale(1)}8%{transform:scale(1.025)}16%{transform:scale(1)}24%{transform:scale(1.018)}33%{transform:scale(1)}
@@ -183,7 +183,7 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
     if (L.fx === 'bump') {
       // タヌくんがよろけて、こちらへ大きくなる → 1枚絵に切りかえて「ぽよん！」＋鼓動
       ch.tanu.classList.add('lunge');
-      setTimeout(() => { bumpEl.classList.add('on'); drawBump(); kick(3.2); popWord(); setTimeout(() => kick(1.4), 520);
+      setTimeout(() => { bumpEl.classList.add('on'); drawBump(); kick(3.8); wave({ x: E.cx, y: E.cy + 40 }, 1.2); popWord(); setTimeout(() => kick(1.6), 520);
         if (!reduce) { bumpEl.classList.remove('beat'); void bumpEl.offsetWidth; bumpEl.classList.add('beat'); } }, 420);
     }
     if (L.uru === 'in') { ch.uru.classList.remove('away'); ch.uru.classList.add('on'); ch.tanu.classList.remove('solo'); }
@@ -212,7 +212,8 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
 
   $('#game').addEventListener('click', (e) => {
     if (e.target.closest('button')) return;
-    if (bumpEl.classList.contains('on')) { const q = toImg(e); if (inBelly(q)) { poke(q); kick(1.8); } }   // おなかをタップすると、そこから「ぷるん」
+    if (dragged) { dragged = false; return; }   // スワイプしたあとは、セリフを進めない
+    if (bumpEl.classList.contains('on')) { const q = toImg(e); if (inBelly(q)) { poke(q); kick(1.8); wave(q, 1); } }   // おなかをタップすると、そこから「ぷるん」＋波紋
     next();
   });
   $('#again').addEventListener('click', reset);
@@ -222,8 +223,10 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
   const bumpEl = $('#bump'), cv = bumpEl.querySelector('canvas'), bimg = new Image();
   bimg.src = 'img/push_bump.webp'; bimg.onload = () => drawBump();
   const E = (() => { const [cx, cy, rx, ry] = bumpEl.dataset.belly.split(',').map(Number); return { cx, cy, rx, ry }; })();
-  const SPRING = 420, DAMP = 4.5, N = 22, POS = [.5, .3];   // POS＝絵のどこを画面に合わせるか（object-position と同じ）
-  const B = { x: 0, v: 0, pk: 0, pkv: 0, pcx: E.cx, pcy: E.cy, run: false };
+  const SPRING = 420, DAMP = 4.5, N = 30, POS = [.5, .3];   // POS＝絵のどこを画面に合わせるか（object-position と同じ）
+  const B = { x: 0, v: 0, pk: 0, pkv: 0, pcx: E.cx, pcy: E.cy, px: 0, py: 0, pvx: 0, pvy: 0, drag: false, run: false };
+  let ripples = [];   // 波紋：{ x, y, t0, a }（絵の中の px・始まった時刻・強さ）
+  const PULL = E.rx * .28, WAVE_L = 110, WAVE_V = 520, WAVE_A = 16;   // 引っぱれる長さ・波の長さ・波の速さ（px/秒）・波の高さ
   function fitB() {
     const r = bumpEl.getBoundingClientRect(), W = r.width, H = r.height, iw = bimg.naturalWidth, ih = bimg.naturalHeight;
     const s = Math.max(W / iw, H / ih);
@@ -234,7 +237,16 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
   function warp(x, y) {
     const nx = (x - E.cx) / E.rx, ny = (y - E.cy) / E.ry, d = nx * nx + ny * ny;
     let dx = 0, dy = 0;
-    if (d < 1) { const w = (1 - d) * (1 - d), sc = Math.max(-.45, Math.min(.45, B.x)); dx += (x - E.cx) * sc * w; dy -= (y - E.cy) * sc * w * .6; }   // 横に広がると縦に縮む（ぷるんらしく）
+    if (d < 1) { const w = (1 - d) * (1 - d), sc = Math.max(-.5, Math.min(.5, B.x)); dx += (x - E.cx) * sc * w + B.px * w; dy -= (y - E.cy) * sc * w * .6 - B.py * w;
+      // 波紋：さわった所から輪が広がって、だんだん消える（おなかのふちでは 0）
+      const now = performance.now() / 1000;
+      for (const r of ripples) {
+        const t = now - r.t0, ux = x - r.x, uy = y - r.y, dist = Math.hypot(ux, uy) || 1, front = dist - WAVE_V * t;
+        const env = Math.exp(-((front / (WAVE_L * 1.2)) ** 2)) * Math.exp(-t * 1.6) * r.a;
+        const m = WAVE_A * env * Math.sin(front / WAVE_L * Math.PI * 2) * Math.sqrt(w);
+        dx += ux / dist * m; dy += uy / dist * m;
+      }
+    }   // 横に広がると縦に縮む（ぷるんらしく）
     if (B.pk) { const u = (x - B.pcx) / (E.rx * .5), v = (y - B.pcy) / (E.ry * .5), r2 = u * u + v * v;
       if (r2 < 1) { const f = (1 - r2) * (1 - r2), pk = Math.max(-.5, Math.min(.3, B.pk)); dx += (x - B.pcx) * pk * f; dy += (y - B.pcy) * pk * f; } }
     return [x + dx, y + dy];
@@ -258,7 +270,7 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
     if (cv.width !== Math.round(f.W * dpr) || cv.height !== Math.round(f.H * dpr)) { cv.width = Math.round(f.W * dpr); cv.height = Math.round(f.H * dpr); }
     const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, f.W, f.H);
     ctx.save(); ctx.translate(f.ox, f.oy); ctx.scale(f.s, f.s); ctx.drawImage(bimg, 0, 0);
-    if (Math.abs(B.x) > .0015 || Math.abs(B.pk) > .0015) {
+    if (Math.abs(B.x) > .0015 || Math.abs(B.pk) > .0015 || Math.abs(B.px) > .3 || Math.abs(B.py) > .3 || ripples.length) {
       const x0 = E.cx - E.rx, y0 = E.cy - E.ry, sw = E.rx * 2 / N, sh = E.ry * 2 / N;
       for (let r = 0; r < N; r++) for (let q = 0; q < N; q++) {
         const A = [x0 + q * sw, y0 + r * sh], Bq = [A[0] + sw, A[1]], C = [A[0], A[1] + sh], D = [A[0] + sw, A[1] + sh];
@@ -268,7 +280,8 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
     }
     ctx.restore();
   }
-  function kick(k) { if (reduce) k *= .4; B.v -= 2.2 * k; spring(); }          // ぶつかった：へこんでから「ぽよん」と戻る
+  function kick(k) { if (reduce) k *= .4; B.v -= 2.2 * k; spring(); }
+  function wave(q, a) { if (reduce) a *= .4; ripples.push({ x: q.x, y: q.y, t0: performance.now() / 1000, a }); spring(); }          // ぶつかった：へこんでから「ぽよん」と戻る
   function poke(q) { B.pcx = q.x; B.pcy = q.y; B.pkv -= 4; spring(); }        // 指の所だけ、小さくくぼむ
   function spring() {
     if (B.run) return; B.run = true; let last = performance.now();
@@ -276,12 +289,37 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
       let dt = Math.max(0, Math.min(.05, (now - last) / 1000)); last = now;
       for (; dt > 0; dt -= 1 / 240) { const h = Math.min(dt, 1 / 240);
         B.v += (-SPRING * B.x - DAMP * B.v) * h; B.x += B.v * h;
-        B.pkv += (-SPRING * B.pk - DAMP * B.pkv) * h; B.pk += B.pkv * h; }
+        B.pkv += (-SPRING * B.pk - DAMP * B.pkv) * h; B.pk += B.pkv * h;
+        if (!B.drag) { B.pvx += (-SPRING * B.px - DAMP * B.pvx) * h; B.px += B.pvx * h; B.pvy += (-SPRING * B.py - DAMP * B.pvy) * h; B.py += B.pvy * h; } }
+      const nowS = performance.now() / 1000; ripples = ripples.filter((r) => nowS - r.t0 < 2.2);
       drawBump();
-      if (Math.abs(B.x) < .001 && Math.abs(B.v) < .02 && Math.abs(B.pk) < .001 && Math.abs(B.pkv) < .02) { B.x = B.v = B.pk = B.pkv = 0; B.run = false; drawBump(); return; }
+      if (!B.drag && !ripples.length && Math.abs(B.px) < .3 && Math.abs(B.py) < .3 && Math.abs(B.pvx) < 8 && Math.abs(B.pvy) < 8 && Math.abs(B.x) < .001 && Math.abs(B.v) < .02 && Math.abs(B.pk) < .001 && Math.abs(B.pkv) < .02) { B.x = B.v = B.pk = B.pkv = B.px = B.py = B.pvx = B.pvy = 0; B.run = false; drawBump(); return; }
       requestAnimationFrame(step);
     })(last);
   }
+  /* スワイプ：おなかを指で引っぱる → はなすと「ぼよよん」と戻って、波紋が広がる */
+  let dragged = false, d0 = null;
+  bumpEl.addEventListener('pointerdown', (e) => {
+    dragged = false;
+    if (!bumpEl.classList.contains('on')) return;
+    const q = toImg(e); if (!inBelly(q)) return;
+    d0 = { q, cx: e.clientX, cy: e.clientY, s: fitB().s }; B.pcx = q.x; B.pcy = q.y;
+  });
+  addEventListener('pointermove', (e) => {
+    if (!d0) return;
+    const mx = e.clientX - d0.cx, my = e.clientY - d0.cy;
+    if (!B.drag && Math.hypot(mx, my) < 10) return;
+    B.drag = true; dragged = true;
+    const k = (v) => PULL * Math.tanh(v / d0.s / PULL);   // 引っぱるほど重くなる（最大 PULL）
+    B.px = k(mx); B.py = k(my); B.pvx = B.pvy = 0; spring();
+  });
+  addEventListener('pointerup', (e) => {
+    if (!d0) return;
+    if (B.drag) { B.drag = false; const pull = Math.hypot(B.px, B.py) / PULL; wave({ x: d0.q.x + B.px, y: d0.q.y + B.py }, .6 + pull); kick(.8 + pull * 1.5); spring(); }
+    d0 = null;
+  });
+  addEventListener('pointercancel', () => { if (d0) { B.drag = false; d0 = null; spring(); } });
+
   function popWord() { const p = $('#pop'); p.classList.remove('go'); void p.offsetWidth; p.classList.add('go'); }
   addEventListener('resize', drawBump);
 
