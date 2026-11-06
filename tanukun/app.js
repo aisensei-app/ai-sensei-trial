@@ -1723,7 +1723,8 @@
     if (seen[k] != null) return 'seen';
     if (MT_ALL) return 'open';
     if (!d.cleared) return null;
-    if (k === 0) return 'open';
+    // 序章：クリアした日の次の日（開いた日の数で firstGap 日あと）から。クリアの日は、ちょうちんを出さない（クリアの余韻を大事に。2026-11-06 ユーザーと決めた）
+    if (k === 0) return d.clearDay == null || d.totalDays - d.clearDay >= (MT.firstGap == null ? 1 : MT.firstGap) ? 'open' : null;
     if (seen[k - 1] == null) return null;
     const left = MT.gap - (d.totalDays - seen[k - 1]);
     return left <= 0 ? 'open' : left;
