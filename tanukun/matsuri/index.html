@@ -115,6 +115,7 @@ body.whole .layer .pic{object-fit:contain;object-position:50% 50%}
 @keyframes btnBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
 @media (prefers-reduced-motion:reduce){.btn.alt{animation:none}}
 #step{left:16px}
+html[lang="zh-Hans"] body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif}
 /* 本編の中で開くとき：確認用の道具（何番目・名前・全体）は出さない（左上には本編の「もどる」が重なる） */
 body.embed #step,body.embed #nm,body.embed #mode{display:none}
 </style>
@@ -225,12 +226,23 @@ const PART = Math.max(0, Math.min(3, parseInt(Q.get('part'), 10) || 0));
 const FIRST = /^(sweet|salty)$/.test(Q.get('pick') || '') ? Q.get('pick') : null;
 const tell = m => { try { if (EMBED && parent !== window) parent.postMessage(m, '*'); } catch (e) {} };
 if (EMBED) document.body.classList.add('embed');
+/* ことば（本編から &lang=en・zh で開かれたとき。2026-11-06）：日本語の文で引く。訳がなければ日本語のまま（肉球・しっぽのページと同じ形） */
+const LANG = /^(en|zh)$/.test(Q.get('lang') || '') ? Q.get('lang') : 'ja';
+const TL = { en: {"{name}、あっ、来てくれたんだ♪\nちょうど会いたかったんだ！": "{name}, oh, you came♪\nI was just hoping to see you!", "ねえねえ、ちょっと聞いて！": "Hey, hey, listen to this!", "今度ね、島でお祭りがあるんだって！\n屋台もいっぱい出るんだよ♪": "There's going to be a festival on the island!\nLots of food stalls, too♪", "{name}と行きたいなぁ。\nいっしょに行こうよ！…ね？ ね？": "I wanna go with {name}.\nLet's go together! …Okay? Okay?", "着いたー！\nにぎやかだねぇ♪": "We're here!\nIt's so lively♪", "ほら、{name}、こっちこっち！\n夜になったら、もっときれいになるんだって": "This way, {name}! Over here!\nThey say it gets even prettier at night", "また来てくれたんだ♪\n前回は入り口まで来たよね": "You came back♪\nLast time we made it to the entrance", "今日は屋台をぜーんぶ回るよ！\nいいにおいがしてきたー♪": "Today we're hitting every single stall!\nSomething smells sooo good♪", "まずはチョコバナナ！\n{name}もひと口どう？": "First up, a chocolate banana!\nWant a bite, {name}?", "あまーい！": "Sooo sweet!", "え、ほっぺについてる？\n…えへへ、気づかなかった♪": "Huh, it's on my cheek?\n…Hehe, I didn't notice♪", "ぺろり。…あれ、\nもうなくなっちゃった": "Gulp. …Huh,\nit's all gone already", "うーん、まだ食べたりないなぁ。\n{name}は、次はどっちに行く？": "Hmm, I'm still hungry.\nWhere should we go next, {name}?", "あまい　綿あめ": "Sweet: cotton candy", "しょっぱい　焼きとうもろこし": "Savory: grilled corn", "あまいの、2連続！？ いいね♪\nぼくも気になってたんだ": "Sweets two in a row!? Nice♪\nI had my eye on it too", "見て見て、綿あめ！\nふわふわで、ぼくのしっぽみたい♪": "Look, look, cotton candy!\nIt's fluffy, just like my tail♪", "あむっ…あまーい！": "Nom… sooo sweet!", "あっ、またほっぺについてる？\n…えへへ、さっきもだったね♪": "Oh, it's on my cheek again?\n…Hehe, same as before♪", "いいね、口直し！\nぼくも気になってたんだ♪": "Nice, something savory!\nI had my eye on it too♪", "あちち…ふーふー。\nできたては、やけどしそうだね": "Hot, hot… fwoo, fwoo.\nIt's so fresh I might burn my tongue", "ん〜っ！ しょっぱくて、\nあまくて…とまらなーい！": "Mmm~! Salty and\nsweet… I can't stop!", "ふぅ〜、おいしかった！\nおなか、ぽんぽこりん♪": "Phew~, that was yummy!\nMy belly's all round and full♪", "ね、さわってみて？\nぷるんってするよ♪": "Hey, wanna touch it?\nIt goes jiggle♪", "タップしてね": "Tap here", "次はね、きみに見てほしいものがあるんだ。\n…楽しみにしててね♪": "Next time, there's something I want you to see.\n…Look forward to it♪", "また来てくれたんだ♪\nこの前の綿あめ、\nふわふわだったね": "You came back♪\nThat cotton candy last time\nwas so fluffy", "また来てくれたんだ♪\nこの前のとうもろこし、\nおいしかったね": "You came back♪\nThat grilled corn last time\nwas so good", "見て見て、はっぴ着てみたんだ！\n今夜の太鼓、まかされちゃった♪": "Look, look, I'm wearing a happi coat!\nI get to play the drum tonight♪", "ちょっと緊張するけど…\nきみが見ててくれるなら、がんばれる！": "I'm a little nervous… but\nif you're watching, I can do it!", "いくよー！ そーれっ！": "Here I go! Hiyaa!", "太鼓、どうだったかな？\n{name}が見てたから、\nちょっとドキドキしちゃった": "How was my drumming?\nWith {name} watching,\nmy heart was pounding a little", "でも、見ててくれたから\n最後までがんばれたよ。ありがとう♪": "But because you were watching,\nI made it to the end. Thank you♪", "…そんなに見つめて、どうしたの？": "…Why are you staring at me like that?", "くすぐったいよ！": "That tickles!", "もうすぐ暗くなるね。\n夜はもっと楽しいよ、きっと！": "It'll be dark soon.\nI bet the night will be even more fun!", "また来てくれたんだ♪\nほら、すっかり夜になったよ": "You came back♪\nLook, it's already nighttime", "ちょうちんが光って…\nこの前より、ずっときれいだね": "The lanterns are glowing…\nIt's so much prettier than before", "お祭り、楽しいね。": "The festival is fun, isn't it?", "…ねえ、もうちょっとだけ、\nいっしょにいてもいい？": "…Hey, can we stay together\njust a little longer?", "えへへ…なんだか、\n照れちゃうね": "Hehe… somehow,\nI'm getting kinda shy", "あのね、{name}に\n渡したいものがあるんだ": "Um, there's something\nI want to give {name}", "じゃーん！\n浜辺で見つけた、光る貝がら♪": "Ta-da!\nA glowing seashell I found on the beach♪", "きみにあげたくて、\nずっと持ってたんだ": "I've been holding on to it\nbecause I wanted to give it to you", "いつもありがとうの、お礼！\n…ぼくのと、おそろいだよ♪": "A thank-you for always being here!\n…It matches mine♪", "あ、あのね…！": "U-um…!", "……": "……", "わぁっ…！ 花火だ！": "Whoa…! Fireworks!", "…花火、きれいだね。": "…The fireworks are beautiful.", "来年も、いっしょに見ようね、{name}。": "Let's watch them together next year too, {name}.", "ぷるん♪": "Jiggle♪", "ドン！": "DON!", "タヌくん": "Tanu-kun", "おしまい": "Finish"},
+  zh: {"{name}、あっ、来てくれたんだ♪\nちょうど会いたかったんだ！": "{name}，啊，你来啦♪\n正好想见你呢！", "ねえねえ、ちょっと聞いて！": "喂喂，听我说！", "今度ね、島でお祭りがあるんだって！\n屋台もいっぱい出るんだよ♪": "听说过几天岛上有祭典！\n还会有好多小吃摊哦♪", "{name}と行きたいなぁ。\nいっしょに行こうよ！…ね？ ね？": "好想和{name}一起去呀。\n我们一起去吧！…好不好？好不好？", "着いたー！\nにぎやかだねぇ♪": "到啦～！\n好热闹呀♪", "ほら、{name}、こっちこっち！\n夜になったら、もっときれいになるんだって": "{name}，快看，这边这边！\n听说到了晚上会更漂亮哦", "また来てくれたんだ♪\n前回は入り口まで来たよね": "你又来啦♪\n上次我们走到入口了吧", "今日は屋台をぜーんぶ回るよ！\nいいにおいがしてきたー♪": "今天要把小吃摊全部逛一遍！\n闻到好香的味道了～♪", "まずはチョコバナナ！\n{name}もひと口どう？": "先来巧克力香蕉！\n{name}也来一口吗？", "あまーい！": "好甜～！", "え、ほっぺについてる？\n…えへへ、気づかなかった♪": "咦，粘到脸颊上了？\n…嘿嘿，我都没发现♪", "ぺろり。…あれ、\nもうなくなっちゃった": "啊呜。…咦，\n已经吃完了", "うーん、まだ食べたりないなぁ。\n{name}は、次はどっちに行く？": "嗯～还没吃够呢。\n接下来{name}想去哪边？", "あまい　綿あめ": "甜的　棉花糖", "しょっぱい　焼きとうもろこし": "咸的　烤玉米", "あまいの、2連続！？ いいね♪\nぼくも気になってたんだ": "连着吃甜的！？好呀♪\n我也正好想吃呢", "見て見て、綿あめ！\nふわふわで、ぼくのしっぽみたい♪": "快看快看，棉花糖！\n软绵绵的，像我的尾巴一样♪", "あむっ…あまーい！": "啊呜…好甜～！", "あっ、またほっぺについてる？\n…えへへ、さっきもだったね♪": "啊，又粘到脸颊上了？\n…嘿嘿，刚才也是呢♪", "いいね、口直し！\nぼくも気になってたんだ♪": "好呀，换换口味！\n我也正好想吃呢♪", "あちち…ふーふー。\nできたては、やけどしそうだね": "好烫好烫…呼呼。\n刚烤好的，差点烫到舌头", "ん〜っ！ しょっぱくて、\nあまくて…とまらなーい！": "嗯～！咸咸的，\n又甜甜的…停不下来～！", "ふぅ〜、おいしかった！\nおなか、ぽんぽこりん♪": "呼～，好好吃！\n肚子圆滚滚的♪", "ね、さわってみて？\nぷるんってするよ♪": "呐，摸摸看？\n会弹弹的哦♪", "タップしてね": "点一下吧", "次はね、きみに見てほしいものがあるんだ。\n…楽しみにしててね♪": "下次呀，有东西想让你看。\n…好好期待吧♪", "また来てくれたんだ♪\nこの前の綿あめ、\nふわふわだったね": "你又来啦♪\n上次的棉花糖，\n软绵绵的呢", "また来てくれたんだ♪\nこの前のとうもろこし、\nおいしかったね": "你又来啦♪\n上次的烤玉米，\n好好吃呢", "見て見て、はっぴ着てみたんだ！\n今夜の太鼓、まかされちゃった♪": "快看快看，我穿上法被了！\n今晚的太鼓交给我啦♪", "ちょっと緊張するけど…\nきみが見ててくれるなら、がんばれる！": "有点紧张…\n但只要你在看，我就能加油！", "いくよー！ そーれっ！": "来啦～！嘿咻！", "太鼓、どうだったかな？\n{name}が見てたから、\nちょっとドキドキしちゃった": "太鼓打得怎么样？\n因为{name}在看，\n我有点心跳加速呢", "でも、見ててくれたから\n最後までがんばれたよ。ありがとう♪": "不过，因为你一直看着，\n我坚持到最后了。谢谢你♪", "…そんなに見つめて、どうしたの？": "…一直盯着我，怎么啦？", "くすぐったいよ！": "好痒啦！", "もうすぐ暗くなるね。\n夜はもっと楽しいよ、きっと！": "天快黑了呢。\n晚上一定会更好玩！", "また来てくれたんだ♪\nほら、すっかり夜になったよ": "你又来啦♪\n看，已经完全是晚上了", "ちょうちんが光って…\nこの前より、ずっときれいだね": "灯笼都亮起来了…\n比上次漂亮多了呢", "お祭り、楽しいね。": "祭典，好开心呀。", "…ねえ、もうちょっとだけ、\nいっしょにいてもいい？": "…呐，可以再陪我\n一会儿吗？", "えへへ…なんだか、\n照れちゃうね": "嘿嘿…总觉得，\n有点害羞呢", "あのね、{name}に\n渡したいものがあるんだ": "那个，我有东西\n想送给{name}", "じゃーん！\n浜辺で見つけた、光る貝がら♪": "锵锵～！\n在海边找到的、会发光的贝壳♪", "きみにあげたくて、\nずっと持ってたんだ": "因为想送给你，\n一直带在身上呢", "いつもありがとうの、お礼！\n…ぼくのと、おそろいだよ♪": "这是谢谢你一直陪着我的礼物！\n…和我的是一对哦♪", "あ、あのね…！": "那、那个…！", "……": "……", "わぁっ…！ 花火だ！": "哇…！是烟火！", "…花火、きれいだね。": "…烟火，好美啊。", "来年も、いっしょに見ようね、{name}。": "明年也一起看吧，{name}。", "ぷるん♪": "弹弹♪", "ドン！": "咚！", "タヌくん": "狸君", "おしまい": "结束"} };
+const tl = s => (LANG !== 'ja' && TL[LANG][s]) || s;
+if (LANG !== 'ja') {
+  document.documentElement.lang = LANG === 'zh' ? 'zh-Hans' : 'en';
+  document.querySelector('.box .name').textContent = tl('タヌくん');
+}
 let NAME = EMBED ? (Q.get('name') || '') : (Q.get('name') || 'コンちゃん');
 function withName(t){
   if (NAME) return t.split('{name}').join(NAME);
+  if (LANG === 'zh') return t.replace(/^\{name\}[，,]\s*/, '').replace(/[，,]\s*\{name\}(?=[！!。？?～~…♪]|$)/g, '').split('{name}').join('你');
+  if (LANG === 'en') return t.replace(/^\{name\}, /, '').replace(/, \{name\}(?=[!?.~…]|$)/g, '').replace(/^\{name\}/, 'You').split('{name}').join('you').replace(/^./, c => c.toUpperCase());
   return t.replace(/[、,]\{name\}(?=[！!。〜…？?♪]|$)/g, '').replace(/\{name\}[、,]/g, '').split('{name}').join('きみ');
 }
-const tx = l => withName(l.alt ? l.alt[FIRST || picked] || l.alt.sweet : l.t);
+const tx = l => withName(tl(l.alt ? l.alt[FIRST || picked] || l.alt.sweet : l.t));
 function nmLabel(){ $('#nm').textContent = NAME ? '名前：' + NAME : '名前：なし'; }
 nmLabel();
 /* さわる場面（hint のあるセリフ：おなか・太鼓・花火）は、一度さわるまで進まない（2026-11-05 ユーザーの希望）。
@@ -248,7 +260,7 @@ function showGuide(line, delay){
     let x = st.width / 2, y = st.height * .4;   // 夜空：画面の中ほど
     const spec = line.drum ? l.dataset.drum : l.dataset.belly;
     if (spec) { const E = ell(spec), f = fit(l), r = f.img.getBoundingClientRect(); x = r.left - st.left + f.ox + E.cx * f.s; y = r.top - st.top + f.oy + E.cy * f.s; }
-    $('#gtext').textContent = line.hint;
+    $('#gtext').textContent = tl(line.hint);
     g.style.left = x + 'px'; g.style.top = y + 'px'; g.hidden = false; void g.offsetWidth; g.classList.add('go');
   }, delay);
 }
@@ -285,7 +297,7 @@ function finish(){
   if (ch) {   // 二択：どちらも「脇役の白い丸」で並べる。押したら、選んだ側へ進む
     choosing = true; const box = $('#choice'); box.innerHTML = ''; box.hidden = false;
     ch.forEach(o => {
-      const b = document.createElement('button'); b.type = 'button'; b.className = 'btn alt'; b.textContent = o.label;
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'btn alt'; b.textContent = tl(o.label);
       b.addEventListener('click', e => { e.stopPropagation(); choosing = false; box.hidden = true; picked = o.to; tell({ matsuri: 'pick', to: o.to }); i = at(o.to); show(); });
       box.appendChild(b);
     });
@@ -295,7 +307,7 @@ function markDone(){ if (!need || done) return; done = true; if (!typing && !isL
 function onTouch(){   // おなかにさわった（タップ・スワイプ）：セリフに touch があれば、その返事に切りかわる（1回だけ）
   const line = LINES[i]; markDone();
   $('#guide').hidden = true; clearTimeout(guideT);
-  if (line.touch && !touched) { touched = true; const at0 = i; setTimeout(() => { if (i === at0) type(withName(line.touch)); }, 450); }   // ぷるんを少し見せてから、返事に切りかえる
+  if (line.touch && !touched) { touched = true; const at0 = i; setTimeout(() => { if (i === at0) type(withName(tl(line.touch))); }, 450); }   // ぷるんを少し見せてから、返事に切りかえる
 }
 function show(){
   const line = LINES[i];
@@ -342,7 +354,7 @@ $('#game').addEventListener('click', e => {
   if (!isLast(i)) { i = nextOf(i); show(); }
 });
 $('#again').addEventListener('click', e => { e.stopPropagation(); if (EMBED) return tell({ matsuri: 'close' }); rising = false; i = 0; shown = 0; picked = null; show(); });
-if (EMBED) $('#again').textContent = 'おしまい';
+if (EMBED) $('#again').textContent = tl('おしまい');
 $('#nm').addEventListener('click', e => {
   e.stopPropagation(); NAME = NAME ? '' : 'コンちゃん'; nmLabel();
   if (!typing) $('#text').textContent = tx(LINES[i]);
@@ -414,6 +426,7 @@ function inside(l, e, spec){
   return ((q.x - E.cx) / E.rx) ** 2 + ((q.y - E.cy) / E.ry) ** 2 < 1;
 }
 function popAt(e, word){
+  word = tl(word);
   const p = $('#pop'), r = $('#stage').getBoundingClientRect();
   p.textContent = word;
   p.style.left = (e ? e.clientX - r.left : r.width / 2) + 'px'; p.style.top = (e ? e.clientY - r.top - 30 : r.height * .45) + 'px';

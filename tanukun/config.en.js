@@ -53,6 +53,9 @@
               { text: '…I love you! Hug me tight!' }] }
   ],
 
+  // 🏮 第2章の場面の名前（2026-11-06。アルバムに出る）
+  matsuri: { parts: [{ title: 'The Invitation' }, { title: 'Food Stalls' }, { title: 'Drums at Dusk' }, { title: 'Night Festival & Fireworks' }] },
+
   clear: {
     hashtag: 'TanukunClear',
     memory: {

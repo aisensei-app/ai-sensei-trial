@@ -1710,9 +1710,9 @@
      ・クリアしたら序章が開く。そのあとは、前の場面をはじめて見た日から gap 日（開いた日の数）たつと次の場面（休んでも消えない）
      ・開いている・まだ見ていない場面があると、なでなでの画面にちょうちん（.mt-bub）。タップで matsuri/ を上に重ねて開く（ふれあいと同じ形）
      ・見た場面は「実績」のアルバム（第2章）から何度でも。2回目からは、ごほうびなし・最初に選んだ味は変えない
-     ・セリフは日本語だけなので、いまは日本語のときだけ出す。確認用：URL に ?matsuri（クリアや日にちに関係なく、全部の場面を出す）
+     ・日英中（セリフの訳は matsuri/index.html の TL。2026-11-06）。確認用：URL に ?matsuri（クリアや日にちに関係なく、全部の場面を出す）
      ========================================================= */
-  const MT = (!DEMO && C.matsuri && feature('matsuri') === 'open' && I18N.lang === 'ja') ? C.matsuri : null;
+  const MT = (!DEMO && C.matsuri && feature('matsuri') === 'open') ? C.matsuri : null;
   const MT_ALL = /[?&]matsuri\b/.test(location.search);
   const MT_SAID = 'tanukun.matsuriSaid';
   let mtPart = -1, mtReplay = false, mtBusy = false;
@@ -1773,7 +1773,7 @@
     const I = window.TanuIris, r = from ? from.getBoundingClientRect() : null;
     const go = () => {
       mtFrame.onload = () => { mtFrame.onload = null; if (I) I.open(); mtBusy = false; };
-      mtFrame.src = MT.page + '?embed=1&part=' + k + '&name=' + encodeURIComponent(SAVE.data.name || '') + '&pick=' + (SAVE.data.k2Pick || '');
+      mtFrame.src = MT.page + '?embed=1&part=' + k + '&name=' + encodeURIComponent(SAVE.data.name || '') + '&pick=' + (SAVE.data.k2Pick || '') + '&lang=' + encodeURIComponent(I18N.lang);
       mtFrame.hidden = false; mtBack.hidden = false; mtBub.hidden = true; document.body.classList.add('fr-on');
     };
     if (I) I.close(r ? r.left + r.width / 2 : innerWidth / 2, r ? r.top + r.height / 2 : innerHeight / 2).then(go); else go();

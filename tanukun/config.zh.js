@@ -54,6 +54,9 @@
               { text: '…最喜欢你了！抱紧我！' }] }
   ],
 
+  // 🏮 第2章の場面の名前（2026-11-06。アルバムに出る）
+  matsuri: { parts: [{ title: '祭典的邀请' }, { title: '逛小吃摊' }, { title: '黄昏的太鼓' }, { title: '夜祭与烟火' }] },
+
   clear: {
     hashtag: 'TanukunClear',
     memory: {

@@ -87,6 +87,17 @@ window.TanuI18n = (function () {
       '見せたいものが あるんだ…♪\nハートのあわ、さわってみて？': 'I want to show you something…♪\nTry touching the heart bubble?',
       'おかえり！ 楽しかった？': 'Welcome back! Was it fun?', 'おかえり〜！': 'Welcome back~!',
       'ふれあいの ごほうび 💗+{n}': 'Cuddle reward 💗+{n}',
+      // 🏮 第2章（2026-11-06）
+      "お祭りへ行く": "Go to the festival",
+      "お祭りの続きは、もうすぐ": "More of the festival soon",
+      "島の夜祭り": "Island Night Festival",
+      "{name}、ねえねえ…！\nちょうちん、さわってみて？": "{name}, hey, hey…!\nTry touching the lantern?",
+      "お祭りの続きに行こう♪\nちょうちん、さわってみて？": "Let's go back to the festival♪\nTry touching the lantern?",
+      "えへへ、楽しかったね♪": "Hehe, that was fun♪",
+      "お祭りの続きは、明日だよ。\n楽しみだね♪": "More of the festival tomorrow.\nCan't wait♪",
+      "お祭りの続きは、あと{n}日だよ。\n楽しみだね♪": "More of the festival in {n} days.\nCan't wait♪",
+      "🏮 第2章 島の夜祭り（{a} ／ {b}）": "🏮 Chapter 2: Island Night Festival ({a} / {b})",
+      "あと{n}日…": "{n} more day…|{n} more days…",
       // 💡 作者へのご意見（2026-11-04 夜）
       '💡 作者へのご意見・ご感想': '💡 Feedback for the creator',
       'アプリをよくするための ご意見・ご感想・こまったことを、作者に送れます。': 'You can send the creator your thoughts, ideas, or problems to help make the app better.',
