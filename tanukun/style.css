@@ -1416,6 +1416,10 @@ body.fr-on #lang-btn, body.fr-on .lang-btn { visibility: hidden; }
 @keyframes mt-sway { 0%, 100% { transform: rotate(-6deg); filter: drop-shadow(0 0 4px rgba(255,170,70,.6)); } 50% { transform: rotate(6deg); filter: drop-shadow(0 0 12px rgba(255,170,70,.95)); } }
 @media (prefers-reduced-motion: reduce) { .mt-bub { animation: none; } }
 .mt-frame { background: #2a1a10; }
+/* 次の場面を待っている間：灯りを消したちょうちん（うすく・揺れも小さく）。押すと「あと○日」 */
+.mt-bub.off { background: none; filter: grayscale(.75) brightness(.95); opacity: .55; animation-duration: 4.5s; }
+.mt-bub.off { animation-name: mt-sway-off; }
+@keyframes mt-sway-off { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
 
 /* ---- 📖 交換日記（post.js の showBox。2026-11-04 夜）：日付ごとに「きみ」のお手紙と「タヌくん」のお返事を、ふきだしで並べる ---- */
 #post .p-diary .p-dstat { margin: -4px 0 2px; text-align: center; font-size: 13px; font-weight: 700; opacity: .7; }

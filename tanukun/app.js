@@ -1729,12 +1729,20 @@
     return left <= 0 ? 'open' : left;
   }
   function mtNext() { if (!MT) return -1; for (let k = 0; k < MT.parts.length; k++) { if (mtState(k) === 'open') return k; } return -1; }
+  // 次の場面を待っている日数（待っていなければ 0）。待っている間は、灯りを消したちょうちんを出す（2026-11-06 ユーザーと決めた）
+  function mtWait() { if (!MT) return 0; for (let k = 0; k < MT.parts.length; k++) { const st = mtState(k); if (typeof st === 'number') return st; } return 0; }
   if (MT) {
     mtBub.type = 'button'; mtBub.className = 'mt-bub'; mtBub.hidden = true; mtBub.textContent = '🏮';
     mtBub.style.left = MT.x + '%'; mtBub.style.top = MT.y + '%';
     mtBub.setAttribute('aria-label', tr('お祭りへ行く'));
     mtBub.addEventListener('pointerdown', (e) => e.stopPropagation());
-    mtBub.addEventListener('click', (e) => { e.stopPropagation(); const k = mtNext(); if (k >= 0) mtOpen(k, false, mtBub); });
+    mtBub.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const k = mtNext();
+      if (k >= 0) return mtOpen(k, false, mtBub);
+      const n = mtWait();   // まだ：タヌくんが「あと○日」を教える（「待ってるね」でなく「楽しみだね」）
+      if (n > 0) showBubble(tr(n === 1 ? 'お祭りの続きは、明日だよ。\n楽しみだね♪' : 'お祭りの続きは、あと{n}日だよ。\n楽しみだね♪', { n: n }));
+    });
     area.appendChild(mtBub);
     mtFrame.className = 'fr-frame mt-frame'; mtFrame.hidden = true; mtFrame.title = tr('島の夜祭り');
     mtBack.type = 'button'; mtBack.className = 'back fr-back'; mtBack.hidden = true; mtBack.textContent = tr('‹ もどる');
@@ -1745,9 +1753,12 @@
   }
   function mtRefresh() {
     const can = mode === 'play' && state.phase === 'active' && sheet.hidden && evEl.hidden && mtFrame.hidden && frFrame.hidden && !reportOpen;
-    const k = can ? mtNext() : -1, show = k >= 0;
+    const k = can ? mtNext() : -1, wait = can && k < 0 && mtWait() > 0, show = k >= 0 || wait;
+    mtBub.classList.toggle('off', wait);
+    mtBub.setAttribute('aria-label', tr(wait ? 'お祭りの続きは、もうすぐ' : 'お祭りへ行く'));
     if (mtBub.hidden === !show) return;
     mtBub.hidden = !show;
+    if (k < 0) return;
     // 新しい場面が開いた日は、タヌくんがひとこと（場面ごとに1回）
     let said = ''; try { said = localStorage.getItem(MT_SAID) || ''; } catch (e) {}
     if (show && said.indexOf('[' + k + ']') < 0) {
