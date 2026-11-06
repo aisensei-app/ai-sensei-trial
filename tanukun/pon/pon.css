@@ -700,9 +700,9 @@ body.in-x .result.scroll-more::after { bottom: 25vh; }
 .t-canvas { visibility: hidden; }
 #pon.mode-taiko #tanu-img, #pon.mode-taiko #belly-canvas, #pon.mode-taiko #parts-layer { display: none; }
 #pon.mode-taiko .t-img, #pon.mode-taiko .t-canvas { display: block; }
-#pon.mode-taiko .t-hit { display: block; opacity: 0; transition: opacity .3s ease; }   /* ごほうびのときだけ、ふわっと重ねて、ふわっと戻す */
-#pon.mode-taiko .t-hit.on { opacity: 1; transition-duration: .22s; }
-/* 太鼓の面に広がる、やわらかい波紋（絵は切りかえない） */
+#pon.mode-taiko .t-hit { display: block; opacity: 0; transition: opacity .2s ease-out; }   /* ドンッ：ふわっと出て、ふわっと戻る（パッと切りかえない） */
+#pon.mode-taiko .t-hit.on { opacity: 1; transition-duration: .06s; }
+/* 太鼓の面に広がる、やわらかい波紋 */
 .drum-ripple { position: absolute; transform: translate(-50%, -50%) scale(.45); border-radius: 50%; border: 3px solid rgba(255, 236, 190, .85);
   box-shadow: 0 0 10px rgba(255, 220, 150, .5); opacity: .9; pointer-events: none; animation: drumRipple .5s ease-out forwards; }
 @keyframes drumRipple { to { transform: translate(-50%, -50%) scale(1); opacity: 0; } }

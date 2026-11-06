@@ -356,20 +356,17 @@
     tHit = Object.assign(document.createElement('img'), { className: 't-hit', alt: '', draggable: false });
     tImg.src = IMG(T.src); tHit.src = IMG(T.hitSrc);
     body.appendChild(tImg); body.appendChild(tCanvas); body.appendChild(tHit);
-    // drum … 太鼓のまわり（絵の％）。たたくと、ほんの少しだけ沈んで戻る（kick）
-    bellyT = window.TanuBelly({ config: Object.assign({}, JIGGLE, T.belly), img: tImg, canvas: tCanvas, layers: () => [],
-      extra: { drum: { type: 'bob', x: 73.2, y: 70.3, rx: 27.3, ry: 16.3 } } });
+    bellyT = window.TanuBelly({ config: Object.assign({}, JIGGLE, T.belly), img: tImg, canvas: tCanvas, layers: () => [] });
     tImg.addEventListener('load', () => bellyT.warm([tImg.src]), { once: true });
   }
-  /* 太鼓をたたいた（2026-11-06 ユーザー「ちかちかして気持ち悪くなる」→ 直した）：
-     ① 絵は切りかえない。動くのは太鼓の所だけ（面にやわらかい波紋・太鼓がほんの少し沈む）
-     ③ おなかは揺らさない（揺れるのは 〜 をすべらせたときだけ）
-     ② たたく絵は「ごほうび」のときだけ（コンボ10ごと・カットイン・最後の一打）、ふわっと重ねて、ふわっと戻す。
-        前に出してから HIT_GAP 秒は出さない
-     ④ スマホの「動きを減らす」設定の人には、② を出さず、太鼓も沈ませない */
+  /* 太鼓をたたいた（2026-11-06）：
+     ・最初は、たたくたびに絵を0.13秒パッと切りかえていた → ユーザー「ちかちかして気持ち悪くなる」
+     ・三三七拍子（ドンッは数が少ない）にしてから、ユーザー「ドンッのときにイラスト切りかえにして」→ ドンッで、たたく絵に。
+       パッと切りかえず、ふわっと出して（0.06秒）、少し見せて（HIT_SHOW）、ふわっと戻す（0.2秒）。太鼓の面に波紋も出す
+     ・おなかは揺らさない。スマホの「動きを減らす」設定の人には、たたく絵を出さない（波紋だけ） */
   const CALM = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
-  const HIT_SHOW = 650, HIT_GAP = 2.5;
-  let hitTimer = 0, hitAt = -9;
+  const HIT_SHOW = 220;
+  let hitTimer = 0;
   function drumHit() {
     if (!tImg) return;
     const D = ARTS.taiko.drumHead;   // 太鼓の面（絵のピクセル）
@@ -379,11 +376,7 @@
       width: D.rx * 2 * scale + 'px', height: D.ry * 2 * scale + 'px' });
     $('pops').appendChild(el);
     setTimeout(() => el.remove(), 520);
-    if (!CALM) belly.kick('drum', 5);
-  }
-  function rewardFrame(now) {
-    if (!tHit || CALM || !taiko() || (now != null && now - hitAt < HIT_GAP)) return;
-    if (now != null) hitAt = now;
+    if (CALM || !tHit) return;
     tHit.classList.add('on');
     clearTimeout(hitTimer);
     hitTimer = setTimeout(() => tHit.classList.remove('on'), HIT_SHOW);
@@ -745,7 +738,7 @@
     howto.innerHTML = HOWTO[mode].map((line) => '<p>' + tr(line, { note: NOTE_IC, purun: PURUN_IC, drum: DRUM_IC }) + '</p>').join('') +
       '<p class="howto-sub">' + tr(taiko() ? '三三七拍子・だんだん速くなるよ' : '8ビート・だんだん速くなるよ') + '</p>';
     howto.classList.remove('out', 'top');
-    howto.hidden = false;
+    howto.hidden = taiko();   // おまつり：はじめの説明は出さない（2026-11-06 ユーザー「余計なテキストは削除」。赤とオレンジの ◉ で分かる）
     howtoUntil = chart.notes[0].t - (mode === 'lane' ? 0.6 : appearT() + 0.1);
     requestAnimationFrame(frame);
   }
@@ -1013,8 +1006,7 @@
       counts[j.key]++;
       combo++;
       maxCombo = Math.max(maxCombo, combo);
-      if (combo % SHY_EVERY === 0) { shyUntil = now + SHY_SECONDS; rewardFrame(now); }   // おまつり：コンボ10ごとに、たたく絵（ごほうび）
-      if (n && n.last) rewardFrame(null);   // 最後の一打
+      if (combo % SHY_EVERY === 0) shyUntil = now + SHY_SECONDS;
       // コンボ10ごとに、1回の点数が10点ずつ増える（最大 +50）
       score += j.point + Math.min(50, Math.floor(combo / 10) * 10);
       $('score').textContent = score;
@@ -1042,7 +1034,6 @@
   }
   // カットイン：がんばる顔と「スピードアップ！」の帯が、右から入って左へ抜ける
   function cutin(bpm, i) {
-    rewardFrame(songTime());   // おまつり：速くなる前に、たたく絵（ごほうび）
     const el = $('cutin'), lv = CUTIN.levels[Math.min(i, CUTIN.levels.length - 1)];
     $('cutin-bpm').textContent = 'BPM ' + bpm;
     $('cutin-text').textContent = tr(lv.text);
