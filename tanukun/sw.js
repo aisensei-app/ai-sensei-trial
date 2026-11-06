@@ -1,7 +1,7 @@
 /* オフラインでも開けるようにするための仕組み（Service Worker）
    ネットにつながるときは常に最新のファイルを使い、
    つながらないときだけ保存しておいたファイルを使います。 */
-const CACHE = 'tanukun-v32';
+const CACHE = 'tanukun-v33';
 const FILES = [
   './', './index.html', './style.css', './config.js', './config.en.js', './config.zh.js', './lines.js', './lines.en.js', './lines.zh.js', './i18n.zh.js', './i18n.js', './stats.js', './save.js', './belly.js', './iris.js', './home.js', './uranai.js', './post.js', './app.js',
   './manifest.webmanifest', './images/icon-192.png', './images/icon-512.png',
@@ -46,7 +46,11 @@ const FILES = [
   './washing/img/sp_zukan.webp', './washing/img/sp_zukan_rare.webp', './washing/img/stand.webp',
   // 💖 ふれあい（なでなでの中で開く。nikukyu/・shippo/）
   './nikukyu/', './nikukyu/index.html', './nikukyu/img/sit_soles.webp', './nikukyu/img/sit_soles_smile.webp', './nikukyu/img/sit_soles_laugh.webp', './nikukyu/img/pads_mask.png',
-  './shippo/', './shippo/index.html', './shippo/img/back.webp', './shippo/img/back_shy.webp', './shippo/img/back_laugh.webp', './shippo/img/tail.webp', './shippo/img/tail_puff.webp'
+  './shippo/', './shippo/index.html', './shippo/img/back.webp', './shippo/img/back_shy.webp', './shippo/img/back_laugh.webp', './shippo/img/tail.webp', './shippo/img/tail_puff.webp',
+  // 🏮 第2章（matsuri/。2026-11-07 公開）：先読みはページ・ちらしの絵・アルバムの小さな絵だけ（全部で 3.4MB あるので、1〜2日目の人にまで読ませない）。
+  // 場面の絵は、はじめて見たときに上の fetch が保存する
+  './matsuri/', './matsuri/index.html', './matsuri/img/gate_day.webp',
+  './matsuri/img/cafe_invite.webp', './matsuri/img/yatai_eat.webp', './matsuri/img/taiko_ready.webp', './matsuri/img/night_gift.webp'
 ];
 
 self.addEventListener('install', (e) => {

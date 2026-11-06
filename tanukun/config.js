@@ -262,7 +262,7 @@ window.TANU_CONFIG = {
     seesaw:    'hidden',   // 丸太シーソー（seesaw/。指で上下になぞって、タヌくんとシーソー）
     thigh:     'open',     // 太ももをさわると「ぷにっ」（2026-11-04。隠し要素。ヒント・レポートには出さない）
     fureai:    'open',     // 💖 ふれあい（なでなでの中のハートのあわ → 🐾 肉球ぷにぷに nikukyu/・🦝 しっぽ ふさふさ shippo/。2026-11-04 夜。来週公開）
-    matsuri:   'hidden',   // 🏮 第2章「島の夜祭り」（matsuri/。クリアのあと、3日おきに場面が開く。2026-11-05 本編につないだ。日本語だけ）
+    matsuri:   'open',     // 🏮 第2章「島の夜祭り」（matsuri/。クリアの次の日から、3日おきに場面が開く。日英中。2026-11-07 公開）
     washing:   'hidden',   // タヌくんを洗おう（washing/。こすって汚れを落とす → シャワー → ぶるぶる。試作中）
     english:   'open',     // 英語版（スマホが英語なら英語。設定の「ことば / Language」で切りかえ。i18n.js）
     chinese:   'open'      // 中国語版（簡体字。スマホが中国語なら中国語。i18n.zh.js・config.zh.js・lines.zh.js）
