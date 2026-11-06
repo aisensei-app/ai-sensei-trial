@@ -66,6 +66,8 @@
 4. 11/8〜9：Web Analytics の数字（上の「次にもらう」）を表にする
 5. 11月中旬：ラリーを open（v33）
 
+- 🐺 **ラリーの序章のお試し版（2026-11-06）**：`tanukun/rally_story/`（index.html・img/）。背景＋左右の立ち絵（タヌくん＝本編の立ち絵・仮／ウルくん）＋名前の札つきセリフ枠。セリフは `LINES`（who・t／u＝表情・still・uru:'in'・anim）。確認用リンク https://claude.ai/artifact/PK85vu2rdU66Q1NTWVopwp（同じ file_path で publish・files に img/*）。絵の元は art/uru・art/rally_story（bg_court_day.webp＝コートの背景の元）。設定は IDEAS.md の「🐺」
+
 **4. 作業のコツ（このチャットでわかったこと）**
 - お祭りのお試し版（matsuri/index.html）：絵のパスは相対（img/〇〇.webp）。更新は Artifact で同じ file_path を publish（新しい絵は files に `img/〇〇.webp` を足す）。ローカルで試すときは matsuri/ で `python3 -m http.server <ポート>`（ページに meta charset あり）。おなか・太鼓の場所は各絵の data-belly／data-drum（絵の中の px で「中心x,中心y,横半径,たて半径」）。絵の番号（pic）は .layer の並び順
 - 新しい絵が届いたら：大きさ・**眉毛の色（白っぽい）**・牙・しま・15歳以上の線（腰みのの下を拡大）を確かめる。差し替え版は ImageChops.difference で、ちがう所がどこかを確かめる

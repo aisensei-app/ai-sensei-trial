@@ -1,0 +1,188 @@
+<meta charset="utf-8">
+<title>タヌくんとウルくん</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<!--
+  タヌくん：ラリーの序章「ウルくんとの出会い」のお試し版（2026-11-06）
+  ・目的：恋愛ゲームの形（背景＋左右の立ち絵＋名前の札つきセリフ枠）で、2人の会話が見やすいかを確かめる
+  ・絵：img/bg_court.webp（キャラのいない浜のコート・横長）
+        img/tanu_*.webp（本編の立ち絵。正面寄り・仮）／img/uru_*.webp（ウルくん。マゼンタを key_out で抜いた）
+        img/intro_invite.webp・intro_sand.webp（1枚絵＝スチル。序章の頭と終わり）
+  ・背の高さは 180cm：170cm（img を作るときに 900px：850px にそろえた）
+  ・話している方を明るく・少し前へ。話していない方は少し暗く・小さく
+  ・セリフは仮（ユーザーと相談中）。本編にはまだつないでいない
+-->
+<style>
+:root{
+  --ink:#4A2C1A; --orange:#F08A3C; --orange-d:#C8641E; --uru:#5B7FA6; --uru-d:#3E5F84;
+  --display:-apple-system,BlinkMacSystemFont,"Hiragino Maru Gothic ProN","Noto Sans JP",sans-serif;
+  color-scheme:light;
+}
+/* 場面の絵の色なので、ダークモードでも同じ色のまま */
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--ink:#4A2C1A}}
+:root[data-theme="dark"]{--ink:#4A2C1A}
+html,body{height:100%}
+body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);overflow:hidden;
+  -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+#game{position:fixed;inset:0;display:flex;flex-direction:column;cursor:pointer;touch-action:manipulation;
+  max-width:520px;margin:0 auto}
+#stage{position:relative;flex:1;min-height:0;overflow:hidden;background:#87c6ef}
+/* 背景（横長の絵を、ネットが見える所で切り取る） */
+#bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:62% 50%;
+  transition:object-position 1.6s cubic-bezier(.35,.05,.25,1)}
+/* 立ち絵 */
+.chara{position:absolute;bottom:-16%;height:94%;transform:translateX(-50%) translateY(0) scale(.96);transform-origin:50% 100%;
+  filter:brightness(.8) saturate(.9);transition:filter .35s,transform .35s,opacity .5s,left .6s cubic-bezier(.3,.1,.25,1);
+  opacity:0;pointer-events:none}
+.chara img{position:absolute;inset:0;height:100%;width:auto;display:block}
+.chara img+img{opacity:0}           /* 表情は2枚を重ねて、ふわっと切りかえる */
+#tanu{left:33%;aspect-ratio:627/900;z-index:1}
+#uru{left:73%;aspect-ratio:491/850;height:calc(94% * 850 / 900);z-index:1}
+#uru.away{left:120%}
+#tanu.solo{left:50%}            /* ウルくんが来る前は、タヌくんがまんなか */
+.chara.on{opacity:1}
+.chara.talk{filter:none;transform:translateX(-50%) scale(1);z-index:2}
+.chara.hop{animation:hop .5s ease-out}
+.chara.shake{animation:shake .5s ease-in-out}
+@keyframes hop{0%,100%{translate:0 0}35%{translate:0 -6%}60%{translate:0 0}80%{translate:0 -1.5%}}
+@keyframes shake{0%,100%{translate:0 0}20%{translate:-2% 0}40%{translate:2% 0}60%{translate:-1.5% 0}80%{translate:1% 0}}
+/* 1枚絵（スチル） */
+.still{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 25%;opacity:0;transition:opacity .8s;z-index:3}
+.still.on{opacity:1}
+#stage::after{content:"";position:absolute;left:0;right:0;bottom:0;height:40px;z-index:4;
+  background:linear-gradient(transparent,#2a1a10);pointer-events:none}
+/* セリフの枠 */
+#talk{position:relative;flex:none;padding:22px 16px calc(env(safe-area-inset-bottom,0px) + 14px)}
+.box{position:relative;min-height:5.2em;padding:18px 20px 22px;border-radius:22px;background:#fff;
+  box-shadow:0 4px 14px rgba(0,0,0,.25);font-size:clamp(17px,4.8vw,22px);font-weight:700;line-height:1.55;white-space:pre-line}
+.name{position:absolute;left:18px;top:-14px;background:var(--orange);color:#fff;font-size:14px;font-weight:800;
+  padding:4px 14px;border-radius:99px;box-shadow:0 2px 0 var(--orange-d);transition:background .2s,box-shadow .2s}
+.name.uru{left:auto;right:18px;background:var(--uru);box-shadow:0 2px 0 var(--uru-d)}   /* ウルくんは右に・青 */
+.more{position:absolute;right:16px;bottom:8px;color:var(--orange-d);font-size:14px;opacity:0}
+.more.on{opacity:1;animation:bob 1s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(3px)}}
+.btns{position:absolute;left:0;right:0;bottom:100%;z-index:5;display:flex;justify-content:center;margin-bottom:6px}
+.btns[hidden]{display:none}
+.btn{border:0;border-radius:99px;font:inherit;font-weight:800;font-size:17px;padding:12px 30px;cursor:pointer;
+  background:var(--orange);color:#fff;box-shadow:0 4px 0 var(--orange-d)}
+/* 道具ボタン */
+.tool{position:absolute;top:12px;z-index:6;border:0;border-radius:99px;background:rgba(255,255,255,.72);color:var(--ink);
+  font:inherit;font-size:13px;font-weight:800;padding:7px 12px;cursor:pointer}
+#nm{right:16px}
+#step{left:16px;cursor:default}
+@media (prefers-reduced-motion:reduce){.chara.hop,.chara.shake{animation:none}.more.on{animation:none}}
+</style>
+
+<div id="game">
+  <div id="stage">
+    <img id="bg" src="img/bg_court.webp" alt="">
+    <div class="chara" id="tanu"><img alt=""><img alt=""></div>
+    <div class="chara away" id="uru"><img alt=""><img alt=""></div>
+    <img class="still" data-k="invite" src="img/intro_invite.webp" alt="">
+    <img class="still" data-k="sand" src="img/intro_sand.webp" alt="">
+    <span class="tool" id="step"></span>
+    <button class="tool" id="nm" type="button"></button>
+  </div>
+  <div id="talk">
+    <div class="btns" hidden><button class="btn" id="again" type="button">もう一度</button></div>
+    <div class="box"><span class="name"></span><span id="text"></span><span class="more">▼</span></div>
+  </div>
+</div>
+
+<script>
+(() => {
+  // セリフ（仮）。who＝話す人（tanu／uru）・t／u＝その行の表情（書かないと前のまま）
+  // still＝1枚絵（invite／sand）・uru＝ウルくんの出入り（'in'）・anim＝動き（hop／shake）・label＝名前の札（初登場の「？？？」）
+  const LINES = [
+    { still: 'invite', who: 'tanu', text: '{name}！ 浜でね、ボールを見つけたんだ♪' },
+    { still: 'invite', who: 'tanu', text: 'いっしょに、ぽよんラリーしよ！' },
+    { who: 'tanu', t: 'happy', text: 'あ、そうだ。今日はね、{name}に会ってほしい友だちがいるんだ。' },
+    { who: 'uru', uru: 'in', u: 'laugh', label: '？？？', text: 'おーい、タヌ〜！' },
+    { who: 'tanu', t: 'happy', anim: 'hop', text: 'ウルくん！ こっちこっち♪' },
+    { who: 'uru', u: 'normal', text: 'きみが{name}だね！\nはじめまして、ウルだよ。よろしくね♪' },
+    { who: 'tanu', t: 'normal', text: 'ウルくんはね、となりの島に住んでる、ぼくの幼なじみなんだ。' },
+    { who: 'uru', u: 'laugh', text: 'タヌね、{name}の話をするとき、いっつも すっごくうれしそうなんだ。\nだから、ぼくも会ってみたかったんだ。' },
+    { who: 'tanu', t: 'shy', anim: 'shake', text: 'ウ、ウルくん…！ それ、言わないでって…' },
+    { who: 'uru', u: 'surprise', anim: 'hop', text: 'あれっ、ないしょだった？ ごめんごめん！' },
+    { who: 'uru', u: 'normal', text: 'でもさ、タヌ。{name}に言いたいこと、あるんでしょ？' },
+    { who: 'tanu', t: 'dere', text: '…うん。あのね、{name}。\nぼく、{name}とラリーするの、ずっと楽しみにしてたんだ。' },
+    { who: 'uru', u: 'laugh', anim: 'hop', text: 'よーし！ じゃあ3人で、ぽよんラリーだ！' },
+    { still: 'sand', who: 'tanu', text: 'えへへ…ころんじゃった。' },
+    { still: 'sand', who: 'tanu', text: 'でも、{name}とウルくんとだと、すっごく楽しいね♪' },
+    { still: 'sand', who: 'uru', text: 'またやろうね、{name}！' }
+  ];
+  const NAMES = { tanu: 'タヌくん', uru: 'ウルくん' };
+
+  const $ = (s) => document.querySelector(s);
+  const ch = { tanu: $('#tanu'), uru: $('#uru') };
+  const face = { tanu: 'normal', uru: 'normal' };
+  const textEl = $('#text'), nameEl = $('.name'), more = $('.more'), btns = $('.btns');
+  let i = -1, typing = null, full = '', useName = true;
+  const NAME = 'コンちゃん';
+
+  // 名前：なしの人は、文頭の「{name}、」は消し、文の途中は「きみ」（本編の withName と同じ）
+  function withName(s) {
+    if (useName) return s.split('{name}').join(NAME);
+    return s.replace(/^\{name\}[、！]\s*/, '').split('{name}').join('きみ');
+  }
+  // 表情：2枚の img を交互に使って、ふわっと切りかえる
+  function setFace(who, f, instant) {
+    const imgs = ch[who].querySelectorAll('img');
+    const src = 'img/' + who + '_' + f + '.webp';
+    const cur = imgs[0].style.opacity === '0' ? imgs[1] : imgs[0];
+    if (cur.getAttribute('src') === src) return;
+    const nxt = cur === imgs[0] ? imgs[1] : imgs[0];
+    if (instant) { cur.src = src; cur.style.opacity = 1; nxt.style.opacity = 0; return; }
+    nxt.style.transition = cur.style.transition = 'opacity .25s';
+    nxt.onload = () => { nxt.style.opacity = 1; cur.style.opacity = 0; };
+    nxt.src = src;
+    if (nxt.complete) nxt.onload();
+  }
+  function anim(who, a) {
+    const el = ch[who];
+    el.classList.remove('hop', 'shake'); void el.offsetWidth; el.classList.add(a);
+  }
+  function type(s) {
+    clearInterval(typing); full = s; textEl.textContent = ''; more.classList.remove('on');
+    let n = 0;
+    typing = setInterval(() => {
+      n++; textEl.textContent = full.slice(0, n);
+      if (n >= full.length) { clearInterval(typing); typing = null; more.classList.add('on'); }
+    }, 38);
+  }
+  function show(k) {
+    const L = LINES[k];
+    document.querySelectorAll('.still').forEach((s) => s.classList.toggle('on', s.dataset.k === L.still));
+    if (L.uru === 'in') { ch.uru.classList.remove('away'); ch.uru.classList.add('on'); ch.tanu.classList.remove('solo'); }
+    if (L.t) { face.tanu = L.t; setFace('tanu', L.t); }
+    if (L.u) { face.uru = L.u; setFace('uru', L.u); }
+    for (const w of ['tanu', 'uru']) ch[w].classList.toggle('talk', L.who === w);
+    if (L.anim) anim(L.who, L.anim);
+    nameEl.textContent = L.label || NAMES[L.who];
+    nameEl.classList.toggle('uru', L.who === 'uru');
+    more.style.color = L.who === 'uru' ? 'var(--uru-d)' : '';
+    $('#step').textContent = (k + 1) + ' / ' + LINES.length;
+    type(withName(L.text));
+  }
+  function next() {
+    if (typing) { clearInterval(typing); typing = null; textEl.textContent = full; more.classList.add('on'); return; }
+    if (i >= LINES.length - 1) { btns.hidden = false; more.classList.remove('on'); return; }
+    show(++i);
+  }
+  function reset() {
+    i = -1; btns.hidden = true;
+    ch.uru.classList.add('away'); ch.uru.classList.remove('on'); ch.tanu.classList.add('solo');
+    setFace('tanu', 'normal', true); setFace('uru', 'normal', true);
+    next();
+  }
+  function nmLabel() { $('#nm').textContent = '名前：' + (useName ? NAME : 'なし'); }
+
+  $('#game').addEventListener('click', (e) => { if (e.target.closest('button')) return; next(); });
+  $('#again').addEventListener('click', reset);
+  $('#nm').addEventListener('click', () => { useName = !useName; nmLabel(); if (i >= 0) { clearInterval(typing); typing = null; i--; show(++i); } });
+  // 絵を先に読みこんでおく
+  ['tanu_normal', 'tanu_happy', 'tanu_shy', 'tanu_dere', 'uru_normal', 'uru_laugh', 'uru_surprise'].forEach((n) => { new Image().src = 'img/' + n + '.webp'; });
+  ch.tanu.classList.add('on');
+  nmLabel(); reset();
+})();
+</script>
