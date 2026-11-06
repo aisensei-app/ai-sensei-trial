@@ -225,7 +225,8 @@
     lane:  ['{note} が わくに来たら <b>タップ</b>', '{purun} は さっと <b>すべらせる</b>'],
     belly: ['{note} に 輪が重なったら <b>タップ</b>', '{purun} は さっと <b>すべらせる</b>'],
     food:  ['「🍙 たべたい！」なら 🍙 を <b>タップ</b>', 'ちがうものは たたかないでね'],
-    taiko: ['{note} は おなかを <b>タップ</b>（ポン）', '{drum} は 太鼓を <b>タップ</b>（ドンッ）']
+    // おまつり：使い方はもう分かっている人たちなので、ひとことと、新しい「ながおし」だけ（2026-11-06 ユーザーと決めた）
+    taiko: ['三三七拍子で いくよ〜！🏮', '{note} おなか　{drum} 太鼓を <b>ながおし</b>']
   };
   const onBelly = () => mode !== 'lane';   // ◉ がおなかの上に出るステージ（おなか・まんぷく）
   const appearT = () => (mode === 'food' ? FOOD.appear : MOLE.appear);
@@ -781,9 +782,10 @@
     // 遊び方の説明：最初の ◉ が見えはじめる少し前に消す
     const howto = $('howto');
     howto.innerHTML = HOWTO[mode].map((line) => '<p>' + tr(line, { note: NOTE_IC, purun: PURUN_IC, drum: DRUM_IC }) + '</p>').join('') +
-      '<p class="howto-sub">' + tr(taiko() ? '三三七拍子・だんだん速くなるよ' : '8ビート・だんだん速くなるよ') + '</p>';
+      (taiko() ? '' : '<p class="howto-sub">' + tr('8ビート・だんだん速くなるよ') + '</p>');
     howto.classList.remove('out', 'top');
-    howto.hidden = taiko();   // おまつり：はじめの説明は出さない（2026-11-06 ユーザー「余計なテキストは削除」。赤とオレンジの ◉ で分かる）
+    howto.classList.toggle('tk', taiko());   // おまつり：画面の下（太鼓の脚のあたり）に小さく。タヌくんと ◉ にかぶらない
+    howto.hidden = false;
     howtoUntil = chart.notes[0].t - (mode === 'lane' ? 0.6 : appearT() + 0.1);
     requestAnimationFrame(frame);
   }
