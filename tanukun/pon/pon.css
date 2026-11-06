@@ -732,9 +732,5 @@ body.in-x .result.scroll-more::after { bottom: 25vh; }
   animation: holdFill var(--hold, 1s) linear forwards; }
 @keyframes holdFill { to { stroke-dashoffset: 0; } }
 
-/* おまつりの始まりのひとこと：画面の下に小さく、半分すけた白（タヌくんと ◉ にかぶらないように） */
-.howto.tk { top: auto; bottom: calc(max(14px, env(safe-area-inset-bottom)) + 10px); transform: none; padding: 8px 12px;
-  background: rgba(255, 255, 255, .8); font-size: 16px; animation: howUp .35s ease-out; }
-.howto.tk p { margin: 3px 0; }
+/* おまつりの始まりのひとこと：ほかのステージと同じ、画面のまんなか（2026-11-06 ユーザー）。◉ の印だけ少し小さく */
 .howto.tk .ic-note { width: 22px; height: 22px; }
-@keyframes howUp { from { opacity: 0; transform: translateY(12px); } }

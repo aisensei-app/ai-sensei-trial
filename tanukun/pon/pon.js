@@ -784,7 +784,7 @@
     howto.innerHTML = HOWTO[mode].map((line) => '<p>' + tr(line, { note: NOTE_IC, purun: PURUN_IC, drum: DRUM_IC }) + '</p>').join('') +
       (taiko() ? '' : '<p class="howto-sub">' + tr('8ビート・だんだん速くなるよ') + '</p>');
     howto.classList.remove('out', 'top');
-    howto.classList.toggle('tk', taiko());   // おまつり：画面の下（太鼓の脚のあたり）に小さく。タヌくんと ◉ にかぶらない
+    howto.classList.toggle('tk', taiko());   // おまつり：位置はほかのステージと同じ（まんなか）
     howto.hidden = false;
     howtoUntil = chart.notes[0].t - (mode === 'lane' ? 0.6 : appearT() + 0.1);
     requestAnimationFrame(frame);
