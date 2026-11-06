@@ -694,3 +694,16 @@ html[lang="zh"] body { font-family: -apple-system, BlinkMacSystemFont, "PingFang
 /* X アプリの中：画面の下 約4分の1 は X の投稿パネルに隠れるので、︾ とぼかしを、その上（下から 25vh）に出す（2026-11-03）。
    結果のカードの下には 25vh の余白があるので、いちばん下までスクロールすると、カードの最後がちょうどパネルの上に来て ︾ が消える */
 body.in-x .result.scroll-more::after { bottom: 25vh; }
+
+/* ---- ステージ4 おまつり（第2章の太鼓の絵。2026-11-06）---- */
+.t-img, .t-canvas, .t-hit { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; display: none; }
+.t-canvas { visibility: hidden; }
+#pon.mode-taiko #tanu-img, #pon.mode-taiko #belly-canvas, #pon.mode-taiko #parts-layer { display: none; }
+#pon.mode-taiko .t-img, #pon.mode-taiko .t-canvas { display: block; }
+#pon.mode-taiko .t-hit { display: block; opacity: 0; }
+#pon.mode-taiko .t-hit.on { opacity: 1; }
+#pon.mode-taiko #stage { background: #3A2350; }
+.btn-taiko.locked { background: #fff; color: #B08A66; box-shadow: 0 3px 0 #E2C7A6; }   /* まだ遊べない：白（主役のオレンジにしない） */
+.btn-taiko .lock { font-size: 14px; margin-left: 2px; }
+.taiko-note { margin: 2px 0 0; font-size: 13px; font-weight: bold; color: #8A4A1A; text-align: center; }
+.taiko-note.show { animation: banner 2.4s ease-out forwards; }

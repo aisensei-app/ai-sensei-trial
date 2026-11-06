@@ -1764,8 +1764,22 @@
     setInterval(mtRefresh, 400);
     window.addEventListener('message', mtMessage);
   }
+  /* 🥁 ぽんぽこリズムのステージ4「おまつり」が開いたお知らせ（features.ponTaiko。2026-11-06 ユーザーと決めた）：
+     第2章を最後まで見て、なでなでの画面に戻ってきたら（「えへへ、楽しかったね♪」のあと）1回だけ。
+     ステージ4を公開する前に見終わっていた人には、公開のあと、なでなでの画面に来たときに1回 */
+  const TAIKO_TOLD = 'tanukun.taikoTold';
+  let mtLastAt = 0, taikoCalm = 0;
+  function taikoTell() {
+    if (feature('ponTaiko') !== 'open' || feature('pon') !== 'open' || ((SAVE.data.k2Seen || {})[MT.parts.length - 1]) == null) return;
+    if (mtLastAt && Date.now() - mtLastAt < 2600) return;   // 「楽しかったね♪」を読む間は待つ
+    try { if (localStorage.getItem(TAIKO_TOLD)) return; localStorage.setItem(TAIKO_TOLD, '1'); } catch (e) { return; }
+    toast(tr('🥁 ぽんぽこリズムに、\nステージ4「おまつり」が開いたよ！'));
+  }
   function mtRefresh() {
     const can = mode === 'play' && state.phase === 'active' && sheet.hidden && evEl.hidden && mtFrame.hidden && frFrame.hidden && !reportOpen;
+    // なでなでの画面に来てすぐは、あいさつ・ふれあいのひとことと重ならないように、少し（約3秒）待ってから
+    taikoCalm = can ? taikoCalm + 1 : 0;
+    if (taikoCalm >= 8) taikoTell();
     const k = can ? mtNext() : -1, wait = can && k < 0 && mtWait() > 0, show = k >= 0 || wait;
     mtBub.classList.toggle('off', wait);
     mtBub.setAttribute('aria-label', tr(wait ? 'お祭りの続きは、もうすぐ' : 'お祭りへ行く'));
@@ -1794,6 +1808,7 @@
     if (mtBusy || mtFrame.hidden) return;
     mtBusy = true;
     const first = !mtReplay && (SAVE.data.k2Seen || {})[mtPart] != null && mtPart >= 0, I = window.TanuIris;
+    if (first && mtPart === MT.parts.length - 1) mtLastAt = Date.now();   // 最後の場面を見終わった（ステージ4のお知らせは、少しあとで）
     const done = () => {
       mtFrame.hidden = true; mtBack.hidden = true; mtFrame.src = 'about:blank'; mtPart = -1;
       document.body.classList.remove('fr-on');

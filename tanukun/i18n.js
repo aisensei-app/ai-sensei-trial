@@ -109,6 +109,7 @@ window.TanuI18n = (function () {
       "島でお祭りがあるんだって！\n{name}ともっとなかよくなったら、\nいっしょに行きたいな♪": "{name}, there's a festival on the island!\nOnce we get even closer,\nI'd love to go together♪",
       "7日目の「ひみつの思い出」を見た次の日から始まるよ": "Starts the day after the secret memory on day 7",
       "ひみつの思い出まで、あと{n}日": "{n} more day until the secret memory|{n} more days until the secret memory",
+      "🥁 ぽんぽこリズムに、\nステージ4「おまつり」が開いたよ！": "🥁 Stage 4 \"Festival\" is now open\nin Ponpoko Rhythm!",
       // 💡 作者へのご意見（2026-11-04 夜）
       '💡 作者へのご意見・ご感想': '💡 Feedback for the creator',
       'アプリをよくするための ご意見・ご感想・こまったことを、作者に送れます。': 'You can send the creator your thoughts, ideas, or problems to help make the app better.',

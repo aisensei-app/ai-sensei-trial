@@ -9,6 +9,8 @@
        ステージ3 まんぷく … おなかモードの ◉ が食べもの（🍙🍉🍡🌽）になる。吹き出しの「たべたい！」と
                       同じものだけたたく（ちがうものはミス）。正しく食べるほど、おなかがふくらんでいく
        ステージ1 ながれる … ◉ が右から左に流れてきて、左のわくに重なったときにたたく
+       ステージ4 おまつり … 第2章「島の夜祭り」の太鼓の絵で。◉ は太鼓の上に出る（ドン＝太鼓・カッ＝ふち）。〜 はおなか。
+                      第2章を最後まで見ると開く（features.ponTaiko。2026-11-06 ユーザーと決めた）
    ・ピンクの「〜」は、指でおなかをさっとすべらせて「ぷるん」（たたくのとは別のアクション）
    ・タイミングが合うほど点数が高い。続けて合わせると右上のタヌくんが笑顔になる
    ・音はすべてプログラムで作る（Web Audio）。音の素材ファイルは使わない
@@ -139,13 +141,31 @@
       fade: false
     }
   };
-  const ART = ARTS.normal;
+  /* ステージ4 おまつり（第2章の太鼓の絵 1024×1536。matsuri/img）。hit … たたいたときに一瞬だけ出す絵
+     view.cover … 画面いっぱいに映す（左右は少し切れる）。cx … 画面の横まんなかに来る所
+     drum … 太鼓（絵のピクセル。ここをたたくと「ドン」＝おなかはへこまず、太鼓をたたく絵が一瞬出る）
+     purunArea … 〜 が出る所（おなか） */
+  ARTS.taiko = {
+    src: 'matsuri/img/taiko_ready.webp', hitSrc: 'matsuri/img/taiko_hit.webp', w: 1024, h: 1536,
+    belly: { x: 51.8, y: 41.7, rx: 18.6, ry: 10.4 },   // おなか（中心 530, 640、半径 190, 160）
+    view: { cover: true, cx: 600 },
+    mole: { area: { x: 745, y: 975, rx: 165, ry: 55 }, gap: 95 },
+    purunArea: { x: 525, y: 635, rx: 110, ry: 75 },
+    drum: { cx: 750, cy: 1080, rx: 280, ry: 250 },
+    hit: { chest: { x0: 380, y0: 330, x1: 700, y1: 470 }, belly: { cx: 530, cy: 640, rx: 200, ry: 165 } },
+    parts: {}, noWear: true, fade: false
+  };
+  const TAIKO_CUTIN_AT = 30;   // カットインの帯の高さ（絵の％。顔の下・おなかの上）
+  let ART = ARTS.normal;
   /* おなかモード
      appear … ◉ が出てから、たたく時までの秒数（この間に輪が縮む）
      area   … ◉ が出る範囲（絵のピクセルで、おなかの楕円。x, y は中心、rx, ry は半径。ART.mole）
      gap    … 続けて出る ◉ どうしの、最低限の離れ具合（絵のピクセル。ART.mole）
      hitR   … 指が ◉ の中心からこれだけ（画面のピクセル）以内なら当たり */
   const MOLE = { appear: 1.0, area: ART.mole.area, gap: ART.mole.gap, hitR: 56 };
+  const taiko = () => mode === 'taiko';
+  // ステージ4 おまつりの譜面：「ドン・ドン・カッカッ・ドン」（pon＝ドン、poko＝カッ）
+  const TAIKO_PATTERN = { 0: 'pon', 2: 'pon', 4: 'poko', 5: 'poko', 6: 'pon' };
   /* ステージ3 まんぷく
      foods      … 出てくる食べもの（形と色が似ていないものを選ぶ）
      appear     … 食べものが出てから、たたく時までの秒数（吹き出しを切りかえる間をとるため、おなかモードより短く）
@@ -175,8 +195,15 @@
   const STAGES = {
     lane:  { num: 1, label: 'ながれる', next: 'belly' },
     belly: { num: 2, label: 'おなか', next: 'food' },
-    food:  { num: 3, label: 'まんぷく', next: null }
+    food:  { num: 3, label: 'まんぷく', next: null },
+    taiko: { num: 4, label: 'おまつり', next: null }
   };
+  /* ステージ4 おまつり：公開スイッチ features.ponTaiko が open で、第2章を最後まで見た（本編の記録 k2Seen[3]）ら遊べる。
+     まだの人には 🔒 で見せる（押すと「第2章を最後まで見ると遊べるよ」）。hidden のときはボタンを出さない */
+  const TAIKO_ON = !!(C.features && C.features.ponTaiko === 'open');
+  const TAIKO_ALL = /[?&]taiko\b/.test(location.search);   // 確認用：?taiko で、第2章を見ていなくても遊べる
+  const taikoOpen = () => TAIKO_ON && (TAIKO_ALL || (((loadSave().k2Seen || {})[3]) != null));
+  if (TAIKO_ON) STAGES.food.next = 'taiko';
   // 「ステージ1（ながれる）」など（いまの言語で）
   const stageName = (m) => tr('ステージ{n}（{s}）', { n: STAGES[m].num, s: tr(STAGES[m].label) });
   /* ステージが始まってから最初の ◉ が出るまでの間（数を数えている間）に出す、遊び方の説明
@@ -185,7 +212,8 @@
   const HOWTO = {   // {note} は ◉、{purun} は 〜 の小さな絵に入れかわる
     lane:  ['{note} が わくに来たら <b>タップ</b>', '{purun} は さっと <b>すべらせる</b>'],
     belly: ['{note} に 輪が重なったら <b>タップ</b>', '{purun} は さっと <b>すべらせる</b>'],
-    food:  ['「🍙 たべたい！」なら 🍙 を <b>タップ</b>', 'ちがうものは たたかないでね']
+    food:  ['「🍙 たべたい！」なら 🍙 を <b>タップ</b>', 'ちがうものは たたかないでね'],
+    taiko: ['{note} に 輪が重なったら 太鼓を <b>タップ</b>', '{purun} は おなかを さっと <b>すべらせる</b>']
   };
   const onBelly = () => mode !== 'lane';   // ◉ がおなかの上に出るステージ（おなか・まんぷく）
   const appearT = () => (mode === 'food' ? FOOD.appear : MOLE.appear);
@@ -306,14 +334,37 @@
     } catch (e) { /* 保存できない環境では、その回だけ */ }
   }
   updateSave((d) => { d.ponSeen = true; });   // 本編のメニューの NEW を消す
-  const belly = window.TanuBelly({ config: JIGGLE, img: img, canvas: $('belly-canvas'),
+  const bellyN = window.TanuBelly({ config: JIGGLE, img: img, canvas: $('belly-canvas'),
     overlay: partsLayer, layers: () => wornLayers(),
     extra: Object.assign({ armL: REACT.armL, armR: REACT.armR, fat: Object.assign({ type: 'swell' }, ART.fat) },
       ART.skirtSway ? { skirt: ART.skirtSway } : {}) });
+  let belly = bellyN;
+  // ステージ4 おまつり：太鼓の絵は別の <img>・<canvas> に描く（絵の大きさがちがうので、揺れの仕組みも別に作る）
+  let bellyT = null, tImg = null, tHit = null;
+  function taikoSetup() {
+    if (bellyT) return;
+    const T = ARTS.taiko;
+    tImg = Object.assign(document.createElement('img'), { className: 't-img', alt: '', draggable: false });
+    const tCanvas = Object.assign(document.createElement('canvas'), { className: 't-canvas' });
+    tHit = Object.assign(document.createElement('img'), { className: 't-hit', alt: '', draggable: false });
+    tImg.src = IMG(T.src); tHit.src = IMG(T.hitSrc);
+    body.appendChild(tImg); body.appendChild(tCanvas); body.appendChild(tHit);
+    bellyT = window.TanuBelly({ config: Object.assign({}, JIGGLE, T.belly), img: tImg, canvas: tCanvas, layers: () => [] });
+    tImg.addEventListener('load', () => bellyT.warm([tImg.src]), { once: true });
+  }
+  // 太鼓をたたいた：たたく絵を一瞬だけ出す（第2章の「ドン！」と同じ）
+  let hitTimer = 0;
+  function drumFrame() {
+    if (!tHit) return;
+    tHit.classList.add('on');
+    clearTimeout(hitTimer);
+    hitTimer = setTimeout(() => tHit.classList.remove('on'), 130);
+  }
   renderParts();
   let armSide = 0;
   function react(big) {
     const k = big ? REACT.purun : 1;
+    if (taiko()) { wipeFace.classList.remove('tick'); void wipeFace.offsetWidth; wipeFace.classList.add('tick'); return; }   // 太鼓の絵には腕の「ビクン」はない
     if (big) {
       belly.twitch('armL', REACT.armL.angle * k);
       belly.twitch('armR', REACT.armR.angle * k);
@@ -328,13 +379,19 @@
 
   /* ---------- おなかのアップ ----------
      ART.view の範囲を画面に映す */
-  const VIEW = ART.view;
   let scale = 1, offX = 0, offY = 0;
   function layout() {
-    const sw = stage.clientWidth, sh = stage.clientHeight;
-    scale = sw / VIEW.w;
-    offX = sw / 2 - VIEW.cx * scale;
-    offY = sh * VIEW.at - VIEW.cy * scale;
+    const sw = stage.clientWidth, sh = stage.clientHeight, VIEW = ART.view;
+    if (VIEW.cover) {
+      // 画面いっぱいに（すき間ができないように大きいほうに合わせ、cx を横のまんなかに。はみ出さないようにおさめる）
+      scale = Math.max(sw / ART.w, sh / ART.h);
+      offX = Math.min(0, Math.max(sw - ART.w * scale, sw / 2 - VIEW.cx * scale));
+      offY = (sh - ART.h * scale) / 2;
+    } else {
+      scale = sw / VIEW.w;
+      offX = sw / 2 - VIEW.cx * scale;
+      offY = sh * VIEW.at - VIEW.cy * scale;
+    }
     body.style.width = ART.w * scale + 'px';
     body.style.height = ART.h * scale + 'px';
     body.style.left = offX + 'px';
@@ -382,6 +439,28 @@
     o.connect(g).connect(ac.destination);
     o.start(t); o.stop(t + 0.2);
     hitNoise(t, 2200, 0.3 * vol, 0.06);
+  }
+  // ドン：お祭りの太鼓（ぽんより低く、長く響く）
+  function soundDon(t, vol) {
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(150, t);
+    o.frequency.exponentialRampToValueAtTime(52, t + 0.3);
+    env(g, t, 1.0 * vol, 0.6);
+    o.connect(g).connect(ac.destination);
+    o.start(t); o.stop(t + 0.65);
+    hitNoise(t, 500, 0.35 * vol, 0.07);
+  }
+  // カッ：太鼓のふちをたたく、かわいた短い音
+  function soundKa(t, vol) {
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'square';
+    o.frequency.setValueAtTime(1150, t);
+    o.frequency.exponentialRampToValueAtTime(800, t + 0.03);
+    env(g, t, 0.16 * vol, 0.05);
+    o.connect(g).connect(ac.destination);
+    o.start(t); o.stop(t + 0.07);
+    hitNoise(t, 3200, 0.45 * vol, 0.04);
   }
   // ぷるん：音がふるえながら下がる「ぷるるん」
   function soundPurun(t) {
@@ -505,8 +584,9 @@
         for (let e = 0; e < 8; e++) {
           hats.push({ t: t, accent: e % 2 === 0 });
           const purun = !food && b % SONG.purun.every === SONG.purun.every - 1 && e === SONG.purun.at;
-          if (SONG.pattern[e]) {
-            const n = { t: t, kind: purun ? 'purun' : SONG.pattern[e] };
+          const pat = taiko() ? TAIKO_PATTERN : SONG.pattern;
+          if (pat[e]) {
+            const n = { t: t, kind: purun ? 'purun' : pat[e] };
             if (food) {
               n.target = firstInSec || Math.random() < FOOD.targetRate;
               n.food = n.target ? want : pick(FOOD.foods.filter((f) => f !== want));
@@ -521,8 +601,9 @@
     // 最後に「ぽん！」で決める
     notes.push(food ? { t: t, kind: 'pon', last: true, target: true, food: want } : { t: t, kind: 'pon', last: true });
     // おなかモード：◉ の出る場所をランダムに（前の2つの ◉ から gap 以上はなす）
-    const A = MOLE.area;
     notes.forEach((n, i) => {
+      // おまつり：〜 はおなかの上、ほかは太鼓の上
+      const A = taiko() && n.kind === 'purun' ? ART.purunArea : MOLE.area;
       for (let k = 0; k < 30; k++) {
         const a = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random());
         n.ix = A.x + Math.cos(a) * r * A.rx;
@@ -576,6 +657,15 @@
 
   function start(m) {
     if (typeof m === 'string') mode = m;
+    if (taiko() && !taikoOpen()) mode = 'food';   // 念のため（開いていないのに ステージ4 へ来たとき）
+    // 映す絵：おまつりは太鼓の絵（揺れの仕組みも切りかえる）
+    if (taiko()) taikoSetup();
+    ART = taiko() ? ARTS.taiko : ARTS.normal;
+    MOLE.area = ART.mole.area; MOLE.gap = ART.mole.gap;
+    belly.stop();
+    belly = taiko() ? bellyT : bellyN;
+    app.classList.toggle('mode-taiko', taiko());
+    app.classList.toggle('art-fade', ART.fade);
     app.classList.toggle('mode-belly', onBelly());
     app.classList.toggle('mode-food', mode === 'food');
     app.classList.toggle('mode-lane', mode === 'lane');
@@ -765,10 +855,12 @@
       return;
     }
     const kind = found && found.d < 0.25 ? found.note.kind : 'pon';
-    if (ac) (kind === 'poko' ? soundPoko : soundPon)(ac.currentTime, 1);
+    // おまつり：太鼓をたたいたら「ドン」「カッ」（おなかをたたいたときは、いつもの「ぽん」）
+    const drum = taiko() && p.drum;
+    if (ac) (drum ? (kind === 'poko' ? soundKa : soundDon) : kind === 'poko' ? soundPoko : soundPon)(ac.currentTime, 1);
     react(false);
     const eat = found && found.note.food;
-    popWord(tr(eat ? 'ぱくっ！' : kind === 'poko' ? 'ぽこ！' : 'ぽん！'), p.sx, p.sy, kind);
+    popWord(tr(eat ? 'ぱくっ！' : drum ? (kind === 'poko' ? 'カッ！' : 'ドン！') : kind === 'poko' ? 'ぽこ！' : 'ぽん！'), p.sx, p.sy, kind);
     if (playing && hit(found, p.now) && eat) feed();
   }
   // まんぷく：食べた数に合わせて、おなかをふくらませる
@@ -829,6 +921,8 @@
   function areaAt(ix, iy) {
     const H = ART.hit;
     if (!H) return 'body';
+    const D = ART.drum;
+    if (D && Math.hypot((ix - D.cx) / D.rx, (iy - D.cy) / D.ry) <= 1) return 'drum';
     const c = H.chest, b = H.belly, k = H.skirt;
     if (ix >= c.x0 && ix <= c.x1 && iy >= c.y0 && iy <= c.y1) return 'body';
     if (Math.hypot((ix - b.cx) / b.rx, (iy - b.cy) / b.ry) <= 1) return 'body';
@@ -845,14 +939,16 @@
     // 胸・おなかの外は、点にも音にもしない（2026-11-03。ステージ1で、足や背景をたたいても判定されていたため）。
     // おなかモードで ◉ のすぐ近く（hitR 以内）をたたいたときは、おなかの外にはみ出していても今までどおり
     let area = areaAt(ix, iy);
-    if (area !== 'body' && playing && ac && onBelly()) {
+    if (area !== 'body' && area !== 'drum' && playing && ac && onBelly()) {
       const late = Math.min(0.1, Math.max(0, (performance.now() - e.timeStamp) / 1000));
       if (nearest(songTime() - late, ['pon', 'poko', 'purun'], { sx: sx, sy: sy })) area = 'body';
     }
     if (area === 'skirt') { belly.nudge('skirt', (skirtSide++ % 2 ? 1 : -1) * 5, 2); return; }   // 腰みのが少し揺れるだけ
     if (!area) return;   // からぶり
-    const p = pointers[e.pointerId] = { sx: sx, sy: sy, x0: e.clientX, y0: e.clientY, now: 0, wait: false, purun: false, pull: false };
-    if (belly.ready()) belly.press('belly', ix, iy);
+    const p = pointers[e.pointerId] = { sx: sx, sy: sy, x0: e.clientX, y0: e.clientY, now: 0, wait: false, purun: false, pull: false, drum: area === 'drum' };
+    // おまつり：太鼓をたたいたら、たたく絵が一瞬出て、おなかが少しだけ揺れる（ドンの響き）
+    if (p.drum) { drumFrame(); belly.bounce('belly', 0.03); }
+    else if (belly.ready()) belly.press('belly', ix, iy);
     else { body.classList.remove('bounce'); void body.offsetWidth; body.classList.add('bounce'); }
     if (playing && ac) {
       // 指が触れた瞬間（イベントが届くまでの遅れを差し引く）
@@ -869,6 +965,7 @@
     const p = pointers[e.pointerId];
     if (!p) return;
     const dx = e.clientX - p.x0, dy = e.clientY - p.y0;
+    if (p.drum) return;   // 太鼓の上では、すべらせても「ぷるん」にしない
     if (!p.pull && Math.hypot(dx, dy) < SWIPE_PX) return;
     if (p.wait) { p.wait = false; purun(p); }
     // すべらせたら、指の動きの2.5倍おなかを引っぱる（短くすべらせても大きく揺れる）
@@ -883,7 +980,7 @@
     delete pointers[e.pointerId];
     if (p.wait && e.type === 'pointerup') tap(p);
     // ぷるん：引っぱった所から、はなすと大きく揺れて戻る
-    belly.release('belly', e.type === 'pointerup' && !p.pull);
+    if (!p.drum) belly.release('belly', e.type === 'pointerup' && !p.pull);
   }
   stage.addEventListener('pointerup', lift);
   stage.addEventListener('pointercancel', lift);
@@ -934,7 +1031,7 @@
     band.style.setProperty('--c1', lv.colors[0]);
     band.style.setProperty('--c2', lv.colors[1]);
     // 帯の高さ：おへその上と、おなかの上部のあいだ（画面の大きさで変わるので、毎回計算する）
-    const y = stage.getBoundingClientRect().top - app.getBoundingClientRect().top + offY + CUTIN.at / 100 * ART.h * scale;
+    const y = stage.getBoundingClientRect().top - app.getBoundingClientRect().top + offY + (taiko() ? TAIKO_CUTIN_AT : CUTIN.at) / 100 * ART.h * scale;
     band.style.top = (y - (band.offsetHeight || 136) / 2) + 'px';   // 隠れている間は高さが 0 なので、そのときは 136
     el.hidden = false;
     el.classList.remove('go'); void el.offsetWidth; el.classList.add('go');
@@ -996,8 +1093,13 @@
       { stage: stageName(mode), n: score, rank: tr(rank.title), m: maxCombo }) + url;
     $('btn-post').href = 'https://x.com/intent/post?text=' + encodeURIComponent(text);
     // 次のステージへ
-    const next = STAGES[mode].next;
+    const next = STAGES[mode].next && (STAGES[mode].next !== 'taiko' || taikoOpen()) ? STAGES[mode].next : null;
     $('btn-next').hidden = !next;
+    // おまつり：結果の絵は、太鼓をたたく絵（いい結果）か、かまえる絵
+    if (taiko()) {
+      $('r-img').src = IMG(rate >= 0.7 ? ARTS.taiko.hitSrc : ARTS.taiko.src);
+      $('r-line').textContent = tr('タヌくん「{s}」', { s: tr(rate >= 0.7 ? 'お祭りの太鼓、ばっちりだったね！' : 'えへへ、お祭りの太鼓、また いっしょに たたこうね♪') });
+    }
     if (next) $('btn-next').textContent = tr('ステージ{n} へ ▶', { n: STAGES[next].num });
     if (mode === 'food') $('r-line').textContent = tr('タヌくん「{s}」',
       { s: tr(fed / Math.max(1, targets) >= 0.66 ? 'ごちそうさま！おなかいっぱい〜！' : 'ごちそうさま！もうちょっと食べたかったな〜') });
@@ -1069,6 +1171,8 @@
     $('howto').hidden = true;
     $('cutin').hidden = true;
     belly.setBase('fat', 0);
+    belly.stop();
+    if (taiko()) { mode = 'belly'; ART = ARTS.normal; belly = bellyN; app.classList.remove('mode-taiko'); app.classList.toggle('art-fade', ART.fade); layout(); }
     setFace('normal');
     showBar();
   }
@@ -1098,6 +1202,22 @@
   $('btn-again').addEventListener('click', () => start());
   $('btn-next').addEventListener('click', () => start(STAGES[mode].next));
   $('btn-food').addEventListener('click', () => start('food'));
+  // ステージ4 おまつり：開いていれば遊べる。まだなら 🔒 と「第2章を最後まで見ると遊べるよ」
+  (function () {
+    const b = $('btn-taiko');
+    if (!b) return;
+    b.hidden = !TAIKO_ON;
+    if (!TAIKO_ON) return;
+    const open = taikoOpen();
+    b.classList.toggle('locked', !open);
+    if (!open) b.insertAdjacentHTML('beforeend', '<span class="lock">🔒</span>');
+    b.addEventListener('click', () => {
+      if (taikoOpen()) return start('taiko');
+      const n = $('taiko-note');
+      n.hidden = false;
+      n.classList.remove('show'); void n.offsetWidth; n.classList.add('show');
+    });
+  })();
   $('btn-mode').addEventListener('click', quit);
   setFace('normal');
   showBar();
