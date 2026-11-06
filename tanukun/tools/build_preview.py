@@ -131,6 +131,16 @@ if __name__ == '__main__':
         # 確認用リンクでは日数が1日目から始まるので、あわは日にちに関係なく出す（本番は 2日目・4日目から）
         text = text.replace("const FR_ALL = /[?&]fureai\\b/.test(location.search);", "const FR_ALL = true;")
         out.write_text(text, encoding='utf8')
+        # 🏮 第2章（2026-11-06）：確認用リンクでは公開スイッチを open にして、クリアや日にちに関係なく全部の場面を出す（MT_ALL）。
+        # matsuri/index.html は頭を付けて出す。絵は Artifact の files に matsuri/img/〇〇.webp として、そのまま載せる
+        text = out.read_text(encoding='utf8')
+        text = text.replace("matsuri:   'hidden'", "matsuri:   'open'").replace("const MT_ALL = /[?&]matsuri\\b/.test(location.search);", "const MT_ALL = true;")
+        out.write_text(text, encoding='utf8')
+        mdst = out.parent / 'matsuri' / 'index.html'
+        mdst.parent.mkdir(parents=True, exist_ok=True)
+        mdst.write_text('<!doctype html>\n<html lang="ja"><head><meta charset="utf-8">'
+                        '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"></head><body>\n'
+                        + (ROOT / 'matsuri' / 'index.html').read_text(encoding='utf8') + '\n</body></html>\n', encoding='utf8')
         for d in ('nikukyu', 'shippo'):
             src = (ROOT / d / 'index.html').read_text(encoding='utf8')
             src = re.sub(r"'((?:\.\./)?(?:images|img)/[^']+\.(webp|png))'",
