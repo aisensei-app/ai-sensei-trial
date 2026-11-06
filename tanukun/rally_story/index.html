@@ -118,14 +118,14 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
     { still: 'invite', who: 'tanu', text: '{name}！ 浜でね、ボールを見つけたんだ♪' },
     { still: 'invite', who: 'tanu', text: 'いっしょに、ぽよんラリーしよ！' },
     { who: 'tanu', t: 'happy', text: 'あ、そうだ。今日はね、{name}に会ってほしい友だちがいるんだ。' },
-    { who: 'uru', uru: 'in', u: 'laugh', label: '？？？', text: 'おーい、タヌ〜！' },
+    { who: 'uru', uru: 'in', u: 'laugh', label: '？？？', text: 'おーい、タヌくーん！' },
     { who: 'tanu', t: 'happy', anim: 'hop', text: 'ウルくん！ こっちこっち♪' },
     { who: 'uru', u: 'normal', text: 'きみが{name}だね！\nはじめまして、ウルだよ。よろしくね♪' },
     { who: 'tanu', t: 'normal', text: 'ウルくんはね、となりの島に住んでる、ぼくの幼なじみなんだ。' },
-    { who: 'uru', u: 'laugh', text: 'タヌね、{name}の話をするとき、いっつも すっごくうれしそうなんだ。\nだから、ぼくも会ってみたかったんだ。' },
+    { who: 'uru', u: 'laugh', text: 'タヌくんね、{name}の話をするとき、いっつも すっごくうれしそうなんだ。\nだから、ぼくも会ってみたかったんだ。' },
     { who: 'tanu', t: 'shy', anim: 'shake', text: 'ウ、ウルくん…！ それ、言わないでって…' },
     { who: 'uru', u: 'surprise', anim: 'hop', text: 'あれっ、ないしょだった？ ごめんごめん！' },
-    { who: 'uru', u: 'normal', text: 'でもさ、タヌ。{name}に言いたいこと、あるんでしょ？' },
+    { who: 'uru', u: 'normal', text: 'でもさ、タヌくん。{name}に言いたいこと、あるんでしょ？' },
     { who: 'uru', u: 'laugh', fx: 'push', text: 'ほらっ、いってらっしゃい！' },
     { bump: true, fx: 'bump', who: 'tanu', text: 'わわっ…！' },
     { bump: true, who: 'tanu', text: 'ご、ごめん、{name}…！\nぶつかっちゃった…' },
@@ -183,7 +183,7 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
     if (L.fx === 'bump') {
       // タヌくんがよろけて、こちらへ大きくなる → 1枚絵に切りかえて「ぽよん！」＋鼓動
       ch.tanu.classList.add('lunge');
-      setTimeout(() => { bumpEl.classList.add('on'); drawBump(); kick(1.7); popWord();
+      setTimeout(() => { bumpEl.classList.add('on'); drawBump(); kick(3.2); popWord(); setTimeout(() => kick(1.4), 520);
         if (!reduce) { bumpEl.classList.remove('beat'); void bumpEl.offsetWidth; bumpEl.classList.add('beat'); } }, 420);
     }
     if (L.uru === 'in') { ch.uru.classList.remove('away'); ch.uru.classList.add('on'); ch.tanu.classList.remove('solo'); }
@@ -212,7 +212,7 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
 
   $('#game').addEventListener('click', (e) => {
     if (e.target.closest('button')) return;
-    if (bumpEl.classList.contains('on')) { const q = toImg(e); if (inBelly(q)) { poke(q); kick(.9); } }   // おなかをタップすると、そこから「ぷるん」
+    if (bumpEl.classList.contains('on')) { const q = toImg(e); if (inBelly(q)) { poke(q); kick(1.8); } }   // おなかをタップすると、そこから「ぷるん」
     next();
   });
   $('#again').addEventListener('click', reset);
@@ -222,7 +222,7 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
   const bumpEl = $('#bump'), cv = bumpEl.querySelector('canvas'), bimg = new Image();
   bimg.src = 'img/push_bump.webp'; bimg.onload = () => drawBump();
   const E = (() => { const [cx, cy, rx, ry] = bumpEl.dataset.belly.split(',').map(Number); return { cx, cy, rx, ry }; })();
-  const SPRING = 450, DAMP = 6, N = 22, POS = [.5, .3];   // POS＝絵のどこを画面に合わせるか（object-position と同じ）
+  const SPRING = 420, DAMP = 4.5, N = 22, POS = [.5, .3];   // POS＝絵のどこを画面に合わせるか（object-position と同じ）
   const B = { x: 0, v: 0, pk: 0, pkv: 0, pcx: E.cx, pcy: E.cy, run: false };
   function fitB() {
     const r = bumpEl.getBoundingClientRect(), W = r.width, H = r.height, iw = bimg.naturalWidth, ih = bimg.naturalHeight;
@@ -234,7 +234,7 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
   function warp(x, y) {
     const nx = (x - E.cx) / E.rx, ny = (y - E.cy) / E.ry, d = nx * nx + ny * ny;
     let dx = 0, dy = 0;
-    if (d < 1) { const w = (1 - d) * (1 - d), sc = Math.max(-.35, Math.min(.35, B.x)); dx += (x - E.cx) * sc * w; dy += (y - E.cy) * sc * w * .8; }
+    if (d < 1) { const w = (1 - d) * (1 - d), sc = Math.max(-.45, Math.min(.45, B.x)); dx += (x - E.cx) * sc * w; dy -= (y - E.cy) * sc * w * .6; }   // 横に広がると縦に縮む（ぷるんらしく）
     if (B.pk) { const u = (x - B.pcx) / (E.rx * .5), v = (y - B.pcy) / (E.ry * .5), r2 = u * u + v * v;
       if (r2 < 1) { const f = (1 - r2) * (1 - r2), pk = Math.max(-.5, Math.min(.3, B.pk)); dx += (x - B.pcx) * pk * f; dy += (y - B.pcy) * pk * f; } }
     return [x + dx, y + dy];
