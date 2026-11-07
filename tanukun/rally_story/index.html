@@ -126,7 +126,7 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
 #night{position:absolute;inset:0;z-index:5;opacity:0;transition:opacity 1s;overflow:hidden;background:#0b1024}
 #night.on{opacity:1}
 #night .lean{position:absolute;inset:0;transition:transform 1.8s cubic-bezier(.35,.05,.25,1),filter 1.8s ease}
-#night.leaning .lean{transform:translateX(20%) translateY(5%) rotate(-7deg) scale(1.2);filter:brightness(.32) blur(2.5px)}
+#night.leaning .lean{transform:translateX(20%) translateY(5%) rotate(-7deg) scale(1.45);filter:brightness(.32) blur(2.5px)}
 #night .beat{position:absolute;inset:0}
 #night.leaning .beat{animation:slowbeat 1.5s ease-in-out infinite}
 @keyframes slowbeat{0%,100%{transform:scale(1)}12%{transform:scale(1.012)}24%{transform:scale(1)}36%{transform:scale(1.008)}48%{transform:scale(1)}}
@@ -174,6 +174,8 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
 #nm{right:16px}
 #part{right:132px}
 #step{left:16px;cursor:default}
+#lang{left:16px;top:48px}
+html[lang="zh-Hans"] body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif}
 @media (prefers-reduced-motion:reduce){#bump.beat,#night.leaning .beat,#stage.quake,.chara.hop,.chara.shake{animation:none}
   #tanu.lunge{transition:none}#dive.go{animation-duration:1.2s}.puff.go{animation-duration:.4s}.more.on{animation:none}}
 </style>
@@ -208,6 +210,7 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
     <div class="hint" id="hint"></div>
     <div class="meter" id="meter"><i></i></div>
     <span class="tool" id="step"></span>
+    <button class="tool" id="lang" type="button"></button>
     <button class="tool" id="part" type="button"></button>
     <button class="tool" id="nm" type="button"></button>
   </div>
@@ -227,7 +230,7 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
   const PARTS = [
     { title: '序章', start: 'solo', lines: [
       { still: 'invite', who: 'tanu', text: '{name}！ 見て見て！\n浜で、ビーチバレーの大会があるんだって！' },
-      { still: 'invite', who: 'tanu', text: 'ふたり一組で出るんだ。\n…{name}、ぼくといっしょに、出てくれない？' },
+      { still: 'invite', who: 'tanu', choice: ['うん、いっしょに出よう！'], text: 'ふたり一組で出るんだ。\n…{name}、ぼくといっしょに、出てくれない？' },
       { who: 'tanu', t: 'happy', anim: 'hop', text: 'やったぁ！\nあのね、優勝すると、すっごくきれいな貝のネックレスがもらえるんだよ♪' },
       { who: 'tanu', t: 'shy', text: 'ぼく、どうしても、それがほしくて…\nえへへ、なんでかは、ないしょ！' },
       { who: 'tanu', t: 'normal', text: 'それでね、練習相手を呼んであるんだ！' },
@@ -275,8 +278,8 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
       { night: 'relief', who: 'tanu', text: '{name}は、もう寝なきゃね。\n明日、寝ぼうしちゃうよ♪' },
       { night: 'relief', who: 'tanu', text: 'おやすみ、{name}。\n明日、いっしょにがんばろうね。' },
       { shore: true, who: 'narr', text: '── {name}が帰ったあと。' },
-      { shore: true, who: 'tanu', text: 'ざく、ざく……' },
-      { shore: true, who: 'tanu', fx: 'find', text: '……あった。\nきれいなの、みっつめ。' },
+      { shore: true, who: 'narr', text: 'ざく、ざく……' },
+      { shore: true, who: 'tanu', fx: 'find', text: '……あった。\nこれで、ななつめ。' },
       { shore: true, who: 'tanu', text: '明日までに、間に合うかな……\nもうちょっとだけ、がんばろ。' }
     ] },
     { title: '大会', start: 'duo', lines: [
@@ -308,7 +311,19 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
     ] }
   ];
   const NAMES = { tanu: 'タヌくん', uru: 'ウルくん' };
-  const NAME = 'コンちゃん';
+  /* ===== 言語（日本語／英語／中国語）。訳は日本語の文で引く（第2章 matsuri の TL と同じ形）。URL の ?lang=en・zh でも ===== */
+  const TL = {"en": {"{name}！ 見て見て！\n浜で、ビーチバレーの大会があるんだって！": "{name}! Look, look!\nThere's going to be a beach volleyball tournament!", "ふたり一組で出るんだ。\n…{name}、ぼくといっしょに、出てくれない？": "It's for teams of two.\n…{name}, will you enter it with me?", "うん、いっしょに出よう！": "Sure, let's enter together!", "やったぁ！\nあのね、優勝すると、すっごくきれいな貝のネックレスがもらえるんだよ♪": "Yay!\nGuess what — the winners get a super pretty seashell necklace♪", "ぼく、どうしても、それがほしくて…\nえへへ、なんでかは、ないしょ！": "I really, really want it…\nHehe, but why is a secret!", "それでね、練習相手を呼んであるんだ！": "And I've invited someone to practice with us!", "おーい、タヌくーん！": "Heeey, Tanu-kun!", "ウルくん！ こっちこっち♪": "Uru-kun! Over here♪", "きみが{name}だね！\nはじめまして、ウルだよ。よろしくね♪": "So you're {name}!\nNice to meet you, I'm Uru♪", "ウルくんはね、となりの島に住んでる、ぼくの幼なじみなんだ。\nバレー、すっごく上手なんだよ！": "Uru-kun is my childhood friend from the next island.\nHe's really, really good at volleyball!", "タヌくんね、{name}とペアで出られるって、\nずーっとはりきってたんだよ♪": "You know, Tanu-kun's been so excited\nabout teaming up with you, {name}♪", "ウ、ウルくん…！ それ、言わないでって…": "U-Uru-kun…! I told you not to say that…", "えへへ、ごめんごめん！": "Hehe, sorry, sorry!", "でもさ、タヌくん。{name}に言いたいこと、あるんでしょ？": "But hey, Tanu-kun. There's something you want to tell {name}, right?", "ほらっ、いってらっしゃい！": "Go on, off you go!", "わわっ…！": "Whoa…!", "ご、ごめん、{name}…！\nぶつかっちゃった…": "S-sorry, {name}…!\nI bumped into you…", "……でも、{name}、あったかいね。": "……But {name}, you're so warm.", "…あのね。\n{name}がいっしょだから、ぼく、がんばれる気がするんだ。": "…You know.\nWith you here, {name}, I feel like I can do my best.", "よーし！ じゃあ、さっそく特訓だ！": "Alright! Let's start training right away!", "{name}、大会まで、いっしょにがんばろうね♪": "{name}, let's do our best together until the tournament♪", "よーし！ 今日は、大会に向けて特訓だよ！": "Alright! Today we train for the tournament!", "{name}も見ててね！ ぼく、がんばるから♪": "Watch me, {name}! I'll do my best♪", "いくよ、タヌくん！ それっ！": "Here it comes, Tanu-kun! Hup!", "とりゃ〜っ！": "Hyaaah!", "ナイスファイト！\n今の、ちゃんとボールにさわれてたよ！": "Nice try!\nYou actually touched the ball that time!", "えへへ…ころんじゃった。\nでも、さわれた！": "Hehe… I fell over.\nBut I touched it!", "ぼくはタオル持ってるから、\n{name}は、お腹の砂をはらってあげて！": "I've got the towel,\nso {name}, could you brush the sand off his tummy?", "えっ、{name}が…？\n…じゃあ、お願い、しようかな…": "Huh, {name} will…?\n…Then, um, could you please…", "ひゃっ…！": "Eep…!", "く、くすぐったいってば〜！": "Th-that tickles~!", "おへそのとこ、\nくすぐったい〜…！": "Around my belly button…\nit tickles~…!", "…えへへ。\n{name}にはらってもらうの、なんだか、うれしいな。": "…Hehe.\nHaving you brush me off, {name}… it makes me kind of happy.", "ピカピカだね！ はい、タオル♪\nタヌくんの飛びつき、どんどんよくなってるよ！": "All shiny! Here, a towel♪\nYour dives keep getting better, Tanu-kun!", "ほんと？ えへへ…\n{name}、また練習、見に来てくれる？": "Really? Hehe…\n{name}, will you come watch me practice again?", "わっ、{name}！ 来てくれたんだ。\n…えへへ、なんだか、眠れなくて。": "Oh, {name}! You came.\n…Hehe, I just can't seem to sleep.", "明日、いよいよ大会だね。\n…ぼく、ほんとは、ちょっとこわいんだ。": "The tournament's finally tomorrow.\n…Truth is, I'm a little scared.", "ぼくね、ずっと、何かに挑戦する勇気がなかったんだ。\n失敗したらどうしようって、いつも見てるだけで。": "I never had the courage to try new things.\nI was so afraid of failing, I always just watched.", "でも、{name}と会ってから…\nなんだか、一歩ふみ出してみたくなったんだ。": "But ever since I met you, {name}…\nI've wanted to take a step forward.", "あのね、{name}…\nちょっとだけ、もたれかかっても、いい…？": "Um, {name}…\nCould I lean on you, just for a little bit…?", "いいよ": "Sure", "もちろん": "Of course", "…ほんと？\nえへへ…じゃあ、ちょっとだけ…": "…Really?\nHehe… just for a little bit, then…", "…もちろん、って。\nえへへ…じゃあ、ちょっとだけ…": "…'Of course,' you said.\nHehe… just for a little bit, then…", "……あったかい。": "……So warm.", "ねえ、{name}。\nひとつ、ひみつを言ってもいい？": "Hey, {name}.\nCan I tell you a secret?", "優勝したら、あの貝のネックレス…\n{name}に、プレゼントしたかったんだ。": "If we won, that seashell necklace…\nI wanted to give it to you, {name}.", "いつも会いに来てくれる、\nお礼に。": "As a thank-you\nfor always coming to see me.", "えへへ…言っちゃった。\nなんだか、すっきりして、元気が出てきた！": "Hehe… I said it.\nI feel so much lighter now — I'm all fired up!", "{name}は、もう寝なきゃね。\n明日、寝ぼうしちゃうよ♪": "You should get to bed, {name}.\nOr you'll oversleep tomorrow♪", "おやすみ、{name}。\n明日、いっしょにがんばろうね。": "Good night, {name}.\nLet's do our best tomorrow.", "── {name}が帰ったあと。": "── After {name} went home.", "ざく、ざく……": "Scrunch, scrunch……", "……あった。\nこれで、ななつめ。": "……Found one.\nThat makes seven.", "明日までに、間に合うかな……\nもうちょっとだけ、がんばろ。": "Will I make it in time for tomorrow……\nJust a little longer.", "いよいよ本番だね！\nふたりとも、いい顔してる！": "It's finally time!\nYou both look ready!", "ふぁ…あ、あくびじゃないよ！\nちょっと、早起きしすぎただけ！": "Fwah… th-that wasn't a yawn!\nI just woke up a bit too early!", "あれ？ タヌくん、その指、ばんそうこう？\nだいじょうぶ？": "Huh? Tanu-kun, is that a bandage on your finger?\nAre you okay?", "しーっ！ な、なんでもないよ！\n…ほら、始まるよ！": "Shh! I-it's nothing!\n…Look, it's starting!", "ぼく、いちばん前で応援してるからね！\nふたりなら、きっと大丈夫！": "I'll be cheering from the front row!\nYou two will be just fine!", "{name}、いくよ！\nボールが来たら、タップで打ち返してね！": "{name}, here we go!\nWhen the ball comes, tap to hit it back!", "やったぁ！\n3回もつながったよ、{name}！": "Yay!\nWe kept it going three times, {name}!", "でも…相手チーム、すっごく強い…！": "But… the other team is really strong…!", "まだまだ…！ とりゃ〜っ！": "Not yet…! Hyaaah!", "……えへへ。負けちゃった。": "……Hehe. We lost.", "ごめんね、{name}。\nネックレス、とれなかったや…": "Sorry, {name}.\nI couldn't win the necklace…", "タヌくん、最後まで、ぜんぶのボールを追いかけてたね。\nいちばんかっこよかったよ！": "Tanu-kun, you chased every single ball to the very end.\nYou were the coolest one out there!", "{name}も、おつかれさま！\n…ぼく、冷たい飲み物、買ってくるね♪": "Great job, {name}!\n…I'll go get us some cold drinks♪", "……ウルくん、ありがと。": "……Thanks, Uru-kun.", "── 大会がおわって、夕方。": "── The tournament is over. Evening.", "{name}、ちょっと待って……！": "{name}, wait a sec……!", "はぁ、はぁ…\nよかった、まだいた…": "Huff, huff…\nPhew, you're still here…", "えへへ…あのね、{name}に、\n渡したいものがあるんだ。": "Hehe… you know, {name},\nthere's something I want to give you.", "…これ。": "…This.", "優勝できなかったときのために、って…\nゆうべ、浜で貝がら集めて、作ったんだ。": "In case we didn't win…\nI collected shells on the beach last night and made it.", "形も、ばらばらだし…ひもも、むすび目だらけで…\nちょっと、かっこ悪いけど。": "The shapes are all different… the string's full of knots…\nIt's a little clumsy, but…", "でも、ぼくの「ありがとう」、ぜんぶ入ってるから。\n…もらって、くれる？": "But every bit of my \"thank you\" is in it.\n…Will you take it?", "タヌくん、ありがとう！": "Thank you, Tanu-kun!", "…！ えへへ…名前、呼んでくれた。\nよかったぁ。": "…! Hehe… you said my name.\nI'm so glad.", "ねえ、{name}。ぼく、大会に出てよかった。\n{name}がいたから、こわくなかったよ。": "Hey, {name}. I'm glad I entered the tournament.\nWith you there, I wasn't scared.", "また、いっしょに挑戦しようね。\n…次は、もっと上を目指そ♪": "Let's take on another challenge together.\n…Next time, let's aim even higher♪", "ナイス、{name}！": "Nice, {name}!", "その調子！": "That's it!", "ナイス！": "Nice!", "近くに来たら、タップ！": "Tap when it gets close!", "もう少し、引きつけて！": "Wait a little longer!", "👆 おなかを なでて、砂を おとしてね": "👆 Rub his tummy to brush off the sand", "ラリー": "Rally", "もう一度": "Again", "次の話 ▶": "Next ▶", "話：": "Ep: ", "名前：": "Name: ", "なし": "none", "序章": "Prologue", "特訓": "Training", "前夜": "The Night Before", "大会": "Tournament", "タヌくん": "Tanu-kun", "ウルくん": "Uru-kun", "？？？": "???", "ぽよん！": "Poyon!", "ずさーっ！": "Thud!", "ポン！": "Pon!"}, "zh": {"{name}！ 見て見て！\n浜で、ビーチバレーの大会があるんだって！": "{name}！你看你看！\n海滩上要举办沙滩排球大赛哦！", "ふたり一組で出るんだ。\n…{name}、ぼくといっしょに、出てくれない？": "要两个人一组参加。\n…{name}，愿意和我一起参加吗？", "うん、いっしょに出よう！": "嗯，一起参加吧！", "やったぁ！\nあのね、優勝すると、すっごくきれいな貝のネックレスがもらえるんだよ♪": "太好了！\n跟你说哦，拿到冠军的话，可以得到一条超漂亮的贝壳项链♪", "ぼく、どうしても、それがほしくて…\nえへへ、なんでかは、ないしょ！": "我真的、真的很想要它…\n嘿嘿，为什么嘛，是秘密！", "それでね、練習相手を呼んであるんだ！": "所以呀，我请来了一个练习对手！", "おーい、タヌくーん！": "喂——狸君！", "ウルくん！ こっちこっち♪": "狼君！这边这边♪", "きみが{name}だね！\nはじめまして、ウルだよ。よろしくね♪": "你就是{name}吧！\n初次见面，我是狼君。请多关照♪", "ウルくんはね、となりの島に住んでる、ぼくの幼なじみなんだ。\nバレー、すっごく上手なんだよ！": "狼君是住在隔壁岛的、我的青梅竹马。\n他排球打得超级好哦！", "タヌくんね、{name}とペアで出られるって、\nずーっとはりきってたんだよ♪": "狸君呀，说能和{name}组队参加，\n一直都干劲满满呢♪", "ウ、ウルくん…！ それ、言わないでって…": "狼、狼君…！不是说好不说出来的嘛…", "えへへ、ごめんごめん！": "嘿嘿，抱歉抱歉！", "でもさ、タヌくん。{name}に言いたいこと、あるんでしょ？": "不过呀，狸君。你不是有话想对{name}说吗？", "ほらっ、いってらっしゃい！": "来，去吧！", "わわっ…！": "哇哇…！", "ご、ごめん、{name}…！\nぶつかっちゃった…": "对、对不起，{name}…！\n撞到你了…", "……でも、{name}、あったかいね。": "……不过，{name}，好温暖呀。", "…あのね。\n{name}がいっしょだから、ぼく、がんばれる気がするんだ。": "…那个呀。\n因为有{name}在，我觉得自己能加油了。", "よーし！ じゃあ、さっそく特訓だ！": "好——！那就马上开始特训吧！", "{name}、大会まで、いっしょにがんばろうね♪": "{name}，到比赛之前，一起加油吧♪", "よーし！ 今日は、大会に向けて特訓だよ！": "好——！今天要为比赛特训哦！", "{name}も見ててね！ ぼく、がんばるから♪": "{name}也要看着哦！我会加油的♪", "いくよ、タヌくん！ それっ！": "来了哦，狸君！嘿！", "とりゃ〜っ！": "看我的——！", "ナイスファイト！\n今の、ちゃんとボールにさわれてたよ！": "好样的！\n刚才那球，你碰到了哦！", "えへへ…ころんじゃった。\nでも、さわれた！": "嘿嘿…摔倒了。\n不过，碰到了！", "ぼくはタオル持ってるから、\n{name}は、お腹の砂をはらってあげて！": "我拿着毛巾，\n{name}帮他把肚子上的沙子拍掉吧！", "えっ、{name}が…？\n…じゃあ、お願い、しようかな…": "诶，{name}来…？\n…那、那就拜托你了…", "ひゃっ…！": "呀…！", "く、くすぐったいってば〜！": "好、好痒啦～！", "おへそのとこ、\nくすぐったい〜…！": "肚脐那里，\n好痒～…！", "…えへへ。\n{name}にはらってもらうの、なんだか、うれしいな。": "…嘿嘿。\n被{name}拍掉沙子，总觉得好开心呢。", "ピカピカだね！ はい、タオル♪\nタヌくんの飛びつき、どんどんよくなってるよ！": "亮晶晶的！给，毛巾♪\n狸君的飞扑越来越好了哦！", "ほんと？ えへへ…\n{name}、また練習、見に来てくれる？": "真的吗？嘿嘿…\n{name}，还会再来看我练习吗？", "わっ、{name}！ 来てくれたんだ。\n…えへへ、なんだか、眠れなくて。": "哇，{name}！你来啦。\n…嘿嘿，总觉得睡不着。", "明日、いよいよ大会だね。\n…ぼく、ほんとは、ちょっとこわいんだ。": "明天终于要比赛了呢。\n…其实，我有点害怕。", "ぼくね、ずっと、何かに挑戦する勇気がなかったんだ。\n失敗したらどうしようって、いつも見てるだけで。": "我呀，一直都没有挑战什么的勇气。\n总担心失败了怎么办，每次都只是在旁边看着。", "でも、{name}と会ってから…\nなんだか、一歩ふみ出してみたくなったんだ。": "可是，自从遇见了{name}…\n总觉得，想试着迈出一步了。", "あのね、{name}…\nちょっとだけ、もたれかかっても、いい…？": "那个，{name}…\n可以稍微、靠着你一下吗…？", "いいよ": "可以呀", "もちろん": "当然", "…ほんと？\nえへへ…じゃあ、ちょっとだけ…": "…真的吗？\n嘿嘿…那就，一下下…", "…もちろん、って。\nえへへ…じゃあ、ちょっとだけ…": "…你说「当然」呢。\n嘿嘿…那就，一下下…", "……あったかい。": "……好温暖。", "ねえ、{name}。\nひとつ、ひみつを言ってもいい？": "呐，{name}。\n可以告诉你一个秘密吗？", "優勝したら、あの貝のネックレス…\n{name}に、プレゼントしたかったんだ。": "如果拿到冠军，那条贝壳项链…\n我想送给{name}。", "いつも会いに来てくれる、\nお礼に。": "作为你一直来看我的\n谢礼。", "えへへ…言っちゃった。\nなんだか、すっきりして、元気が出てきた！": "嘿嘿…说出来了。\n总觉得轻松了好多，有精神了！", "{name}は、もう寝なきゃね。\n明日、寝ぼうしちゃうよ♪": "{name}该睡觉啦。\n明天会睡过头的哦♪", "おやすみ、{name}。\n明日、いっしょにがんばろうね。": "晚安，{name}。\n明天一起加油吧。", "── {name}が帰ったあと。": "── {name}回去之后。", "ざく、ざく……": "沙沙，沙沙……", "……あった。\nこれで、ななつめ。": "……找到了。\n这是第七个。", "明日までに、間に合うかな……\nもうちょっとだけ、がんばろ。": "明天之前，来得及吗……\n再努力一下吧。", "いよいよ本番だね！\nふたりとも、いい顔してる！": "终于要正式比赛了！\n你们俩表情都很棒！", "ふぁ…あ、あくびじゃないよ！\nちょっと、早起きしすぎただけ！": "呼啊…才、才不是打哈欠！\n只是起得有点太早了！", "あれ？ タヌくん、その指、ばんそうこう？\nだいじょうぶ？": "咦？狸君，你手指贴着创可贴？\n没事吧？", "しーっ！ な、なんでもないよ！\n…ほら、始まるよ！": "嘘——！没、没什么啦！\n…你看，要开始了！", "ぼく、いちばん前で応援してるからね！\nふたりなら、きっと大丈夫！": "我会在最前排给你们加油的！\n你们俩一定没问题！", "{name}、いくよ！\nボールが来たら、タップで打ち返してね！": "{name}，要开始了！\n球飞过来的时候，点一下打回去哦！", "やったぁ！\n3回もつながったよ、{name}！": "太好了！\n连上了三次哦，{name}！", "でも…相手チーム、すっごく強い…！": "可是…对手好强…！", "まだまだ…！ とりゃ〜っ！": "还没完…！看我的——！", "……えへへ。負けちゃった。": "……嘿嘿。输掉了。", "ごめんね、{name}。\nネックレス、とれなかったや…": "对不起，{name}。\n没能拿到项链…", "タヌくん、最後まで、ぜんぶのボールを追いかけてたね。\nいちばんかっこよかったよ！": "狸君，一直到最后，每一球都拼命追了呢。\n是最帅的哦！", "{name}も、おつかれさま！\n…ぼく、冷たい飲み物、買ってくるね♪": "{name}也辛苦啦！\n…我去买点冷饮哦♪", "……ウルくん、ありがと。": "……狼君，谢谢你。", "── 大会がおわって、夕方。": "── 比赛结束，到了傍晚。", "{name}、ちょっと待って……！": "{name}，等一下……！", "はぁ、はぁ…\nよかった、まだいた…": "呼、呼…\n太好了，你还在…", "えへへ…あのね、{name}に、\n渡したいものがあるんだ。": "嘿嘿…那个，{name}，\n我有东西想给你。", "…これ。": "…这个。", "優勝できなかったときのために、って…\nゆうべ、浜で貝がら集めて、作ったんだ。": "想着万一没拿到冠军…\n昨晚在海滩捡了贝壳，做出来的。", "形も、ばらばらだし…ひもも、むすび目だらけで…\nちょっと、かっこ悪いけど。": "形状也不一样…绳子也全是结…\n虽然，有点难看。", "でも、ぼくの「ありがとう」、ぜんぶ入ってるから。\n…もらって、くれる？": "可是，我所有的「谢谢」都在里面了。\n…你愿意收下吗？", "タヌくん、ありがとう！": "狸君，谢谢你！", "…！ えへへ…名前、呼んでくれた。\nよかったぁ。": "…！嘿嘿…你叫了我的名字。\n太好了。", "ねえ、{name}。ぼく、大会に出てよかった。\n{name}がいたから、こわくなかったよ。": "呐，{name}。参加比赛真是太好了。\n因为有{name}在，我一点都不害怕。", "また、いっしょに挑戦しようね。\n…次は、もっと上を目指そ♪": "下次，也一起挑战吧。\n…下次，要向更高的目标前进♪", "ナイス、{name}！": "漂亮，{name}！", "その調子！": "就是这样！", "ナイス！": "漂亮！", "近くに来たら、タップ！": "球靠近了再点！", "もう少し、引きつけて！": "再等一下下！", "👆 おなかを なでて、砂を おとしてね": "👆 摸摸肚子，把沙子拍掉吧", "ラリー": "回合", "もう一度": "再看一次", "次の話 ▶": "下一话 ▶", "話：": "话：", "名前：": "名字：", "なし": "无", "序章": "序章", "特訓": "特训", "前夜": "前夜", "大会": "比赛", "タヌくん": "狸君", "ウルくん": "狼君", "？？？": "？？？", "ぽよん！": "噗哟！", "ずさーっ！": "扑通！", "ポン！": "嘭！"}};
+  const LANGS = ['ja', 'en', 'zh'], LANG_LABEL = { ja: '日本語', en: 'English', zh: '中文' };
+  let LANG = (new URLSearchParams(location.search).get('lang') || 'ja').replace('zh-Hans', 'zh');
+  if (!LANGS.includes(LANG)) LANG = 'ja';
+  const tl = (t) => (LANG !== 'ja' && TL[LANG][t]) || t;
+  const NAMES_L = { ja: 'コンちゃん', en: 'Kon-chan', zh: '小紺' }, YOU = { ja: 'きみ', en: 'you', zh: '你' };
+  let NAME = NAMES_L[LANG];
+  function setLang(l) {
+    LANG = l; NAME = NAMES_L[l];
+    document.documentElement.lang = l === 'zh' ? 'zh-Hans' : l;
+    $('#lang').textContent = '🌐 ' + LANG_LABEL[l];
+  }
 
   const $ = (s) => document.querySelector(s);
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -321,7 +336,10 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
   // 名前：なしの人は、文頭の「{name}、」は消し、文の途中は「きみ」（本編の withName と同じ）
   function withName(s) {
     if (useName) return s.split('{name}').join(NAME);
-    return s.replace(/^\{name\}[、！]\s*/, '').split('{name}').join('きみ');
+    // 名前なし：文頭の「{name}、」は消す（英語は「{name}, 」・中国語は「{name}，」）。文の途中は「きみ／you／你」
+    s = s.replace(/^\{name\}(、|！|, |! |，|！)\s*/, (m) => '');
+    s = s.split('{name}').join(YOU[LANG]);
+    return LANG === 'en' ? s.replace(/^[a-z]/, (c) => c.toUpperCase()) : s;
   }
   // 表情：2枚の img を交互に使って、ふわっと切りかえる
   function setFace(who, f, instant) {
@@ -350,7 +368,7 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
       if (n >= full.length) { clearInterval(typing); typing = null; if (!waitChoice && !waitSand && !waitGame) more.classList.add('on'); }
     }, 38);
   }
-  function popWord(w) { const p = $('#pop'); p.textContent = w; p.classList.remove('go'); void p.offsetWidth; p.classList.add('go'); }
+  function popWord(w) { const p = $('#pop'); p.textContent = tl(w); p.classList.remove('go'); void p.offsetWidth; p.classList.add('go'); }
   let hintT = 0;
   function hint(s, ms) { const h = $('#hint'); h.textContent = s; h.classList.add('on'); clearTimeout(hintT); if (ms) hintT = setTimeout(() => h.classList.remove('on'), ms); }
   function hideHint() { $('#hint').classList.remove('on'); }
@@ -538,7 +556,7 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
   const DONE = .7;   // 7割はらえば終わり（胸の砂まで全部でなくてよい）
   const REACT = [[.12, 'ひゃっ…！'], [.32, 'く、くすぐったいってば〜！'], [.52, 'おへそのとこ、\nくすぐったい〜…！']];
   function reactSand() {
-    while (said < REACT.length && progress >= REACT[said][0]) { type(REACT[said][1]); said++; }
+    while (said < REACT.length && progress >= REACT[said][0]) { type(tl(REACT[said][1])); said++; }
     if (progress >= DONE && waitSand) finishSand();
   }
   function finishSand() {
@@ -574,10 +592,10 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
   const DUR = [1.7, 1.5, 1.3];
   function startGame(goal) {
     waitGame = true; G.goal = goal; G.n = 0; rally.classList.add('on'); ch.uru.classList.add('away'); ch.tanu.classList.add('side');
-    rally.querySelector('.rc').textContent = 'ラリー 0 / ' + goal; serve();
+    rally.querySelector('.rc').textContent = tl('ラリー') + ' 0 / ' + goal; serve();
     cancelAnimationFrame(G.raf); G.raf = requestAnimationFrame(loop);
   }
-  function stopGame() { waitGame = false; rally.classList.remove('on'); cancelAnimationFrame(G.raf); ch.tanu.classList.remove('side'); }
+  function stopGame() { waitGame = false; rally.classList.remove('on'); cancelAnimationFrame(G.raf); ch.tanu.classList.remove('side'); ch.tanu.classList.add('solo'); }
   function serve() { G.phase = 'in'; G.t0 = performance.now(); G.x0 = .35 + Math.random() * .3; G.x1 = .4 + Math.random() * .2; }
   function ballPos(now) {
     const r = stage.getBoundingClientRect();
@@ -594,7 +612,7 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
     const b = ballPos(now);
     ballEl.style.transform = `translate(${b.x}px,${b.y}px) scale(${b.sc}) rotate(${now / 4 % 360}deg)`;
     shEl.style.transform = `translate(${b.x}px,${b.gy}px) scale(${b.sc})`;
-    if (G.phase === 'in' && b.p > 1.12) { G.phase = 'miss'; G.t0 = now - 1.12 * 1000 * DUR[Math.min(G.n, 2)]; hint('近くに来たら、タップ！', 1400); setTimeout(() => { if (waitGame) serve(); }, 900); }
+    if (G.phase === 'in' && b.p > 1.12) { G.phase = 'miss'; G.t0 = now - 1.12 * 1000 * DUR[Math.min(G.n, 2)]; hint(tl('近くに来たら、タップ！'), 1400); setTimeout(() => { if (waitGame) serve(); }, 900); }
     if (G.phase === 'out' && b.p >= 1) {
       if (G.n >= G.goal) { stopGame(); setTimeout(() => show(++i), 300); return; }
       G.phase = 'wait'; setTimeout(() => { if (waitGame) serve(); }, 450);
@@ -605,11 +623,11 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
   function hitBall() {
     if (G.phase !== 'in') return;
     const now = performance.now(), b = ballPos(now);
-    if (b.p < .62) { hint('もう少し、引きつけて！', 1000); return; }
+    if (b.p < .62) { hint(tl('もう少し、引きつけて！'), 1000); return; }
     G.n++; G.phase = 'out'; G.t0 = now; G.from = b;
-    rally.querySelector('.rc').textContent = 'ラリー ' + G.n + ' / ' + G.goal;
+    rally.querySelector('.rc').textContent = tl('ラリー') + ' ' + G.n + ' / ' + G.goal;
     popWord('ポン！'); anim('tanu', 'hop');
-    type(withName(['ナイス、{name}！', 'その調子！', 'やったぁ！'][G.n - 1] || 'ナイス！'));
+    type(withName(tl(['ナイス、{name}！', 'その調子！', 'やったぁ！'][G.n - 1] || 'ナイス！')));
   }
 
   /* ===== 投げたボール：弧を描いて飛び、タヌくんの手の少し先に落ちて、はずむ =====
@@ -658,7 +676,7 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
     }
     clearTimeout(autoT);
     if (L.auto) autoT = setTimeout(() => { if (i === k) { clearInterval(typing); typing = null; show(++i); } }, L.auto);
-    if (L.interact === 'sand') { waitSand = true; setTimeout(() => { if (waitSand) { hint('👆 おなかを なでて、砂を おとしてね'); $('#meter').classList.add('on'); } }, 900); }
+    if (L.interact === 'sand') { waitSand = true; setTimeout(() => { if (waitSand) { hint(tl('👆 おなかを なでて、砂を おとしてね')); $('#meter').classList.add('on'); } }, 900); }
     // 背景だけ（大会のあと）：立ち絵を消して、夕方の色に
     if (L.empty) { ch.tanu.classList.remove('on'); ch.uru.classList.remove('on'); stage.classList.add('evening'); }
     // 大会のラリー
@@ -681,7 +699,7 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
     if (L.u) setFace('uru', L.u);
     for (const w of ['tanu', 'uru']) ch[w].classList.toggle('talk', L.who === w);
     if (L.anim) anim(L.who, L.anim);
-    nameEl.textContent = L.label || NAMES[L.who] || '';
+    nameEl.textContent = tl(L.label || NAMES[L.who] || '');
     nameEl.classList.toggle('narr', L.who === 'narr');
     nameEl.classList.toggle('uru', L.who === 'uru');
     more.style.color = L.who === 'uru' ? 'var(--uru-d)' : '';
@@ -690,11 +708,11 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
     btns.innerHTML = ''; btns.hidden = true; waitChoice = false;
     if (L.choice) {
       waitChoice = true;
-      L.choice.forEach((c, n) => { const b = document.createElement('button'); b.className = 'btn alt'; b.type = 'button'; b.textContent = c;
+      L.choice.forEach((c, n) => { const b = document.createElement('button'); b.className = 'btn alt'; b.type = 'button'; b.textContent = tl(c);
         b.addEventListener('click', () => { picked = n; waitChoice = false; btns.hidden = true; show(++i); }); btns.appendChild(b); });
       setTimeout(() => { if (waitChoice) btns.hidden = false; }, 700);
     }
-    type(withName(L.alt ? L.alt[picked] : L.text));
+    type(withName(tl(L.alt ? L.alt[picked] : L.text)));
   }
   function next() {
     if (typing) { clearInterval(typing); typing = null; textEl.textContent = full; if (!waitChoice && !waitSand && !waitGame) more.classList.add('on'); return; }
@@ -704,9 +722,9 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
   }
   function endButtons() {
     more.classList.remove('on'); btns.innerHTML = ''; btns.hidden = false;
-    const again = document.createElement('button'); again.className = 'btn'; again.type = 'button'; again.textContent = 'もう一度';
+    const again = document.createElement('button'); again.className = 'btn'; again.type = 'button'; again.textContent = tl('もう一度');
     again.addEventListener('click', () => reset(part)); btns.appendChild(again);
-    if (part < PARTS.length - 1) { const nx = document.createElement('button'); nx.className = 'btn alt'; nx.type = 'button'; nx.textContent = '次の話 ▶';
+    if (part < PARTS.length - 1) { const nx = document.createElement('button'); nx.className = 'btn alt'; nx.type = 'button'; nx.textContent = tl('次の話 ▶');
       nx.addEventListener('click', () => reset(part + 1)); btns.appendChild(nx); }
   }
   function reset(p) {
@@ -719,10 +737,10 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
     if (st === 'solo') { ch.tanu.classList.add('on', 'solo'); setFace('tanu', 'normal', true); setFace('uru', 'normal', true); }
     if (st === 'duo') { ch.tanu.classList.add('on'); ch.uru.classList.add('on'); ch.uru.classList.remove('away'); setFace('tanu', 'happy', true); setFace('uru', 'laugh', true); }
     if (sandW) resetSand();
-    $('#part').textContent = '話：' + PARTS[p].title + ' ▸';
+    $('#part').textContent = tl('話：') + tl(PARTS[p].title) + ' ▸';
     next();
   }
-  function nmLabel() { $('#nm').textContent = '名前：' + (useName ? NAME : 'なし'); }
+  function nmLabel() { $('#nm').textContent = tl('名前：') + (useName ? NAME : tl('なし')); }
 
   $('#game').addEventListener('click', (e) => {
     if (e.target.closest('button')) return;
@@ -739,6 +757,11 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
   ['tanu_normal', 'tanu_happy', 'tanu_shy', 'tanu_dere', 'tanu_troubled', 'uru_normal', 'uru_laugh', 'uru_surprise'].forEach((n) => { new Image().src = 'img/' + n + '.webp'; });
   // セリフ欄の行数が変わって絵の高さが変わったら、揺れる絵（canvas）を描き直す（前は画面の回転のときだけだった）
   if (window.ResizeObserver) new ResizeObserver(() => { bump.draw(); sand.draw(); }).observe(stage);
+  $('#lang').addEventListener('click', () => {
+    setLang(LANGS[(LANGS.indexOf(LANG) + 1) % LANGS.length]); nmLabel(); $('#part').textContent = tl('話：') + tl(PARTS[part].title) + ' ▸';
+    if (i >= 0 && !waitSand && !waitGame) { clearInterval(typing); typing = null; show(i); }
+  });
+  setLang(LANG);
   nmLabel(); reset(part);
 })();
 </script>
