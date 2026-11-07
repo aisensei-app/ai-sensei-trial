@@ -60,6 +60,7 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
 /* 1枚絵（スチル） */
 .still{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 25%;opacity:0;transition:opacity .5s .7s;z-index:3}
 .still.on{opacity:1;transition:opacity .7s}
+.still.on[data-k="g-hide"]{transition:opacity 1.8s ease-in-out}   /* モジモジの絵は、ゆっくり出す */
 /* 受け取ったときの、きらっ（ゆっくり・点滅しない） */
 .twinkle{position:absolute;z-index:6;width:26px;height:26px;opacity:0;pointer-events:none;
   background:radial-gradient(circle,#fff 0 18%,rgba(255,240,200,.9) 30%,rgba(255,240,200,0) 70%);
