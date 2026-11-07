@@ -75,7 +75,7 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
 #tanu.dive{opacity:0 !important;transition:none}
 #dive{position:absolute;left:30%;bottom:4%;height:64%;aspect-ratio:986/767;transform:translateX(-50%);opacity:0;z-index:4;pointer-events:none}
 #dive img{height:100%;width:auto;display:block}
-#dive.go{opacity:1;animation:dive2 1.05s cubic-bezier(.4,0,.8,.6) forwards}
+#dive.go{opacity:1;animation:dive2 1.05s cubic-bezier(.4,0,.8,.6) 1s both}   /* ポーズを見せて1秒ためてから、飛びこむ */
 @keyframes dive2{0%{transform:translateX(-50%) translateY(6%) scale(.92)}
   30%{transform:translateX(-40%) translateY(-12%) rotate(-5deg) scale(1)}
   100%{transform:translateX(75%) translateY(62%) rotate(20deg) scale(1.1)}}
@@ -160,7 +160,7 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
 #part{right:132px}
 #step{left:16px;cursor:default}
 @media (prefers-reduced-motion:reduce){#bump.beat,#night.leaning .beat,#stage.quake,.chara.hop,.chara.shake{animation:none}
-  #tanu.lunge{transition:none}#dive.go{animation-duration:.5s}.puff.go{animation-duration:.4s}.more.on{animation:none}}
+  #tanu.lunge{transition:none}#dive.go{animation-duration:.5s;animation-delay:1s}.puff.go{animation-duration:.4s}.more.on{animation:none}}
 </style>
 
 <div id="game">
@@ -233,7 +233,7 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
       { who: 'uru', u: 'laugh', text: 'よーし！ 今日は、大会に向けて特訓だよ！' },
       { who: 'tanu', t: 'happy', anim: 'hop', text: '{name}も見ててね！ ぼく、がんばるから♪' },
       { who: 'uru', u: 'normal', text: 'いくよ、タヌくん！ それっ！' },
-      { who: 'tanu', t: 'happy', u: 'surprise', fx: 'dive', auto: 1800, text: 'とりゃ〜っ！' },
+      { who: 'tanu', t: 'happy', u: 'surprise', fx: 'dive', auto: 2800, text: 'とりゃ〜っ！' },
       { jig: 'sand', who: 'uru', text: 'ナイスファイト！\n今の、ちゃんとボールにさわれてたよ！' },
       { jig: 'sand', who: 'tanu', text: 'えへへ…ころんじゃった。\nでも、さわれた！' },
       { jig: 'sand', who: 'uru', text: 'ぼくはタオル持ってるから、\n{name}は、お腹の砂をはらってあげて！' },
@@ -270,7 +270,7 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
       { who: 'tanu', t: 'happy', game: 3, text: '{name}、いくよ！\nボールが来たら、タップで打ち返してね！' },
       { who: 'tanu', t: 'happy', anim: 'hop', text: 'やったぁ！\n3回もつながったよ、{name}！' },
       { who: 'tanu', t: 'troubled', text: 'でも…相手チーム、すっごく強い…！' },
-      { who: 'tanu', t: 'happy', fx: 'dive', auto: 1800, text: 'まだまだ…！ とりゃ〜っ！' },
+      { who: 'tanu', t: 'happy', fx: 'dive', auto: 2800, text: 'まだまだ…！ とりゃ〜っ！' },
       { still: 'sand', who: 'tanu', text: '……えへへ。負けちゃった。' },
       { still: 'sand', who: 'tanu', text: 'ごめんね、{name}。\nネックレス、とれなかったや…' },
       { still: 'sand', who: 'uru', text: 'タヌくん、最後まで、ぜんぶのボールを追いかけてたね。\nいちばんかっこよかったよ！' },
@@ -612,7 +612,7 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
       setTimeout(() => {
         const pf = $('#puff'); pf.classList.remove('go'); void pf.offsetWidth; pf.classList.add('go'); popWord('ずさーっ！');
         if (!reduce) { stage.classList.remove('quake'); void stage.offsetWidth; stage.classList.add('quake'); }
-      }, 850);
+      }, 1850);
     }
     clearTimeout(autoT);
     if (L.auto) autoT = setTimeout(() => { if (i === k) { clearInterval(typing); typing = null; show(++i); } }, L.auto);
