@@ -295,16 +295,21 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
   }
   // 表情：2枚の img を交互に使って、ふわっと切りかえる
   function setFace(who, f, instant) {
-    const imgs = ch[who].querySelectorAll('img');
-    const src = 'img/' + who + '_' + f + '.webp';
-    const cur = imgs[0].style.opacity === '0' ? imgs[1] : imgs[0];
-    if (cur.getAttribute('src') === src) return;
-    const nxt = cur === imgs[0] ? imgs[1] : imgs[0];
-    if (instant) { cur.src = src; cur.style.opacity = 1; nxt.style.opacity = 0; return; }
-    nxt.style.transition = cur.style.transition = 'opacity .25s';
-    nxt.onload = () => { nxt.style.opacity = 1; cur.style.opacity = 0; };
+    // ちらつき対策（2026-11-07）：前は2枚を同時にフェードしていたので、途中で両方が半分すけて体が薄く見えた。
+    // いまは「今の絵はそのまま下に残し、新しい絵を上に重ねて、読みこみ（decode）が終わってからふわっと出す → 出きったら下の絵を消す」
+    const el = ch[who], imgs = el.querySelectorAll('img'), src = 'img/' + who + '_' + f + '.webp';
+    const ci = +(el.dataset.cur || 0), cur = imgs[ci], nxt = imgs[1 - ci];
+    if (cur.getAttribute('src') === src && cur.style.opacity !== '0') return;
+    const token = (el._tok = (el._tok || 0) + 1);
+    if (instant) { cur.src = src; cur.style.transition = 'none'; cur.style.opacity = 1; nxt.style.transition = 'none'; nxt.style.opacity = 0; return; }
+    nxt.style.transition = 'none'; nxt.style.opacity = 0; nxt.style.zIndex = 2; cur.style.zIndex = 1;
     nxt.src = src;
-    if (nxt.complete) nxt.onload();
+    const ready = nxt.decode ? nxt.decode().catch(() => {}) : Promise.resolve();
+    ready.then(() => requestAnimationFrame(() => {
+      if (el._tok !== token) return;
+      nxt.style.transition = 'opacity .28s ease'; nxt.style.opacity = 1;
+      setTimeout(() => { if (el._tok !== token) return; cur.style.transition = 'none'; cur.style.opacity = 0; el.dataset.cur = 1 - ci; }, 300);
+    }));
   }
   function anim(who, a) { const el = ch[who]; el.classList.remove('hop', 'shake'); void el.offsetWidth; el.classList.add(a); }
   function type(s) {
