@@ -65,10 +65,14 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
   41%{transform:scale(1.025)}49%{transform:scale(1)}57%{transform:scale(1.018)}66%{transform:scale(1)}}
 #tanu.lunge{left:50%;transform:translateX(-50%) scale(1.9);transform-origin:50% 45%;filter:none;z-index:3;
   transition:left .45s ease-in,transform .45s cubic-bezier(.5,0,.9,.6)}
-#tanu.dive{filter:none;z-index:3;animation:dive .75s cubic-bezier(.4,0,.8,.6) forwards}
-@keyframes dive{0%{transform:translateX(-50%) scale(1)}
-  35%{transform:translateX(-35%) translateY(-22%) rotate(-6deg) scale(1)}
-  100%{transform:translateX(40%) translateY(75%) rotate(48deg) scale(1.1);opacity:1}}
+/* 飛びつく：立ち絵を消して、飛びつきの絵（右向き・反転しない）が跳ねて右下の画面の外へ */
+#tanu.dive{opacity:0 !important;transition:none}
+#dive{position:absolute;left:30%;bottom:4%;height:64%;aspect-ratio:986/746;transform:translateX(-50%);opacity:0;z-index:4;pointer-events:none}
+#dive img{height:100%;width:auto;display:block}
+#dive.go{opacity:1;animation:dive2 1.05s cubic-bezier(.4,0,.8,.6) forwards}
+@keyframes dive2{0%{transform:translateX(-50%) translateY(6%) scale(.92)}
+  30%{transform:translateX(-40%) translateY(-12%) rotate(-5deg) scale(1)}
+  100%{transform:translateX(75%) translateY(62%) rotate(20deg) scale(1.1)}}
 /* 砂けむり（画面の下からふわっと広がって消える） */
 .puff{position:absolute;z-index:4;left:50%;bottom:-6%;width:120%;height:46%;transform:translateX(-50%) scale(.3);opacity:0;pointer-events:none;
   background:radial-gradient(closest-side,rgba(240,214,170,.95),rgba(236,205,155,.75) 45%,rgba(230,200,150,0) 100%);filter:blur(4px)}
@@ -156,7 +160,7 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
 #part{right:132px}
 #step{left:16px;cursor:default}
 @media (prefers-reduced-motion:reduce){#bump.beat,#night.leaning .beat,#stage.quake,.chara.hop,.chara.shake{animation:none}
-  #tanu.lunge{transition:none}.puff.go{animation-duration:.4s}.more.on{animation:none}}
+  #tanu.lunge{transition:none}#dive.go{animation-duration:.5s}.puff.go{animation-duration:.4s}.more.on{animation:none}}
 </style>
 
 <div id="game">
@@ -177,6 +181,7 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
       <img data-k="ask" src="img/night_ask.webp" alt="">
       <img data-k="relief" class="off" src="img/night_relief.webp" alt="">
     </div></div></div>
+    <div id="dive"><img src="img/tanu_dive.webp" alt=""></div>
     <div class="puff" id="puff"></div>
     <div class="pop" id="pop"></div>
     <div class="hint" id="hint"></div>
@@ -225,7 +230,7 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
       { who: 'uru', u: 'laugh', text: 'よーし！ 今日は、大会に向けて特訓だよ！' },
       { who: 'tanu', t: 'happy', anim: 'hop', text: '{name}も見ててね！ ぼく、がんばるから♪' },
       { who: 'uru', u: 'normal', text: 'いくよ、タヌくん！ それっ！' },
-      { who: 'tanu', t: 'happy', u: 'surprise', fx: 'dive', auto: 1500, text: 'とりゃ〜っ！' },
+      { who: 'tanu', t: 'happy', u: 'surprise', fx: 'dive', auto: 1800, text: 'とりゃ〜っ！' },
       { jig: 'sand', who: 'uru', text: 'ナイスファイト！\n今の、ちゃんとボールにさわれてたよ！' },
       { jig: 'sand', who: 'tanu', text: 'えへへ…ころんじゃった。\nでも、さわれた！' },
       { jig: 'sand', who: 'uru', text: 'ぼくはタオル持ってるから、\n{name}は、お腹の砂をはらってあげて！' },
@@ -262,7 +267,7 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
       { who: 'tanu', t: 'happy', game: 3, text: '{name}、いくよ！\nボールが来たら、タップで打ち返してね！' },
       { who: 'tanu', t: 'happy', anim: 'hop', text: 'やったぁ！\n3回もつながったよ、{name}！' },
       { who: 'tanu', t: 'troubled', text: 'でも…相手チーム、すっごく強い…！' },
-      { who: 'tanu', t: 'happy', fx: 'dive', auto: 1500, text: 'まだまだ…！ とりゃ〜っ！' },
+      { who: 'tanu', t: 'happy', fx: 'dive', auto: 1800, text: 'まだまだ…！ とりゃ〜っ！' },
       { still: 'sand', who: 'tanu', text: '……えへへ。負けちゃった。' },
       { still: 'sand', who: 'tanu', text: 'ごめんね、{name}。\nネックレス、とれなかったや…' },
       { still: 'sand', who: 'uru', text: 'タヌくん、最後まで、ぜんぶのボールを追いかけてたね。\nいちばんかっこよかったよ！' },
@@ -591,6 +596,7 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
     if (L.jig === 'sand' && !sandEl.classList.contains('on')) { sandEl.classList.add('on'); sand.draw(); sand.kick(2.4); sand.wave({ x: AREA.cx, y: AREA.cy }, 1); }
     if (L.jig !== 'sand') sandEl.classList.remove('on');
     if (L.fx !== 'dive' && L.jig !== 'sand') ch.tanu.classList.remove('dive');
+    if (L.fx !== 'dive') $('#dive').classList.remove('go');
     if (L.fx === 'push') { ch.uru.classList.add('pushed'); ch.tanu.classList.add('front'); setTimeout(() => anim('tanu', 'shake'), 300); }
     if (L.fx === 'bump') {   // タヌくんがよろけて、こちらへ大きくなる → 1枚絵に切りかえて「ぽよん！」＋鼓動
       ch.tanu.classList.add('lunge');
@@ -598,11 +604,11 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
         if (!reduce) { bumpEl.classList.remove('beat'); void bumpEl.offsetWidth; bumpEl.classList.add('beat'); } }, 420);
     }
     if (L.fx === 'dive') {   // ボールに飛びつく：上へ跳んで、画面の外へ飛びこむ → 砂けむり・地面が少し揺れる（点滅はしない）→ 砂まみれの絵へ
-      ch.tanu.classList.remove('dive'); void ch.tanu.offsetWidth; ch.tanu.classList.add('dive');
+      ch.tanu.classList.add('dive'); const dv = $('#dive'); dv.classList.remove('go'); void dv.offsetWidth; dv.classList.add('go');
       setTimeout(() => {
         const pf = $('#puff'); pf.classList.remove('go'); void pf.offsetWidth; pf.classList.add('go'); popWord('ずさーっ！');
         if (!reduce) { stage.classList.remove('quake'); void stage.offsetWidth; stage.classList.add('quake'); }
-      }, 700);
+      }, 850);
     }
     clearTimeout(autoT);
     if (L.auto) autoT = setTimeout(() => { if (i === k) { clearInterval(typing); typing = null; show(++i); } }, L.auto);
