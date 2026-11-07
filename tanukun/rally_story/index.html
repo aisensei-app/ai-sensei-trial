@@ -75,7 +75,17 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
 #tanu.dive{opacity:0 !important;transition:none}
 #dive{position:absolute;left:30%;bottom:4%;height:64%;aspect-ratio:986/767;transform:translateX(-50%);opacity:0;z-index:4;pointer-events:none}
 #dive img{height:100%;width:auto;display:block}
-#dive.go{opacity:1;animation:dive2 1.05s cubic-bezier(.4,0,.8,.6) 1s both}   /* ポーズを見せて1秒ためてから、飛びこむ */
+#dive.go{opacity:1;animation:dive3 2s linear both}   /* 左から飛んできて → 一瞬ためて → 右下へずっこける */
+@keyframes dive3{0%{transform:translateX(-230%) translateY(-14%) rotate(-4deg);animation-timing-function:cubic-bezier(.2,.7,.4,1)}
+  25%{transform:translateX(-50%) translateY(-8%) rotate(-2deg)}
+  50%{transform:translateX(-46%) translateY(-6%) rotate(0deg);animation-timing-function:cubic-bezier(.5,0,.9,.6)}
+  100%{transform:translateX(75%) translateY(62%) rotate(20deg) scale(1.1)}}
+/* ウルくんが投げる：右へ動く。タヌくんの立ち絵は左の画面の外へ */
+#uru.throw{left:92%}
+#tanu.exit{left:-45%}
+/* 投げたボール（ラリーのボールと同じ見た目） */
+#toss{position:absolute;left:0;top:0;width:64px;height:64px;margin:-32px 0 0 -32px;border-radius:50%;z-index:5;pointer-events:none;opacity:0;
+  background:conic-gradient(from 20deg,#F7D34A 0 30%,#fff 0 48%,#3C6FD1 0 68%,#fff 0 82%,#F7D34A 0);box-shadow:inset -8px -10px 16px rgba(0,0,0,.25),0 4px 10px rgba(0,0,0,.25)}
 @keyframes dive2{0%{transform:translateX(-50%) translateY(6%) scale(.92)}
   30%{transform:translateX(-40%) translateY(-12%) rotate(-5deg) scale(1)}
   100%{transform:translateX(75%) translateY(62%) rotate(20deg) scale(1.1)}}
@@ -160,7 +170,7 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
 #part{right:132px}
 #step{left:16px;cursor:default}
 @media (prefers-reduced-motion:reduce){#bump.beat,#night.leaning .beat,#stage.quake,.chara.hop,.chara.shake{animation:none}
-  #tanu.lunge{transition:none}#dive.go{animation-duration:.5s;animation-delay:1s}.puff.go{animation-duration:.4s}.more.on{animation:none}}
+  #tanu.lunge{transition:none}#dive.go{animation-duration:1.2s}.puff.go{animation-duration:.4s}.more.on{animation:none}}
 </style>
 
 <div id="game">
@@ -184,6 +194,7 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
       <img data-k="ask" src="img/night_ask.webp" alt="">
       <img data-k="relief" class="off" src="img/night_relief.webp" alt="">
     </div></div></div>
+    <span id="toss"></span>
     <div id="dive"><img src="img/tanu_dive.webp" alt=""></div>
     <div class="puff" id="puff"></div>
     <div class="pop" id="pop"></div>
@@ -232,8 +243,8 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
     { title: '特訓', start: 'duo', lines: [
       { who: 'uru', u: 'laugh', text: 'よーし！ 今日は、大会に向けて特訓だよ！' },
       { who: 'tanu', t: 'happy', anim: 'hop', text: '{name}も見ててね！ ぼく、がんばるから♪' },
-      { who: 'uru', u: 'normal', text: 'いくよ、タヌくん！ それっ！' },
-      { who: 'tanu', t: 'happy', u: 'surprise', fx: 'dive', auto: 2800, text: 'とりゃ〜っ！' },
+      { who: 'uru', u: 'laugh', fx: 'toss', auto: 1000, text: 'いくよ、タヌくん！ それっ！' },
+      { who: 'tanu', t: 'happy', u: 'surprise', fx: 'dive', auto: 2900, text: 'とりゃ〜っ！' },
       { jig: 'sand', who: 'uru', text: 'ナイスファイト！\n今の、ちゃんとボールにさわれてたよ！' },
       { jig: 'sand', who: 'tanu', text: 'えへへ…ころんじゃった。\nでも、さわれた！' },
       { jig: 'sand', who: 'uru', text: 'ぼくはタオル持ってるから、\n{name}は、お腹の砂をはらってあげて！' },
@@ -270,7 +281,7 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
       { who: 'tanu', t: 'happy', game: 3, text: '{name}、いくよ！\nボールが来たら、タップで打ち返してね！' },
       { who: 'tanu', t: 'happy', anim: 'hop', text: 'やったぁ！\n3回もつながったよ、{name}！' },
       { who: 'tanu', t: 'troubled', text: 'でも…相手チーム、すっごく強い…！' },
-      { who: 'tanu', t: 'happy', fx: 'dive', auto: 2800, text: 'まだまだ…！ とりゃ〜っ！' },
+      { who: 'tanu', t: 'happy', fx: 'dive', auto: 2900, text: 'まだまだ…！ とりゃ〜っ！' },
       { still: 'sand', who: 'tanu', text: '……えへへ。負けちゃった。' },
       { still: 'sand', who: 'tanu', text: 'ごめんね、{name}。\nネックレス、とれなかったや…' },
       { still: 'sand', who: 'uru', text: 'タヌくん、最後まで、ぜんぶのボールを追いかけてたね。\nいちばんかっこよかったよ！' },
@@ -590,6 +601,23 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
     type(withName(['ナイス、{name}！', 'その調子！', 'やったぁ！'][G.n - 1] || 'ナイス！'));
   }
 
+  /* ===== 投げたボール：弧を描いて飛び、タヌくんの手の少し先に落ちて、はずむ =====
+     toss＝ウルくん（右）から山なりに左上へ上がって、まんなかの下へ落ちる。spike＝右上から速く落ちてくる */
+  let tossing = false;
+  function tossBall(kind) {
+    const el = $('#toss'), r = stage.getBoundingClientRect(), W = r.width, H = r.height;
+    // [時刻(ms), x, y, 大きさ]（x・y は画面の割合）。タヌくんの手の先（約1.5秒）をかすめて、その先に落ちる＝届かない
+    const P = kind === 'spike'
+      ? [[0, 1.05, .05, .7], [1400, .66, .4, .9], [2000, .55, .86, 1], [2300, .62, .76, 1], [2700, .68, .86, 1]]
+      : [[0, .74, .42, .8], [600, .45, .05, .7], [1500, .64, .38, .9], [2100, .55, .86, 1], [2400, .62, .76, 1], [2800, .68, .86, 1]];
+    const dur = P[P.length - 1][0] + 300;
+    const kf = P.map(([t, x, y, sc], n) => ({ offset: t / dur, transform: `translate(${x * W}px,${y * H}px) scale(${sc}) rotate(${n * 160}deg)`, opacity: 1,
+      easing: n === 0 ? 'ease-out' : 'ease-in' }));
+    kf.push({ offset: 1, transform: kf[kf.length - 1].transform, opacity: 0 });
+    tossing = true;
+    el.animate(kf, { duration: dur, fill: 'forwards' }).onfinish = () => { tossing = false; };
+  }
+
   /* ===== 1行を出す ===== */
   function show(k) {
     const L = LINES[k];
@@ -607,12 +635,15 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
       setTimeout(() => { bumpEl.classList.add('on'); bump.draw(); bump.kick(3.8); bump.wave({ x: 510, y: 1090 }, 1.2); popWord('ぽよん！'); setTimeout(() => bump.kick(1.6), 520);
         if (!reduce) { bumpEl.classList.remove('beat'); void bumpEl.offsetWidth; bumpEl.classList.add('beat'); } }, 420);
     }
+    if (L.fx === 'toss') { ch.uru.classList.add('throw'); ch.tanu.classList.add('exit'); tossBall('toss'); }
+    if (L.fx !== 'toss' && L.fx !== 'dive') { ch.uru.classList.remove('throw'); ch.tanu.classList.remove('exit'); }
     if (L.fx === 'dive') {   // ボールに飛びつく：上へ跳んで、画面の外へ飛びこむ → 砂けむり・地面が少し揺れる（点滅はしない）→ 砂まみれの絵へ
       ch.tanu.classList.add('dive'); const dv = $('#dive'); dv.classList.remove('go'); void dv.offsetWidth; dv.classList.add('go');
+      if (!tossing) tossBall('spike');   // 大会：相手のスパイクが右から飛んでくる
       setTimeout(() => {
         const pf = $('#puff'); pf.classList.remove('go'); void pf.offsetWidth; pf.classList.add('go'); popWord('ずさーっ！');
         if (!reduce) { stage.classList.remove('quake'); void stage.offsetWidth; stage.classList.add('quake'); }
-      }, 1850);
+      }, 1900);
     }
     clearTimeout(autoT);
     if (L.auto) autoT = setTimeout(() => { if (i === k) { clearInterval(typing); typing = null; show(++i); } }, L.auto);
