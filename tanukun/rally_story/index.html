@@ -35,7 +35,9 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
 #bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:62% 50%;transition:opacity .6s}
 #stage.dark #bg{opacity:0}
 #bg{transition:opacity .6s,filter 1.2s}
-#stage.evening #bg{filter:sepia(.45) saturate(1.3) hue-rotate(-12deg) brightness(.88)}   /* 大会のあとの夕方 */
+/* 大会のあとの夕方：昼の背景の上に、夕方の背景をゆっくり重ねる（時間がたつ感じ） */
+#bg2{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:62% 50%;opacity:0;transition:opacity 3s ease-in-out}
+#stage.evening #bg2{opacity:1}
 /* 立ち絵 */
 .chara{position:absolute;bottom:-16%;height:94%;transform:translateX(-50%) translateY(0) scale(.96);transform-origin:50% 100%;
   filter:brightness(.8) saturate(.9);transition:filter .35s,transform .35s,opacity .5s,left .6s cubic-bezier(.3,.1,.25,1);
@@ -178,6 +180,7 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
 <div id="game">
   <div id="stage">
     <img id="bg" src="img/bg_court.webp" alt="">
+    <img id="bg2" src="img/bg_court_evening.webp" alt="">
     <div class="chara" id="tanu"><img alt=""><img alt=""></div>
     <div class="chara away" id="uru"><img alt=""><img alt=""></div>
     <img class="still" data-k="invite" src="img/intro_invite.webp" alt="">
