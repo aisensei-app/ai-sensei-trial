@@ -172,7 +172,7 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
 .tool{position:absolute;top:12px;z-index:9;border:0;border-radius:99px;background:rgba(255,255,255,.72);color:var(--ink);
   font:inherit;font-size:13px;font-weight:800;padding:7px 12px;cursor:pointer}
 #nm{right:16px}
-#part{right:132px}
+#part{right:16px;top:48px}   /* 名前の下に（英語で長くなっても重ならないように） */
 #step{left:16px;cursor:default}
 #lang{left:16px;top:48px}
 html[lang="zh-Hans"] body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif}
@@ -366,7 +366,7 @@ html[lang="zh-Hans"] body{font-family:-apple-system,BlinkMacSystemFont,"PingFang
     typing = setInterval(() => {
       n++; textEl.textContent = full.slice(0, n);
       if (n >= full.length) { clearInterval(typing); typing = null; if (!waitChoice && !waitSand && !waitGame) more.classList.add('on'); }
-    }, 38);
+    }, LANG === 'en' ? 18 : 38);   // 英語は文字数が多いので、1文字を速めに
   }
   function popWord(w) { const p = $('#pop'); p.textContent = tl(w); p.classList.remove('go'); void p.offsetWidth; p.classList.add('go'); }
   let hintT = 0;
