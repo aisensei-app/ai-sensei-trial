@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>花だんを まもれ！｜タヌくん</title>
+<meta name="theme-color" content="#BFE6FF">
+<!--
+  タヌくん：「花だんを まもれ！」のお試し版（2026-11-07）
+  ・YouTube の広告でよく見る「下から撃って、上から来る大群を止める」形のミニゲーム。敵は出さない（世界観に合わないため）
+  ・坂の上から、まるい岩がコロコロ・ウニがころころ転がってくる。南国の花だん（いちばん下）に届くと、お花がしおれる
+  ・タヌくんは指で左右に動かすだけ。木の実は自動で上へ飛ぶ
+  ・岩：当てると数字が減って「パカッ」。大きい岩は小さい岩に分かれる（大群らしく）。最後は大岩
+  ・ウニ：生きものなので割らない。当てると「ぽーん」と海へ帰っていく
+  ・ヤシのゲート：くぐると木の実が増える（＋・×）／減る（−）。ゲートに木の実を当てると、数が1ずつ上がる
+  ・🥥 ココナッツ：岩を割るとゲージがたまる。満タンでボタン → 大きなココナッツが岩をつらぬく
+  ・岩は顔なし・山がくずれる見せ方はしない（土砂くずれを思い出させないように。コミカルに）
+  ・絵はまだ仮（岩・ウニ・花・木の実はプログラムで描く。タヌくんと浜は本編の絵）。日本語だけ。本編にはまだつないでいない
+  ・?fast で、時間が半分になる（確認用）
+-->
+<style>
+:root{ --ink:#4A2C1A; --orange:#F08A3C; --orange-d:#C8641E; }
+*{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html,body{ margin:0; height:100%; background:#3A2210; overflow:hidden; color:var(--ink);
+  font-family:"Hiragino Maru Gothic ProN","Rounded Mplus 1c","Kosugi Maru","BIZ UDPGothic",system-ui,sans-serif;
+  -webkit-user-select:none; user-select:none; touch-action:none; }
+#wrap{ position:fixed; inset:0; margin:0 auto; max-width:480px; overflow:hidden; background:#BFE6FF; }
+canvas{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+.bar{ position:absolute; left:0; right:0; top:0; display:flex; align-items:center; gap:8px;
+  padding:calc(env(safe-area-inset-top) + 8px) 10px 6px; pointer-events:none; font-weight:800; }
+.pill{ background:rgba(255,255,255,.78); border-radius:99px; padding:4px 10px; font-size:14px; box-shadow:0 2px 6px rgba(0,0,0,.12); }
+.bar .sp{ flex:1; }
+#nuts b{ font-size:17px; }
+#prog{ position:absolute; left:12px; right:12px; top:calc(env(safe-area-inset-top) + 44px); height:6px;
+  border-radius:9px; background:rgba(255,255,255,.55); overflow:hidden; pointer-events:none; }
+#prog i{ display:block; height:100%; width:0; background:linear-gradient(90deg,#7BC96F,#F08A3C); }
+#coco{ position:absolute; right:12px; bottom:calc(env(safe-area-inset-bottom) + 250px); width:60px; height:60px;
+  border-radius:50%; border:0; font-size:30px; background:rgba(255,255,255,.6); color:var(--ink);
+  box-shadow:0 3px 8px rgba(0,0,0,.18); display:grid; place-items:center; padding:0; overflow:hidden; }
+#coco .fill{ position:absolute; left:0; right:0; bottom:0; height:0; background:rgba(240,138,60,.35); }
+#coco span{ position:relative; }
+#coco.ready{ background:var(--orange); box-shadow:0 4px 0 var(--orange-d), 0 0 0 4px rgba(255,255,255,.7); animation:pulse 1s infinite; }
+#coco.ready .fill{ display:none; }
+@keyframes pulse{ 50%{ transform:scale(1.08); } }
+.sheet{ position:absolute; left:16px; right:16px; top:50%; transform:translateY(-50%);
+  background:rgba(255,253,246,.96); border-radius:22px; padding:22px 18px; text-align:center;
+  box-shadow:0 10px 30px rgba(0,0,0,.25); }
+.sheet h1,.sheet h2{ margin:0 0 10px; font-size:24px; }
+.sheet p{ margin:8px 0; line-height:1.6; font-size:15px; }
+.sheet img{ width:150px; height:auto; display:block; margin:-6px auto 0; }
+.btn{ display:block; width:100%; margin-top:12px; padding:13px; border:0; border-radius:99px; font:inherit;
+  font-weight:800; font-size:17px; color:#fff; background:var(--orange); box-shadow:0 4px 0 var(--orange-d); }
+.btn.sub{ background:#fff; color:var(--orange-d); box-shadow:0 0 0 2px #F3D9C2 inset; }
+.small{ font-size:13px !important; opacity:.8; }
+[hidden]{ display:none !important; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="cv"></canvas>
+  <div class="bar">
+    <div class="pill" id="flowers">🌺 5</div>
+    <div class="sp"></div>
+    <div class="pill" id="nuts">🌰 ×<b>1</b></div>
+  </div>
+  <div id="prog"><i></i></div>
+  <button id="coco" type="button" aria-label="ココナッツ"><div class="fill"></div><span>🥥</span></button>
+
+  <section id="start" class="sheet">
+    <h1>🌺 花だんを まもれ！</h1>
+    <img src="../images/normal.webp" alt="タヌくん" draggable="false">
+    <p>坂の上から、岩やウニが<br>ころころ 転がってくるよ！</p>
+    <p><b>指で 左右に 動かして</b>、木の実を当てよう。<br>ヤシのゲートで 木の実が ふえるよ</p>
+    <p class="small">🥥 がたまったら、ココナッツで ドーン！<br>🦔 ウニは 当てると 海へ帰っていくよ</p>
+    <button id="btn-start" class="btn" type="button">はじめる</button>
+    <p class="small">🔊 音が出ます（お試し版・絵は仮）</p>
+  </section>
+
+  <section id="result" class="sheet" hidden>
+    <h2 id="r-title"></h2>
+    <img id="r-img" alt="" draggable="false">
+    <p id="r-text"></p>
+    <button id="btn-again" class="btn" type="button">もう一回</button>
+  </section>
+</div>
+
+<script>
+(function(){
+'use strict';
+const $ = (id) => document.getElementById(id);
+const cv = $('cv'), ctx = cv.getContext('2d');
+const FAST = /[?&]fast\b/.test(location.search);
+
+/* ---------- 絵 ---------- */
+function img(src){ const i = new Image(); i.src = src; return i; }
+const IMG = {
+  bg: img('../images/bg/beach_day.webp'),
+  normal: img('../images/normal.webp'),
+  happy: img('../images/happy.webp'),
+  troubled: img('../images/troubled.webp'),
+};
+
+/* ---------- 画面の大きさ ---------- */
+let W = 360, H = 640, DPR = 1;
+function resize(){
+  const r = $('wrap').getBoundingClientRect();
+  W = r.width; H = r.height; DPR = Math.min(2, window.devicePixelRatio || 1);
+  cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+window.addEventListener('resize', resize); resize();
+const SAFE_B = () => 8;
+const bedTop = () => H - 64;               // 花だんの上のはし（ここに届くとお花がしおれる）
+const tanuH  = () => Math.min(170, H * 0.22);
+const tanuY  = () => bedTop() + 26;         // タヌくんの足もと（花だんの前に立つ）
+
+/* ---------- 音（Web Audio・小さめ） ---------- */
+let AC = null;
+function audio(){ if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){} } if (AC && AC.state === 'suspended') AC.resume(); }
+function tone(f, d, type, vol, slide){
+  if (!AC) return; const t = AC.currentTime, o = AC.createOscillator(), g = AC.createGain();
+  o.type = type || 'sine'; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(slide, t + d);
+  g.gain.setValueAtTime(vol || .08, t); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+  o.connect(g).connect(AC.destination); o.start(t); o.stop(t + d);
+}
+function noise(d, vol, lp){
+  if (!AC) return; const t = AC.currentTime, n = Math.floor(AC.sampleRate * d), b = AC.createBuffer(1, n, AC.sampleRate), a = b.getChannelData(0);
+  for (let i = 0; i < n; i++) a[i] = (Math.random() * 2 - 1) * (1 - i / n);
+  const s = AC.createBufferSource(), f = AC.createBiquadFilter(), g = AC.createGain();
+  s.buffer = b; f.type = 'lowpass'; f.frequency.value = lp || 1200; g.gain.value = vol || .2;
+  s.connect(f).connect(g).connect(AC.destination); s.start(t);
+}
+let lastHitSnd = 0;
+const SND = {
+  hit(){ const n = performance.now(); if (n - lastHitSnd < 45) return; lastHitSnd = n; tone(520 + Math.random()*120, .05, 'triangle', .035); },
+  crack(big){ noise(big ? .35 : .18, big ? .35 : .22, big ? 700 : 1500); tone(big ? 160 : 260, .15, 'square', .04, 90); },
+  boing(){ tone(300, .35, 'sine', .12, 900); },
+  gateGood(){ [660, 880, 1320].forEach((f,i) => setTimeout(() => tone(f, .14, 'triangle', .08), i*70)); },
+  gateBad(){ tone(330, .3, 'sawtooth', .05, 160); },
+  wilt(){ tone(500, .5, 'sine', .1, 180); },
+  coco(){ tone(140, .4, 'square', .08, 60); noise(.2, .2, 500); },
+  clear(){ [523, 659, 784, 1047].forEach((f,i) => setTimeout(() => tone(f, .25, 'triangle', .1), i*120)); },
+};
+
+/* ---------- 状態 ---------- */
+const NFLOWER = 5;
+const FLOWER_COL = ['#E8394B', '#FFF4D6', '#FF7FA8', '#FFF4D6', '#FFC43D'];   // ハイビスカス赤・プルメリア白・ピンク・黄色
+let S = null;
+function newGame(){
+  S = {
+    t: 0, end: FAST ? 32 : 64, bossAt: FAST ? 26 : 52,
+    x: W / 2, nuts: 1, fireT: 0,
+    shots: [], cocos: [], obs: [], gates: [], fx: [], texts: [],
+    flowers: Array.from({length: NFLOWER}, () => ({ alive: true, hp: 2, wilt: 0 })),   // お花は2回までがまんできる（1回目は花びらが落ちるだけ）
+    coco: 0, spawnT: 1.2, groupT: 9, nextGate: 0, bossSpawned: false, bossDown: false,
+    face: 'normal', faceT: 0, say: '花だんは ぼくが まもる！', sayT: 2.2,
+    broken: 0, byes: 0, over: false, shake: 0,
+  };
+  S.gatePlan = (FAST ? [3, 9, 15, 21] : [5, 14, 24, 34, 44]).map(t => t);
+  updateHud();
+}
+
+/* ---------- 指で左右に動かす（どこをさわっても、指の動きの分だけ動く） ---------- */
+let drag = null;
+cv.addEventListener('pointerdown', (e) => { audio(); drag = { px: e.clientX, x: S ? S.x : W/2 }; cv.setPointerCapture(e.pointerId); });
+cv.addEventListener('pointermove', (e) => { if (!drag || !S || S.over) return; S.x = clamp(drag.x + (e.clientX - drag.px) * 1.25, 24, W - 24); });
+cv.addEventListener('pointerup', () => { drag = null; });
+cv.addEventListener('pointercancel', () => { drag = null; });
+function clamp(v, a, b){ return v < a ? a : v > b ? b : v; }
+function rnd(a, b){ return a + Math.random() * (b - a); }
+
+/* ---------- 出てくるもの ---------- */
+const ROCK = { // r：半径・hp：当てる回数・v：落ちる速さ（画面の高さに対する割合/秒）
+  s: { r: 17, hp: 3,  v: .115 },
+  m: { r: 26, hp: 9,  v: .095 },
+  l: { r: 38, hp: 24, v: .08 },
+  boss: { r: 74, hp: 260, v: .045 },
+};
+function scaleHp(hp){ return Math.round(hp * (1 + S.t / 40)); }   // あとになるほど、少しかたく
+function spawnRock(size, x, y, vx){
+  const d = ROCK[size], hp = size === 'boss' ? d.hp + S.nuts * 20 : scaleHp(d.hp);
+  const pts = []; const n = size === 'boss' ? 11 : 8;
+  for (let i = 0; i < n; i++) pts.push(.82 + Math.random() * .2);
+  S.obs.push({ kind: 'rock', size, r: d.r, x: x != null ? x : rnd(d.r + 6, W - d.r - 6), y: y != null ? y : -d.r - 10,
+    vx: vx || rnd(-14, 14), vy: d.v * H, hp, max: hp, rot: Math.random() * 6, hop: Math.random() * 6, pts, flash: 0 });
+}
+function spawnUni(x){
+  S.obs.push({ kind: 'uni', r: 17, x: x != null ? x : rnd(30, W - 30), y: -26, vx: (Math.random() < .5 ? -1 : 1) * rnd(40, 70),
+    vy: .13 * H, hp: 4 + Math.floor(S.t / 20), max: 4, rot: 0, flash: 0, bye: false });
+}
+function spawnGate(){
+  // 左右に1つずつ。どちらかは「いいほう」。木の実を当てると数が上がる
+  const good = [['+', 1], ['+', 2], ['×', 2], ['+', 3]], bad = [['−', 1], ['−', 2], ['+', 1]];
+  const g1 = good[Math.min(good.length - 1, Math.floor(Math.random() * (2 + S.gates.length)))];
+  const g2 = Math.random() < .55 ? bad[Math.floor(Math.random() * 2)] : bad[2];
+  const leftGood = Math.random() < .5;
+  const mk = (side, g) => ({ side, op: g[0], val: g[1], hits: 0 });
+  S.gates.push({ y: -70, parts: [mk(0, leftGood ? g1 : g2), mk(1, leftGood ? g2 : g1)], done: false });
+}
+
+/* ---------- 毎フレーム ---------- */
+let last = 0, running = false;
+function frame(now){
+  const dt = Math.min(.05, (now - last) / 1000 || 0); last = now;
+  // 動きの細かさをそろえる（スマホが重くてコマが飛んでも、木の実が岩をすりぬけないように）
+  if (running) { let rest = dt; while (rest > 1e-4) { const st = Math.min(rest, 1 / 90); update(st); rest -= st; } }
+  draw();
+  requestAnimationFrame(frame);
+}
+
+function update(dt){
+  if (S.over) return;
+  S.t += dt;
+  // --- 出す ---
+  if (S.t < S.bossAt) {
+    S.spawnT -= dt;
+    if (S.spawnT <= 0) {
+      const k = S.t / S.bossAt;
+      S.spawnT = 1.55 - .6 * k + rnd(-.15, .15);
+      const r = Math.random();
+      if (S.t > 6 && r < .2) spawnUni();
+      else if (S.t > 22 && r < .38) spawnRock('l');
+      else if (S.t > 9 && r < .6) spawnRock('m');
+      else spawnRock('s');
+    }
+    S.groupT -= dt;
+    if (S.groupT <= 0) {   // 小さい岩が横に並んでコロコロ（大群）
+      S.groupT = rnd(8, 11);
+      const n = 3 + Math.floor(S.t / 18), gap = (W - 50) / (n - 1);
+      for (let i = 0; i < n; i++) spawnRock('s', 25 + i * gap, -20 - (i % 2) * 22, 0);
+      say('いっぱい 来た〜！', 1.4);
+    }
+    if (S.gatePlan.length && S.t >= S.gatePlan[0]) { S.gatePlan.shift(); spawnGate(); }
+  } else if (!S.bossSpawned) {
+    S.bossSpawned = true; spawnRock('boss', W / 2, -80, 0); say('おおきな岩だ…！ ココナッツの 出番！', 2.4); S.coco = Math.max(S.coco, 100);
+  }
+  // --- 撃つ（木の実は自動で） ---
+  S.fireT -= dt;
+  if (S.fireT <= 0) {
+    S.fireT = .15;
+    const n = S.nuts, spread = Math.min(16, 150 / Math.max(1, n - 1)), y0 = tanuY() - tanuH() * .72;
+    for (let i = 0; i < n; i++) {
+      const off = (i - (n - 1) / 2) * spread;
+      S.shots.push({ x: S.x + off, y: y0 + Math.abs(off) * .25, vx: off * .6, vy: -H * 1.25, r: 6 });
+    }
+  }
+  for (const s of S.shots) { s.x += s.vx * dt; s.y += s.vy * dt; }
+  window.__hanadan = S;
+  for (const c of S.cocos) { c.y += c.vy * dt; c.rot += dt * 8; }
+  // --- ゲート ---
+  const gy = tanuY() - tanuH() * .55;
+  for (const g of S.gates) {
+    g.y += .1 * H * dt;
+    if (!g.done && g.y + 30 >= gy) {
+      g.done = true; const p = g.parts[S.x < W / 2 ? 0 : 1];
+      const before = S.nuts;
+      if (p.op === '+') S.nuts += p.val; else if (p.op === '×') S.nuts *= p.val; else S.nuts -= p.val;
+      S.nuts = clamp(S.nuts, 1, 16);
+      p.taken = true;
+      if (S.nuts > before) { SND.gateGood(); face('happy', 1); say(['実が ふえた！', 'いっぱい 投げるよ〜！', 'えへへ、つよくなった♪'][Math.floor(Math.random()*3)], 1.4); }
+      else if (S.nuts < before) { SND.gateBad(); face('troubled', 1); say('あれ、へっちゃった…', 1.4); }
+      popText(S.x, gy - 20, `🌰 ×${S.nuts}`, S.nuts >= before ? '#2E8B3A' : '#C0392B', 1.4);
+      updateHud();
+    }
+  }
+  S.gates = S.gates.filter(g => g.y < H + 60);
+  // --- 岩とウニ ---
+  for (const o of S.obs) {
+    o.flash = Math.max(0, o.flash - dt * 6);
+    if (o.kind === 'uni' && o.bye) {   // 海へ帰っていく
+      o.x += o.vx * dt; o.y += o.vy * dt; o.vy += H * .9 * dt; o.rot += dt * 14; o.scale = Math.max(.2, (o.scale || 1) - dt * .5);
+      continue;
+    }
+    o.x += o.vx * dt; o.y += o.vy * dt; o.hop += dt * 7;
+    o.rot += (o.vx / o.r + o.vy / o.r * .6) * dt * (o.kind === 'uni' ? 1.4 : 1);
+    if (o.x < o.r) { o.x = o.r; o.vx = Math.abs(o.vx); }
+    if (o.x > W - o.r) { o.x = W - o.r; o.vx = -Math.abs(o.vx); }
+    if (o.y + o.r >= bedTop() + 8) { o.dead = true; reachBed(o); }
+  }
+  // --- 当たり ---
+  for (const s of S.shots) {
+    if (s.y < -20) { s.dead = true; continue; }
+    for (const o of S.obs) {
+      if (o.dead || o.bye) continue;
+      const dx = s.x - o.x, dy = s.y - o.y, rr = o.r + s.r;
+      if (dx * dx + dy * dy < rr * rr) { s.dead = true; hit(o, 1, s.x, s.y); break; }
+    }
+    if (s.dead) continue;
+    for (const g of S.gates) {   // ゲートに当てると、数が上がる（いいほうも、わるいほうも）
+      if (g.done || s.y > g.y + 34 || s.y < g.y - 34) continue;
+      if (s.gate === g) continue;   // 木の実はゲートを通りぬける（1つのゲートで1回だけ数える）
+      const p = g.parts[s.x < W / 2 ? 0 : 1];
+      s.gate = g; p.hits++;
+      if (p.hits >= 14 + S.nuts * 2) { p.hits = 0; const cap = p.op === '×' ? 3 : 5;   // 上がりすぎないように（+5・×3 まで）
+        if (p.op === '−') { p.val--; if (p.val <= 0) { p.op = '+'; p.val = 1; } tone(990, .06, 'triangle', .05); } else if (p.val < cap) { p.val++; tone(990, .06, 'triangle', .05); } }
+    }
+  }
+  for (const c of S.cocos) {
+    if (c.y < -60) { c.dead = true; continue; }
+    for (const o of S.obs) {
+      if (o.dead || o.bye || c.hitSet.has(o)) continue;
+      const dx = c.x - o.x, dy = c.y - o.y, rr = o.r + c.r;
+      if (dx * dx + dy * dy < rr * rr) {
+        c.hitSet.add(o); S.shake = .25; SND.coco();
+        popText(o.x, o.y - o.r, 'ゴンッ！', '#7A4A1E', 1);
+        hit(o, o.size === 'boss' ? 90 : 40, o.x, o.y + o.r * .5);
+      }
+    }
+  }
+  // 割れた岩は、小さい岩に分かれる（あとで足す）
+  const born = S.obs.filter(o => o.split); S.obs = S.obs.filter(o => !o.dead && !(o.bye && o.y > H + 80) && !(o.bye && (o.x < -60 || o.x > W + 60)));
+  for (const o of born) {
+    const kids = o.size === 'boss' ? ['m', 'm', 'm', 's', 's'] : o.size === 'l' ? ['m', 'm'] : ['s', 's', 's'];
+    kids.forEach((k, i) => spawnRock(k, o.x + (i - (kids.length - 1) / 2) * o.r * .8, o.y, (i - (kids.length - 1) / 2) * 50));
+    o.split = false;
+  }
+  S.shots = S.shots.filter(s => !s.dead);
+  S.cocos = S.cocos.filter(c => !c.dead);
+  // --- 演出 ---
+  for (const f of S.fx) { f.x += f.vx * dt; f.y += f.vy * dt; f.vy += 600 * dt; f.life -= dt; }
+  S.fx = S.fx.filter(f => f.life > 0);
+  for (const t of S.texts) { t.y -= 30 * dt; t.life -= dt; }
+  S.texts = S.texts.filter(t => t.life > 0);
+  S.faceT -= dt; if (S.faceT <= 0) S.face = 'normal';
+  S.sayT -= dt;
+  S.shake = Math.max(0, S.shake - dt);
+  for (const f of S.flowers) { const to = f.hp >= 2 ? 0 : f.hp === 1 ? .3 : 1; f.wilt += clamp(to - f.wilt, -dt * 2.5, dt * 2.5); }
+  // --- 終わり ---
+  if (S.bossDown && !S.obs.some(o => !o.bye)) finish(true);
+  updateHud();
+}
+
+function hit(o, dmg, x, y){
+  o.hp -= dmg; o.flash = 1;
+  if (o.kind === 'uni') {
+    SND.hit();
+    if (o.hp <= 0) {   // ウニは割らない。ぽーんと海へ
+      o.bye = true; o.vx = (o.x < W / 2 ? -1 : 1) * rnd(160, 240); o.vy = -H * .75; SND.boing(); S.byes++;
+      popText(o.x, o.y - 20, 'ばいば〜い🌊', '#2B6CB0', 1.3);
+      if (S.byes === 1 || Math.random() < .25) say('ごめんね、海へ おかえり〜', 1.6);
+    }
+    return;
+  }
+  SND.hit();
+  for (let i = 0; i < 2; i++) S.fx.push({ x, y, vx: rnd(-60, 60), vy: rnd(-120, -40), life: .35, r: rnd(1.5, 3), c: '#B9B2A6' });
+  if (o.hp <= 0) {
+    o.dead = true; S.broken++;
+    S.coco = Math.min(100, S.coco + (o.size === 'l' ? 12 : o.size === 'm' ? 7 : 4));
+    SND.crack(o.size !== 's');
+    popText(o.x, o.y, o.size === 'boss' ? 'ドッカーン！' : 'パカッ', o.size === 'boss' ? '#C8641E' : '#5A4632', o.size === 'boss' ? 1.6 : .7, o.size === 'boss' ? 30 : 18);
+    const n = o.size === 'boss' ? 30 : o.size === 'l' ? 14 : 8;
+    for (let i = 0; i < n; i++) S.fx.push({ x: o.x + rnd(-o.r, o.r) * .6, y: o.y + rnd(-o.r, o.r) * .6, vx: rnd(-160, 160), vy: rnd(-260, -40), life: rnd(.4, .8), r: rnd(2.5, o.r / 5), c: Math.random() < .5 ? '#9C958A' : '#C9C2B5', rock: true });
+    if (o.size !== 's') o.split = true;
+    if (o.size === 'boss') { S.bossDown = true; S.shake = .5; face('happy', 3); say('やった〜！ お花、ぶじだよ！', 3); }
+  }
+}
+
+function reachBed(o){
+  if (o.kind === 'uni' && o.bye) return;
+  // いちばん近い、元気なお花がしおれる
+  const col = clamp(Math.floor(o.x / (W / NFLOWER)), 0, NFLOWER - 1);
+  let best = -1, bd = 99;
+  S.flowers.forEach((f, i) => { if (f.alive && Math.abs(i - col) < bd) { bd = Math.abs(i - col); best = i; } });
+  let n = o.size === 'boss' ? 99 : o.size === 'l' ? 2 : 1;
+  while (n-- > 0 && best >= 0) {
+    const f = S.flowers[best]; f.hp--;
+    const fx = (best + .5) * W / NFLOWER;
+    for (let i = 0; i < 6; i++) S.fx.push({ x: fx, y: bedTop() + 6, vx: rnd(-70, 70), vy: rnd(-180, -60), life: .7, r: rnd(2.5, 4.5), c: FLOWER_COL[best] });
+    if (f.hp <= 0) f.alive = false;
+    best = S.flowers.findIndex(f => f.alive);
+  }
+  S.shake = .3; SND.wilt(); face('troubled', 1.2);
+  say(o.kind === 'uni' ? 'あっ、ウニが 花だんに〜！' : 'あっ、お花が〜！', 1.4);
+  popText(o.x, bedTop() - 10, 'はらり…', '#8A5A8A', 1);
+  if (!S.flowers.some(f => f.alive)) finish(false);
+}
+
+function useCoco(){
+  if (!S || S.over || S.coco < 100) return;
+  S.coco = 0; audio();
+  S.cocos.push({ x: S.x, y: tanuY() - tanuH() * .8, vy: -H * .55, r: 24, rot: 0, hitSet: new Set() });
+  face('happy', 1); say('ココナッツ、いっけ〜！', 1.4); tone(220, .25, 'triangle', .1, 440);
+  updateHud();
+}
+$('coco').addEventListener('click', useCoco);
+
+function face(f, t){ S.face = f; S.faceT = t; }
+function say(text, t){ S.say = text; S.sayT = t; }
+function popText(x, y, text, color, life, size){ S.texts.push({ x, y, text, color, life, max: life, size: size || 16 }); }
+
+let hudCache = '';
+function updateHud(){
+  const alive = S.flowers.filter(f => f.alive).length;
+  const k = `${alive}|${S.nuts}|${Math.floor(S.coco)}|${Math.floor(S.t * 4)}`;
+  if (k === hudCache) return; hudCache = k;
+  $('flowers').textContent = '🌺 ' + alive;
+  $('nuts').innerHTML = '🌰 ×<b>' + S.nuts + '</b>';
+  $('prog').firstElementChild.style.width = Math.min(100, S.t / S.bossAt * 100) + '%';
+  $('coco').classList.toggle('ready', S.coco >= 100);
+  $('coco').firstElementChild.style.height = S.coco + '%';
+}
+
+function finish(win){
+  if (S.over) return; S.over = true;
+  setTimeout(() => {
+    running = false;
+    const alive = S.flowers.filter(f => f.alive).length;
+    $('r-title').textContent = win ? (alive === NFLOWER ? '🌺 ぜんぶ まもった！' : '🌺 花だんを まもった！') : '🥀 お花が しおれちゃった…';
+    $('r-img').src = win ? '../images/happy.webp' : '../images/troubled.webp';
+    $('r-text').innerHTML = win
+      ? `のこったお花 <b>${alive}</b> / ${NFLOWER}<br>割った岩 ${S.broken}こ・海へ帰したウニ ${S.byes}ひき<br>「きみのおかげで、お花が 元気だよ♪」`
+      : `割った岩 ${S.broken}こ・海へ帰したウニ ${S.byes}ひき<br>「もう一回、いっしょに まもろ！」`;
+    $('result').hidden = false;
+    if (win) SND.clear();
+  }, win ? 1400 : 900);
+}
+
+function start(){
+  audio(); resize(); newGame();
+  $('start').hidden = true; $('result').hidden = true; running = true;
+}
+$('btn-start').addEventListener('click', start);
+$('btn-again').addEventListener('click', start);
+
+/* ---------- 描く ---------- */
+function draw(){
+  ctx.save();
+  ctx.clearRect(0, 0, W, H);
+  if (S && S.shake > 0) ctx.translate(rnd(-4, 4) * S.shake * 3, rnd(-3, 3) * S.shake * 3);
+  drawBg();
+  if (S) {
+    for (const g of S.gates) drawGate(g);
+    for (const o of S.obs) o.kind === 'uni' ? drawUni(o) : drawRock(o);
+    drawBed();
+    drawTanu();
+    for (const s of S.shots) drawNut(s.x, s.y, s.r);
+    for (const c of S.cocos) drawCoco(c);
+    for (const f of S.fx) { ctx.globalAlpha = Math.min(1, f.life * 3); ctx.fillStyle = f.c; ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, 7); ctx.fill(); }
+    ctx.globalAlpha = 1;
+    for (const t of S.texts) {
+      ctx.globalAlpha = Math.min(1, t.life / t.max * 2.5);
+      ctx.font = `900 ${t.size}px "Hiragino Maru Gothic ProN","Rounded Mplus 1c",system-ui,sans-serif`;
+      ctx.textAlign = 'center'; ctx.lineJoin = 'round'; ctx.lineWidth = 4; ctx.strokeStyle = '#fff';
+      ctx.strokeText(t.text, t.x, t.y); ctx.fillStyle = t.color; ctx.fillText(t.text, t.x, t.y);
+    }
+    ctx.globalAlpha = 1;
+    drawSay();
+  } else { drawBed(true); }
+  ctx.restore();
+}
+
+function drawBg(){
+  const b = IMG.bg;
+  if (b.complete && b.naturalWidth) {
+    const s = Math.max(W / b.naturalWidth, H / b.naturalHeight), w = b.naturalWidth * s, h = b.naturalHeight * s;
+    ctx.drawImage(b, (W - w) / 2, (H - h) / 2, w, h);
+  } else { ctx.fillStyle = '#BFE6FF'; ctx.fillRect(0, 0, W, H); }
+  // 上のほう（坂の上）を少しかすませて、岩が見やすいように
+  const g = ctx.createLinearGradient(0, 0, 0, H * .5);
+  g.addColorStop(0, 'rgba(255,255,255,.35)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H * .5);
+}
+
+function drawRock(o){
+  const hop = o.size === 'boss' ? 0 : Math.abs(Math.sin(o.hop)) * -4;
+  ctx.save(); ctx.translate(o.x, o.y + hop);
+  // かげ
+  ctx.fillStyle = 'rgba(60,40,20,.18)'; ctx.beginPath(); ctx.ellipse(0, o.r - hop + 2, o.r * .85, o.r * .22, 0, 0, 7); ctx.fill();
+  ctx.rotate(o.rot);
+  const n = o.pts.length;
+  ctx.beginPath();
+  for (let i = 0; i <= n; i++) {
+    const a = i / n * Math.PI * 2, r = o.r * o.pts[i % n];
+    const px = Math.cos(a) * r, py = Math.sin(a) * r;
+    if (i === 0) ctx.moveTo(px, py); else { const a2 = (i - .5) / n * Math.PI * 2, r2 = o.r * (o.pts[i % n] + o.pts[(i - 1) % n]) / 2 * 1.06; ctx.quadraticCurveTo(Math.cos(a2) * r2, Math.sin(a2) * r2, px, py); }
+  }
+  const gr = ctx.createRadialGradient(-o.r * .35, -o.r * .4, o.r * .1, 0, 0, o.r * 1.1);
+  gr.addColorStop(0, o.flash > 0 ? '#FFFFFF' : '#D8D2C6'); gr.addColorStop(1, o.size === 'boss' ? '#7D766B' : '#958E82');
+  ctx.fillStyle = gr; ctx.fill();
+  ctx.lineWidth = 2.5; ctx.strokeStyle = '#5E574D'; ctx.stroke();
+  // ひび（減るほど増える）
+  const crack = 1 - o.hp / o.max;
+  if (crack > .3) {
+    ctx.strokeStyle = '#4E473E'; ctx.lineWidth = 1.8; ctx.beginPath();
+    ctx.moveTo(-o.r * .1, -o.r * .7); ctx.lineTo(o.r * .08, -o.r * .25); ctx.lineTo(-o.r * .12, o.r * .05);
+    if (crack > .65) { ctx.moveTo(o.r * .08, -o.r * .25); ctx.lineTo(o.r * .45, -o.r * .1); ctx.moveTo(-o.r * .12, o.r * .05); ctx.lineTo(-o.r * .3, o.r * .5); }
+    ctx.stroke();
+  }
+  ctx.restore();
+  // 数字（回らない）
+  ctx.font = `900 ${o.size === 'boss' ? 28 : o.size === 'l' ? 20 : o.size === 'm' ? 16 : 13}px system-ui,sans-serif`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+  ctx.lineWidth = 4; ctx.strokeStyle = '#4A3F33'; ctx.strokeText(Math.max(0, Math.ceil(o.hp)), o.x, o.y + hop);
+  ctx.fillStyle = '#fff'; ctx.fillText(Math.max(0, Math.ceil(o.hp)), o.x, o.y + hop);
+  ctx.textBaseline = 'alphabetic';
+}
+
+function drawUni(o){
+  ctx.save(); ctx.translate(o.x, o.y); const sc = o.scale || 1; ctx.scale(sc, sc);
+  ctx.save(); ctx.rotate(o.rot);
+  ctx.strokeStyle = o.flash > 0 ? '#9A86C9' : '#3B2E5A'; ctx.lineWidth = 2.4; ctx.lineCap = 'round';
+  for (let i = 0; i < 18; i++) { const a = i / 18 * Math.PI * 2; ctx.beginPath(); ctx.moveTo(Math.cos(a) * o.r * .7, Math.sin(a) * o.r * .7); ctx.lineTo(Math.cos(a) * o.r * 1.35, Math.sin(a) * o.r * 1.35); ctx.stroke(); }
+  ctx.restore();
+  ctx.fillStyle = o.flash > 0 ? '#8C79BE' : '#4B3A73'; ctx.beginPath(); ctx.arc(0, 0, o.r * .82, 0, 7); ctx.fill();
+  // 目（回らない・ちょっとかわいく）
+  ctx.fillStyle = '#fff';
+  ctx.beginPath(); ctx.arc(-5, -1, 3.2, 0, 7); ctx.arc(5, -1, 3.2, 0, 7); ctx.fill();
+  ctx.fillStyle = '#222';
+  if (o.bye) { ctx.strokeStyle = '#222'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(-5, 0, 2.2, Math.PI, 0); ctx.moveTo(7.2, 0); ctx.arc(5, 0, 2.2, Math.PI, 0); ctx.stroke(); }
+  else { ctx.beginPath(); ctx.arc(-5, 0, 1.6, 0, 7); ctx.arc(5, 0, 1.6, 0, 7); ctx.fill(); }
+  ctx.restore();
+  if (!o.bye) {
+    ctx.font = '900 12px system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = '#fff';
+    const t = Math.max(0, Math.ceil(o.hp)); ctx.strokeText(t, o.x, o.y - o.r - 6); ctx.fillStyle = '#4B3A73'; ctx.fillText(t, o.x, o.y - o.r - 6);
+  }
+}
+
+function drawGate(g){
+  const h = 56, top = g.y - h / 2;
+  g.parts.forEach((p) => {
+    const x0 = p.side === 0 ? 6 : W / 2 + 3, w = W / 2 - 9;
+    const good = p.op !== '−';
+    ctx.globalAlpha = p.taken ? .25 : .85;
+    ctx.fillStyle = good ? 'rgba(120,205,120,.55)' : 'rgba(235,110,110,.55)';
+    roundRect(x0, top, w, h, 12); ctx.fill();
+    ctx.lineWidth = 3; ctx.strokeStyle = good ? '#3E9E4B' : '#C24848'; ctx.stroke();
+    // ヤシの葉（上の飾り）
+    ctx.fillStyle = '#3E9E4B';
+    for (let i = 0; i < 5; i++) { const lx = x0 + 12 + i * (w - 24) / 4; ctx.beginPath(); ctx.ellipse(lx, top - 3, 13, 5, (i - 2) * .35, 0, 7); ctx.fill(); }
+    ctx.font = '900 24px system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.35)'; const t = `🌰 ${p.op}${p.val}`;
+    ctx.strokeText(t, x0 + w / 2, g.y + 2); ctx.fillStyle = '#fff'; ctx.fillText(t, x0 + w / 2, g.y + 2);
+    ctx.textBaseline = 'alphabetic'; ctx.globalAlpha = 1;
+  });
+}
+function roundRect(x, y, w, h, r){ ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+
+function drawBed(){
+  const y = bedTop();
+  // 土
+  ctx.fillStyle = '#8B5A32'; roundRect(-10, y + 18, W + 20, H - y, 18); ctx.fill();
+  ctx.fillStyle = '#A26C3E'; roundRect(-10, y + 22, W + 20, 10, 6); ctx.fill();
+  // 葉っぱ
+  ctx.fillStyle = '#3F9A4A';
+  for (let i = 0; i < 14; i++) { const lx = (i + .5) * W / 14; ctx.beginPath(); ctx.ellipse(lx, y + 22, 16, 7, (i % 2 ? .5 : -.5), 0, 7); ctx.fill(); }
+  const flowers = S ? S.flowers : Array.from({length: NFLOWER}, () => ({ alive: true, wilt: 0 }));
+  flowers.forEach((f, i) => {
+    const fx = (i + .5) * W / NFLOWER, fy = y + 6 + (i % 2) * 6;
+    drawFlower(fx, fy, FLOWER_COL[i], i % 2 === 1 ? 'plumeria' : 'hibiscus', f.wilt, f.hp === 1);
+  });
+}
+function drawFlower(x, y, col, type, wilt, hurt){
+  ctx.save(); ctx.translate(x, y);
+  // くき
+  ctx.strokeStyle = '#2F7D3A'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(0, 18); ctx.quadraticCurveTo(wilt * 10, 6, wilt * 14, -2 + wilt * 12); ctx.stroke();
+  ctx.translate(wilt * 14, wilt * 12); ctx.rotate(wilt * 1.1); ctx.scale(1 - wilt * .3, 1 - wilt * .3);
+  const c = wilt > 0 ? mix(col, '#8E8070', wilt * .7) : col;
+  const n = 5, R = type === 'plumeria' ? 14 : 18;
+  for (let i = 0; i < n; i++) {
+    if (hurt && i % 2 === 1) continue;   // 1回目で花びらが落ちたところ
+    const a = i / n * Math.PI * 2 - Math.PI / 2;
+    ctx.save(); ctx.rotate(a); ctx.fillStyle = c;
+    ctx.beginPath(); ctx.ellipse(R * .55, 0, R * .62, R * (type === 'plumeria' ? .36 : .5), type === 'plumeria' ? .4 : 0, 0, 7); ctx.fill();
+    ctx.restore();
+  }
+  ctx.fillStyle = type === 'plumeria' ? '#FFC93D' : '#FFE07A';
+  ctx.beginPath(); ctx.arc(0, 0, type === 'plumeria' ? 4.5 : 3.5, 0, 7); ctx.fill();
+  if (type === 'hibiscus') { ctx.strokeStyle = '#FFE07A'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(9, -9); ctx.stroke(); }
+  ctx.restore();
+}
+function mix(a, b, t){
+  const p = (h) => [1, 3, 5].map(i => parseInt(h.substr(i, 2), 16)); const A = p(a), B = p(b);
+  return 'rgb(' + A.map((v, i) => Math.round(v + (B[i] - v) * t)).join(',') + ')';
+}
+
+function drawTanu(){
+  const im = IMG[S.face] || IMG.normal, h = tanuH(), w = h * 720 / 900, y = tanuY();
+  const bob = Math.sin(S.t * 10) * 1.5;
+  ctx.fillStyle = 'rgba(60,40,20,.25)'; ctx.beginPath(); ctx.ellipse(S.x, y - 4, w * .3, 6, 0, 0, 7); ctx.fill();
+  if (im.complete && im.naturalWidth) ctx.drawImage(im, S.x - w / 2, y - h * 893 / 900 + bob, w, h);
+}
+
+function drawNut(x, y, r){
+  ctx.fillStyle = '#8A5426'; ctx.beginPath(); ctx.ellipse(x, y, r * .85, r * 1.05, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = '#5A3518'; ctx.beginPath(); ctx.ellipse(x, y - r * .6, r * .9, r * .45, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.beginPath(); ctx.arc(x - r * .3, y + r * .1, r * .25, 0, 7); ctx.fill();
+}
+function drawCoco(c){
+  ctx.save(); ctx.translate(c.x, c.y); ctx.rotate(c.rot);
+  const g = ctx.createRadialGradient(-8, -8, 3, 0, 0, c.r); g.addColorStop(0, '#A9744A'); g.addColorStop(1, '#5C3A1E');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, c.r, 0, 7); ctx.fill();
+  ctx.strokeStyle = 'rgba(40,25,10,.4)'; ctx.lineWidth = 1.5;
+  for (let i = 0; i < 6; i++) { ctx.beginPath(); ctx.arc(0, 0, c.r * (.4 + i * .1), i, i + 1.2); ctx.stroke(); }
+  ctx.fillStyle = '#2E1C0E'; [[-6, -4], [6, -4], [0, 6]].forEach(([a, b]) => { ctx.beginPath(); ctx.arc(a, b, 3, 0, 7); ctx.fill(); });
+  ctx.restore();
+}
+
+function drawSay(){
+  if (S.sayT <= 0) return;
+  const text = S.say, y = tanuY() - tanuH() - 18;
+  ctx.font = '800 16px "Hiragino Maru Gothic ProN","Rounded Mplus 1c",system-ui,sans-serif';
+  const w = Math.min(W - 24, ctx.measureText(text).width + 28), x = clamp(S.x - w / 2, 12, W - 12 - w);
+  ctx.globalAlpha = Math.min(1, S.sayT * 4);
+  ctx.fillStyle = '#fff'; ctx.shadowColor = 'rgba(0,0,0,.15)'; ctx.shadowBlur = 8;
+  roundRect(x, y - 20, w, 36, 16); ctx.fill(); ctx.shadowBlur = 0;
+  ctx.beginPath(); ctx.moveTo(clamp(S.x, x + 18, x + w - 18) - 6, y + 15); ctx.lineTo(clamp(S.x, x + 18, x + w - 18) + 2, y + 25); ctx.lineTo(clamp(S.x, x + 18, x + w - 18) + 6, y + 15); ctx.fill();
+  ctx.fillStyle = '#4A2C1A'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, x + w / 2, y - 2, w - 20);
+  ctx.textBaseline = 'alphabetic'; ctx.globalAlpha = 1;
+}
+
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
