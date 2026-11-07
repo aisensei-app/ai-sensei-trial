@@ -54,8 +54,14 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
 @keyframes hop{0%,100%{translate:0 0}35%{translate:0 -6%}60%{translate:0 0}80%{translate:0 -1.5%}}
 @keyframes shake{0%,100%{translate:0 0}20%{translate:-2% 0}40%{translate:2% 0}60%{translate:-1.5% 0}80%{translate:1% 0}}
 /* 1枚絵（スチル） */
-.still{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 25%;opacity:0;transition:opacity .8s;z-index:3}
-.still.on{opacity:1}
+.still{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 25%;opacity:0;transition:opacity .5s .7s;z-index:3}
+.still.on{opacity:1;transition:opacity .7s}
+/* 受け取ったときの、きらっ（ゆっくり・点滅しない） */
+.twinkle{position:absolute;z-index:6;width:26px;height:26px;opacity:0;pointer-events:none;
+  background:radial-gradient(circle,#fff 0 18%,rgba(255,240,200,.9) 30%,rgba(255,240,200,0) 70%);
+  clip-path:polygon(50% 0,60% 40%,100% 50%,60% 60%,50% 100%,40% 60%,0 50%,40% 40%)}
+.twinkle.go{animation:twinkle 1.6s ease-in-out forwards}
+@keyframes twinkle{0%{opacity:0;transform:scale(.3) rotate(0)}40%{opacity:1;transform:scale(1.2) rotate(30deg)}100%{opacity:0;transform:scale(.6) rotate(60deg)}}
 /* おなかが揺れる1枚絵（canvas に描き直す）：押されて飛びこむ・砂はらい */
 .jig{position:absolute;inset:0;z-index:6;opacity:0;transition:opacity .35s;pointer-events:none}
 .jig.on{opacity:1;pointer-events:auto;touch-action:none}
@@ -101,12 +107,6 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
   background:conic-gradient(from 20deg,#F7D34A 0 30%,#fff 0 48%,#3C6FD1 0 68%,#fff 0 82%,#F7D34A 0);box-shadow:inset -8px -10px 16px rgba(0,0,0,.25),0 4px 10px rgba(0,0,0,.25)}
 #rally .shadow{position:absolute;left:0;top:0;width:80px;height:20px;margin:-10px 0 0 -40px;border-radius:50%;background:rgba(80,50,20,.28);filter:blur(3px)}
 #rally .rc{position:absolute;left:50%;top:54px;transform:translateX(-50%);background:rgba(255,255,255,.85);color:var(--orange-d);font-weight:800;font-size:14px;padding:6px 14px;border-radius:99px}
-/* ネックレスの仮カード（絵ができたら差しかえ） */
-.gift{position:absolute;z-index:4;left:50%;top:44%;transform:translateX(-50%) scale(.9);display:flex;flex-direction:column;align-items:center;gap:4px;
-  background:rgba(255,255,255,.92);border-radius:18px;padding:14px 20px;font-size:40px;box-shadow:0 6px 18px rgba(0,0,0,.25);opacity:0;transition:opacity .6s,transform .6s;pointer-events:none}
-.gift b{font-size:15px;color:var(--ink)}
-.gift small{font-size:12px;color:#8a6a50}
-.gift.on{opacity:1;transform:translateX(-50%) scale(1)}
 /* 夜（前夜）：絵を包む2重の箱。外＝もたれる動き（寄る・傾く・暗く）、内＝ゆっくりした鼓動 */
 #night{position:absolute;inset:0;z-index:5;opacity:0;transition:opacity 1s;overflow:hidden;background:#0b1024}
 #night.on{opacity:1}
@@ -171,7 +171,10 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
     <img class="still" data-k="invite" src="img/intro_invite.webp" alt="">
     <img class="still" data-k="sand" src="img/intro_sand.webp" alt="">
     <div id="rally"><span class="shadow"></span><span class="ball"></span><span class="rc"></span></div>
-    <div class="gift" id="gift">🐚<b>手作りの貝のネックレス</b><small>（絵はこれから）</small></div>
+    <img class="still" data-k="g-shy" src="img/gift_shy.webp" alt="">
+    <img class="still" data-k="g-tear" src="img/gift_tear.webp" alt="">
+    <img class="still" data-k="g-smile" src="img/gift_smile.webp" alt="">
+    <span class="twinkle" style="left:40%;top:52%"></span><span class="twinkle" style="left:58%;top:57%;animation-delay:.35s"></span><span class="twinkle" style="left:49%;top:63%;animation-delay:.7s"></span>
     <div class="jig" id="bump"><canvas></canvas></div>
     <div class="jig" id="sand"><canvas></canvas></div>
     <div id="shore"><span class="moon"></span><span class="glow"></span>
@@ -273,13 +276,13 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
       { still: 'sand', who: 'uru', text: 'タヌくん、最後まで、ぜんぶのボールを追いかけてたね。\nいちばんかっこよかったよ！' },
       { still: 'sand', who: 'uru', text: '{name}も、おつかれさま！\n…ぼく、冷たい飲み物、買ってくるね♪' },
       { still: 'sand', who: 'tanu', text: '……ウルくん、ありがと。' },
-      { gift: true, who: 'tanu', t: 'dere', text: 'あのね、{name}。…これ。' },
-      { gift: true, who: 'tanu', t: 'shy', text: '優勝できなかったときのために、って…\nゆうべ、浜で貝がら集めて、作ったんだ。' },
-      { gift: true, who: 'tanu', t: 'troubled', text: '形も、ばらばらだし…ひもも、むすび目だらけで…\nちょっと、かっこ悪いけど。' },
-      { gift: true, who: 'tanu', t: 'dere', choice: ['タヌくん、ありがとう！'], text: 'でも、ぼくの「ありがとう」、ぜんぶ入ってるから。\n…もらって、くれる？' },
-      { gift: true, who: 'tanu', t: 'happy', anim: 'hop', text: '…！ えへへ…名前、呼んでくれた。\nよかったぁ。' },
-      { gift: true, who: 'tanu', t: 'dere', text: 'ねえ、{name}。ぼく、大会に出てよかった。\n{name}がいたから、こわくなかったよ。' },
-      { gift: true, who: 'tanu', t: 'happy', text: 'また、いっしょに挑戦しようね。\n…次は、もっと上を目指そ♪' }
+      { still: 'g-shy', who: 'tanu', text: 'あのね、{name}。…これ。' },
+      { still: 'g-shy', who: 'tanu', text: '優勝できなかったときのために、って…\nゆうべ、浜で貝がら集めて、作ったんだ。' },
+      { still: 'g-tear', who: 'tanu', text: '形も、ばらばらだし…ひもも、むすび目だらけで…\nちょっと、かっこ悪いけど。' },
+      { still: 'g-tear', who: 'tanu', choice: ['タヌくん、ありがとう！'], text: 'でも、ぼくの「ありがとう」、ぜんぶ入ってるから。\n…もらって、くれる？' },
+      { still: 'g-smile', fx: 'twinkle', who: 'tanu', text: '…！ えへへ…名前、呼んでくれた。\nよかったぁ。' },
+      { still: 'g-smile', who: 'tanu', text: 'ねえ、{name}。ぼく、大会に出てよかった。\n{name}がいたから、こわくなかったよ。' },
+      { still: 'g-shy', who: 'tanu', text: 'また、いっしょに挑戦しようね。\n…次は、もっと上を目指そ♪' }
     ] }
   ];
   const NAMES = { tanu: 'タヌくん', uru: 'ウルくん' };
@@ -590,7 +593,8 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
   /* ===== 1行を出す ===== */
   function show(k) {
     const L = LINES[k];
-    document.querySelectorAll('.still').forEach((s) => s.classList.toggle('on', s.dataset.k === L.still));
+    document.querySelectorAll('.still').forEach((s) => { const on = s.dataset.k === L.still; if (on && !s.classList.contains('on')) stage.appendChild(s); s.classList.toggle('on', on); });   // 新しく出す絵を、ほかの1枚絵より上に（前の絵は出きるまで残る）
+    if (L.fx === 'twinkle') document.querySelectorAll('.twinkle').forEach((t) => { t.classList.remove('go'); void t.offsetWidth; t.classList.add('go'); });
     // おなかが揺れる1枚絵
     if (L.jig !== 'bump') { bumpEl.classList.remove('on', 'beat'); ch.tanu.classList.remove('lunge'); if (L.fx !== 'push') ch.tanu.classList.remove('front'); ch.uru.classList.remove('pushed'); }
     if (L.jig === 'sand' && !sandEl.classList.contains('on')) { sandEl.classList.add('on'); sand.draw(); sand.kick(2.4); sand.wave({ x: AREA.cx, y: AREA.cy }, 1); }
@@ -616,8 +620,6 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
     // 大会のラリー
     if (L.game) setTimeout(() => startGame(L.game), 900);
     // ネックレス（仮カード）：タヌくんがまんなかに来る
-    $('#gift').classList.toggle('on', !!L.gift);
-    if (L.gift) { ch.uru.classList.add('away'); ch.tanu.classList.add('on', 'solo'); ch.tanu.classList.remove('dive'); }
     // その夜の浜
     const sh = $('#shore');
     sh.classList.toggle('on', !!L.shore); stage.classList.toggle('dark', !!L.shore || PARTS[part].start === 'night');
