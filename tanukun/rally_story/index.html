@@ -632,7 +632,7 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
   /* ===== 1行を出す ===== */
   function show(k) {
     const L = LINES[k];
-    document.querySelectorAll('.still').forEach((s) => { const on = s.dataset.k === L.still; if (on && !s.classList.contains('on')) stage.appendChild(s); s.classList.toggle('on', on); });   // 新しく出す絵を、ほかの1枚絵より上に（前の絵は出きるまで残る）
+    document.querySelectorAll('.still').forEach((s) => { const on = s.dataset.k === L.still; if (on && !s.classList.contains('on')) { stage.appendChild(s); void s.offsetWidth; } s.classList.toggle('on', on); });   // 動かしたあと、一度計算させてから出す（しないとフェードせずに一瞬で出ていた）   // 新しく出す絵を、ほかの1枚絵より上に（前の絵は出きるまで残る）
     if (L.fx === 'twinkle') document.querySelectorAll('.twinkle').forEach((t) => { t.classList.remove('go'); void t.offsetWidth; t.classList.add('go'); });
     // おなかが揺れる1枚絵
     if (L.jig !== 'bump') { bumpEl.classList.remove('on', 'beat'); ch.tanu.classList.remove('lunge'); if (L.fx !== 'push') ch.tanu.classList.remove('front'); ch.uru.classList.remove('pushed'); }
