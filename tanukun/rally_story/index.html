@@ -34,6 +34,8 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
 /* 背景（横長の絵を、ネットが見える所で切り取る） */
 #bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:62% 50%;transition:opacity .6s}
 #stage.dark #bg{opacity:0}
+#bg{transition:opacity .6s,filter 1.2s}
+#stage.evening #bg{filter:sepia(.45) saturate(1.3) hue-rotate(-12deg) brightness(.88)}   /* 大会のあとの夕方 */
 /* 立ち絵 */
 .chara{position:absolute;bottom:-16%;height:94%;transform:translateX(-50%) translateY(0) scale(.96);transform-origin:50% 100%;
   filter:brightness(.8) saturate(.9);transition:filter .35s,transform .35s,opacity .5s,left .6s cubic-bezier(.3,.1,.25,1);
@@ -142,8 +144,8 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
   background:rgba(255,255,255,.55);overflow:hidden;opacity:0;transition:opacity .5s;pointer-events:none}
 .meter.on{opacity:1}
 .meter i{display:block;height:100%;width:0;background:var(--orange);border-radius:99px;transition:width .2s}
-#stage::after{content:"";position:absolute;left:0;right:0;bottom:0;height:40px;z-index:7;
-  background:linear-gradient(transparent,#2a1a10);pointer-events:none}
+#stage::after{content:"";position:absolute;left:0;right:0;bottom:-2px;height:44px;z-index:7;
+  background:linear-gradient(transparent,#2a1a10 85%);pointer-events:none}
 /* セリフの枠 */
 #talk{position:relative;flex:none;padding:22px 16px calc(env(safe-area-inset-bottom,0px) + 14px)}
 .box{position:relative;min-height:5.2em;padding:18px 20px 22px;border-radius:22px;background:#fff;
@@ -287,6 +289,9 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
       { still: 'sand', who: 'uru', text: 'タヌくん、最後まで、ぜんぶのボールを追いかけてたね。\nいちばんかっこよかったよ！' },
       { still: 'sand', who: 'uru', text: '{name}も、おつかれさま！\n…ぼく、冷たい飲み物、買ってくるね♪' },
       { still: 'sand', who: 'tanu', text: '……ウルくん、ありがと。' },
+      { empty: true, who: 'narr', text: '── 大会がおわって、夕方。' },
+      { empty: true, who: 'tanu', text: '{name}、ちょっと待って……！' },
+      { empty: true, who: 'tanu', text: 'はぁ、はぁ…\nよかった、まだいた…' },
       { still: 'g-shy', who: 'tanu', text: 'あのね、{name}。…これ。' },
       { still: 'g-shy', who: 'tanu', text: '優勝できなかったときのために、って…\nゆうべ、浜で貝がら集めて、作ったんだ。' },
       { still: 'g-tear', who: 'tanu', text: '形も、ばらばらだし…ひもも、むすび目だらけで…\nちょっと、かっこ悪いけど。' },
@@ -648,6 +653,8 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
     clearTimeout(autoT);
     if (L.auto) autoT = setTimeout(() => { if (i === k) { clearInterval(typing); typing = null; show(++i); } }, L.auto);
     if (L.interact === 'sand') { waitSand = true; setTimeout(() => { if (waitSand) { hint('👆 おなかを なでて、砂を おとしてね'); $('#meter').classList.add('on'); } }, 900); }
+    // 背景だけ（大会のあと）：立ち絵を消して、夕方の色に
+    if (L.empty) { ch.tanu.classList.remove('on'); ch.uru.classList.remove('on'); stage.classList.add('evening'); }
     // 大会のラリー
     if (L.game) setTimeout(() => startGame(L.game), 900);
     // ネックレス（仮カード）：タヌくんがまんなかに来る
@@ -700,7 +707,7 @@ body{margin:0;background:#2a1a10;color:var(--ink);font-family:var(--display);ove
     part = p; LINES = PARTS[p].lines; i = -1; picked = 0; waitChoice = waitSand = false; stopGame();
     btns.innerHTML = ''; btns.hidden = true; hideHint(); $('#meter').classList.remove('on');
     const st = PARTS[p].start;
-    stage.classList.toggle('dark', st === 'night');
+    stage.classList.toggle('dark', st === 'night'); stage.classList.remove('evening');
     ch.tanu.className = 'chara'; ch.uru.className = 'chara away';
     bumpEl.classList.remove('on', 'beat'); sandEl.classList.remove('on'); $('#night').className = '';
     if (st === 'solo') { ch.tanu.classList.add('on', 'solo'); setFace('tanu', 'normal', true); setFace('uru', 'normal', true); }
